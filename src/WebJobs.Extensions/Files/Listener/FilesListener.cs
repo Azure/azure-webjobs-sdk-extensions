@@ -41,7 +41,7 @@ namespace Microsoft.Azure.WebJobs.ServiceBus.Listeners
             string path = Path.GetDirectoryName(_attribute.Path);
             string watchPath = Path.Combine(_config.RootPath, path);
 
-            if (!File.Exists(watchPath))
+            if (!Directory.Exists(watchPath))
             {
                 throw new InvalidOperationException(string.Format("Path '{0}' does not exist.", watchPath));
             }
