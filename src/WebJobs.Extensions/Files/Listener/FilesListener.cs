@@ -38,11 +38,17 @@ namespace Microsoft.Azure.WebJobs.ServiceBus.Listeners
                 throw new InvalidOperationException("The listener has already been started.");
             }
 
-            string watchPath = Path.GetDirectoryName(_attribute.Path);
+            string path = Path.GetDirectoryName(_attribute.Path);
+            string watchPath = Path.Combine(_config.RootPath, path);
+
+            if (!File.Exists(watchPath))
+            {
+                throw new InvalidOperationException(string.Format("Path '{0}' does not exist.", watchPath));
+            }
 
             _watcher = new FileSystemWatcher
             {
-                Path = Path.Combine(_config.RootPath, watchPath),
+                Path = watchPath,
                 NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName,
                 Filter = _attribute.Filter
             };
