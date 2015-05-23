@@ -8,7 +8,7 @@ namespace WebJobs.Extensions.Timers
     {
         private List<TimeSpan>[] schedule = new List<TimeSpan>[7];
 
-        protected void Add(DayOfWeek day, TimeSpan time)
+        public void Add(DayOfWeek day, TimeSpan time)
         {
             List<TimeSpan> times = schedule[(int)day];
             if (times == null)
@@ -20,8 +20,13 @@ namespace WebJobs.Extensions.Timers
             times.Add(time);
         }
 
-        public override TimeSpan GetNextInterval(DateTime now)
+        public override DateTime GetNextOccurrence(DateTime now)
         {
+            if (schedule.All(p => p == null))
+            {
+                throw new InvalidOperationException("The schedule is empty.");
+            }
+
             // Determine where we are in the weekly schedule
             int idx = (int)now.DayOfWeek;
             List<TimeSpan> daySchedule = schedule[idx];
@@ -46,9 +51,10 @@ namespace WebJobs.Extensions.Timers
 
             // construct the next occurrence date
             int deltaDays = idx - (int)now.DayOfWeek;
-            DateTime nextOccurrence = new DateTime(now.Year, now.Month, now.Day + deltaDays, nextTime.Hours, nextTime.Minutes, nextTime.Seconds);
+            DateTime nextOccurrence = new DateTime(now.Year, now.Month, now.Day, nextTime.Hours, nextTime.Minutes, nextTime.Seconds);
+            nextOccurrence = nextOccurrence.AddDays(deltaDays);
 
-            return nextOccurrence - now;
+            return nextOccurrence;
         }
     }
 }

@@ -37,12 +37,10 @@ namespace WebJobs.Extensions.Timers.Listeners
                 Schedule = _attribute.Schedule
             };
 
-            TimeSpan nextInterval = _timerInfo.Schedule.GetNextInterval(DateTime.Now);
-
             _timer = new System.Timers.Timer
             {
                 AutoReset = false,
-                Interval = nextInterval.TotalMilliseconds
+                Interval = GetNextInterval(DateTime.Now)
             };
             _timer.Elapsed += OnTimer;
             _timer.Start();
@@ -115,9 +113,15 @@ namespace WebJobs.Extensions.Timers.Listeners
                 token.ThrowIfCancellationRequested();
             }
 
-            TimeSpan nextInterval = timerInfo.Schedule.GetNextInterval(lastOccurrence);
-            _timer.Interval = nextInterval.TotalMilliseconds;
+            _timer.Interval = GetNextInterval(lastOccurrence);
             _timer.Start();
+        }
+
+        private double GetNextInterval(DateTime now)
+        {
+            DateTime nextOccurrence = _timerInfo.Schedule.GetNextOccurrence(now);
+            TimeSpan nextInterval = nextOccurrence - DateTime.Now;
+            return nextInterval.TotalMilliseconds;
         }
 
         private void ThrowIfDisposed()

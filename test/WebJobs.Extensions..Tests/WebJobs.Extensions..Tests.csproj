@@ -1,46 +1,42 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\..\packages\xunit.runner.visualstudio.2.0.0\build\net20\xunit.runner.visualstudio.props" Condition="Exists('..\..\packages\xunit.runner.visualstudio.2.0.0\build\net20\xunit.runner.visualstudio.props')" />
+  <Import Project="..\..\packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props" Condition="Exists('..\..\packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{E6F59990-F3A1-469F-A9D8-6D529121D385}</ProjectGuid>
+    <ProjectGuid>{1729561F-D598-4208-9154-3A5497523D54}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WebJobs.Extensions</RootNamespace>
-    <AssemblyName>WebJobs.Extensions</AssemblyName>
+    <RootNamespace>WebJobs.Extensions.Tests</RootNamespace>
+    <AssemblyName>WebJobs.Extensions._.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <NuGetPackageImportStamp>f3c0bf0b</NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\bin\Debug\</OutputPath>
+    <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\bin\Release\</OutputPath>
+    <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject />
-  </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Azure.WebJobs, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Microsoft.Azure.WebJobs">
       <HintPath>..\..\packages\Microsoft.Azure.WebJobs.Core.1.1.0-alpha1-10000\lib\net45\Microsoft.Azure.WebJobs.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Azure.WebJobs.Host, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Microsoft.Azure.WebJobs.Host">
       <HintPath>..\..\packages\Microsoft.Azure.WebJobs.1.1.0-alpha1-10000\lib\net45\Microsoft.Azure.WebJobs.Host.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Data.Edm, Version=5.6.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -68,57 +64,56 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Data" />
     <Reference Include="System.Spatial, Version=5.6.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <Private>True</Private>
       <HintPath>..\..\packages\System.Spatial.5.6.0\lib\net40\System.Spatial.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="xunit.abstractions">
+      <HintPath>..\..\packages\xunit.abstractions.2.0.0\lib\net35\xunit.abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="xunit.assert">
+      <HintPath>..\..\packages\xunit.assert.2.0.0\lib\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.assert.dll</HintPath>
+    </Reference>
+    <Reference Include="xunit.core">
+      <HintPath>..\..\packages\xunit.extensibility.core.2.0.0\lib\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Files\Bindings\CompositeArgumentBindingProvider.cs" />
-    <Compile Include="Files\Bindings\ConverterArgumentBindingProvider.cs" />
-    <Compile Include="Files\Bindings\FileSystemEventValueProvider.cs" />
-    <Compile Include="Files\Bindings\FileTriggerBinding.cs" />
-    <Compile Include="Files\Bindings\IFileTriggerArgumentBindingProvider.cs" />
-    <Compile Include="Files\Config\FilesConfiguration.cs" />
-    <Compile Include="Files\Config\FilesExtensionConfig.cs" />
-    <Compile Include="Files\Config\JobHostConfigurationExtensions.cs" />
-    <Compile Include="Files\Converters\FileSystemConverter.cs" />
-    <Compile Include="Files\Converters\OutputConverter.cs" />
-    <Compile Include="Files\FilesTriggerParameterDescriptor.cs" />
-    <Compile Include="Files\FileTriggerAttribute.cs" />
-    <Compile Include="Files\Listener\FilesListener.cs" />
-    <Compile Include="Files\Listener\FilesListenerFactory.cs" />
-    <Compile Include="Files\Listener\FileTriggerExecutor.cs" />
-    <Compile Include="Files\Triggers\FilesTriggerAttributeBindingProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Timers\Bindings\ITimerTriggerArgumentBindingProvider.cs" />
-    <Compile Include="Timers\Bindings\TimerInfoConverterArgumentBindingProvider.cs" />
-    <Compile Include="Timers\Bindings\TimerInfoValueProvider.cs" />
-    <Compile Include="Timers\Bindings\TimerTriggerBinding.cs" />
-    <Compile Include="Timers\Config\JobHostConfigurationExtensions.cs" />
-    <Compile Include="Timers\Config\TimersExtensionConfig.cs" />
-    <Compile Include="Timers\Listeners\TimerListener.cs" />
-    <Compile Include="Timers\Listeners\TimerListenerFactory.cs" />
-    <Compile Include="Timers\Scheduling\ConstantSchedule.cs" />
-    <Compile Include="Timers\Scheduling\DailySchedule.cs" />
-    <Compile Include="Timers\Scheduling\MonthlySchedule.cs" />
-    <Compile Include="Timers\Scheduling\TimerSchedule.cs" />
-    <Compile Include="Timers\Scheduling\WeeklySchedule.cs" />
-    <Compile Include="Timers\TimerInfo.cs" />
-    <Compile Include="Timers\TimerTriggerAttribute.cs" />
-    <Compile Include="Timers\TimerTriggerParameterDescriptor.cs" />
-    <Compile Include="Timers\Triggers\TimersTriggerAttributeBindingProvider.cs" />
+    <Compile Include="Timers\Scheduling\ConstantScheduleTests.cs" />
+    <Compile Include="Timers\Scheduling\DailyScheduleTests.cs" />
+    <Compile Include="Timers\Scheduling\MonthlyScheduleTests.cs" />
+    <Compile Include="Timers\Scheduling\WeeklyScheduleTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <Folder Include="Files\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\WebJobs.Extensions\WebJobs.Extensions.csproj">
+      <Project>{e6f59990-f3a1-469f-a9d8-6d529121d385}</Project>
+      <Name>WebJobs.Extensions</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\..\packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props'))" />
+    <Error Condition="!Exists('..\..\packages\xunit.runner.visualstudio.2.0.0\build\net20\xunit.runner.visualstudio.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\xunit.runner.visualstudio.2.0.0\build\net20\xunit.runner.visualstudio.props'))" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

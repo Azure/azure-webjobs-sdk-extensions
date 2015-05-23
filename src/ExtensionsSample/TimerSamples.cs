@@ -19,6 +19,14 @@ namespace WebJobsSandbox
         }
     }
 
+    public class MyDailySchedule : DailySchedule
+    {
+        public MyDailySchedule() : 
+            base("8:00:00", "12:00:00", "22:00:00")
+        {
+        }
+    }
+
     public class TimerSamples
     {
         public void TimerJob([TimerTrigger("00:00:10")] TimerInfo timer)

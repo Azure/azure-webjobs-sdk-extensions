@@ -4,6 +4,6 @@ namespace WebJobs.Extensions.Timers
 {
     public abstract class TimerSchedule
     {
-        public abstract TimeSpan GetNextInterval(DateTime now);
+        public abstract DateTime GetNextOccurrence(DateTime now);
     }
 }
