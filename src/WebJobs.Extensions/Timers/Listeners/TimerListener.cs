@@ -120,7 +120,7 @@ namespace WebJobs.Extensions.Timers.Listeners
         private double GetNextInterval(DateTime now)
         {
             DateTime nextOccurrence = _timerInfo.Schedule.GetNextOccurrence(now);
-            TimeSpan nextInterval = nextOccurrence - DateTime.Now;
+            TimeSpan nextInterval = nextOccurrence - now;
             return nextInterval.TotalMilliseconds;
         }
 

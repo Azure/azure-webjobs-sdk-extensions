@@ -2,7 +2,9 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Listeners;
@@ -29,13 +31,18 @@ namespace Microsoft.Azure.WebJobs.ServiceBus.Listeners
             _cancellationTokenSource = new CancellationTokenSource();
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
             ThrowIfDisposed();
 
             if (_watcher != null && _watcher.EnableRaisingEvents)
             {
                 throw new InvalidOperationException("The listener has already been started.");
+            }
+
+            if (string.IsNullOrEmpty(_config.RootPath) || !Directory.Exists(_config.RootPath))
+            {
+                throw new InvalidOperationException("FilesConfiguration.RootPath must be set to a valid directory location.");
             }
 
             string path = Path.GetDirectoryName(_attribute.Path);
@@ -75,7 +82,10 @@ namespace Microsoft.Azure.WebJobs.ServiceBus.Listeners
             
             _watcher.EnableRaisingEvents = true;
 
-            return Task.FromResult<bool>(true);
+            // on startup, process any preexisting files that haven't been processed yet
+            ProcessFiles();
+
+            await Task.FromResult<bool>(true);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
@@ -118,6 +128,30 @@ namespace Microsoft.Azure.WebJobs.ServiceBus.Listeners
                 }
 
                 _disposed = true;
+            }
+        }
+
+        private void ProcessFiles()
+        {
+            string[] files = Directory.GetFiles(_watcher.Path, _watcher.Filter);
+
+            int batchSize = 5;  // TODO make configurable
+            int skip = 0;
+            IEnumerable<string> fileBatch = files.Skip(skip).Take(batchSize);
+            while (fileBatch.Any())
+            {
+                List<Task> batchTasks = new List<Task>();
+                foreach (string file in fileBatch)
+                {
+                    string fileName = Path.GetFileName(file);
+                    FileSystemEventArgs args = new FileSystemEventArgs(WatcherChangeTypes.Created, _watcher.Path, fileName);
+                    batchTasks.Add(HandleFileChange(args));
+                }
+                Task.WaitAll(batchTasks.ToArray());
+
+                // get the next batch
+                skip += batchSize;
+                fileBatch = files.Skip(skip).Take(batchSize);
             }
         }
 

@@ -25,7 +25,7 @@ namespace WebJobs.Extensions.Files
             }
 
             FilesConfiguration filesConfiguration = new FilesConfiguration();
-            // TODO: default the root path to wwwroot
+            // TODO: default the root path to wwwroot in Azure
 
             config.UseFiles(filesConfiguration);
         }
