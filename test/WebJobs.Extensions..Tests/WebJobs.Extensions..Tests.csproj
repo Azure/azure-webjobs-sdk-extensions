@@ -10,7 +10,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>WebJobs.Extensions.Tests</RootNamespace>
-    <AssemblyName>WebJobs.Extensions._.Tests</AssemblyName>
+    <AssemblyName>WebJobs.Extensions.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <NuGetPackageImportStamp>f3c0bf0b</NuGetPackageImportStamp>
@@ -58,6 +58,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\WindowsAzure.Storage.4.0.1\lib\net40\Microsoft.WindowsAzure.Storage.dll</HintPath>
     </Reference>
+    <Reference Include="NCrontab, Version=2.0.16709.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\packages\ncrontab.2.0.0\lib\net20\NCrontab.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\Newtonsoft.Json.6.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -86,9 +90,10 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Timers\Scheduling\ConstantScheduleTests.cs" />
+    <Compile Include="Timers\Scheduling\CronScheduleTests.cs" />
     <Compile Include="Timers\Scheduling\DailyScheduleTests.cs" />
-    <Compile Include="Timers\Scheduling\MonthlyScheduleTests.cs" />
     <Compile Include="Timers\Scheduling\WeeklyScheduleTests.cs" />
+    <Compile Include="Timers\TimerTriggerAttributeTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Files\" />

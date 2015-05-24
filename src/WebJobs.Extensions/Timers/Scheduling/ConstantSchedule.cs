@@ -2,34 +2,24 @@
 
 namespace WebJobs.Extensions.Timers
 {
+    /// <summary>
+    /// A simple constant interval scheduling strategy.
+    /// </summary>
     public class ConstantSchedule : TimerSchedule
     {
-        private TimeSpan _due;
         private TimeSpan _interval;
         private TimeSpan? _intervalOverride;
-        private bool _first = true;
 
-        public ConstantSchedule(TimeSpan due, TimeSpan interval)
+        /// <summary>
+        /// Constructs an instance using the specified interval.
+        /// </summary>
+        /// <param name="interval">The constant interval between schedule occurrences.</param>
+        public ConstantSchedule(TimeSpan interval)
         {
-            _due = due;
             _interval = interval;
         }
 
-        public ConstantSchedule(TimeSpan period) 
-            : this(TimeSpan.Zero, period)
-        {
-        }
-
-        public TimeSpan Due
-        {
-            get { return _due; }
-        }
-
-        public TimeSpan Interval
-        {
-            get { return _interval; }
-        }
-
+        /// <inheritdoc/>
         public override DateTime GetNextOccurrence(DateTime now)
         {
             TimeSpan nextInterval = _interval;
@@ -39,15 +29,13 @@ namespace WebJobs.Extensions.Timers
                 _intervalOverride = null;
             }
 
-            if (_first)
-            {
-                nextInterval += _due;
-                _first = false;
-            }
-
             return now + nextInterval;
         }
 
+        /// <summary>
+        /// Override the next schedule interval using the specified interval.
+        /// </summary>
+        /// <param name="interval">The one time interval to use for the next occurrence.</param>
         public void SetNextInterval(TimeSpan interval)
         {
             _intervalOverride = interval;

@@ -3,9 +3,36 @@ using WebJobs.Extensions.Timers;
 
 namespace WebJobsSandbox
 {
-    public class WeeklyPurgeSchedule : WeeklySchedule
+    public class TimerSamples
     {
-        public WeeklyPurgeSchedule()
+        /// <summary>
+        /// Example job triggered by a crontab schedule.
+        /// </summary>
+        public void CronJob([TimerTrigger("*/10 * * * * *")] TimerInfo timer)
+        {
+            Console.WriteLine("Scheduled job fired!");
+        }
+
+        /// <summary>
+        /// Example job triggered by a timespan schedule.
+        /// </summary>
+        public void TimerJob([TimerTrigger("00:00:10")] TimerInfo timer)
+        {
+            Console.WriteLine("Scheduled job fired!");
+        }
+
+        /// <summary>
+        /// Example job triggered by a custom schedule.
+        /// </summary>
+        public void WeeklyTimerJob([TimerTrigger(typeof(MyWeeklySchedule))] TimerInfo timer)
+        {
+            Console.WriteLine("Scheduled job fired!");
+        }
+    }
+
+    public class MyWeeklySchedule : WeeklySchedule
+    {
+        public MyWeeklySchedule()
         {
             // Every Monday at 8 AM
             Add(DayOfWeek.Monday, new TimeSpan(8, 0, 0));
@@ -21,22 +48,9 @@ namespace WebJobsSandbox
 
     public class MyDailySchedule : DailySchedule
     {
-        public MyDailySchedule() : 
+        public MyDailySchedule() :
             base("8:00:00", "12:00:00", "22:00:00")
         {
-        }
-    }
-
-    public class TimerSamples
-    {
-        public void TimerJob([TimerTrigger("00:00:10")] TimerInfo timer)
-        {
-            Console.WriteLine("Scheduled job fired!");
-        }
-
-        public void WeeklyTimerJob([TimerTrigger(typeof(WeeklyPurgeSchedule))] TimerInfo timer)
-        {
-            Console.WriteLine("Scheduled job fired!");
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using WebJobs.Extensions.Timers;
 using Xunit;
 
@@ -58,8 +59,8 @@ namespace WebJobs.Extensions.Tests.Timers.Scheduling
                 new Tuple<DayOfWeek, TimeSpan>(DayOfWeek.Monday, new TimeSpan(20, 30, 0)),
                 new Tuple<DayOfWeek, TimeSpan>(DayOfWeek.Tuesday, new TimeSpan(12, 0, 0)),
                 new Tuple<DayOfWeek, TimeSpan>(DayOfWeek.Wednesday, new TimeSpan(9, 0, 0)),
+                new Tuple<DayOfWeek, TimeSpan>(DayOfWeek.Wednesday, new TimeSpan(22, 30, 00)),  // verify schedule self orders
                 new Tuple<DayOfWeek, TimeSpan>(DayOfWeek.Wednesday, new TimeSpan(15, 25, 15)),
-                new Tuple<DayOfWeek, TimeSpan>(DayOfWeek.Wednesday, new TimeSpan(22, 30, 00)),
                 new Tuple<DayOfWeek, TimeSpan>(DayOfWeek.Friday, new TimeSpan(9, 30, 0)),
                 new Tuple<DayOfWeek, TimeSpan>(DayOfWeek.Saturday, new TimeSpan(5, 30, 0)),
                 new Tuple<DayOfWeek, TimeSpan>(DayOfWeek.Saturday, new TimeSpan(17, 30, 0)),
@@ -79,19 +80,22 @@ namespace WebJobs.Extensions.Tests.Timers.Scheduling
                 schedule.Add(occurrence.Item1, occurrence.Item2);
             }
 
+            var expectedSchedule = scheduleData.GroupBy(p => p.Item1);
+
             // loop through the full schedule a few times, ensuring we cross over
             // a month boundary ensuring day handling is correct
             for (int i = 0; i < 10; i++)
             {
-                // run through the entire schedule once
-                for (int j = 0; j < scheduleData.Length; j++)
+                // run through the entire schedule once, ordering the expected times per day
+                foreach (var expectedScheduleDay in expectedSchedule)
                 {
-                    DateTime nextOccurrence = schedule.GetNextOccurrence(now);
-                    var expectedOccurrence = scheduleData[j];
-                    Assert.Equal(expectedOccurrence.Item1, nextOccurrence.DayOfWeek);
-                    Assert.Equal(expectedOccurrence.Item2, nextOccurrence.TimeOfDay);
-
-                    now = nextOccurrence + TimeSpan.FromSeconds(1);
+                    foreach (TimeSpan time in expectedScheduleDay.OrderBy(p => p.Item2).Select(p => p.Item2))
+                    {
+                        DateTime nextOccurrence = schedule.GetNextOccurrence(now);
+                        Assert.Equal(expectedScheduleDay.Key, nextOccurrence.DayOfWeek);
+                        Assert.Equal(time, nextOccurrence.TimeOfDay);
+                        now = nextOccurrence + TimeSpan.FromSeconds(1);
+                    }
                 }
             }
         }

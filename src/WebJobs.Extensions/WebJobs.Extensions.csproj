@@ -62,6 +62,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\WindowsAzure.Storage.4.0.1\lib\net40\Microsoft.WindowsAzure.Storage.dll</HintPath>
     </Reference>
+    <Reference Include="NCrontab">
+      <HintPath>..\..\packages\ncrontab.2.0.0\lib\net20\NCrontab.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\Newtonsoft.Json.6.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -104,8 +107,8 @@
     <Compile Include="Timers\Listeners\TimerListener.cs" />
     <Compile Include="Timers\Listeners\TimerListenerFactory.cs" />
     <Compile Include="Timers\Scheduling\ConstantSchedule.cs" />
+    <Compile Include="Timers\Scheduling\CronSchedule.cs" />
     <Compile Include="Timers\Scheduling\DailySchedule.cs" />
-    <Compile Include="Timers\Scheduling\MonthlySchedule.cs" />
     <Compile Include="Timers\Scheduling\TimerSchedule.cs" />
     <Compile Include="Timers\Scheduling\WeeklySchedule.cs" />
     <Compile Include="Timers\TimerInfo.cs" />

@@ -4,6 +4,10 @@ using System.Linq;
 
 namespace WebJobs.Extensions.Timers
 {
+    /// <summary>
+    /// A simple daily schedule. The schedule repeats each day, and each day it
+    /// cycles through the configured times.
+    /// </summary>
     public class DailySchedule : TimerSchedule
     {
         private List<TimeSpan> schedule = new List<TimeSpan>();
@@ -12,21 +16,27 @@ namespace WebJobs.Extensions.Timers
         {
         }
 
+        /// <summary>
+        /// Constructs an instance based on the specified collection of
+        /// <see cref="TimeSpan"/> strings.
+        /// </summary>
+        /// <param name="times">The daily schedule times.</param>
         public DailySchedule(params string[] times)
         {
-            schedule = times.Select(p => TimeSpan.Parse(p)).ToList();
+            schedule = times.Select(p => TimeSpan.Parse(p)).OrderBy(p => p).ToList();
         }
 
+        /// <summary>
+        /// Constructs an instance based on the specified collection of
+        /// <see cref="TimeSpan"/> instances.
+        /// </summary>
+        /// <param name="times">The daily schedule times.</param>
         public DailySchedule(params TimeSpan[] times)
         {
-            schedule = times.ToList();
+            schedule = times.OrderBy(p => p).ToList();
         }
 
-        public void Add(TimeSpan time)
-        {
-            schedule.Add(time);
-        }
-
+        /// <inheritdoc/>
         public override DateTime GetNextOccurrence(DateTime now)
         {
             if (schedule.Count == 0)

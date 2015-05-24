@@ -46,8 +46,9 @@ namespace WebJobs.Extensions.Tests.Timers.Scheduling
         {
             DailySchedule schedule = new DailySchedule(
                 new TimeSpan(8, 30, 0),
-                new TimeSpan(12, 00, 0),
-                new TimeSpan(15, 0, 0));
+                new TimeSpan(15, 0, 0),  // verify the schedule self orders
+                new TimeSpan(12, 00, 0)
+            );
 
             DateTime now = new DateTime(2015, 5, 23, 7, 30, 0);
             DateTime nextOccurrence = schedule.GetNextOccurrence(now);
@@ -65,11 +66,7 @@ namespace WebJobs.Extensions.Tests.Timers.Scheduling
 
         private void VerifySchedule(List<TimeSpan> scheduleData, DateTime now)
         {
-            DailySchedule schedule = new DailySchedule();
-            foreach (TimeSpan time in scheduleData)
-            {
-                schedule.Add(time);
-            }
+            DailySchedule schedule = new DailySchedule(scheduleData.ToArray());
 
             for (int i = 0; i < 10; i++)
             {
