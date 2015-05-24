@@ -8,7 +8,7 @@ using WebJobs.Extensions.Files;
 using WebJobs.Extensions.Tests.Common;
 using Xunit;
 
-namespace WebJobs.Extensions.Tests.Timers
+namespace WebJobs.Extensions.Tests.Files
 {
     public class FileTriggerEndToEndTests
     {

@@ -91,7 +91,7 @@
     <Compile Include="Common\ExplicitTypeLocator.cs" />
     <Compile Include="Common\TestHelpers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Timers\FileTriggerEndToEndTests.cs" />
+    <Compile Include="Files\FileTriggerEndToEndTests.cs" />
     <Compile Include="Timers\Scheduling\ConstantScheduleTests.cs" />
     <Compile Include="Timers\Scheduling\CronScheduleTests.cs" />
     <Compile Include="Timers\Scheduling\DailyScheduleTests.cs" />
@@ -99,9 +99,7 @@
     <Compile Include="Timers\TimerTriggerEndToEndTests.cs" />
     <Compile Include="Timers\TimerTriggerAttributeTests.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Files\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\..\src\WebJobs.Extensions\WebJobs.Extensions.csproj">
       <Project>{e6f59990-f3a1-469f-a9d8-6d529121d385}</Project>
