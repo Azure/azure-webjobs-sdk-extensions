@@ -91,12 +91,12 @@
     <Compile Include="Files\Config\JobHostConfigurationExtensions.cs" />
     <Compile Include="Files\Converters\FileSystemConverter.cs" />
     <Compile Include="Files\Converters\OutputConverter.cs" />
-    <Compile Include="Files\FilesTriggerParameterDescriptor.cs" />
+    <Compile Include="Files\FileTriggerParameterDescriptor.cs" />
     <Compile Include="Files\FileTriggerAttribute.cs" />
-    <Compile Include="Files\Listener\FilesListener.cs" />
-    <Compile Include="Files\Listener\FilesListenerFactory.cs" />
+    <Compile Include="Files\Listener\FileListener.cs" />
+    <Compile Include="Files\Listener\FileListenerFactory.cs" />
     <Compile Include="Files\Listener\FileTriggerExecutor.cs" />
-    <Compile Include="Files\Triggers\FilesTriggerAttributeBindingProvider.cs" />
+    <Compile Include="Files\Triggers\FileTriggerAttributeBindingProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Timers\Bindings\ITimerTriggerArgumentBindingProvider.cs" />
     <Compile Include="Timers\Bindings\TimerInfoConverterArgumentBindingProvider.cs" />

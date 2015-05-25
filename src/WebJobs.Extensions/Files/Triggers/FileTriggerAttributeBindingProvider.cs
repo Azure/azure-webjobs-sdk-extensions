@@ -14,7 +14,7 @@ using WebJobs.Extensions.Files.Converters;
 
 namespace WebJobs.Extensions.Files
 {
-    internal class FilesTriggerAttributeBindingProvider : ITriggerBindingProvider
+    internal class FileTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
         private static readonly IFileTriggerArgumentBindingProvider _argumentBindingProvider =
             new CompositeArgumentBindingProvider(
@@ -28,7 +28,7 @@ namespace WebJobs.Extensions.Files
         private readonly INameResolver _nameResolver;
         private readonly FilesConfiguration _config;
 
-        public FilesTriggerAttributeBindingProvider(INameResolver nameResolver, FilesConfiguration config)
+        public FileTriggerAttributeBindingProvider(INameResolver nameResolver, FilesConfiguration config)
         {
             if (nameResolver == null)
             {

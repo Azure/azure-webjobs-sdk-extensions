@@ -11,9 +11,9 @@ using Microsoft.Azure.WebJobs.Host.Listeners;
 using WebJobs.Extensions.Files;
 using WebJobs.Extensions.Files.Listener;
 
-namespace Microsoft.Azure.WebJobs.ServiceBus.Listeners
+namespace Microsoft.Azure.WebJobs.Files.Listeners
 {
-    internal sealed class FilesListener : IListener
+    internal sealed class FileListener : IListener
     {
         private readonly FileTriggerAttribute _attribute;
         private readonly FileTriggerExecutor _triggerExecutor;
@@ -23,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.ServiceBus.Listeners
         private FileSystemWatcher _watcher;
         private bool _disposed;
 
-        public FilesListener(FilesConfiguration config, FileTriggerAttribute attribute, FileTriggerExecutor triggerExecutor)
+        public FileListener(FilesConfiguration config, FileTriggerAttribute attribute, FileTriggerExecutor triggerExecutor)
         {
             _config = config;
             _attribute = attribute;

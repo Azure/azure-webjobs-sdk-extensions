@@ -49,7 +49,7 @@ namespace WebJobs.Extensions.Files
             IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
 
             // register our trigger binding provider
-            FilesTriggerAttributeBindingProvider triggerBindingProvider = new FilesTriggerAttributeBindingProvider(nameResolver, _filesConfig);
+            FileTriggerAttributeBindingProvider triggerBindingProvider = new FileTriggerAttributeBindingProvider(nameResolver, _filesConfig);
             extensions.RegisterExtension<ITriggerBindingProvider>(triggerBindingProvider);
         }
     }

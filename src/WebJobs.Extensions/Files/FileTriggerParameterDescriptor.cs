@@ -3,7 +3,7 @@ using Microsoft.Azure.WebJobs.Host.Protocols;
 
 namespace WebJobs.Extensions.Files
 {
-    internal class FilesTriggerParameterDescriptor : TriggerParameterDescriptor
+    internal class FileTriggerParameterDescriptor : TriggerParameterDescriptor
     {
         public string FilePath { get; set; }
 

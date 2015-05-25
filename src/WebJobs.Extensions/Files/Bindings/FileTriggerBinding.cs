@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Fiels.Listeners;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 using Microsoft.Azure.WebJobs.Host.Converters;
@@ -9,7 +10,6 @@ using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
-using Microsoft.Azure.WebJobs.ServiceBus.Listeners;
 
 namespace WebJobs.Extensions.Files.Bindings
 {
@@ -68,17 +68,17 @@ namespace WebJobs.Extensions.Files.Bindings
 
         public IListenerFactory CreateListenerFactory(FunctionDescriptor descriptor, ITriggeredFunctionExecutor<FileSystemEventArgs> executor)
         {
-            return new FilesListenerFactory(_config, _attribute, executor);
+            return new FileListenerFactory(_config, _attribute, executor);
         }
 
         public IListenerFactory CreateListenerFactory(FunctionDescriptor descriptor, ITriggeredFunctionExecutor executor)
         {
-            return new FilesListenerFactory(_config, _attribute, (ITriggeredFunctionExecutor<FileSystemEventArgs>)executor);
+            return new FileListenerFactory(_config, _attribute, (ITriggeredFunctionExecutor<FileSystemEventArgs>)executor);
         }
 
         public ParameterDescriptor ToParameterDescriptor()
         {
-            return new FilesTriggerParameterDescriptor
+            return new FileTriggerParameterDescriptor
             {
                 Name = _parameterName,
                 FilePath = _attribute.Path

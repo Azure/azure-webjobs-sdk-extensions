@@ -3,20 +3,21 @@
 
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Files.Listeners;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using WebJobs.Extensions.Files;
 using WebJobs.Extensions.Files.Listener;
 
-namespace Microsoft.Azure.WebJobs.ServiceBus.Listeners
+namespace Microsoft.Azure.WebJobs.Fiels.Listeners
 {
-    internal class FilesListenerFactory : IListenerFactory
+    internal class FileListenerFactory : IListenerFactory
     {
         private readonly FileTriggerAttribute _attribute;
         private readonly ITriggeredFunctionExecutor<FileSystemEventArgs> _executor;
         private readonly FilesConfiguration _config;
 
-        public FilesListenerFactory(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor<FileSystemEventArgs> executor)
+        public FileListenerFactory(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor<FileSystemEventArgs> executor)
         {
             _config = config;
             _attribute = attribute;
@@ -26,7 +27,7 @@ namespace Microsoft.Azure.WebJobs.ServiceBus.Listeners
         public async Task<IListener> CreateAsync(ListenerFactoryContext context)
         {
             FileTriggerExecutor triggerExecutor = new FileTriggerExecutor(_executor);
-            return new FilesListener(_config, _attribute, triggerExecutor);
+            return new FileListener(_config, _attribute, triggerExecutor);
         }
     }
 }
