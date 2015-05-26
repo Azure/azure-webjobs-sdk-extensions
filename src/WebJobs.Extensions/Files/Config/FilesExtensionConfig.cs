@@ -44,12 +44,16 @@ namespace WebJobs.Extensions.Files
         /// <inheritdoc />
         public void Initialize(ExtensionConfigContext context)
         {
+            if (context == null)
+            {
+                throw new ArgumentNullException("context");
+            }
+
             // get the services we need to construct our binding providers
-            INameResolver nameResolver = context.Config.GetService<INameResolver>();
             IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
 
             // register our trigger binding provider
-            FileTriggerAttributeBindingProvider triggerBindingProvider = new FileTriggerAttributeBindingProvider(nameResolver, _filesConfig);
+            FileTriggerAttributeBindingProvider triggerBindingProvider = new FileTriggerAttributeBindingProvider(_filesConfig);
             extensions.RegisterExtension<ITriggerBindingProvider>(triggerBindingProvider);
         }
     }

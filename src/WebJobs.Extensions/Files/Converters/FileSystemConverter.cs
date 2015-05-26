@@ -9,6 +9,11 @@ namespace WebJobs.Extensions.Files.Converters
     {
         public Task<TOutput> ConvertAsync(FileSystemEventArgs input, CancellationToken cancellationToken)
         {
+            if (input == null)
+            {
+                throw new System.ArgumentNullException("input");
+            }
+
             object result = null;
 
             if (typeof(TOutput) == typeof(FileStream))

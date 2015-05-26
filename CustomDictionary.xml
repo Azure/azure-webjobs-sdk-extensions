@@ -1,0 +1,57 @@
+<!-- See http://msdn.microsoft.com/en-us/library/bb514188.aspx for details -->
+<Dictionary>
+  <Words>
+    <Unrecognized>
+    </Unrecognized>
+    <Recognized>
+      <Word>e</Word>  <!-- to get eTag variants working -->
+      <Word>autofac</Word>
+      <Word>api</Word>
+      <Word>apis</Word>
+      <Word>auth</Word>
+      <Word>bson</Word>
+      <Word>cors</Word>
+      <Word>ctor</Word>
+      <Word>deserializes</Word>
+      <Word>dto</Word>
+      <Word>edm</Word>
+      <Word>guid</Word>
+      <Word>hashset</Word>
+      <Word>infos</Word>
+      <Word>jwt</Word>
+      <Word>loc</Word>
+      <Word>mpns</Word>
+      <Word>mvc</Word>
+      <Word>nullables</Word>
+      <Word>nuget</Word>
+      <Word>queryables</Word>
+      <Word>realtime</Word>
+      <Word>rel</Word>
+      <Word>rev</Word>
+      <Word>rfc</Word>
+      <Word>src</Word>
+	  <Word>Cron</Word>
+	  <Word>FileTriggerAttribute</Word>
+	  <Word>TimerTriggerAttribute</Word>
+      <Word>FileSystemEventArgs</Word>
+      <Word>TimerInfo</Word>
+    </Recognized>
+    <Deprecated/>
+    <Compound>
+      <Term CompoundAlternate="CancellationToken">cancellationToken</Term>
+      <Term CompoundAlternate="TableName">tableName</Term>
+      <Term CompoundAlternate="ETag">etag</Term>
+      <Term CompoundAlternate="ETag">eTag</Term>
+    </Compound>
+    <DiscreteExceptions>
+	<Term>WebJobs</Term>
+	<Term>TimerInfo</Term>
+	<Term>TimerTriggerAttribute</Term>
+    </DiscreteExceptions>
+  </Words>
+  <Acronyms>
+    <CasingExceptions>
+	<Acronym>ETag</Acronym>
+    </CasingExceptions>
+  </Acronyms>
+</Dictionary>

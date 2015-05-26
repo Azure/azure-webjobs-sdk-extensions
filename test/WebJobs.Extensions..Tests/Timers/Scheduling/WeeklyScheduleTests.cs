@@ -18,8 +18,6 @@ namespace WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void GetNextOccurrence_SingleDaySchedule_MultipleScheduleIterations()
         {
-            WeeklySchedule schedule = new WeeklySchedule();
-
             // simple MWF schedule
             Tuple<DayOfWeek, TimeSpan>[] scheduleData = new Tuple<DayOfWeek, TimeSpan>[]
             {
@@ -34,8 +32,6 @@ namespace WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void GetNextOccurrence_ThreeDaySchedule_MultipleScheduleIterations()
         {
-            WeeklySchedule schedule = new WeeklySchedule();
-
             // simple MWF schedule
             Tuple<DayOfWeek, TimeSpan>[] scheduleData = new Tuple<DayOfWeek, TimeSpan>[]
             {

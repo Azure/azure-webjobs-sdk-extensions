@@ -28,7 +28,9 @@ namespace WebJobs.Extensions.Timers
 
             // sorted insertion
             int i;
-            for (i = 0; i < times.Count && time > times[i]; i++) ;
+            for (i = 0; i < times.Count && time > times[i]; i++)
+            {
+            }
 
             times.Insert(i, time);
         }
@@ -62,7 +64,9 @@ namespace WebJobs.Extensions.Timers
             // today, advance to the next day with a schedule
             if (daySchedule == null || nextTimeIndex == -1)
             {
-                while ((daySchedule = schedule[++day % 7]) == null);
+                while ((daySchedule = schedule[++day % 7]) == null)
+                {
+                }
 
                 // select the first time for the schedule
                 nextTime = daySchedule[0];

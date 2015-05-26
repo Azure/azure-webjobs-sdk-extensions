@@ -5,7 +5,6 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Converters;
 using Microsoft.Azure.WebJobs.Host.Triggers;
@@ -16,35 +15,33 @@ namespace WebJobs.Extensions.Files
 {
     internal class FileTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
-        private static readonly IFileTriggerArgumentBindingProvider _argumentBindingProvider =
+        private static readonly IFileTriggerArgumentBindingProvider ArgumentBindingProvider =
             new CompositeArgumentBindingProvider(
                 new ConverterArgumentBindingProvider<FileSystemEventArgs>(new AsyncConverter<FileSystemEventArgs, FileSystemEventArgs>(new IdentityConverter<FileSystemEventArgs>())),
                 new ConverterArgumentBindingProvider<FileStream>(new FileSystemEventConverter<FileStream>()),
                 new ConverterArgumentBindingProvider<FileInfo>(new FileSystemEventConverter<FileInfo>()),
                 new ConverterArgumentBindingProvider<byte[]>(new FileSystemEventConverter<byte[]>()),
-                new ConverterArgumentBindingProvider<string>(new FileSystemEventConverter<string>())
-            );
+                new ConverterArgumentBindingProvider<string>(new FileSystemEventConverter<string>()));
 
-        private readonly INameResolver _nameResolver;
         private readonly FilesConfiguration _config;
 
-        public FileTriggerAttributeBindingProvider(INameResolver nameResolver, FilesConfiguration config)
+        public FileTriggerAttributeBindingProvider(FilesConfiguration config)
         {
-            if (nameResolver == null)
-            {
-                throw new ArgumentNullException("nameResolver");
-            }
             if (config == null)
             {
                 throw new ArgumentNullException("config");
             }
 
-            _nameResolver = nameResolver;
             _config = config;
         }
 
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
         {
+            if (context == null)
+            {
+                throw new ArgumentNullException("context");
+            }
+
             ParameterInfo parameter = context.Parameter;
             FileTriggerAttribute fileTriggerAttribute = parameter.GetCustomAttribute<FileTriggerAttribute>(inherit: false);
 
@@ -55,10 +52,10 @@ namespace WebJobs.Extensions.Files
 
             // TODO: remove dependency on NameResolver?
 
-            IArgumentBinding<FileSystemEventArgs> argumentBinding = _argumentBindingProvider.TryCreate(parameter);
+            IArgumentBinding<FileSystemEventArgs> argumentBinding = ArgumentBindingProvider.TryCreate(parameter);
             if (argumentBinding == null)
             {
-                throw new InvalidOperationException(string.Format("Can't bind FileTrigger to type '{0}'.", parameter.ParameterType));
+                throw new InvalidOperationException(string.Format("Can't bind FileTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
             ITriggerBinding binding = new FileTriggerBinding(parameter.Name, parameter.ParameterType, argumentBinding, _config, fileTriggerAttribute);

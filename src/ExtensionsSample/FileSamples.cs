@@ -5,7 +5,7 @@ using WebJobs.Extensions.Files;
 
 namespace WebJobsSandbox
 {
-    public class FileSamples
+    public static class FileSamples
     {
         public static void ImportFile(
             [FileTrigger(@"data\import\{name}", autoDelete: true, filter: "*.dat")] FileStream file,

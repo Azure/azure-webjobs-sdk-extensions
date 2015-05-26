@@ -3,12 +3,12 @@ using WebJobs.Extensions.Timers;
 
 namespace WebJobsSandbox
 {
-    public class TimerSamples
+    public static class TimerSamples
     {
         /// <summary>
         /// Example job triggered by a crontab schedule.
         /// </summary>
-        public void CronJob([TimerTrigger("*/10 * * * * *")] TimerInfo timer)
+        public static void CronJob([TimerTrigger("*/10 * * * * *")] TimerInfo timer)
         {
             Console.WriteLine("Scheduled job fired!");
         }
@@ -16,7 +16,7 @@ namespace WebJobsSandbox
         /// <summary>
         /// Example job triggered by a timespan schedule.
         /// </summary>
-        public void TimerJob([TimerTrigger("00:00:10")] TimerInfo timer)
+        public static void TimerJob([TimerTrigger("00:00:10")] TimerInfo timer)
         {
             Console.WriteLine("Scheduled job fired!");
         }
@@ -24,7 +24,7 @@ namespace WebJobsSandbox
         /// <summary>
         /// Example job triggered by a custom schedule.
         /// </summary>
-        public void WeeklyTimerJob([TimerTrigger(typeof(MyWeeklySchedule))] TimerInfo timer)
+        public static void WeeklyTimerJob([TimerTrigger(typeof(MyWeeklySchedule))] TimerInfo timer)
         {
             Console.WriteLine("Scheduled job fired!");
         }

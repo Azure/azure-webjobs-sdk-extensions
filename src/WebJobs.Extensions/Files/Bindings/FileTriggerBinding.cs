@@ -116,7 +116,7 @@ namespace WebJobs.Extensions.Files.Bindings
             bindingData.Add("FileTrigger", fileEvent.FullPath);
 
             string pathRoot = Path.GetDirectoryName(_attribute.Path);
-            int idx = fileEvent.FullPath.IndexOf(pathRoot);
+            int idx = fileEvent.FullPath.IndexOf(pathRoot, StringComparison.OrdinalIgnoreCase);
             string pathToMatch = fileEvent.FullPath.Substring(idx);
             IReadOnlyDictionary<string, object> bindingDataFromPath = _bindingTemplateSource.CreateBindingData(pathToMatch);
 

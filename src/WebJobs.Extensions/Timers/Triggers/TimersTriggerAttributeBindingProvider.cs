@@ -10,11 +10,16 @@ namespace WebJobs.Extensions.Timers.Triggers
 {
     internal class TimersTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
-        private static readonly ITimerTriggerArgumentBindingProvider _argumentBindingProvider =
+        private static readonly ITimerTriggerArgumentBindingProvider ArgumentBindingProvider =
             new TimerInfoConverterArgumentBindingProvider<TimerInfo>(new AsyncConverter<TimerInfo, TimerInfo>(new IdentityConverter<TimerInfo>()));
 
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
         {
+            if (context == null)
+            {
+                throw new ArgumentNullException("context");
+            }
+
             ParameterInfo parameter = context.Parameter;
             TimerTriggerAttribute timerTriggerAttribute = parameter.GetCustomAttribute<TimerTriggerAttribute>(inherit: false);
 
@@ -23,10 +28,10 @@ namespace WebJobs.Extensions.Timers.Triggers
                 return Task.FromResult<ITriggerBinding>(null);
             }
 
-            IArgumentBinding<TimerInfo> argumentBinding = _argumentBindingProvider.TryCreate(parameter);
+            IArgumentBinding<TimerInfo> argumentBinding = ArgumentBindingProvider.TryCreate(parameter);
             if (argumentBinding == null)
             {
-                throw new InvalidOperationException(string.Format("Can't bind TimerTrigger to type '{0}'.", parameter.ParameterType));
+                throw new InvalidOperationException(string.Format("Can't bind TimerTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
             ITriggerBinding binding = new TimerTriggerBinding(parameter.Name, parameter.ParameterType, argumentBinding, timerTriggerAttribute);

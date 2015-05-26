@@ -24,10 +24,11 @@ namespace Microsoft.Azure.WebJobs.Fiels.Listeners
             _executor = executor;
         }
 
-        public async Task<IListener> CreateAsync(ListenerFactoryContext context)
+        public Task<IListener> CreateAsync(ListenerFactoryContext context)
         {
             FileTriggerExecutor triggerExecutor = new FileTriggerExecutor(_executor);
-            return new FileListener(_config, _attribute, triggerExecutor);
+            FileListener listener = new FileListener(_config, _attribute, triggerExecutor);
+            return Task.FromResult<IListener>(listener);
         }
     }
 }

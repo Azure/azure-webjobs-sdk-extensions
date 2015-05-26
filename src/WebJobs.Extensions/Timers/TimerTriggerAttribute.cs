@@ -4,7 +4,7 @@ using WebJobs.Extensions.Timers;
 namespace WebJobs.Extensions.Timers
 {
     [AttributeUsage(AttributeTargets.Parameter)]
-    public class TimerTriggerAttribute : Attribute
+    public sealed class TimerTriggerAttribute : Attribute
     {
         /// <summary>
         /// Constructs a new instance based on the schedule expression passed in./>

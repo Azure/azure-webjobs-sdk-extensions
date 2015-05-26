@@ -10,6 +10,7 @@ using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using WebJobs.Extensions.Files;
+using WebJobs.Extensions.Timers.Converters;
 
 namespace WebJobs.Extensions.Timers.Bindings
 {
@@ -103,30 +104,6 @@ namespace WebJobs.Extensions.Timers.Bindings
         {
             return new CompositeObjectToTypeConverter<TimerInfo>(
                     new TimerInfoOutputConverter<TimerInfo>(new IdentityConverter<TimerInfo>()));
-        }
-    }
-
-    internal class TimerInfoOutputConverter<TInput> : IObjectToTypeConverter<TimerInfo> where TInput : class
-    {
-        private readonly IConverter<TInput, TimerInfo> _innerConverter;
-
-        public TimerInfoOutputConverter(IConverter<TInput, TimerInfo> innerConverter)
-        {
-            _innerConverter = innerConverter;
-        }
-
-        public bool TryConvert(object input, out TimerInfo output)
-        {
-            TInput typedInput = input as TInput;
-
-            if (typedInput == null)
-            {
-                output = null;
-                return false;
-            }
-
-            output = _innerConverter.Convert(typedInput);
-            return true;
         }
     }
 }

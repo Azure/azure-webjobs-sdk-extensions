@@ -1,5 +1,4 @@
-﻿
-namespace WebJobs.Extensions.Files
+﻿namespace WebJobs.Extensions.Files
 {
     public class FilesConfiguration
     {

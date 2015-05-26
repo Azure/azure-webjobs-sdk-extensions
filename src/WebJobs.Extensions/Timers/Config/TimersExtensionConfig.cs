@@ -15,6 +15,11 @@ namespace WebJobs.Extensions.Timers.Config
         /// <inheritdoc />
         public void Initialize(ExtensionConfigContext context)
         {
+            if (context == null)
+            {
+                throw new ArgumentNullException("context");
+            }
+
             IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
 
             // register our trigger binding provider

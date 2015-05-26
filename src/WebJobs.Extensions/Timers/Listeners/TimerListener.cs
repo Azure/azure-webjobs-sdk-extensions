@@ -92,7 +92,7 @@ namespace WebJobs.Extensions.Timers.Listeners
             }
         }
 
-        void OnTimer(object sender, ElapsedEventArgs e)
+        private void OnTimer(object sender, ElapsedEventArgs e)
         {
             HandleTimerEvent().Wait();
         }
