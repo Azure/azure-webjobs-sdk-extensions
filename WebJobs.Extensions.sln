@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions", "src\W
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExtensionsSample", "src\ExtensionsSample\ExtensionsSample.csproj", "{1CFEAA1A-F726-482E-ACD1-96D21DB10837}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions..Tests", "test\WebJobs.Extensions..Tests\WebJobs.Extensions..Tests.csproj", "{1729561F-D598-4208-9154-3A5497523D54}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.Tests", "test\WebJobs.Extensions.Tests\WebJobs.Extensions.Tests.csproj", "{1729561F-D598-4208-9154-3A5497523D54}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

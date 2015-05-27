@@ -14,11 +14,12 @@ namespace WebJobs.Extensions.Tests.Files
     {
         private readonly string testFileDir;
         private readonly string rootPath;
+        private readonly string attributeSubPath = @"webjobs_extensionstests\import";
 
         public FileTriggerEndToEndTests()
         {
             rootPath = Path.GetTempPath();
-            testFileDir = Path.Combine(rootPath, @"webjobs_extensionstests\import");
+            testFileDir = Path.Combine(rootPath, attributeSubPath);
             Directory.CreateDirectory(testFileDir);
             DeleteTestFiles(testFileDir);
 
@@ -41,7 +42,7 @@ namespace WebJobs.Extensions.Tests.Files
 
             Assert.Equal(1, FileTriggerTestJobs.Processed.Count);
             Assert.Equal(Path.GetFileName(testFilePath), FileTriggerTestJobs.Processed.Single());
-            Assert.False(File.Exists(testFilePath));
+            Assert.True(File.Exists(testFilePath));
 
             // write a non .dat file - don't expect it to trigger the job
             string ignoreFilePath = WriteTestFile("txt");
@@ -125,7 +126,7 @@ namespace WebJobs.Extensions.Tests.Files
         public static List<string> Processed = new List<string>();
 
         public static void ImportTestJob(
-            [FileTrigger(@"webjobs_extensionstests\import\{name}", autoDelete: true, filter: "*.dat")] FileStream file,
+            [FileTrigger(@"webjobs_extensionstests\import\{name}", filter: "*.dat")] FileStream file,
             string name)
         {
             Processed.Add(name);
