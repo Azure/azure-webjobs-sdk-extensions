@@ -4,11 +4,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Moq;
-using WebJobs.Extensions.Files;
-using WebJobs.Extensions.Files.Listener;
+using Microsoft.Azure.WebJobs.Extensions.Files;
+using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
 using Xunit;
 
-namespace WebJobs.Extensions.Tests.Files.Listener
+namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
 {
     public class FileProcessorTests
     {

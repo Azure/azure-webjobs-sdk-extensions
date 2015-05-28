@@ -1,5 +1,5 @@
 ﻿using System;
-using WebJobs.Extensions.Timers;
+using Microsoft.Azure.WebJobs.Extensions.Timers;
 
 namespace WebJobsSandbox
 {

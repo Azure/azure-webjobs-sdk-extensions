@@ -4,11 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
-using WebJobs.Extensions.Files;
-using WebJobs.Extensions.Tests.Common;
+using Microsoft.Azure.WebJobs.Extensions.Files;
+using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Xunit;
 
-namespace WebJobs.Extensions.Tests.Files
+namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
 {
     public class FileTriggerEndToEndTests
     {

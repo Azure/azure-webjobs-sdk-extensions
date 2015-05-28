@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace WebJobs.Extensions.Timers
+namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
     /// <summary>
     /// A simple weekly schedule. The schedule repeats each week, and each week,

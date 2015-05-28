@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 
-namespace WebJobs.Extensions.Timers.Bindings
+namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 {
     internal interface ITimerTriggerArgumentBindingProvider
     {

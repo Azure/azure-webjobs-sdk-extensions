@@ -5,10 +5,10 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Files;
+using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
-using WebJobs.Extensions.Files;
-using WebJobs.Extensions.Files.Listener;
 
 namespace Microsoft.Azure.WebJobs.Files.Listeners
 {

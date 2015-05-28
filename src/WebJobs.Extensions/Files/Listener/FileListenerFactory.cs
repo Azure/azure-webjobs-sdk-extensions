@@ -3,13 +3,11 @@
 
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs.Files.Listeners;
+using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
-using WebJobs.Extensions.Files;
-using WebJobs.Extensions.Files.Listener;
 
-namespace Microsoft.Azure.WebJobs.Fiels.Listeners
+namespace Microsoft.Azure.WebJobs.Files.Listeners
 {
     internal class FileListenerFactory : IListenerFactory
     {

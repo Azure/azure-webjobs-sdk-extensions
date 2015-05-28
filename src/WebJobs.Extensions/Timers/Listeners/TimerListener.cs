@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 
-namespace WebJobs.Extensions.Timers.Listeners
+namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 {
     internal sealed class TimerListener : IListener
     {
@@ -32,10 +32,7 @@ namespace WebJobs.Extensions.Timers.Listeners
                 throw new InvalidOperationException("The listener has already been started.");
             }
 
-            _timerInfo = new TimerInfo
-            {
-                Schedule = _attribute.Schedule
-            };
+            _timerInfo = new TimerInfo(_attribute.Schedule);
 
             _timer = new System.Timers.Timer
             {
@@ -101,13 +98,8 @@ namespace WebJobs.Extensions.Timers.Listeners
         {
             CancellationToken token = _cancellationTokenSource.Token;
 
-            // TODO: need to construct new instances?
             DateTime lastOccurrence = DateTime.Now;
-            TimerInfo timerInfo = new TimerInfo
-            {
-                Schedule = _attribute.Schedule
-            };
-
+            TimerInfo timerInfo = new TimerInfo(_attribute.Schedule);
             if (!await _triggerExecutor.ExecuteAsync(timerInfo, token))
             {
                 token.ThrowIfCancellationRequested();

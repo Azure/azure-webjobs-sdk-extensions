@@ -1,7 +1,7 @@
 ﻿using System;
 using NCrontab;
 
-namespace WebJobs.Extensions.Timers
+namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
     /// <summary>
     /// A scheduling strategy based on crontab expressions. <a href="http://en.wikipedia.org/wiki/Cron#CRON_expression"/>
@@ -11,22 +11,31 @@ namespace WebJobs.Extensions.Timers
     {
         private CrontabSchedule cronSchedule;
 
+        /// <summary>
+        /// Constructs a new instance based on the specified crontab expression
+        /// </summary>
+        /// <param name="cronTabExpression">The crontab expression defining the schedule</param>
         public CronSchedule(string cronTabExpression)
             : this(CrontabSchedule.Parse(cronTabExpression))
         {
         }
 
+        /// <summary>
+        /// Constructs a new instance based on the specified crontab schedule
+        /// </summary>
+        /// <param name="schedule">The crontab schedule to use</param>
         public CronSchedule(CrontabSchedule schedule)
         {
             cronSchedule = schedule;
         }
 
+        /// <inheritdoc/>
         public override DateTime GetNextOccurrence(DateTime now)
         {
             return cronSchedule.GetNextOccurrence(now);
         }
 
-        public static bool TryCreate(string cronExpression, out CronSchedule cronSchedule)
+        internal static bool TryCreate(string cronExpression, out CronSchedule cronSchedule)
         {
             cronSchedule = null;
             CrontabSchedule.ParseOptions options = new CrontabSchedule.ParseOptions()

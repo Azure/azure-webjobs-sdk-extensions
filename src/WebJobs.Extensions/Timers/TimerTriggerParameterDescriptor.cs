@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 
-namespace WebJobs.Extensions.Timers
+namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
     internal class TimerTriggerParameterDescriptor : TriggerParameterDescriptor
     {

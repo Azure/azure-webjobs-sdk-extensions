@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Timers.Listeners;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
-using WebJobs.Extensions.Files;
-using WebJobs.Extensions.Timers.Listeners;
 
-namespace WebJobs.Extensions.Timers
+namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
     internal class TimerListenerFactory : IListenerFactory
     {

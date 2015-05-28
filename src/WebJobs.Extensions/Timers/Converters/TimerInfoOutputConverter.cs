@@ -1,6 +1,6 @@
 ﻿using Microsoft.Azure.WebJobs.Host.Converters;
 
-namespace WebJobs.Extensions.Timers.Converters
+namespace Microsoft.Azure.WebJobs.Extensions.Timers.Converters
 {
     internal class TimerInfoOutputConverter<TInput> : IObjectToTypeConverter<TimerInfo> where TInput : class
     {

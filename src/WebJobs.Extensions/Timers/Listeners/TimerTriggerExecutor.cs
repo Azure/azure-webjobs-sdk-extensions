@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Executors;
 
-namespace WebJobs.Extensions.Timers.Listeners
+namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 {
     internal class TimerTriggerExecutor
     {

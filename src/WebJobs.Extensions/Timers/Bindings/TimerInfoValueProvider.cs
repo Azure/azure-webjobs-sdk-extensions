@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 
-namespace WebJobs.Extensions.Timers.Bindings
+namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 {
     internal class TimerInfoValueProvider : IValueProvider
     {

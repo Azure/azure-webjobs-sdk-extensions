@@ -2,13 +2,19 @@
 using System.IO;
 using Microsoft.Azure.WebJobs.Host.Executors;
 
-namespace WebJobs.Extensions.Files.Listener
+namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
 {
     /// <summary>
     /// Context input for <see cref="IFileProcessorFactory"/>
     /// </summary>
     public class FileProcessorFactoryContext
     {
+        /// <summary>
+        /// Constructs a new instance
+        /// </summary>
+        /// <param name="config">The <see cref="FilesConfiguration"/></param>
+        /// <param name="attribute">The <see cref="FileTriggerAttribute"/></param>
+        /// <param name="executor">The function executor.</param>
         public FileProcessorFactoryContext(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor<FileSystemEventArgs> executor)
         {
             if (config == null)
@@ -29,8 +35,19 @@ namespace WebJobs.Extensions.Files.Listener
             Executor = executor;
         }
 
+        /// <summary>
+        /// The <see cref="FilesConfiguration"/>
+        /// </summary>
         public FilesConfiguration Config { get; private set; }
+
+        /// <summary>
+        /// The <see cref="FileTriggerAttribute"/>
+        /// </summary>
         public FileTriggerAttribute Attribute { get; private set; }
+
+        /// <summary>
+        /// Gets the function executor
+        /// </summary>
         public ITriggeredFunctionExecutor<FileSystemEventArgs> Executor { get; private set; }
     }
 }

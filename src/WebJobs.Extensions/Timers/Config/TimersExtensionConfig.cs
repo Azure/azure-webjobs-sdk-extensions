@@ -1,11 +1,10 @@
 ﻿using System;
-using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Timers.Triggers;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Azure.WebJobs.Host.Triggers;
-using WebJobs.Extensions.Timers.Triggers;
 
-namespace WebJobs.Extensions.Timers.Config
+namespace Microsoft.Azure.WebJobs.Extensions.Timers.Config
 {
     /// <summary>
     /// Extension configuration provider used to register File System triggers and binders

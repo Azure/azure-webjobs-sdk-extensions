@@ -1,16 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Timers.Config;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Config;
-using WebJobs.Extensions.Timers.Config;
 
-namespace WebJobs.Extensions.Timers
+namespace Microsoft.Azure.WebJobs
 {
-    public static class JobHostConfigurationExtensions
+    /// <summary>
+    /// Extension class used to register timer extensions.
+    /// </summary>
+    public static class TimerJobHostConfigurationExtensions
     {
         /// <summary>
         /// Enables use of the Timer extensions

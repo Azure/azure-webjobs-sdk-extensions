@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 
-namespace WebJobs.Extensions.Files
+namespace Microsoft.Azure.WebJobs.Extensions.Files
 {
     internal class FileTriggerParameterDescriptor : TriggerParameterDescriptor
     {

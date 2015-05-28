@@ -4,9 +4,8 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Converters;
-using WebJobs.Extensions.Timers.Triggers;
 
-namespace WebJobs.Extensions.Timers.Bindings
+namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 {
     internal class TimerInfoConverterArgumentBindingProvider<T> : ITimerTriggerArgumentBindingProvider
     {

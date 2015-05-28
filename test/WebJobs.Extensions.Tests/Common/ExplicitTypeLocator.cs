@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Azure.WebJobs;
 
-namespace WebJobs.Extensions.Tests.Common
+namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
 {
     public class ExplicitTypeLocator : ITypeLocator
     {

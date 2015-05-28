@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
-using WebJobs.Extensions.Tests.Common;
-using WebJobs.Extensions.Timers;
+using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
+using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Xunit;
 
-namespace WebJobs.Extensions.Tests.Timers
+namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 {
     public class TimerTriggerEndToEndTests
     {

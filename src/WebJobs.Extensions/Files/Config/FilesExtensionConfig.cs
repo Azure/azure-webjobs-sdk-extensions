@@ -6,7 +6,7 @@ using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 
-namespace WebJobs.Extensions.Files
+namespace Microsoft.Azure.WebJobs.Extensions.Files
 {
     /// <summary>
     /// Extension configuration provider used to register File System triggers and binders

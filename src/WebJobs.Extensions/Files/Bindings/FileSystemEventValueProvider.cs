@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 
-namespace WebJobs.Extensions.Files.Bindings
+namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
     internal class FileSystemEventValueProvider : IValueProvider
     {

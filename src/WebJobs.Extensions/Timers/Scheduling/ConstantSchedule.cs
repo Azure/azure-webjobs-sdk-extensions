@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace WebJobs.Extensions.Timers
+namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
     /// <summary>
     /// A simple constant interval scheduling strategy.

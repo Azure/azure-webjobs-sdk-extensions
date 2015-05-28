@@ -9,8 +9,8 @@
     <ProjectGuid>{1729561F-D598-4208-9154-3A5497523D54}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WebJobs.Extensions.Tests</RootNamespace>
-    <AssemblyName>WebJobs.Extensions.Tests</AssemblyName>
+    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Tests</RootNamespace>
+    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <NuGetPackageImportStamp>f3c0bf0b</NuGetPackageImportStamp>

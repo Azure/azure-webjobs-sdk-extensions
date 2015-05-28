@@ -5,13 +5,13 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Files.Bindings;
+using Microsoft.Azure.WebJobs.Extensions.Files.Converters;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Converters;
 using Microsoft.Azure.WebJobs.Host.Triggers;
-using WebJobs.Extensions.Files.Bindings;
-using WebJobs.Extensions.Files.Converters;
 
-namespace WebJobs.Extensions.Files
+namespace Microsoft.Azure.WebJobs.Extensions.Files
 {
     internal class FileTriggerAttributeBindingProvider : ITriggerBindingProvider
     {

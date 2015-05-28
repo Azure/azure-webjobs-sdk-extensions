@@ -1,14 +1,17 @@
 ﻿using System;
 using System.IO;
-using WebJobs.Extensions.Files.Listener;
+using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
 
-namespace WebJobs.Extensions.Files
+namespace Microsoft.Azure.WebJobs.Extensions.Files
 {
     /// <summary>
     /// Configuration object for <see cref="FileTriggerAttribute"/> decorated job functions.
     /// </summary>
     public class FilesConfiguration
     {
+        /// <summary>
+        /// Constructs a new instance
+        /// </summary>
         public FilesConfiguration()
         {
             // default to the D:\HOME\DATA directory when running in Azure WebApps

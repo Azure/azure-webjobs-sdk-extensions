@@ -1,9 +1,9 @@
 ﻿using System;
 using NCrontab;
-using WebJobs.Extensions.Timers;
+using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Xunit;
 
-namespace WebJobs.Extensions.Tests.Timers.Scheduling
+namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
 {
     public class CronScheduleTests
     {

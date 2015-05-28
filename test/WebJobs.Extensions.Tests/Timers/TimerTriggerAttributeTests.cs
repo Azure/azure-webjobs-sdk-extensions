@@ -1,8 +1,8 @@
 ﻿using System;
-using WebJobs.Extensions.Timers;
+using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Xunit;
 
-namespace WebJobs.Extensions.Tests.Timers
+namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 {
     public class TimerTriggerAttributeTests
     {

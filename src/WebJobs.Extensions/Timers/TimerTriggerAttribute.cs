@@ -1,8 +1,12 @@
 ﻿using System;
-using WebJobs.Extensions.Timers;
+using Microsoft.Azure.WebJobs.Extensions.Timers;
 
-namespace WebJobs.Extensions.Timers
+namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
+    /// <summary>
+    /// Trigger attribute used to declare that a job function should be invoked periodically
+    /// based on a timer schedule.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Parameter)]
     public sealed class TimerTriggerAttribute : Attribute
     {

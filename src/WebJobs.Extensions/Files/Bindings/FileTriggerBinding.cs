@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs.Fiels.Listeners;
+using Microsoft.Azure.WebJobs.Files.Listeners;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 using Microsoft.Azure.WebJobs.Host.Converters;
@@ -11,7 +11,7 @@ using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 
-namespace WebJobs.Extensions.Files.Bindings
+namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
     internal class FileTriggerBinding : ITriggerBinding<FileSystemEventArgs>
     {

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Converters;
 
-namespace WebJobs.Extensions.Files.Bindings
+namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
     internal class ConverterArgumentBindingProvider<T> : IFileTriggerArgumentBindingProvider
     {

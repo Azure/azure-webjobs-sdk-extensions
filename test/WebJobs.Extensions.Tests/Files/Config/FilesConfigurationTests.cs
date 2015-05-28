@@ -1,9 +1,9 @@
 ﻿using System;
-using WebJobs.Extensions.Files;
-using WebJobs.Extensions.Files.Listener;
+using Microsoft.Azure.WebJobs.Extensions.Files;
+using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
 using Xunit;
 
-namespace WebJobs.Extensions.Tests.Files.Config
+namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Config
 {
     public class FilesConfigurationTests
     {

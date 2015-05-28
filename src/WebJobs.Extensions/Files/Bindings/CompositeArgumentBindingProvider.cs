@@ -3,7 +3,7 @@ using System.IO;
 using System.Reflection;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 
-namespace WebJobs.Extensions.Files.Bindings
+namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
     internal class CompositeArgumentBindingProvider : IFileTriggerArgumentBindingProvider
     {

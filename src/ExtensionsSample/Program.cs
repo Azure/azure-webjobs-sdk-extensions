@@ -1,6 +1,5 @@
 ﻿using Microsoft.Azure.WebJobs;
-using WebJobs.Extensions.Files;
-using WebJobs.Extensions.Timers;
+using Microsoft.Azure.WebJobs.Extensions.Files;
 
 namespace ExtensionsSample
 {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace WebJobs.Extensions.Timers
+namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
     /// <summary>
     /// A timer scheduling strategy used with <see cref="TimerTriggerAttribute"/> for schedule

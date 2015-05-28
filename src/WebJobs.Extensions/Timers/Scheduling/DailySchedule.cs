@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace WebJobs.Extensions.Timers
+namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
     /// <summary>
     /// A simple daily schedule. The schedule repeats each day, and each day it
@@ -12,6 +12,9 @@ namespace WebJobs.Extensions.Timers
     {
         private List<TimeSpan> schedule = new List<TimeSpan>();
 
+        /// <summary>
+        /// Constructs a new instance.
+        /// </summary>
         public DailySchedule()
         {
         }

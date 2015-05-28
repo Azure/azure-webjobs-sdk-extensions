@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Converters;
 
-namespace WebJobs.Extensions.Files.Converters
+namespace Microsoft.Azure.WebJobs.Extensions.Files.Converters
 {
     internal class FileSystemEventConverter<TOutput> : IAsyncConverter<FileSystemEventArgs, TOutput>
     {

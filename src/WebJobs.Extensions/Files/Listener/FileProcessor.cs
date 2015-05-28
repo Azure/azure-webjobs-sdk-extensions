@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Executors;
 
-namespace WebJobs.Extensions.Files.Listener
+namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
 {
     /// <summary>
     /// Default file processor.
@@ -20,6 +20,11 @@ namespace WebJobs.Extensions.Files.Listener
         private string _filePath;
         private string _instanceId;
 
+        /// <summary>
+        /// Constructs a new instance
+        /// </summary>
+        /// <param name="context">The <see cref="FileProcessorFactoryContext"/></param>
+        /// <param name="cancellationTokenSource">The <see cref="CancellationTokenSource"/></param>
         public FileProcessor(FileProcessorFactoryContext context, CancellationTokenSource cancellationTokenSource)
         {
             if (context == null)
@@ -236,6 +241,9 @@ namespace WebJobs.Extensions.Files.Listener
             return !File.Exists(statusFileName);
         }
 
+        /// <summary>
+        /// Clean up any files that have been completely processed
+        /// </summary>
         public virtual void CleanupProcessedFiles()
         {
             var fileGroups = Directory.GetFiles(_filePath)

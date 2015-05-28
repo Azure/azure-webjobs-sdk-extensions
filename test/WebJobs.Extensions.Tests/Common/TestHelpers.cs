@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace WebJobs.Extensions.Tests.Common
+namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
 {
     public static class TestHelpers
     {

@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 
-namespace WebJobs.Extensions.Files.Listener
+namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
 {
     internal class DefaultFileProcessorFactory : IFileProcessorFactory
     {

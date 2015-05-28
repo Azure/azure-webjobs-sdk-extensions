@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace WebJobs.Extensions.Files
+namespace Microsoft.Azure.WebJobs.Extensions.Files
 {
     /// <summary>
     /// Trigger for invoking jobs based on file events.

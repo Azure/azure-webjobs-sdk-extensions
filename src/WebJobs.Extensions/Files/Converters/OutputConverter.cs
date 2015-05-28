@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using Microsoft.Azure.WebJobs.Host.Converters;
 
-namespace WebJobs.Extensions.Files.Bindings
+namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
     internal class OutputConverter<TInput> : IObjectToTypeConverter<FileSystemEventArgs> where TInput : class
     {

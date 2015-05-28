@@ -3,15 +3,16 @@
 
 using System;
 using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Config;
 
-namespace WebJobs.Extensions.Files
+namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
     /// Extension methods for File System integration
     /// </summary>
-    public static class JobHostConfigurationExtensions
+    public static class FilesJobHostConfigurationExtensions
     {
         /// <summary>
         /// Enables use of File System extensions

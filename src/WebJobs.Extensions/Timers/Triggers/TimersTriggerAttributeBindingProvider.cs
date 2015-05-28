@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Timers.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Converters;
 using Microsoft.Azure.WebJobs.Host.Triggers;
-using WebJobs.Extensions.Timers.Bindings;
 
-namespace WebJobs.Extensions.Timers.Triggers
+namespace Microsoft.Azure.WebJobs.Extensions.Timers.Triggers
 {
     internal class TimersTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
