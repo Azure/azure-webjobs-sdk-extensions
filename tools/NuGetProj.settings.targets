@@ -4,7 +4,7 @@
     <WebJobsRootPath>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\'))</WebJobsRootPath>
     <WebJobsToolsPath>$(MSBuildThisFileDirectory)</WebJobsToolsPath>
     <WebJobsPackageEULA>http://www.microsoft.com/web/webpi/eula/aspnetcomponent_rtw_enu.htm</WebJobsPackageEULA>
-    <BUILD_NUMBER Condition=" '$(BUILD_NUMBER)' == '' ">10003</BUILD_NUMBER>
+    <BUILD_NUMBER Condition=" '$(BUILD_NUMBER)' == '' ">local</BUILD_NUMBER>
     <WebJobsPackageVersion>1.1.0-alpha1-$(BUILD_NUMBER)</WebJobsPackageVersion>
   </PropertyGroup>
 </Project>
