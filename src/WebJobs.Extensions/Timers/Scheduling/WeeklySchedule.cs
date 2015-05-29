@@ -17,7 +17,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// </summary>
         /// <param name="day">The day to add the occurrence on.</param>
         /// <param name="time">The time of the occurrence.</param>
-        protected internal void Add(DayOfWeek day, TimeSpan time)
+        public void Add(DayOfWeek day, TimeSpan time)
         {
             List<TimeSpan> times = schedule[(int)day];
             if (times == null)
@@ -53,7 +53,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 // we have a schedule for today
                 // determine the next time
                 nextTimeIndex = daySchedule.FindIndex(p => p.TotalMilliseconds >= now.TimeOfDay.TotalMilliseconds);
-                if (nextTimeIndex > 0)
+                if (nextTimeIndex != -1)
                 {
                     nextTime = daySchedule[nextTimeIndex];
                 }

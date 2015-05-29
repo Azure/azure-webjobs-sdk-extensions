@@ -68,6 +68,42 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             VerifySchedule(scheduleData, now);
         }
 
+        [Fact]
+        public void GetNextOccurrence_Boundaries_ReturnsExpectedNextOccurrence()
+        {
+            WeeklySchedule schedule = new WeeklySchedule();
+            schedule.Add(DayOfWeek.Monday, new TimeSpan(9, 0, 0));
+            schedule.Add(DayOfWeek.Wednesday, new TimeSpan(8, 30, 0));
+            schedule.Add(DayOfWeek.Wednesday, new TimeSpan(18, 0, 0));
+            schedule.Add(DayOfWeek.Friday, new TimeSpan(10, 0, 0));
+
+            // before time on last schedule day - expect last schedule time
+            DateTime nextOccurrence = schedule.GetNextOccurrence(DateTime.Parse("2015-05-29T09:59:59"));
+            Assert.Equal(DayOfWeek.Friday, nextOccurrence.DayOfWeek);
+            Assert.Equal(new TimeSpan(10, 0, 0), nextOccurrence.TimeOfDay);
+
+            // after time on last schedule day - expect advance to beginning of schedule
+            nextOccurrence = schedule.GetNextOccurrence(DateTime.Parse("2015-05-29T10:00:01"));
+            Assert.Equal(DayOfWeek.Monday, nextOccurrence.DayOfWeek);
+            Assert.Equal(new TimeSpan(9, 0, 0), nextOccurrence.TimeOfDay);
+
+            nextOccurrence = schedule.GetNextOccurrence(DateTime.Parse("2015-06-01T08:59:59"));
+            Assert.Equal(DayOfWeek.Monday, nextOccurrence.DayOfWeek);
+            Assert.Equal(new TimeSpan(9, 0, 0), nextOccurrence.TimeOfDay);
+
+            nextOccurrence = schedule.GetNextOccurrence(DateTime.Parse("2015-06-01T09:00:01"));
+            Assert.Equal(DayOfWeek.Wednesday, nextOccurrence.DayOfWeek);
+            Assert.Equal(new TimeSpan(8, 30, 0), nextOccurrence.TimeOfDay);
+
+            nextOccurrence = schedule.GetNextOccurrence(DateTime.Parse("2015-06-03T08:30:01"));
+            Assert.Equal(DayOfWeek.Wednesday, nextOccurrence.DayOfWeek);
+            Assert.Equal(new TimeSpan(18, 00, 0), nextOccurrence.TimeOfDay);
+
+            nextOccurrence = schedule.GetNextOccurrence(DateTime.Parse("2015-06-03T18:00:01"));
+            Assert.Equal(DayOfWeek.Friday, nextOccurrence.DayOfWeek);
+            Assert.Equal(new TimeSpan(10, 00, 0), nextOccurrence.TimeOfDay);
+        }
+
         private void VerifySchedule(Tuple<DayOfWeek, TimeSpan>[] scheduleData, DateTime now)
         {
             WeeklySchedule schedule = new WeeklySchedule();
