@@ -169,7 +169,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
                 // multi-instance concurrency. If another process (e.g. another instance of the host
                 // WebApp) beats us to it, the following line will throw, indicating that somebody
                 // else is processing the file.
-                string statusFilePath = Path.ChangeExtension(filePath, StatusFileExtension);
+                string statusFilePath = GetStatusFile(filePath);
                 stream = File.Open(statusFilePath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
                 using (StreamWriter sw = new StreamWriter(stream))
                 {
@@ -199,7 +199,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// <param name="success">True if the function succeeded, false otherwise.</param>
         public virtual void CompleteProcessing(string filePath, bool success)
         {
-            string statusFilePath = Path.ChangeExtension(filePath, StatusFileExtension);
+            string statusFilePath = GetStatusFile(filePath);
             if (success)
             {
                 File.AppendAllText(statusFilePath, string.Format("Processed {0} (Instance: {1})\r\n", DateTime.UtcNow.ToString("o"), InstanceId));
@@ -237,46 +237,43 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         {
             // If a status file exist for the file, it shouldn't be processed (it's
             // either already processed or being processed)
-            string statusFileName = Path.ChangeExtension(filePath, StatusFileExtension);
+            string statusFileName = GetStatusFile(filePath);
             return !File.Exists(statusFileName);
         }
 
         /// <summary>
-        /// Clean up any files that have been completely processed
+        /// Clean up any files that have been fully processed
         /// </summary>
         public virtual void CleanupProcessedFiles()
         {
-            var fileGroups = Directory.GetFiles(_filePath)
-                .GroupBy(p => Path.GetFileNameWithoutExtension(p))
-                .Where(q => q.Any(p => Path.GetExtension(p).TrimStart('.') == StatusFileExtension));
-
-            foreach (var fileGroup in fileGroups)
+            string[] statusFiles = Directory.GetFiles(_filePath, GetStatusFile("*"));
+            foreach (string statusFilePath in statusFiles)
             {
                 try
                 {
                     // first read the status file to determine if the file
                     // processing is complete
-                    string statusFilePath = fileGroup.SingleOrDefault(p => Path.GetExtension(p).TrimStart('.') == StatusFileExtension);
-                    bool isComplete = false;
-                    if (!string.IsNullOrEmpty(statusFilePath))
-                    {
-                        string[] lines = File.ReadAllLines(statusFilePath);
-                        isComplete = lines.Length == 2 && lines[1].StartsWith("Processed", StringComparison.OrdinalIgnoreCase);
-                    }
-
+                    string[] lines = File.ReadAllLines(statusFilePath);
+                    bool isComplete = lines.Length == 2 && lines[1].StartsWith("Processed", StringComparison.OrdinalIgnoreCase);
                     if (!isComplete)
                     {
                         continue;
                     }
 
+                    // get all files starting with that file name. For example, for
+                    // status file input.dat.status, this might return input.dat and
+                    // input.dat.meta (if the file has other companion files)
+                    string targetFileName = Path.GetFileNameWithoutExtension(statusFilePath);
+                    string[] files = Directory.GetFiles(_filePath, targetFileName + "*");
+
                     // first delete the non status file(s)
-                    foreach (string file in fileGroup)
+                    foreach (string filePath in files)
                     {
-                        if (file == statusFilePath)
+                        if (Path.GetExtension(filePath).TrimStart('.') == StatusFileExtension)
                         {
                             continue;
                         }
-                        TryDelete(file);
+                        TryDelete(filePath);
                     }
 
                     // then delete the status file
@@ -300,6 +297,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
             {
                 return false;
             }
+        }
+
+        internal string GetStatusFile(string file)
+        {
+            return file + "." + StatusFileExtension;
         }
     }
 }

@@ -40,7 +40,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files
         public WatcherChangeTypes ChangeTypes { get; private set; }
 
         /// <summary>
-        /// Gets the auto delete setting.
+        /// Gets the auto delete setting. When set to true, all files including any companion files
+        /// starting with the target file name will be deleted when the file is fully processed.
         /// </summary>
         public bool AutoDelete { get; private set; }
 

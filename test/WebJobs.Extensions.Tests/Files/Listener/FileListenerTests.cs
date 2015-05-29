@@ -87,7 +87,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             // verify contents of each status file
             foreach (string processedFile in processedFiles)
             {
-                string statusFile = Path.Combine(testFileDir, Path.ChangeExtension(processedFile, "status"));
+                string statusFile = Path.Combine(testFileDir, processedFile + ".status");
                 string[] statusLines = File.ReadAllLines(statusFile);
 
                 Assert.Equal(2, statusLines.Length);

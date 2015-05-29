@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
         {
             string testFile = WriteTestFile("dat");
 
-            string expectedStatusFile = Path.ChangeExtension(testFile, processor.StatusFileExtension);
+            string expectedStatusFile = processor.GetStatusFile(testFile);
             Assert.False(File.Exists(expectedStatusFile));
 
             bool shouldProcess = processor.BeginProcessing(testFile);
@@ -73,7 +73,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
 
             processor.BeginProcessing(testFile);
 
-            string expectedStatusFile = Path.ChangeExtension(testFile, processor.StatusFileExtension);
+            string expectedStatusFile = processor.GetStatusFile(testFile);
             Assert.True(File.Exists(expectedStatusFile));
 
             processor.CompleteProcessing(testFile, false);
@@ -93,7 +93,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             processor.BeginProcessing(testFile);
             processor.CompleteProcessing(testFile, true);
 
-            string expectedStatusFile = Path.ChangeExtension(testFile, processor.StatusFileExtension);
+            string expectedStatusFile = processor.GetStatusFile(testFile);
             Assert.True(File.Exists(testFile));
             Assert.True(File.Exists(expectedStatusFile));
             string[] lines = File.ReadAllLines(expectedStatusFile);
@@ -115,7 +115,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             await processor.ProcessFileAsync(eventArgs);
 
             Assert.Equal(2, Directory.GetFiles(combinedTestFilePath).Length);
-            string expectedStatusFile = Path.ChangeExtension(testFile, processor.StatusFileExtension);
+            string expectedStatusFile = processor.GetStatusFile(testFile);
             Assert.True(File.Exists(testFile));
             Assert.True(File.Exists(expectedStatusFile));
 
@@ -143,24 +143,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
         [Fact]
         public void Cleanup_AutoDeleteOn_DeletesCompletedFiles()
         {
+            FileTriggerAttribute attribute = new FileTriggerAttribute(attributeSubPath, "*.dat", autoDelete: true);
+            FileProcessor localProcessor = CreateTestProcessor(attribute);
+
             // create a completed file set
             string completedFile = WriteTestFile("dat");
-            string completedStatusFile = Path.ChangeExtension(completedFile, "status");
+            string completedStatusFile = localProcessor.GetStatusFile(completedFile);
             File.WriteAllLines(completedStatusFile, new string[] { "Processing", "Processed" });
+
+            // include an additional companion metadata file
+            string completedAdditionalFile = completedFile + ".metadata";
+            File.WriteAllText(completedAdditionalFile, "Data");
+
+            // write a file that SHOULDN'T be deleted
+            string dontDeleteFile = Path.ChangeExtension(completedFile, "json");
+            File.WriteAllText(dontDeleteFile, "Data");
 
             // create an incomplete file set
             string incompleteFile = WriteTestFile("dat");
-            string incompleteStatusFile = Path.ChangeExtension(incompleteFile, "status");
+            string incompleteStatusFile = localProcessor.GetStatusFile(incompleteFile);
             File.WriteAllLines(incompleteStatusFile, new string[] { "Processing" });
-
-            FileTriggerAttribute attribute = new FileTriggerAttribute(attributeSubPath, "*.dat", autoDelete: true);
-            FileProcessor localProcessor = CreateTestProcessor(attribute);
 
             localProcessor.Cleanup();
 
             // expect the completed set to be deleted
             Assert.False(File.Exists(completedFile));
+            Assert.False(File.Exists(completedAdditionalFile));
             Assert.False(File.Exists(completedStatusFile));
+            Assert.True(File.Exists(dontDeleteFile));
 
             // expect the incomplete set to remain
             Assert.False(File.Exists(completedFile));
