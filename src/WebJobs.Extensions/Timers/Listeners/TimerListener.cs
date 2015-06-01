@@ -2,6 +2,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using Microsoft.Azure.WebJobs.Extensions.Timers.Config;
+using Microsoft.Azure.WebJobs.Extensions.Timers.Scheduling;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
@@ -9,21 +11,31 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
     internal sealed class TimerListener : IListener
     {
         private readonly TimerTriggerAttribute _attribute;
+        private readonly TimersConfiguration _config;
         private readonly TimerTriggerExecutor _triggerExecutor;
         private readonly CancellationTokenSource _cancellationTokenSource;
 
-        private TimerInfo _timerInfo;
         private System.Timers.Timer _timer;
+        private TimerSchedule _schedule;
+        private ScheduleMonitor _scheduleMonitor;
+        private bool _monitorSchedule;
+        private string _timerName;
         private bool _disposed;
 
-        public TimerListener(TimerTriggerAttribute attribute, TimerTriggerExecutor triggerExecutor)
+        public TimerListener(TimerTriggerAttribute attribute, string timerName, TimersConfiguration config, TimerTriggerExecutor triggerExecutor)
         {
             _attribute = attribute;
+            _timerName = timerName;
+            _config = config;
             _triggerExecutor = triggerExecutor;
             _cancellationTokenSource = new CancellationTokenSource();
+
+            _schedule = _attribute.Schedule;
+            _scheduleMonitor = _config.ScheduleMonitor;
+            _monitorSchedule = _attribute.UseMonitor;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
             ThrowIfDisposed();
 
@@ -32,17 +44,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 throw new InvalidOperationException("The listener has already been started.");
             }
 
-            _timerInfo = new TimerInfo(_attribute.Schedule);
+            // if schedule monitoring is enabled for this timer job,
+            // check to see if we've missed an occurrence since
+            // we last started
+            DateTime now = DateTime.UtcNow;
+            if (_monitorSchedule && await _scheduleMonitor.IsPastDueAsync(_timerName, now))
+            {
+                // we've missed an occurrence so invoke the job function immediately
+                await InvokeJobFunction(now, true);
+            }
 
             _timer = new System.Timers.Timer
             {
                 AutoReset = false,
-                Interval = GetNextInterval(DateTime.Now)
+                Interval = GetNextInterval(now)
             };
             _timer.Elapsed += OnTimer;
             _timer.Start();
-
-            return Task.FromResult<bool>(true);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
@@ -54,7 +72,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 throw new InvalidOperationException("The listener has not yet been started or has already been stopped.");
             }
 
-            // Signal ProcessMessage to shut down gracefully
             _cancellationTokenSource.Cancel();
 
             _timer.Dispose();
@@ -96,22 +113,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
         private async Task HandleTimerEvent()
         {
-            CancellationToken token = _cancellationTokenSource.Token;
-
             DateTime lastOccurrence = DateTime.Now;
-            TimerInfo timerInfo = new TimerInfo(_attribute.Schedule);
-            if (!await _triggerExecutor.ExecuteAsync(timerInfo, token))
-            {
-                token.ThrowIfCancellationRequested();
-            }
+
+            await InvokeJobFunction(lastOccurrence, false);
 
             _timer.Interval = GetNextInterval(lastOccurrence);
             _timer.Start();
         }
 
+        private async Task InvokeJobFunction(DateTime lastOccurrence, bool isPastDue)
+        {
+            CancellationToken token = _cancellationTokenSource.Token;
+
+            TimerInfo timerInfo = new TimerInfo(_attribute.Schedule);
+            timerInfo.IsPastDue = isPastDue;
+            if (!await _triggerExecutor.ExecuteAsync(timerInfo, token))
+            {
+                token.ThrowIfCancellationRequested();
+            }
+
+            if (_monitorSchedule)
+            {
+                DateTime nextOccurrence = _schedule.GetNextOccurrence(lastOccurrence);
+                await _scheduleMonitor.UpdateAsync(_timerName, lastOccurrence, nextOccurrence);
+            }
+        }
+
         private double GetNextInterval(DateTime now)
         {
-            DateTime nextOccurrence = _timerInfo.Schedule.GetNextOccurrence(now);
+            DateTime nextOccurrence = _schedule.GetNextOccurrence(now);
             TimeSpan nextInterval = nextOccurrence - now;
             return nextInterval.TotalMilliseconds;
         }

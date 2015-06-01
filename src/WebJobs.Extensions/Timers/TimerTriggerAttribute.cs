@@ -1,5 +1,5 @@
 ﻿using System;
-using Microsoft.Azure.WebJobs.Extensions.Timers;
+using System.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
@@ -21,11 +21,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             if (CronSchedule.TryCreate(expression, out cronSchedule))
             {
                 Schedule = cronSchedule;
+
+                DateTime[] nextOccurrences = cronSchedule.InnerSchedule.GetNextOccurrences(DateTime.Now, DateTime.Now + TimeSpan.FromMinutes(1)).ToArray();
+                if (nextOccurrences.Length > 1)
+                {
+                    // if there is more than one occurrence due in the next minute,
+                    // assume that this is a sub-minute constant schedule and disable
+                    // persistence
+                    UseMonitor = false;
+                }
+                else
+                {
+                    UseMonitor = true;
+                }
             }
             else
             {
                 TimeSpan periodTimespan = TimeSpan.Parse(expression);
                 Schedule = new ConstantSchedule(periodTimespan);
+
+                // for very frequent constant schedules, we want to disable persistence
+                UseMonitor = periodTimespan.TotalMinutes >= 1;
             }
         }
 
@@ -36,11 +52,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         public TimerTriggerAttribute(Type scheduleType)
         {
             Schedule = (TimerSchedule)Activator.CreateInstance(scheduleType);
+            UseMonitor = true;
         }
 
         /// <summary>
         /// Gets the Schedule.
         /// </summary>
         public TimerSchedule Schedule { get; private set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the schedule should be monitored.
+        /// Schedule monitoring persists schedule occurrences to aid in ensuring the
+        /// schedule is maintained correctly even when roles restart.
+        /// This will default to true for schedules that have a recurrence interval greater
+        /// than 1 minute (i.e., for constant schedules that occur more than once per minute,
+        /// persistence is disabled by default).
+        /// </summary>
+        public bool UseMonitor { get; set; }
     }
 }

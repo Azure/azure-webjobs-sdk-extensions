@@ -11,6 +11,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Config
     /// </summary>
     internal class TimersExtensionConfig : IExtensionConfigProvider
     {
+        private TimersConfiguration _config;
+
+        public TimersExtensionConfig(TimersConfiguration config)
+        {
+            _config = config;
+        }
+
         /// <inheritdoc />
         public void Initialize(ExtensionConfigContext context)
         {
@@ -22,7 +29,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Config
             IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
 
             // register our trigger binding provider
-            TimersTriggerAttributeBindingProvider triggerBindingProvider = new TimersTriggerAttributeBindingProvider();
+            TimersTriggerAttributeBindingProvider triggerBindingProvider = new TimersTriggerAttributeBindingProvider(_config);
             extensions.RegisterExtension<ITriggerBindingProvider>(triggerBindingProvider);
         }
     }

@@ -16,12 +16,22 @@ namespace Microsoft.Azure.WebJobs
         /// <param name="config">The <see cref="JobHostConfiguration"/> to configure.</param>
         public static void UseTimers(this JobHostConfiguration config)
         {
+            UseTimers(config, new TimersConfiguration());
+        }
+
+        /// <summary>
+        /// Enables use of the Timer extensions
+        /// </summary>
+        /// <param name="config">The <see cref="JobHostConfiguration"/> to configure.</param>
+        /// <param name="timersConfig">The <see cref="TimersConfiguration"/> to use.</param>
+        public static void UseTimers(this JobHostConfiguration config, TimersConfiguration timersConfig)
+        {
             if (config == null)
             {
                 throw new ArgumentNullException("config");
             }
 
-            TimersExtensionConfig extensionConfig = new TimersExtensionConfig();
+            TimersExtensionConfig extensionConfig = new TimersExtensionConfig(timersConfig);
 
             IExtensionRegistry extensions = config.GetService<IExtensionRegistry>();
             extensions.RegisterExtension<IExtensionConfigProvider>(extensionConfig);

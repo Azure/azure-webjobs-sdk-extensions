@@ -9,7 +9,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     /// </summary>
     public class CronSchedule : TimerSchedule
     {
-        private CrontabSchedule cronSchedule;
+        private CrontabSchedule _cronSchedule;
 
         /// <summary>
         /// Constructs a new instance based on the specified crontab expression
@@ -26,13 +26,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// <param name="schedule">The crontab schedule to use</param>
         public CronSchedule(CrontabSchedule schedule)
         {
-            cronSchedule = schedule;
+            _cronSchedule = schedule;
+        }
+
+        internal CrontabSchedule InnerSchedule
+        {
+            get
+            {
+                return _cronSchedule;
+            }
         }
 
         /// <inheritdoc/>
         public override DateTime GetNextOccurrence(DateTime now)
         {
-            return cronSchedule.GetNextOccurrence(now);
+            return _cronSchedule.GetNextOccurrence(now);
         }
 
         internal static bool TryCreate(string cronExpression, out CronSchedule cronSchedule)

@@ -113,6 +113,7 @@
     <Compile Include="Timers\Bindings\TimerInfoValueProvider.cs" />
     <Compile Include="Timers\Bindings\TimerTriggerBinding.cs" />
     <Compile Include="Timers\Config\TimerJobHostConfigurationExtensions.cs" />
+    <Compile Include="Timers\Config\TimersConfiguration.cs" />
     <Compile Include="Timers\Config\TimersExtensionConfig.cs" />
     <Compile Include="Timers\Converters\TimerInfoOutputConverter.cs" />
     <Compile Include="Timers\Listeners\TimerListener.cs" />
@@ -121,6 +122,8 @@
     <Compile Include="Timers\Scheduling\ConstantSchedule.cs" />
     <Compile Include="Timers\Scheduling\CronSchedule.cs" />
     <Compile Include="Timers\Scheduling\DailySchedule.cs" />
+    <Compile Include="Timers\Scheduling\FileSystemScheduleMonitor.cs" />
+    <Compile Include="Timers\Scheduling\ScheduleMonitor.cs" />
     <Compile Include="Timers\Scheduling\TimerSchedule.cs" />
     <Compile Include="Timers\Scheduling\WeeklySchedule.cs" />
     <Compile Include="Timers\TimerInfo.cs" />

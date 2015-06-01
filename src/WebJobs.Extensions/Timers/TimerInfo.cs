@@ -18,5 +18,11 @@
         /// Gets the schedule for the timer trigger.
         /// </summary>
         public TimerSchedule Schedule { get; private set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this timer invocation
+        /// is due to a missed schedule occurrence.
+        /// </summary>
+        public bool IsPastDue { get; set; }
     }
 }
