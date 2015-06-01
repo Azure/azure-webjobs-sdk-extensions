@@ -18,7 +18,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private System.Timers.Timer _timer;
         private TimerSchedule _schedule;
         private ScheduleMonitor _scheduleMonitor;
-        private bool _monitorSchedule;
         private string _timerName;
         private bool _disposed;
 
@@ -32,7 +31,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             _schedule = _attribute.Schedule;
             _scheduleMonitor = _config.ScheduleMonitor;
-            _monitorSchedule = _attribute.UseMonitor;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -48,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             // check to see if we've missed an occurrence since
             // we last started
             DateTime now = DateTime.UtcNow;
-            if (_monitorSchedule && await _scheduleMonitor.IsPastDueAsync(_timerName, now))
+            if (_attribute.UseMonitor && await _scheduleMonitor.IsPastDueAsync(_timerName, now))
             {
                 // we've missed an occurrence so invoke the job function immediately
                 await InvokeJobFunction(now, true);
@@ -121,7 +119,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             _timer.Start();
         }
 
-        private async Task InvokeJobFunction(DateTime lastOccurrence, bool isPastDue)
+        internal async Task InvokeJobFunction(DateTime lastOccurrence, bool isPastDue)
         {
             CancellationToken token = _cancellationTokenSource.Token;
 
@@ -132,7 +130,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 token.ThrowIfCancellationRequested();
             }
 
-            if (_monitorSchedule)
+            if (_attribute.UseMonitor)
             {
                 DateTime nextOccurrence = _schedule.GetNextOccurrence(lastOccurrence);
                 await _scheduleMonitor.UpdateAsync(_timerName, lastOccurrence, nextOccurrence);
