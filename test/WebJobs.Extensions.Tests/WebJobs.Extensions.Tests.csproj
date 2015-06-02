@@ -108,7 +108,7 @@
     <Compile Include="Timers\Scheduling\DailyScheduleTests.cs" />
     <Compile Include="Timers\Scheduling\FileSystemScheduleMonitorTests.cs" />
     <Compile Include="Timers\Scheduling\WeeklyScheduleTests.cs" />
-    <Compile Include="Timers\TimerListenerTests.cs" />
+    <Compile Include="Timers\Listener\TimerListenerTests.cs" />
     <Compile Include="Timers\TimerTriggerEndToEndTests.cs" />
     <Compile Include="Timers\TimerTriggerAttributeTests.cs" />
   </ItemGroup>
