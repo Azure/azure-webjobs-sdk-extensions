@@ -13,7 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             _innerExecutor = innerExecutor;
         }
 
-        public async Task<bool> ExecuteAsync(TimerInfo value, CancellationToken cancellationToken)
+        public async Task<FunctionResult> ExecuteAsync(TimerInfo value, CancellationToken cancellationToken)
         {
             TriggeredFunctionData<TimerInfo> input = new TriggeredFunctionData<TimerInfo>
             {

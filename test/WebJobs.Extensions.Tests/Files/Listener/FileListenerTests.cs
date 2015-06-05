@@ -38,13 +38,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             // mock out the executor so we can capture function invocations
             Mock<ITriggeredFunctionExecutor<FileSystemEventArgs>> mockExecutor = new Mock<ITriggeredFunctionExecutor<FileSystemEventArgs>>(MockBehavior.Strict);
             ConcurrentBag<string> processedFiles = new ConcurrentBag<string>();
+            FunctionResult result = new FunctionResult(true);
             mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData<FileSystemEventArgs>>(), It.IsAny<CancellationToken>()))
                 .Callback<TriggeredFunctionData<FileSystemEventArgs>, CancellationToken>(async (mockData, mockToken) =>
                     {
                         await Task.Delay(50);
                         processedFiles.Add(mockData.TriggerValue.Name);
                     })
-                .ReturnsAsync(true);
+                .ReturnsAsync(result);
 
             FilesConfiguration config = new FilesConfiguration()
             {

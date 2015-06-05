@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Config;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Scheduling;
+using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
@@ -125,7 +126,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             TimerInfo timerInfo = new TimerInfo(_attribute.Schedule);
             timerInfo.IsPastDue = isPastDue;
-            if (!await _triggerExecutor.ExecuteAsync(timerInfo, token))
+            FunctionResult result = await _triggerExecutor.ExecuteAsync(timerInfo, token);
+            if (!result.Succeeded)
             {
                 token.ThrowIfCancellationRequested();
             }

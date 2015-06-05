@@ -29,12 +29,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _config.ScheduleMonitor = _mockScheduleMonitor.Object;
             _mockTriggerExecutor = new Mock<ITriggeredFunctionExecutor<TimerInfo>>(MockBehavior.Strict);
             TimerTriggerExecutor executor = new TimerTriggerExecutor(_mockTriggerExecutor.Object);
+            FunctionResult result = new FunctionResult(true);
             _mockTriggerExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData<TimerInfo>>(), It.IsAny<CancellationToken>()))
                 .Callback<TriggeredFunctionData<TimerInfo>, CancellationToken>((mockFunctionData, mockToken) =>
                     {
                         _triggeredFunctionData = mockFunctionData;
                     })
-                .Returns(Task.FromResult(true));
+                .Returns(Task.FromResult(result));
             _listener = new TimerListener(_attribute, _testTimerName, _config, executor);
         }
 

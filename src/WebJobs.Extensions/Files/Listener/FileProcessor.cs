@@ -135,11 +135,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
                 TriggerValue = eventArgs
             };
             CancellationToken token = _cancellationTokenSource.Token;
-            bool success = await _executor.TryExecuteAsync(input, token);
+            FunctionResult result = await _executor.TryExecuteAsync(input, token);
 
-            CompleteProcessing(fileToProcess, success);
+            CompleteProcessing(fileToProcess, result);
 
-            if (!success)
+            if (!result.Succeeded)
             {
                 token.ThrowIfCancellationRequested();
             }
@@ -196,11 +196,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// Complete processing of the specified file.
         /// </summary>
         /// <param name="filePath">The file to complete processing for.</param>
-        /// <param name="success">True if the function succeeded, false otherwise.</param>
-        public virtual void CompleteProcessing(string filePath, bool success)
+        /// <param name="result">The <see cref="FunctionResult"/> for the invoked function.</param>
+        public virtual void CompleteProcessing(string filePath, FunctionResult result)
         {
+            if (result == null)
+            {
+                throw new ArgumentNullException("result");
+            }
+
             string statusFilePath = GetStatusFile(filePath);
-            if (success)
+            if (result.Succeeded)
             {
                 File.AppendAllText(statusFilePath, string.Format("Processed {0} (Instance: {1})\r\n", DateTime.UtcNow.ToString("o"), InstanceId));
             }
