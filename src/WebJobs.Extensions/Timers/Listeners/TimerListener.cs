@@ -47,10 +47,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             // check to see if we've missed an occurrence since
             // we last started
             DateTime now = DateTime.UtcNow;
-            if (_attribute.UseMonitor && await _scheduleMonitor.IsPastDueAsync(_timerName, now))
+            if (_attribute.UseMonitor)
             {
-                // we've missed an occurrence so invoke the job function immediately
-                await InvokeJobFunction(now, true);
+                DateTime nextOccurrence = _schedule.GetNextOccurrence(now);
+                if (await _scheduleMonitor.IsPastDueAsync(_timerName, now, nextOccurrence))
+                {
+                    // we've missed an occurrence so invoke the job function immediately
+                    await InvokeJobFunction(now, true);
+                }
             }
 
             _timer = new System.Timers.Timer

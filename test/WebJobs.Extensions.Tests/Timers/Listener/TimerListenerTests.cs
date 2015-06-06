@@ -67,8 +67,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         {
             DateTime lastOccurrence = default(DateTime);
 
-            _mockScheduleMonitor.Setup(p => p.IsPastDueAsync(_testTimerName, It.IsAny<DateTime>()))
-                .Callback<string, DateTime>((mockTimerName, mockNow) =>
+            _mockScheduleMonitor.Setup(p => p.IsPastDueAsync(_testTimerName, It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+                .Callback<string, DateTime, DateTime>((mockTimerName, mockNow, mockNext) =>
                     {
                         lastOccurrence = mockNow;
                     })
@@ -94,7 +94,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public async Task StartAsync_ScheduleNotPastDue_DoesNotInvokeJobFunctionImmediately()
         {
-            _mockScheduleMonitor.Setup(p => p.IsPastDueAsync(_testTimerName, It.IsAny<DateTime>()))
+            _mockScheduleMonitor.Setup(p => p.IsPastDueAsync(_testTimerName, It.IsAny<DateTime>(), It.IsAny<DateTime>()))
                 .Returns(Task.FromResult(false));
 
             CancellationToken cancellationToken = new CancellationToken();

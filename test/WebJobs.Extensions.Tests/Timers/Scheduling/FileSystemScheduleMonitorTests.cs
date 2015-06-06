@@ -92,10 +92,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         }
 
         [Fact]
-        public async Task IsPastDue_NoStatusFile_ReturnsFalse()
+        public async Task IsPastDue_NoStatusFile_CreatesInitialStatusFile()
         {
             Assert.False(File.Exists(_statusFile));
-            bool isPastDue = await _monitor.IsPastDueAsync(_testTimerName, DateTime.UtcNow);
+            DateTime now = DateTime.UtcNow;
+            DateTime next = now + TimeSpan.FromDays(5);
+            bool isPastDue = await _monitor.IsPastDueAsync(_testTimerName, now, next);
+            Assert.True(File.Exists(_statusFile));
+            VerifyScheduleStatus(default(DateTime), next);
             Assert.False(isPastDue);
         }
 
@@ -106,19 +110,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             DateTime next = now + TimeSpan.FromDays(1);
             await _monitor.UpdateAsync(_testTimerName, now, next);
 
-            bool isPastDue = await _monitor.IsPastDueAsync(_testTimerName, now);
+            bool isPastDue = await _monitor.IsPastDueAsync(_testTimerName, now, next);
             Assert.False(isPastDue);
 
             now = now + TimeSpan.FromHours(23);
-            isPastDue = await _monitor.IsPastDueAsync(_testTimerName, now);
+            isPastDue = await _monitor.IsPastDueAsync(_testTimerName, now, next);
             Assert.False(isPastDue);
 
             now = now + TimeSpan.FromHours(1);
-            isPastDue = await _monitor.IsPastDueAsync(_testTimerName, now);
+            isPastDue = await _monitor.IsPastDueAsync(_testTimerName, now, next);
             Assert.False(isPastDue);
 
             now = now + TimeSpan.FromHours(1);
-            isPastDue = await _monitor.IsPastDueAsync(_testTimerName, now);
+            isPastDue = await _monitor.IsPastDueAsync(_testTimerName, now, next);
             Assert.True(isPastDue);
         }
 

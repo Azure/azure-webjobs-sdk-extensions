@@ -61,15 +61,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Scheduling
         }
 
         /// <inheritdoc/>
-        public override async Task<bool> IsPastDueAsync(string timerName, DateTime now)
+        public override async Task<bool> IsPastDueAsync(string timerName, DateTime now, DateTime nextOccurrence)
         {
             bool isPastDue = false;
 
-            DateTime? recordedNextOccurrence = await GetStatusAsync(timerName);
-            if (recordedNextOccurrence != null && now > recordedNextOccurrence)
+            DateTime? recordedNextOccurrence = await GetNextOccurrenceAsync(timerName);
+            if (recordedNextOccurrence == null)
+            {
+                // If we've never recorded a status for this timer, write an initial
+                // status entry. This ensures that for a new timer, we've captured a
+                // status log for the next occurrence even though no occurrence has happened yet
+                // (ensuring we don't miss an occurrence)
+                await UpdateAsync(timerName, default(DateTime), nextOccurrence);
+                recordedNextOccurrence = nextOccurrence;
+            }
+
+            if (now > recordedNextOccurrence)
             {
                 isPastDue = true;
             }
+
             return isPastDue;
         }
 
@@ -101,7 +112,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Scheduling
         /// </summary>
         /// <param name="timerName">The name of the timer.</param>
         /// <returns></returns>
-        protected virtual Task<DateTime?> GetStatusAsync(string timerName)
+        protected virtual Task<DateTime?> GetNextOccurrenceAsync(string timerName)
         {
             string statusFilePath = GetStatusFileName(timerName);
             if (!File.Exists(statusFilePath))
