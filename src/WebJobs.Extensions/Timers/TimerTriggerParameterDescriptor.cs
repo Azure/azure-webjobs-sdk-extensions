@@ -8,7 +8,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     {
         public override string GetTriggerReason(IDictionary<string, string> arguments)
         {
-            return string.Format("Timer fired at {0}", DateTime.Now);
+            return string.Format("Timer fired at {0}", DateTime.UtcNow.ToString("o"));
         }
     }
 }

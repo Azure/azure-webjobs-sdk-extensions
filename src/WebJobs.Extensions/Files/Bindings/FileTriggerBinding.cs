@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Files.Converters;
 using Microsoft.Azure.WebJobs.Files.Listeners;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings.Path;
@@ -25,11 +26,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 
         public FileTriggerBinding(string parameterName, Type parameterType, IArgumentBinding<FileSystemEventArgs> argumentBinding, FilesConfiguration config, FileTriggerAttribute attribute)
         {
+            _attribute = attribute;
             _parameterName = parameterName;
             _converter = CreateConverter(parameterType);
             _argumentBinding = argumentBinding;
             _config = config;
-            _attribute = attribute;
             _bindingContract = CreateBindingDataContract(attribute.Path);
         }
 
@@ -78,12 +79,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 
         public ParameterDescriptor ToParameterDescriptor()
         {
-            return new FileTriggerParameterDescriptor
+            FileTriggerParameterDescriptor descriptor = new FileTriggerParameterDescriptor
             {
                 Name = _parameterName,
-                FilePath = _attribute.Path
-                // TODO: Figure out Display Hints
+                DisplayHints = new ParameterDisplayHints
+                {
+                    Prompt = "Enter a file path",
+                    Description = string.Format("File event occurred on path '{0}'", _attribute.GetNormalizedPath()),
+                    DefaultValue = Path.Combine(_config.RootPath, _attribute.GetNormalizedPath(), "{name}")
+                }
             };
+            return descriptor;
         }
 
         private IReadOnlyDictionary<string, Type> CreateBindingDataContract(string filePathPattern)
@@ -134,7 +140,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
         private static IObjectToTypeConverter<FileSystemEventArgs> CreateConverter(Type parameterType)
         {
             return new CompositeObjectToTypeConverter<FileSystemEventArgs>(
-                    new OutputConverter<FileSystemEventArgs>(new IdentityConverter<FileSystemEventArgs>()));
+                    new OutputConverter<FileSystemEventArgs>(new IdentityConverter<FileSystemEventArgs>()),
+                    new OutputConverter<string>(new StringToFileSystemEventArgsConverter()));
         }
     }
 }

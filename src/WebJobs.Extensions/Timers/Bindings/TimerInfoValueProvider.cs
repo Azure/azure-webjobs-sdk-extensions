@@ -46,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 
         private static Task<string> CreateInvokeStringAsync(TimerInfo clone, CancellationToken cancellationToken)
         {
-            string invokeString = "TODO";
+            string invokeString = DateTime.UtcNow.ToString("o");
 
             return Task.FromResult<string>(invokeString);
         }

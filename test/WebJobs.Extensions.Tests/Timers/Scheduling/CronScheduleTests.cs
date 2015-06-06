@@ -25,5 +25,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
                 now = nextOccurrence + TimeSpan.FromSeconds(1);
             }
         }
+
+        [Fact]
+        public void ToString_ReturnsExpectedValue()
+        {
+            CronSchedule schedule = new CronSchedule("59 11 * * 1-5");
+            Assert.Equal("Cron: '59 11 * * 1-5'", schedule.ToString());
+        }
     }
 }

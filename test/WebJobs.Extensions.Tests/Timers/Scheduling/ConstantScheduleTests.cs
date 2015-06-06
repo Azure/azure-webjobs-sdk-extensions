@@ -43,5 +43,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             Assert.Equal(new TimeSpan(0, 0, 30), nextOccurrence - now);
             now = nextOccurrence;
         }
+
+        [Fact]
+        public void ToString_ReturnsCorrectValue()
+        {
+            ConstantSchedule schedule = new ConstantSchedule(TimeSpan.FromSeconds(30));
+
+            Assert.Equal("Constant: 00:00:30", schedule.ToString());
+        }
     }
 }

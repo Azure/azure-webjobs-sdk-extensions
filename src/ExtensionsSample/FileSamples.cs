@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using Microsoft.Azure.WebJobs;
-using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.Azure.WebJobs.Extensions.Files;
+using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace WebJobsSandbox
 {

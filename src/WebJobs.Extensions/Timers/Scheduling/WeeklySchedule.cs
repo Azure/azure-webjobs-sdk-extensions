@@ -79,5 +79,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
 
             return nextOccurrence;
         }
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            return string.Format("Weekly: {0} occurrences", schedule.Where(p => p != null).Sum(p => p.Count));
+        }
     }
 }

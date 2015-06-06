@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
@@ -39,6 +40,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         public void SetNextInterval(TimeSpan interval)
         {
             _intervalOverride = interval;
+        }
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            return string.Format(CultureInfo.InvariantCulture, "Constant: {0}", _interval.ToString());
         }
     }
 }

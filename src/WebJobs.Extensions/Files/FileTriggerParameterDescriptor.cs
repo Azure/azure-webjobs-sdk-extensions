@@ -5,8 +5,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files
 {
     internal class FileTriggerParameterDescriptor : TriggerParameterDescriptor
     {
-        public string FilePath { get; set; }
-
         public override string GetTriggerReason(IDictionary<string, string> arguments)
         {
             string fullPath = null;

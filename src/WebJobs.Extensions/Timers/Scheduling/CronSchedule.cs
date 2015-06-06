@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using NCrontab;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers
@@ -41,6 +42,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         public override DateTime GetNextOccurrence(DateTime now)
         {
             return _cronSchedule.GetNextOccurrence(now);
+        }
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            return string.Format(CultureInfo.InvariantCulture, "Cron: '{0}'", _cronSchedule.ToString());
         }
 
         internal static bool TryCreate(string cronExpression, out CronSchedule cronSchedule)

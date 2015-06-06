@@ -50,8 +50,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files
                 return Task.FromResult<ITriggerBinding>(null);
             }
 
-            // TODO: remove dependency on NameResolver?
-
             IArgumentBinding<FileSystemEventArgs> argumentBinding = ArgumentBindingProvider.TryCreate(parameter);
             if (argumentBinding == null)
             {

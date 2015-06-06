@@ -104,6 +104,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             Assert.Equal(new TimeSpan(10, 00, 0), nextOccurrence.TimeOfDay);
         }
 
+        [Fact]
+        public void ToString_ReturnsCorrectValue()
+        {
+            WeeklySchedule schedule = new WeeklySchedule();
+            schedule.Add(DayOfWeek.Monday, new TimeSpan(9, 0, 0));
+            schedule.Add(DayOfWeek.Wednesday, new TimeSpan(8, 30, 0));
+            schedule.Add(DayOfWeek.Wednesday, new TimeSpan(18, 0, 0));
+            schedule.Add(DayOfWeek.Friday, new TimeSpan(10, 0, 0));
+
+            Assert.Equal("Weekly: 4 occurrences", schedule.ToString());
+        }
+
         private void VerifySchedule(Tuple<DayOfWeek, TimeSpan>[] scheduleData, DateTime now)
         {
             WeeklySchedule schedule = new WeeklySchedule();

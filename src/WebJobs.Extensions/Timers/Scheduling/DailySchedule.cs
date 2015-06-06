@@ -56,5 +56,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             TimeSpan nextTime = schedule[idx];
             return new DateTime(now.Year, now.Month, now.Day, nextTime.Hours, nextTime.Minutes, nextTime.Seconds);
         }
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            return string.Format("Daily: {0} occurrences", schedule.Count);
+        }
     }
 }

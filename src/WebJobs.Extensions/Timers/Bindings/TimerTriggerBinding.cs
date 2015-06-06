@@ -23,10 +23,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 
         public TimerTriggerBinding(string parameterName, Type parameterType, IArgumentBinding<TimerInfo> argumentBinding, TimerTriggerAttribute attribute, TimersConfiguration config)
         {
+            _attribute = attribute;
             _parameterName = parameterName;
             _converter = CreateConverter(parameterType);
             _argumentBinding = argumentBinding;
-            _attribute = attribute;
             _config = config;
             _bindingContract = CreateBindingDataContract();
         }
@@ -81,10 +81,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 
         public ParameterDescriptor ToParameterDescriptor()
         {
-            return new TimerTriggerParameterDescriptor
+            TimerTriggerParameterDescriptor descriptor = new TimerTriggerParameterDescriptor
             {
-                // TODO: Figure out Display Hints
+                Name = _parameterName,
+                DisplayHints = new ParameterDisplayHints
+                {
+                    Prompt = "Enter an ISO DateTime string (yyyy-mm-ddThh:mm:ssZ)",
+                    Description = string.Format("Timer executed on schedule ({0})", _attribute.Schedule.ToString()),
+                    DefaultValue = DateTime.UtcNow.ToString("o")
+                }
             };
+            return descriptor;
         }
 
         private IReadOnlyDictionary<string, Type> CreateBindingDataContract()
@@ -98,17 +105,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
         private IReadOnlyDictionary<string, object> CreateBindingData(TimerInfo timerInfo)
         {
             Dictionary<string, object> bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            bindingData.Add("TimerTrigger", DateTime.Now.ToString());
+            bindingData.Add("TimerTrigger", DateTime.UtcNow.ToString());
 
             // TODO: figure out if there is any binding data we need
 
             return bindingData;
         }
 
-        private static IObjectToTypeConverter<TimerInfo> CreateConverter(Type parameterType)
+        private IObjectToTypeConverter<TimerInfo> CreateConverter(Type parameterType)
         {
             return new CompositeObjectToTypeConverter<TimerInfo>(
-                    new TimerInfoOutputConverter<TimerInfo>(new IdentityConverter<TimerInfo>()));
+                    new TimerInfoOutputConverter<TimerInfo>(new IdentityConverter<TimerInfo>()),
+                    new TimerInfoOutputConverter<string>(new StringToTimerInfoConverter(_attribute.Schedule)));
         }
     }
 }

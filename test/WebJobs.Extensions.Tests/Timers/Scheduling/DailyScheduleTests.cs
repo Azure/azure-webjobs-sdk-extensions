@@ -64,6 +64,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             now = nextOccurrence + TimeSpan.FromSeconds(1);
         }
 
+        [Fact]
+        public void ToString_ReturnsExpectedValue()
+        {
+            DailySchedule schedule = new DailySchedule(
+                new TimeSpan(8, 30, 0),
+                new TimeSpan(15, 0, 0),  // verify the schedule self orders
+                new TimeSpan(12, 00, 0)
+            );
+            Assert.Equal("Daily: 3 occurrences", schedule.ToString());
+        }
+
         private void VerifySchedule(List<TimeSpan> scheduleData, DateTime now)
         {
             DailySchedule schedule = new DailySchedule(scheduleData.ToArray());

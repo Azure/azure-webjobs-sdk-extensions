@@ -97,6 +97,7 @@
     <Compile Include="Files\Config\FilesJobHostConfigurationExtensions.cs" />
     <Compile Include="Files\Converters\FileSystemConverter.cs" />
     <Compile Include="Files\Converters\OutputConverter.cs" />
+    <Compile Include="Files\Converters\StringToFileSystemEventArgsConverter.cs" />
     <Compile Include="Files\FileTriggerParameterDescriptor.cs" />
     <Compile Include="Files\FileTriggerAttribute.cs" />
     <Compile Include="Files\Listener\DefaultFileProcessorFactory.cs" />
@@ -115,6 +116,7 @@
     <Compile Include="Timers\Config\TimerJobHostConfigurationExtensions.cs" />
     <Compile Include="Timers\Config\TimersConfiguration.cs" />
     <Compile Include="Timers\Config\TimersExtensionConfig.cs" />
+    <Compile Include="Timers\Converters\StringToTimerInfoConverter.cs" />
     <Compile Include="Timers\Converters\TimerInfoOutputConverter.cs" />
     <Compile Include="Timers\Listeners\TimerListener.cs" />
     <Compile Include="Timers\Listeners\TimerListenerFactory.cs" />
