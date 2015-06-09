@@ -58,7 +58,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 
             if (!_converter.TryConvert(value, out message))
             {
-                throw new InvalidOperationException("Unable to convert trigger to TimerInfo.");
+                throw new InvalidOperationException("Unable to convert value to TimerInfo.");
             }
 
             return BindAsync(message, context);

@@ -61,7 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 
             if (!_converter.TryConvert(value, out message))
             {
-                throw new InvalidOperationException("Unable to convert trigger to FileSystemEventArgs.");
+                throw new InvalidOperationException("Unable to convert value to FileSystemEventArgs.");
             }
 
             return BindAsync(message, context);

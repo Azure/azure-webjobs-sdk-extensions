@@ -52,7 +52,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
             if (string.IsNullOrEmpty(_config.RootPath) || !Directory.Exists(_config.RootPath))
             {
-                throw new InvalidOperationException("FilesConfiguration.RootPath must be set to a valid directory location.");
+                throw new InvalidOperationException(string.Format("Path '{0}' is invalid. FilesConfiguration.RootPath must be set to a valid directory location.", _config.RootPath));
             }
 
             CreateFileWatcher();

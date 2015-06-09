@@ -8,7 +8,7 @@ namespace WebJobsSandbox
     public static class FileSamples
     {
         public static void ImportFile(
-            [FileTrigger(@"data\import\{name}", autoDelete: true, filter: "*.dat")] FileStream file,
+            [FileTrigger(@"import\{name}", autoDelete: true, filter: "*.dat")] FileStream file,
             [Blob(@"processed/{name}")] CloudBlockBlob output,
             string name,
             TextWriter log)
