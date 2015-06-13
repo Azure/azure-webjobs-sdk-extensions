@@ -16,11 +16,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private readonly TimerTriggerExecutor _triggerExecutor;
         private readonly CancellationTokenSource _cancellationTokenSource;
 
+        // Since Timer uses an integer internally for it's interval,
+        // it has a maximum interval of 24.8 days.
+        private static readonly TimeSpan _maxTimerInterval = TimeSpan.FromDays(24);
+
         private System.Timers.Timer _timer;
         private TimerSchedule _schedule;
         private ScheduleMonitor _scheduleMonitor;
         private string _timerName;
         private bool _disposed;
+        private TimeSpan _remainingInterval;
 
         public TimerListener(TimerTriggerAttribute attribute, string timerName, TimersConfiguration config, TimerTriggerExecutor triggerExecutor)
         {
@@ -34,6 +39,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             _scheduleMonitor = _config.ScheduleMonitor;
         }
 
+        internal static TimeSpan MaxTimerInterval 
+        {
+            get
+            {
+                return _maxTimerInterval;
+            }
+        }
+
+        // for testing
+        internal System.Timers.Timer Timer
+        {
+            get
+            {
+                return _timer;
+            }
+        }
+
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             ThrowIfDisposed();
@@ -43,27 +65,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 throw new InvalidOperationException("The listener has already been started.");
             }
 
-            // if schedule monitoring is enabled for this timer job,
-            // check to see if we've missed an occurrence since
-            // we last started
+            // if schedule monitoring is enabled for this timer job, check to see if we've
+            // missed an occurrence since we last started
             DateTime now = DateTime.UtcNow;
             if (_attribute.UseMonitor)
             {
-                DateTime nextOccurrence = _schedule.GetNextOccurrence(now);
-                if (await _scheduleMonitor.IsPastDueAsync(_timerName, now, nextOccurrence))
+                if (await _scheduleMonitor.IsPastDueAsync(_timerName, now, _schedule))
                 {
                     // we've missed an occurrence so invoke the job function immediately
                     await InvokeJobFunction(now, true);
                 }
             }
-
+       
             _timer = new System.Timers.Timer
             {
-                AutoReset = false,
-                Interval = GetNextInterval(now)
+                AutoReset = false
             };
             _timer.Elapsed += OnTimer;
-            _timer.Start();
+
+            DateTime nextOccurrence = _schedule.GetNextOccurrence(now);
+            TimeSpan nextInterval = nextOccurrence - now;
+            StartTimer(nextInterval);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
@@ -114,14 +136,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             HandleTimerEvent().Wait();
         }
 
-        private async Task HandleTimerEvent()
+        internal async Task HandleTimerEvent()
         {
+            if (_remainingInterval != TimeSpan.Zero)
+            {
+                // if we're in the middle of a long interval that exceeds
+                // Timer's max interval, continue the remaining interval w/o
+                // invoking the function
+                StartTimer(_remainingInterval);
+                return;
+            }
+
             DateTime lastOccurrence = DateTime.Now;
 
             await InvokeJobFunction(lastOccurrence, false);
 
-            _timer.Interval = GetNextInterval(lastOccurrence);
-            _timer.Start();
+            // restart the timer with the next schedule occurrence
+            DateTime nextOccurrence = _schedule.GetNextOccurrence(lastOccurrence);
+            TimeSpan nextInterval = nextOccurrence - lastOccurrence;
+            StartTimer(nextInterval);
         }
 
         internal async Task InvokeJobFunction(DateTime lastOccurrence, bool isPastDue)
@@ -143,11 +176,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             }
         }
 
-        private double GetNextInterval(DateTime now)
+        internal void StartTimer(TimeSpan interval)
         {
-            DateTime nextOccurrence = _schedule.GetNextOccurrence(now);
-            TimeSpan nextInterval = nextOccurrence - now;
-            return nextInterval.TotalMilliseconds;
+            if (interval > MaxTimerInterval)
+            {
+                // if the interval exceeds the maximum interval supported by Timer,
+                // store the remainder and use the max
+                _remainingInterval = interval - MaxTimerInterval;
+                interval = MaxTimerInterval;
+            }
+            else
+            {
+                // clear out any remaining interval
+                _remainingInterval = TimeSpan.Zero;
+            }
+
+            _timer.Interval = interval.TotalMilliseconds;
+            _timer.Start();
         }
 
         private void ThrowIfDisposed()

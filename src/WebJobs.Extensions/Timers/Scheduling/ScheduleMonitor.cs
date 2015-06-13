@@ -16,9 +16,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Scheduling
         /// </summary>
         /// <param name="timerName">The name of the timer to check</param>
         /// <param name="now">The time to check</param>
-        /// <param name="nextOccurrence">The next occurrence of the schedule</param>
+        /// <param name="schedule">The <see cref="TimerSchedule"/></param>
         /// <returns>True if the schedule is past due, false otherwise.</returns>
-        public abstract Task<bool> IsPastDueAsync(string timerName, DateTime now, DateTime nextOccurrence);
+        public abstract Task<bool> IsPastDueAsync(string timerName, DateTime now, TimerSchedule schedule);
 
         /// <summary>
         /// Updates the schedule status for the specified timer.

@@ -2,19 +2,19 @@
 using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers.Scheduling
 {
     /// <summary>
     /// This class is used to monitor and record schedule occurrences. It stores
-    /// schedule occurrence info to persistent storage at runtime.
+    /// schedule occurrence info to the file system at runtime.
     /// <see cref="TimerTriggerAttribute"/> uses this class to monitor
     /// schedules to avoid missing scheduled executions.
     /// </summary>
     public class FileSystemScheduleMonitor : ScheduleMonitor
     {
         private string _statusFilePath;
+        private JsonSerializer _serializer;
 
         /// <summary>
         /// Constructs a new instance
@@ -35,6 +35,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Scheduling
 
             _statusFilePath = Path.Combine(rootPath, @"webjobssdk\timers");
             Directory.CreateDirectory(_statusFilePath);
+
+            JsonSerializerSettings settings = new JsonSerializerSettings
+            {
+                DateFormatHandling = DateFormatHandling.IsoDateFormat
+            };
+            _serializer = JsonSerializer.Create(settings);
         }
 
         /// <summary>
@@ -61,43 +67,57 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Scheduling
         }
 
         /// <inheritdoc/>
-        public override async Task<bool> IsPastDueAsync(string timerName, DateTime now, DateTime nextOccurrence)
+        public override async Task<bool> IsPastDueAsync(string timerName, DateTime now, TimerSchedule schedule)
         {
-            bool isPastDue = false;
-
-            DateTime? recordedNextOccurrence = await GetNextOccurrenceAsync(timerName);
-            if (recordedNextOccurrence == null)
+            StatusEntry status = GetStatus(timerName);
+            DateTime recordedNextOccurrence;
+            if (status == null)
             {
                 // If we've never recorded a status for this timer, write an initial
                 // status entry. This ensures that for a new timer, we've captured a
                 // status log for the next occurrence even though no occurrence has happened yet
                 // (ensuring we don't miss an occurrence)
+                DateTime nextOccurrence = schedule.GetNextOccurrence(now);
                 await UpdateAsync(timerName, default(DateTime), nextOccurrence);
                 recordedNextOccurrence = nextOccurrence;
             }
-
-            if (now > recordedNextOccurrence)
+            else
             {
-                isPastDue = true;
+                // ensure that the schedule hasn't been updated since the last
+                // time we checked, and if it has, update the status file
+                DateTime expectedNextOccurrence = schedule.GetNextOccurrence(status.Last);
+                if (status.Next != expectedNextOccurrence)
+                {
+                    await UpdateAsync(timerName, status.Last, expectedNextOccurrence);
+                }
+                recordedNextOccurrence = status.Next;
             }
 
-            return isPastDue;
+            // if now is after the last next occurrence we recorded, we know we've missed
+            // at least one schedule instance
+            return now > recordedNextOccurrence;
         }
 
         /// <inheritdoc/>
         public override Task UpdateAsync(string timerName, DateTime lastOccurrence, DateTime nextOccurrence)
         {
-            JObject record = new JObject
+            StatusEntry status = new StatusEntry
             {
-                { "Last", lastOccurrence },
-                { "Next", nextOccurrence }
+                Last = lastOccurrence,
+                Next = nextOccurrence
             };
-            string status = record.ToString(Formatting.None);
+
+            string statusLine;
+            using (StringWriter stringWriter = new StringWriter())
+            {
+                _serializer.Serialize(stringWriter, status);
+                statusLine = stringWriter.ToString();
+            }
 
             string statusFileName = GetStatusFileName(timerName);
             try
             {
-                File.WriteAllText(statusFileName, status);
+                File.WriteAllText(statusFileName, statusLine);
             }
             catch
             {
@@ -112,19 +132,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Scheduling
         /// </summary>
         /// <param name="timerName">The name of the timer.</param>
         /// <returns></returns>
-        protected virtual Task<DateTime?> GetNextOccurrenceAsync(string timerName)
+        protected StatusEntry GetStatus(string timerName)
         {
             string statusFilePath = GetStatusFileName(timerName);
             if (!File.Exists(statusFilePath))
             {
-                return Task.FromResult<DateTime?>(null);
+                return null;
             }
 
+            StatusEntry status;
             string statusLine = File.ReadAllText(statusFilePath);
-            JObject status = JObject.Parse(statusLine);
-            DateTime? nextOccurrence = (DateTime)status["Next"];
+            using (StringReader stringReader = new StringReader(statusLine))
+            {
+                status = (StatusEntry)_serializer.Deserialize(stringReader, typeof(StatusEntry));
+            }
 
-            return Task.FromResult(nextOccurrence);
+            return status;
         }
 
         /// <summary>
@@ -135,6 +158,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Scheduling
         protected internal string GetStatusFileName(string timerName)
         {
             return Path.Combine(StatusFilePath, timerName + ".status");
+        }
+
+        /// <summary>
+        /// Represents a timer schedule status file entry
+        /// </summary>
+        protected class StatusEntry
+        {
+            /// <summary>
+            /// The last recorded schedule occurrence
+            /// </summary>
+            public DateTime Last { get; set; }
+
+            /// <summary>
+            /// The expected next schedule occurrence
+            /// </summary>
+            public DateTime Next { get; set; }
         }
     }
 }
