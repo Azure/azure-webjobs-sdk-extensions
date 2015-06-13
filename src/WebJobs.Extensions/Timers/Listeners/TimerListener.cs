@@ -18,7 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
         // Since Timer uses an integer internally for it's interval,
         // it has a maximum interval of 24.8 days.
-        private static readonly TimeSpan _maxTimerInterval = TimeSpan.FromDays(24);
+        private static TimeSpan _maxTimerInterval = TimeSpan.FromDays(24);
 
         private System.Timers.Timer _timer;
         private TimerSchedule _schedule;

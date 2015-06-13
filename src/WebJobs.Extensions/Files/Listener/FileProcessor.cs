@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Executors;
@@ -58,17 +56,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         }
 
         /// <summary>
-        /// Gets the batch size used when processing files.
-        /// </summary>
-        public virtual int BatchSize
-        {
-            get
-            {
-                return 5;
-            }
-        }
-
-        /// <summary>
         /// Gets the current role instance ID. In Azure WebApps, this will be the
         /// WEBSITE_INSTANCE_ID.
         /// </summary>
@@ -85,33 +72,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
                     }
                 }
                 return _instanceId;
-            }
-        }
-
-        /// <summary>
-        /// This method is responsible for searching for any existing files that haven't been processed yet,
-        /// and processing them.
-        /// </summary>
-        public virtual void ProcessFiles()
-        {
-            IEnumerable<string> files = Directory.GetFiles(_filePath, _attribute.Filter).Where(p => ShouldProcessFile(p)).ToArray();
-
-            int skip = 0;
-            IEnumerable<string> fileBatch = files.Skip(skip).Take(BatchSize);
-            while (fileBatch.Any())
-            {
-                List<Task> batchTasks = new List<Task>();
-                foreach (string file in fileBatch)
-                {
-                    string fileName = Path.GetFileName(file);
-                    FileSystemEventArgs args = new FileSystemEventArgs(WatcherChangeTypes.Created, _filePath, fileName);
-                    batchTasks.Add(ProcessFileAsync(args));
-                }
-                Task.WaitAll(batchTasks.ToArray());
-
-                // get the next batch
-                skip += BatchSize;
-                fileBatch = files.Skip(skip).Take(BatchSize);
             }
         }
 

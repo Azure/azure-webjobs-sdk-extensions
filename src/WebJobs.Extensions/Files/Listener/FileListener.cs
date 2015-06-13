@@ -2,9 +2,12 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
 using Microsoft.Azure.WebJobs.Host.Executors;
@@ -18,6 +21,8 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
         private readonly ITriggeredFunctionExecutor<FileSystemEventArgs> _triggerExecutor;
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly FilesConfiguration _config;
+        private readonly ActionBlock<FileSystemEventArgs> _workQueue;
+        private readonly string _watchPath;
         private FileProcessor _processor;
         private System.Timers.Timer _cleanupTimer;
         private Random _rand = new Random();
@@ -31,9 +36,18 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
             _attribute = attribute;
             _triggerExecutor = triggerExecutor;
             _cancellationTokenSource = new CancellationTokenSource();
+            _watchPath = Path.Combine(_config.RootPath, _attribute.GetNormalizedPath());
+
+            ExecutionDataflowBlockOptions options = new ExecutionDataflowBlockOptions
+            {
+                BoundedCapacity = config.MaxQueueSize,
+                MaxDegreeOfParallelism = config.MaxDegreeOfParallelism,
+            };
+            _workQueue = new ActionBlock<FileSystemEventArgs>(async (e) => await ProcessWorkItem(e), options);
         }
 
-        public FileProcessor Processor
+        // for testing
+        internal FileProcessor Processor
         {
             get
             {
@@ -61,7 +75,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
             _processor = _config.ProcessorFactory.CreateFileProcessor(context, _cancellationTokenSource);
 
             // on startup, process any preexisting files that haven't been processed yet
-            _processor.ProcessFiles();
+            ProcessFiles();
 
             // Create a timer to cleanup processed files.
             // The timer doesn't auto-reset. It will reset itself
@@ -133,16 +147,14 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
         private void CreateFileWatcher()
         {
-            string watchPath = Path.Combine(_config.RootPath, _attribute.GetNormalizedPath());
-
-            if (!Directory.Exists(watchPath))
+            if (!Directory.Exists(_watchPath))
             {
-                throw new InvalidOperationException(string.Format("Path '{0}' does not exist.", watchPath));
+                throw new InvalidOperationException(string.Format("Path '{0}' does not exist.", _watchPath));
             }
 
             _watcher = new FileSystemWatcher
             {
-                Path = watchPath,
+                Path = _watchPath,
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName,
                 Filter = _attribute.Filter
             };
@@ -177,10 +189,29 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
         private void FileChangeHandler(object source, FileSystemEventArgs e)
         {
-            _processor.ProcessFileAsync(e).Wait();
+            // add the item to the work queue
+            _workQueue.Post(e);
 
             // when we receive file events, reset the cleanup timer
             _cleanupTimer.Enabled = true;
+        }
+
+        private async Task ProcessWorkItem(FileSystemEventArgs e)
+        {
+            await _processor.ProcessFileAsync(e);
+        }
+
+        private void ProcessFiles()
+        {
+            IEnumerable<string> unprocessedFiles = Directory.GetFiles(_watchPath, _attribute.Filter)
+                .Where(p => _processor.ShouldProcessFile(p)).ToArray();
+
+            foreach (string fileToProcess in unprocessedFiles)
+            {
+                string fileName = Path.GetFileName(fileToProcess);
+                FileSystemEventArgs args = new FileSystemEventArgs(WatcherChangeTypes.Created, _watchPath, fileName);
+                _workQueue.Post(args);
+            }
         }
 
         private void ThrowIfDisposed()
