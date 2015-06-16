@@ -142,7 +142,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
                     {
                         State = ProcessingState.Processing,
                         Timestamp = DateTime.UtcNow,
-                        LastWrite = File.GetLastWriteTime(filePath),
+                        LastWrite = File.GetLastWriteTimeUtc(filePath),
                         ChangeType = eventArgs.ChangeType,
                         InstanceId = InstanceId
                     };
@@ -191,10 +191,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// </summary>
         public virtual void Cleanup()
         {
-            // TODO: Look for any status files that have been around for a while but
-            // don't indicate success (e.g. failed job functions), and delete the status
-            // files to trigger reprocessing
-
             if (_attribute.AutoDelete)
             {
                 CleanupProcessedFiles();
@@ -215,7 +211,93 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
             }
 
             StatusFileEntry statusEntry = GetLastStatus(statusFilePath);
-            return statusEntry.State != ProcessingState.Processed;
+            return statusEntry == null || statusEntry.State != ProcessingState.Processed;
+        }
+
+        internal StreamWriter AquireStatusFileLock(string filePath, WatcherChangeTypes changeType)
+        {
+            Stream stream = null;
+            try
+            {
+                // Attempt to create (or update) the companion status file and lock it. The status
+                // file is the mechanism for handling multi-instance concurrency.
+                string statusFilePath = GetStatusFile(filePath);
+                stream = File.Open(statusFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+
+                // Once we've established the lock, we need to check to ensure that another instance
+                // hasn't already processed the file in the time between our getting the event and
+                // aquiring the lock.
+                StatusFileEntry statusEntry = GetLastStatus(stream);
+                if (statusEntry != null && statusEntry.State == ProcessingState.Processed)
+                {
+                    // For file Create, we have no additional checks to perform. However for
+                    // file Change, we need to also check the LastWrite value for the entry
+                    // since there can be multiple Processed entries in the file over time.
+                    if (changeType == WatcherChangeTypes.Created)
+                    {
+                        return null;
+                    }
+                    else if (changeType == WatcherChangeTypes.Changed &&
+                        File.GetLastWriteTimeUtc(filePath) == statusEntry.LastWrite)
+                    {
+                        return null;
+                    }
+                }
+                
+                stream.Seek(0, SeekOrigin.End);
+                StreamWriter streamReader = new StreamWriter(stream);
+                streamReader.AutoFlush = true;
+                stream = null;
+
+                return streamReader;
+            }
+            catch
+            {
+                return null;
+            }
+            finally
+            {
+                if (stream != null)
+                {
+                    stream.Dispose();
+                }
+            }
+        }
+
+        internal StatusFileEntry GetLastStatus(string statusFilePath)
+        {
+            using (Stream stream = File.OpenRead(statusFilePath))
+            {
+                return GetLastStatus(stream);
+            }
+        }
+
+        internal StatusFileEntry GetLastStatus(Stream statusFileStream)
+        {
+            StatusFileEntry statusEntry = null;
+
+            using (StreamReader reader = new StreamReader(statusFileStream, Encoding.UTF8, false, 1024, true))
+            {
+                string text = reader.ReadToEnd();
+                string[] fileLines = text.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+                string lastLine = fileLines.LastOrDefault();
+                if (!string.IsNullOrEmpty(lastLine))
+                {
+                    using (StringReader stringReader = new StringReader(lastLine))
+                    {
+                        statusEntry = (StatusFileEntry)_serializer.Deserialize(stringReader, typeof(StatusFileEntry));
+                    }
+                }
+            }
+
+            statusFileStream.Seek(0, SeekOrigin.End);
+
+            return statusEntry;
+        }
+
+        internal string GetStatusFile(string file)
+        {
+            return file + "." + StatusFileExtension;
         }
 
         /// <summary>
@@ -259,94 +341,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
                     // ignore any delete failures
                 }
             }
-        }
-
-        internal StreamWriter AquireStatusFileLock(string filePath, WatcherChangeTypes changeType)
-        {
-            Stream stream = null;
-            try
-            {
-                // Attempt to create (or update) the companion status file. The status file is
-                // the mechanism for handling multi-instance concurrency. In file Create cases,
-                // we use FileMode CreateNew, ensuring only one instance will process the file.
-                // In file Update cases, we first aquire the file lock, then verify that another
-                // instance hasn't already processed the update by checking the LastWrite time
-                // of the last Change entry in the file.
-                string statusFilePath = GetStatusFile(filePath);
-                FileMode fileMode = changeType == WatcherChangeTypes.Created
-                                        ? FileMode.CreateNew : FileMode.OpenOrCreate;
-                stream = File.Open(statusFilePath, fileMode, FileAccess.ReadWrite, FileShare.None);
-
-                if (changeType == WatcherChangeTypes.Changed)
-                {
-                    // check to ensure that this file change hasn't already been processed
-                    StatusFileEntry statusEntry = GetLastStatus(stream);
-                    if (statusEntry != null)
-                    {
-                        FileInfo statusFileInfo = new FileInfo(filePath);
-                        if (statusEntry.ChangeType == WatcherChangeTypes.Changed &&
-                            statusFileInfo.LastWriteTime == statusEntry.LastWrite)
-                        {
-                            // some other instance has processed this file change
-                            return null;
-                        }
-                    }
-                }
-
-                stream.Seek(0, SeekOrigin.End);
-                StreamWriter streamReader = new StreamWriter(stream);
-                streamReader.AutoFlush = true;
-                stream = null;
-
-                return streamReader;
-            }
-            catch
-            {
-                return null;
-            }
-            finally
-            {
-                if (stream != null)
-                {
-                    stream.Dispose();
-                }
-            }
-        }
-
-        internal StatusFileEntry GetLastStatus(string statusFilePath)
-        {
-            using (Stream stream = File.OpenRead(statusFilePath))
-            {
-                return GetLastStatus(stream);
-            }
-        }
-
-        internal StatusFileEntry GetLastStatus(Stream statusFileStream)
-        {
-            StatusFileEntry statusEntry = null;
-
-            using (StreamReader reader = new StreamReader(statusFileStream, Encoding.UTF8, false, 1024, true))
-            {
-                string text = reader.ReadToEnd();
-                string[] fileLines = text.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-                string lastLine = fileLines.Last();
-                if (!string.IsNullOrEmpty(lastLine))
-                {
-                    using (StringReader stringReader = new StringReader(lastLine))
-                    {
-                        statusEntry = (StatusFileEntry)_serializer.Deserialize(stringReader, typeof(StatusFileEntry));
-                    }
-                }
-            }
-
-            statusFileStream.Seek(0, SeekOrigin.End);
-
-            return statusEntry;
-        }
-
-        internal string GetStatusFile(string file)
-        {
-            return file + "." + StatusFileExtension;
         }
 
         private static bool TryDelete(string filePath)

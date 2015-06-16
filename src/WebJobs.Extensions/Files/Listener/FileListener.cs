@@ -227,13 +227,16 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
             foreach (string fileToProcess in unprocessedFiles)
             {
                 WatcherChangeTypes changeType = WatcherChangeTypes.Created;
-
                 string statusFilePath = _processor.GetStatusFile(fileToProcess);
                 if (File.Exists(statusFilePath))
                 {
-                    // if an in progress status file exists
+                    // if an in progress status file exists, we determine the ChangeType
+                    // from the last entry (incomplete) in the file
                     StatusFileEntry statusEntry = _processor.GetLastStatus(statusFilePath);
-                    changeType = statusEntry.ChangeType;
+                    if (statusEntry != null)
+                    {
+                        changeType = statusEntry.ChangeType;
+                    }
                 }
 
                 string fileName = Path.GetFileName(fileToProcess);

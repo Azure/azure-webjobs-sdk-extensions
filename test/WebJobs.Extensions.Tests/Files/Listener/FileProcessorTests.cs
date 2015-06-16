@@ -138,6 +138,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             Assert.True(fileProcessedSuccessfully);
 
             // now process a Change event
+            File.WriteAllText(testFile, "update");
             eventArgs = new FileSystemEventArgs(WatcherChangeTypes.Changed, testFilePath, testFileName);
             fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs);
             Assert.True(fileProcessedSuccessfully);
