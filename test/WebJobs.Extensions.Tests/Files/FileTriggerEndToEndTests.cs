@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Xunit;
@@ -65,7 +64,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
             int preexistingFileCount = 10;
             for (int i = 0; i < preexistingFileCount; i++)
             {
-                // now write a file to trigger the job
                 string testFilePath = WriteTestFile();
                 filesToProcess.Add(Path.GetFileName(testFilePath));
             }

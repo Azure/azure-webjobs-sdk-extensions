@@ -5,12 +5,13 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs.Files.Listeners;
-using Microsoft.Azure.WebJobs.Host.Executors;
-using Moq;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
+using Microsoft.Azure.WebJobs.Files.Listeners;
+using Microsoft.Azure.WebJobs.Host.Executors;
+using Moq;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
@@ -51,7 +52,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             {
                 RootPath = rootPath
             };
-            FileTriggerAttribute attribute = new FileTriggerAttribute(attributeSubPath, "*.dat");
+            FileTriggerAttribute attribute = new FileTriggerAttribute(attributeSubPath, changeTypes: WatcherChangeTypes.Created | WatcherChangeTypes.Changed, filter: "*.dat");
 
             // create a bunch of listeners and start them
             CancellationTokenSource tokenSource = new CancellationTokenSource();
@@ -78,26 +79,81 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             // wait for all files to be processed
             await TestHelpers.Await(() =>
             {
-                return processedFiles.Count == inputFileCount;
+                return processedFiles.Count >= inputFileCount;
             });
+            Assert.Equal(inputFileCount, processedFiles.Count);
 
             // verify that each file was only processed once
             Assert.True(expectedFiles.OrderBy(p => p).SequenceEqual(processedFiles.OrderBy(p => p)));
             Assert.Equal(expectedFiles.Count * 2, Directory.GetFiles(testFileDir).Length);
 
             // verify contents of each status file
+            FileProcessor processor = listeners[0].Processor;
             foreach (string processedFile in processedFiles)
             {
-                string statusFile = Path.Combine(testFileDir, processedFile + ".status");
-                string[] statusLines = File.ReadAllLines(statusFile);
+                string statusFilePath = processor.GetStatusFile(Path.Combine(testFileDir, processedFile));
+
+                string[] statusLines = File.ReadAllLines(statusFilePath);
 
                 Assert.Equal(2, statusLines.Length);
-                Assert.True(statusLines[0].StartsWith("Processing"));
-                Assert.True(statusLines[1].StartsWith("Processed"));
+                StatusFileEntry statusEntry = JsonConvert.DeserializeObject<StatusFileEntry>(statusLines[0]);
+                Assert.Equal(ProcessingState.Processing, statusEntry.State);
+                Assert.Equal(WatcherChangeTypes.Created, statusEntry.ChangeType);
+
+                statusEntry = JsonConvert.DeserializeObject<StatusFileEntry>(statusLines[1]);
+                Assert.Equal(ProcessingState.Processed, statusEntry.State);
+                Assert.Equal(WatcherChangeTypes.Created, statusEntry.ChangeType);
+            }
+
+            // Now test concurrency handling for updates by updating some files
+            // and verifying the updates are only processed once
+            string[] filesToUpdate = processedFiles.Take(50).Select(p => Path.Combine(testFileDir, p)).ToArray();
+            string item;
+            while (!processedFiles.IsEmpty)
+            {
+                processedFiles.TryTake(out item);
+            }
+            await Task.Delay(1000);
+            foreach (string fileToUpdate in filesToUpdate)
+            {
+                await Task.Delay(50);
+                File.AppendAllText(fileToUpdate, "update");
+            }
+
+            // wait for all files to be processed
+            await TestHelpers.Await(() =>
+            {
+                return processedFiles.Count >= filesToUpdate.Length;
+            });
+            Assert.Equal(filesToUpdate.Length, processedFiles.Count);
+            Assert.Equal(expectedFiles.Count * 2, Directory.GetFiles(testFileDir).Length);
+
+            // verify the status files are correct for each of the updated files
+            foreach (string updatedFile in filesToUpdate)
+            {
+                string statusFilePath = processor.GetStatusFile(updatedFile);
+
+                string[] statusLines = File.ReadAllLines(statusFilePath);
+
+                Assert.Equal(4, statusLines.Length);
+                StatusFileEntry statusEntry = JsonConvert.DeserializeObject<StatusFileEntry>(statusLines[0]);
+                Assert.Equal(ProcessingState.Processing, statusEntry.State);
+                Assert.Equal(WatcherChangeTypes.Created, statusEntry.ChangeType);
+
+                statusEntry = JsonConvert.DeserializeObject<StatusFileEntry>(statusLines[1]);
+                Assert.Equal(ProcessingState.Processed, statusEntry.State);
+                Assert.Equal(WatcherChangeTypes.Created, statusEntry.ChangeType);
+
+                statusEntry = JsonConvert.DeserializeObject<StatusFileEntry>(statusLines[2]);
+                Assert.Equal(ProcessingState.Processing, statusEntry.State);
+                Assert.Equal(WatcherChangeTypes.Changed, statusEntry.ChangeType);
+
+                statusEntry = JsonConvert.DeserializeObject<StatusFileEntry>(statusLines[3]);
+                Assert.Equal(ProcessingState.Processed, statusEntry.State);
+                Assert.Equal(WatcherChangeTypes.Changed, statusEntry.ChangeType);
             }
 
             // Now call purge to clean up all processed files
-            FileProcessor processor = listeners[0].Processor;
             processor.CleanupProcessedFiles();
             Assert.Equal(0, Directory.GetFiles(testFileDir).Length);
 

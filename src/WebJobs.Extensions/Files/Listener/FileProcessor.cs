@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Executors;
+using Newtonsoft.Json;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
 {
@@ -17,7 +21,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         private CancellationTokenSource _cancellationTokenSource;
         private string _filePath;
         private string _instanceId;
-
+        private JsonSerializer _serializer;
+ 
         /// <summary>
         /// Constructs a new instance
         /// </summary>
@@ -41,6 +46,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
 
             string attributePath = _attribute.GetNormalizedPath();
             _filePath = Path.Combine(_config.RootPath, attributePath);
+
+            JsonSerializerSettings settings = new JsonSerializerSettings
+            {
+                DateFormatHandling = DateFormatHandling.IsoDateFormat,
+            };
+            _serializer = JsonSerializer.Create(settings);
         }
 
         /// <summary>
@@ -56,8 +67,38 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         }
 
         /// <summary>
+        /// Gets or sets the maximum degree of parallelism that will be used
+        /// when processing files concurrently.
+        /// </summary>
+        /// <remarks>
+        /// Files are added to an internal processing queue as file events
+        /// are detected, and they're processed in parallel based on this setting.
+        /// </remarks>
+        public virtual int MaxDegreeOfParallelism 
+        { 
+            get
+            {
+                return 5;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the bounds on the maximum number of files that
+        /// can be queued up for processing at one time. When set to -1,
+        /// the work queue is unbounded.
+        /// </summary>
+        public virtual int MaxQueueSize 
+        { 
+            get
+            {
+                return -1;
+            }
+        }
+
+        /// <summary>
         /// Gets the current role instance ID. In Azure WebApps, this will be the
-        /// WEBSITE_INSTANCE_ID.
+        /// WEBSITE_INSTANCE_ID. In non Azure scenarios, this will default to the
+        /// Process ID.
         /// </summary>
         public virtual string InstanceId
         {
@@ -68,7 +109,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
                     string envValue = Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID");
                     if (!string.IsNullOrEmpty(envValue))
                     {
-                        _instanceId = envValue.Substring(0, 10);
+                        _instanceId = envValue.Substring(0, 20);
+                    }
+                    else
+                    {
+                        _instanceId = Process.GetCurrentProcess().Id.ToString();
                     }
                 }
                 return _instanceId;
@@ -79,102 +124,65 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// Process the file indicated by the specified <see cref="FileSystemEventArgs"/>.
         /// </summary>
         /// <param name="eventArgs">The <see cref="FileSystemEventArgs"/> indicating the file to process.</param>
-        /// <returns>A <see cref="Task"/> representing the file process operation.</returns>
-        public virtual async Task ProcessFileAsync(FileSystemEventArgs eventArgs)
+        /// <returns>A <see cref="Task"/> that returns true if the file was processed successfully, false otherwise.</returns>
+        public virtual async Task<bool> ProcessFileAsync(FileSystemEventArgs eventArgs)
         {
-            string fileToProcess = eventArgs.FullPath;
-            if (!BeginProcessing(fileToProcess))
-            {
-                return;
-            }
-
-            TriggeredFunctionData<FileSystemEventArgs> input = new TriggeredFunctionData<FileSystemEventArgs>
-            {
-                // TODO: set this properly
-                ParentId = null,
-                TriggerValue = eventArgs
-            };
-            CancellationToken token = _cancellationTokenSource.Token;
-            FunctionResult result = await _executor.TryExecuteAsync(input, token);
-
-            CompleteProcessing(fileToProcess, result);
-
-            if (!result.Succeeded)
-            {
-                token.ThrowIfCancellationRequested();
-            }
-        }
-
-        /// <summary>
-        /// Begin processing the specified file.
-        /// </summary>
-        /// <param name="filePath">The file to process.</param>
-        /// <returns>True if the file should be processed, false otherwise.</returns>
-        public virtual bool BeginProcessing(string filePath)
-        {
-            if (!ShouldProcessFile(filePath))
-            {
-                return false;
-            }
-
-            return TryCreateStatusFile(filePath);
-        }
-
-        private bool TryCreateStatusFile(string filePath)
-        {
-            Stream stream = null;
             try
             {
-                // Attempt to create a companion status file. This is the mechanism for handling
-                // multi-instance concurrency. If another process (e.g. another instance of the host
-                // WebApp) beats us to it, the following line will throw, indicating that somebody
-                // else is processing the file.
-                string statusFilePath = GetStatusFile(filePath);
-                stream = File.Open(statusFilePath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
-                using (StreamWriter sw = new StreamWriter(stream))
+                string filePath = eventArgs.FullPath;
+                using (StreamWriter statusWriter = AquireStatusFileLock(filePath, eventArgs.ChangeType))
                 {
-                    stream = null;
-                    sw.WriteLine(string.Format("Processing {0} (Instance: {1})", DateTime.UtcNow.ToString("o"), InstanceId));
-                }
+                    if (statusWriter == null)
+                    {
+                        return false;
+                    }
+
+                    // write an entry indicating the file is being processed
+                    StatusFileEntry status = new StatusFileEntry
+                    {
+                        State = ProcessingState.Processing,
+                        Timestamp = DateTime.UtcNow,
+                        LastWrite = File.GetLastWriteTime(filePath),
+                        ChangeType = eventArgs.ChangeType,
+                        InstanceId = InstanceId
+                    };
+                    _serializer.Serialize(statusWriter, status);
+                    statusWriter.WriteLine();
+
+                    // invoke the job function
+                    TriggeredFunctionData<FileSystemEventArgs> input = new TriggeredFunctionData<FileSystemEventArgs>
+                    {
+                        // TODO: set this properly
+                        ParentId = null,
+                        TriggerValue = eventArgs
+                    };
+                    CancellationToken token = _cancellationTokenSource.Token;
+                    FunctionResult result = await _executor.TryExecuteAsync(input, token);
+
+                    if (result.Succeeded)
+                    {
+                        // write a status entry indicating processing is complete
+                        status.State = ProcessingState.Processed;
+                        status.Timestamp = DateTime.UtcNow;
+                        _serializer.Serialize(statusWriter, status);
+                        statusWriter.WriteLine();
+                        return true;
+                    }
+                    else
+                    {         
+                        // If the function failed, we leave the in progress status
+                        // file as is (it will show "Processing"). The file will be
+                        // reprocessed later on a clean-up pass.
+                        statusWriter.Close();
+                        token.ThrowIfCancellationRequested();
+                        return false;
+                    }
+                }             
             }
             catch
             {
                 return false;
             }
-            finally
-            {
-                if (stream != null)
-                {
-                    stream.Dispose();
-                }
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Complete processing of the specified file.
-        /// </summary>
-        /// <param name="filePath">The file to complete processing for.</param>
-        /// <param name="result">The <see cref="FunctionResult"/> for the invoked function.</param>
-        public virtual void CompleteProcessing(string filePath, FunctionResult result)
-        {
-            if (result == null)
-            {
-                throw new ArgumentNullException("result");
-            }
-
-            string statusFilePath = GetStatusFile(filePath);
-            if (result.Succeeded)
-            {
-                File.AppendAllText(statusFilePath, string.Format("Processed {0} (Instance: {1})\r\n", DateTime.UtcNow.ToString("o"), InstanceId));
-            }
-            else
-            {
-                // if the function failed, clean up any in progress
-                // status file
-                TryDelete(statusFilePath);
-            }  
         }
 
         /// <summary>
@@ -200,10 +208,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// <returns>True if the file should be processed, false otherwise.</returns>
         public virtual bool ShouldProcessFile(string filePath)
         {
-            // If a status file exist for the file, it shouldn't be processed (it's
-            // either already processed or being processed)
-            string statusFileName = GetStatusFile(filePath);
-            return !File.Exists(statusFileName);
+            string statusFilePath = GetStatusFile(filePath);
+            if (!File.Exists(statusFilePath))
+            {
+                return true;
+            }
+
+            StatusFileEntry statusEntry = GetLastStatus(statusFilePath);
+            return statusEntry.State != ProcessingState.Processed;
         }
 
         /// <summary>
@@ -216,11 +228,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
             {
                 try
                 {
-                    // first read the status file to determine if the file
-                    // processing is complete
-                    string[] lines = File.ReadAllLines(statusFilePath);
-                    bool isComplete = lines.Length == 2 && lines[1].StartsWith("Processed", StringComparison.OrdinalIgnoreCase);
-                    if (!isComplete)
+                    // verify that the file has been fully processed
+                    StatusFileEntry statusEntry = GetLastStatus(statusFilePath);
+                    if (statusEntry.State != ProcessingState.Processed)
                     {
                         continue;
                     }
@@ -251,6 +261,94 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
             }
         }
 
+        internal StreamWriter AquireStatusFileLock(string filePath, WatcherChangeTypes changeType)
+        {
+            Stream stream = null;
+            try
+            {
+                // Attempt to create (or update) the companion status file. The status file is
+                // the mechanism for handling multi-instance concurrency. In file Create cases,
+                // we use FileMode CreateNew, ensuring only one instance will process the file.
+                // In file Update cases, we first aquire the file lock, then verify that another
+                // instance hasn't already processed the update by checking the LastWrite time
+                // of the last Change entry in the file.
+                string statusFilePath = GetStatusFile(filePath);
+                FileMode fileMode = changeType == WatcherChangeTypes.Created
+                                        ? FileMode.CreateNew : FileMode.OpenOrCreate;
+                stream = File.Open(statusFilePath, fileMode, FileAccess.ReadWrite, FileShare.None);
+
+                if (changeType == WatcherChangeTypes.Changed)
+                {
+                    // check to ensure that this file change hasn't already been processed
+                    StatusFileEntry statusEntry = GetLastStatus(stream);
+                    if (statusEntry != null)
+                    {
+                        FileInfo statusFileInfo = new FileInfo(filePath);
+                        if (statusEntry.ChangeType == WatcherChangeTypes.Changed &&
+                            statusFileInfo.LastWriteTime == statusEntry.LastWrite)
+                        {
+                            // some other instance has processed this file change
+                            return null;
+                        }
+                    }
+                }
+
+                stream.Seek(0, SeekOrigin.End);
+                StreamWriter streamReader = new StreamWriter(stream);
+                streamReader.AutoFlush = true;
+                stream = null;
+
+                return streamReader;
+            }
+            catch
+            {
+                return null;
+            }
+            finally
+            {
+                if (stream != null)
+                {
+                    stream.Dispose();
+                }
+            }
+        }
+
+        internal StatusFileEntry GetLastStatus(string statusFilePath)
+        {
+            using (Stream stream = File.OpenRead(statusFilePath))
+            {
+                return GetLastStatus(stream);
+            }
+        }
+
+        internal StatusFileEntry GetLastStatus(Stream statusFileStream)
+        {
+            StatusFileEntry statusEntry = null;
+
+            using (StreamReader reader = new StreamReader(statusFileStream, Encoding.UTF8, false, 1024, true))
+            {
+                string text = reader.ReadToEnd();
+                string[] fileLines = text.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+                string lastLine = fileLines.Last();
+                if (!string.IsNullOrEmpty(lastLine))
+                {
+                    using (StringReader stringReader = new StringReader(lastLine))
+                    {
+                        statusEntry = (StatusFileEntry)_serializer.Deserialize(stringReader, typeof(StatusFileEntry));
+                    }
+                }
+            }
+
+            statusFileStream.Seek(0, SeekOrigin.End);
+
+            return statusEntry;
+        }
+
+        internal string GetStatusFile(string file)
+        {
+            return file + "." + StatusFileExtension;
+        }
+
         private static bool TryDelete(string filePath)
         {
             try
@@ -262,11 +360,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
             {
                 return false;
             }
-        }
-
-        internal string GetStatusFile(string file)
-        {
-            return file + "." + StatusFileExtension;
         }
     }
 }

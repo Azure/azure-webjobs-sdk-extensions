@@ -17,16 +17,17 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 {
     internal sealed class FileListener : IListener
     {
+        private readonly TimeSpan _changeEventDebounceInterval = TimeSpan.FromSeconds(1);
+
         private readonly FileTriggerAttribute _attribute;
         private readonly ITriggeredFunctionExecutor<FileSystemEventArgs> _triggerExecutor;
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly FilesConfiguration _config;
-        private readonly ActionBlock<FileSystemEventArgs> _workQueue;
         private readonly string _watchPath;
+        private ActionBlock<FileSystemEventArgs> _workQueue;
         private FileProcessor _processor;
         private System.Timers.Timer _cleanupTimer;
         private Random _rand = new Random();
-
         private FileSystemWatcher _watcher;
         private bool _disposed;
 
@@ -37,13 +38,6 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
             _triggerExecutor = triggerExecutor;
             _cancellationTokenSource = new CancellationTokenSource();
             _watchPath = Path.Combine(_config.RootPath, _attribute.GetNormalizedPath());
-
-            ExecutionDataflowBlockOptions options = new ExecutionDataflowBlockOptions
-            {
-                BoundedCapacity = config.MaxQueueSize,
-                MaxDegreeOfParallelism = config.MaxDegreeOfParallelism,
-            };
-            _workQueue = new ActionBlock<FileSystemEventArgs>(async (e) => await ProcessWorkItem(e), options);
         }
 
         // for testing
@@ -73,6 +67,13 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
             FileProcessorFactoryContext context = new FileProcessorFactoryContext(_config, _attribute, _triggerExecutor);
             _processor = _config.ProcessorFactory.CreateFileProcessor(context, _cancellationTokenSource);
+
+            ExecutionDataflowBlockOptions options = new ExecutionDataflowBlockOptions
+            {
+                BoundedCapacity = _processor.MaxQueueSize,
+                MaxDegreeOfParallelism = _processor.MaxDegreeOfParallelism,
+            };
+            _workQueue = new ActionBlock<FileSystemEventArgs>(async (e) => await ProcessWorkItem(e), options);
 
             // on startup, process any preexisting files that haven't been processed yet
             ProcessFiles();
@@ -147,6 +148,18 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
         private void CreateFileWatcher()
         {
+            if (_attribute.ChangeTypes != WatcherChangeTypes.Created &&
+                _attribute.ChangeTypes != WatcherChangeTypes.Changed &&
+                _attribute.ChangeTypes != (WatcherChangeTypes.Created | WatcherChangeTypes.Changed))
+            {
+                throw new NotSupportedException("Only the 'Created' and 'Changed' change types are supported.");
+            }
+
+            if ((_attribute.ChangeTypes & WatcherChangeTypes.Changed) != 0 && _attribute.AutoDelete)
+            {
+                throw new NotSupportedException("Use of AutoDelete is not supported when using change type 'Changed'.");
+            }
+
             if (!Directory.Exists(_watchPath))
             {
                 throw new InvalidOperationException(string.Format("Path '{0}' does not exist.", _watchPath));
@@ -169,16 +182,6 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
                 _watcher.Created += new FileSystemEventHandler(FileChangeHandler);
             }
 
-            if ((_attribute.ChangeTypes & WatcherChangeTypes.Deleted) != 0)
-            {
-                _watcher.Deleted += new FileSystemEventHandler(FileChangeHandler);
-            }
-
-            if ((_attribute.ChangeTypes & WatcherChangeTypes.Renamed) != 0)
-            {
-                _watcher.Renamed += new RenamedEventHandler(FileChangeHandler);
-            }
-
             _watcher.EnableRaisingEvents = true;
         }
 
@@ -189,6 +192,19 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
         private void FileChangeHandler(object source, FileSystemEventArgs e)
         {
+            if (e.ChangeType == WatcherChangeTypes.Changed)
+            {
+                // if this is a Change event stemming from a Create operation
+                // we'll skip it - we only care about true change events made to
+                // existing files, not the one or more Change events that are
+                // raised when a new file is created.
+                FileInfo fileInfo = new FileInfo(e.FullPath);
+                if ((fileInfo.LastWriteTime - fileInfo.CreationTime) < _changeEventDebounceInterval)
+                {
+                    return;
+                }
+            }
+
             // add the item to the work queue
             _workQueue.Post(e);
 
@@ -203,13 +219,25 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
         private void ProcessFiles()
         {
+            // scan for any files that require processing (either new unprocessed files,
+            // or files that have failed previous processing)
             IEnumerable<string> unprocessedFiles = Directory.GetFiles(_watchPath, _attribute.Filter)
                 .Where(p => _processor.ShouldProcessFile(p)).ToArray();
 
             foreach (string fileToProcess in unprocessedFiles)
             {
+                WatcherChangeTypes changeType = WatcherChangeTypes.Created;
+
+                string statusFilePath = _processor.GetStatusFile(fileToProcess);
+                if (File.Exists(statusFilePath))
+                {
+                    // if an in progress status file exists
+                    StatusFileEntry statusEntry = _processor.GetLastStatus(statusFilePath);
+                    changeType = statusEntry.ChangeType;
+                }
+
                 string fileName = Path.GetFileName(fileToProcess);
-                FileSystemEventArgs args = new FileSystemEventArgs(WatcherChangeTypes.Created, _watchPath, fileName);
+                FileSystemEventArgs args = new FileSystemEventArgs(changeType, _watchPath, fileName);
                 _workQueue.Post(args);
             }
         }

@@ -95,7 +95,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
         private IReadOnlyDictionary<string, Type> CreateBindingDataContract(string filePathPattern)
         {
             Dictionary<string, Type> contract = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
-            contract.Add("FileTrigger", typeof(string));
+            contract.Add("FileTrigger", typeof(FileSystemEventArgs));
 
             _bindingTemplateSource = BindingTemplateSource.FromString(filePathPattern);
             Dictionary<string, Type> contractFromPath = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
@@ -119,7 +119,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
         private IReadOnlyDictionary<string, object> CreateBindingData(FileSystemEventArgs fileEvent)
         {
             Dictionary<string, object> bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            bindingData.Add("FileTrigger", fileEvent.FullPath);
+            bindingData.Add("FileTrigger", fileEvent);
 
             string pathRoot = Path.GetDirectoryName(_attribute.Path);
             int idx = fileEvent.FullPath.IndexOf(pathRoot, StringComparison.OrdinalIgnoreCase);

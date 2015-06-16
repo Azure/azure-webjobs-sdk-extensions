@@ -2,22 +2,25 @@
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs.Host.Executors;
-using Moq;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
+using Microsoft.Azure.WebJobs.Host.Executors;
+using Moq;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
 {
     public class FileProcessorTests
     {
+        private const string InstanceId = "3b151065ae0740f5c4c278989981d9090cd27d8440cdd27ee155a9f0d0ef6bb9";
         private FileProcessor processor;
         private FilesConfiguration config;
         private readonly string combinedTestFilePath;
         private readonly string rootPath;
         private Mock<ITriggeredFunctionExecutor<FileSystemEventArgs>> mockExecutor;
         private const string attributeSubPath = @"webjobs_extensionstests\import";
+        private JsonSerializer _serializer;
 
         public FileProcessorTests()
         {
@@ -30,61 +33,60 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             {
                 RootPath = rootPath
             };
-            mockExecutor = new Mock<ITriggeredFunctionExecutor<FileSystemEventArgs>>(MockBehavior.Strict);
-
+            
             FileTriggerAttribute attribute = new FileTriggerAttribute(attributeSubPath, "*.dat");
             processor = CreateTestProcessor(attribute);
 
-            Environment.SetEnvironmentVariable("WEBSITE_INSTANCE_ID", "3b151065ae0740f5c4c278989981d9090cd27d8440cdd27ee155a9f0d0ef6bb9");
+            JsonSerializerSettings settings = new JsonSerializerSettings
+            {
+                DateFormatHandling = DateFormatHandling.IsoDateFormat,
+            };
+            _serializer = JsonSerializer.Create(settings);
+
+            Environment.SetEnvironmentVariable("WEBSITE_INSTANCE_ID", InstanceId);
         }
 
         [Fact]
-        public void BeginProcessing_CreatesStatusFile()
+        public async Task ProcessFileAsync_AlreadyProcessing_ReturnsWithoutProcessing()
         {
             string testFile = WriteTestFile("dat");
 
-            string expectedStatusFile = processor.GetStatusFile(testFile);
-            Assert.False(File.Exists(expectedStatusFile));
+            // first take a lock on the status file
+            using (StreamWriter statusFile = processor.AquireStatusFileLock(testFile, WatcherChangeTypes.Created))
+            {
+                // now attempt to process the file
+                FileSystemEventArgs eventArgs = new FileSystemEventArgs(WatcherChangeTypes.Created, Path.GetDirectoryName(testFile), Path.GetFileName(testFile));
 
-            bool shouldProcess = processor.BeginProcessing(testFile);
-            Assert.True(shouldProcess);
+                bool fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs);
 
-            Assert.True(File.Exists(expectedStatusFile));
-            string[] lines = File.ReadAllLines(expectedStatusFile);
-            Assert.Equal(1, lines.Length);
-            Assert.True(lines[0].StartsWith("Processing"));
+                Assert.False(fileProcessedSuccessfully);
+                mockExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData<FileSystemEventArgs>>(), It.IsAny<CancellationToken>()), Times.Never);
+            }
+
+            string statusFilePath = processor.GetStatusFile(testFile);
+            File.Delete(statusFilePath);
         }
 
         [Fact]
-        public void BeginProcessing_AlreadyProcessing_ReturnsFalse()
+        public async Task ProcessFileAsync_Failure_LeavesInProgressStatusFile()
         {
             string testFile = WriteTestFile("dat");
-
-            processor.BeginProcessing(testFile);
-
-            bool shouldProcess = processor.BeginProcessing(testFile);
-            Assert.False(shouldProcess);
-        }
-
-        [Fact]
-        public void CompleteProcessing_Failure_DeletesStatusFile()
-        {
-            string testFile = WriteTestFile("dat");
-
-            processor.BeginProcessing(testFile);
-
-            string expectedStatusFile = processor.GetStatusFile(testFile);
-            Assert.True(File.Exists(expectedStatusFile));
 
             FunctionResult result = new FunctionResult(false);
-            processor.CompleteProcessing(testFile, result);
+            mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData<FileSystemEventArgs>>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
 
+            FileSystemEventArgs eventArgs = new FileSystemEventArgs(WatcherChangeTypes.Created, Path.GetDirectoryName(testFile), Path.GetFileName(testFile));
+            bool fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs);
+
+            Assert.False(fileProcessedSuccessfully);
             Assert.True(File.Exists(testFile));
-            Assert.False(File.Exists(expectedStatusFile));
+            string statusFilePath = processor.GetStatusFile(testFile);
+            StatusFileEntry entry = processor.GetLastStatus(statusFilePath);
+            Assert.Equal(ProcessingState.Processing, entry.State);
         }
 
         [Fact]
-        public void CompleteProcessing_Success_UpdatesStatusFile()
+        public async Task ProcessFileAsync_ChangeTypeCreate_Success()
         {
             FileTriggerAttribute attribute = new FileTriggerAttribute(attributeSubPath, "*.dat");
             processor = CreateTestProcessor(attribute);
@@ -92,18 +94,79 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             string testFile = WriteTestFile("dat");
 
             FunctionResult result = new FunctionResult(true);
-            processor.BeginProcessing(testFile);
-            processor.CompleteProcessing(testFile, result);
+            mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData<FileSystemEventArgs>>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
 
+            string testFilePath = Path.GetDirectoryName(testFile);
+            string testFileName = Path.GetFileName(testFile);
+            FileSystemEventArgs eventArgs = new FileSystemEventArgs(WatcherChangeTypes.Created, testFilePath, testFileName);
+            bool fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs);
+
+            Assert.True(fileProcessedSuccessfully);
             string expectedStatusFile = processor.GetStatusFile(testFile);
             Assert.True(File.Exists(testFile));
             Assert.True(File.Exists(expectedStatusFile));
             string[] lines = File.ReadAllLines(expectedStatusFile);
             Assert.Equal(2, lines.Length);
-            Assert.True(lines[0].StartsWith("Processing"));
-            Assert.True(lines[0].Contains("(Instance: 3b151065ae)"));
-            Assert.True(lines[1].StartsWith("Processed"));
-            Assert.True(lines[1].Contains("(Instance: 3b151065ae)"));
+
+            StatusFileEntry entry = (StatusFileEntry)_serializer.Deserialize(new StringReader(lines[0]), typeof(StatusFileEntry));
+            Assert.Equal(ProcessingState.Processing, entry.State);
+            Assert.Equal(WatcherChangeTypes.Created, entry.ChangeType);
+            Assert.Equal(InstanceId.Substring(0, 20), entry.InstanceId);
+
+            entry = (StatusFileEntry)_serializer.Deserialize(new StringReader(lines[1]), typeof(StatusFileEntry));
+            Assert.Equal(ProcessingState.Processed, entry.State);
+            Assert.Equal(WatcherChangeTypes.Created, entry.ChangeType);
+            Assert.Equal(InstanceId.Substring(0, 20), entry.InstanceId);
+        }
+
+        [Fact]
+        public async Task ProcessFileAsync_ChangeTypeChange_Success()
+        {
+            FileTriggerAttribute attribute = new FileTriggerAttribute(attributeSubPath, "*.dat");
+            processor = CreateTestProcessor(attribute);
+
+            string testFile = WriteTestFile("dat");
+
+            FunctionResult result = new FunctionResult(true);
+            mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData<FileSystemEventArgs>>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
+
+            // first process a Create event
+            string testFilePath = Path.GetDirectoryName(testFile);
+            string testFileName = Path.GetFileName(testFile);
+            FileSystemEventArgs eventArgs = new FileSystemEventArgs(WatcherChangeTypes.Created, testFilePath, testFileName);
+            bool fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs);
+            Assert.True(fileProcessedSuccessfully);
+
+            // now process a Change event
+            eventArgs = new FileSystemEventArgs(WatcherChangeTypes.Changed, testFilePath, testFileName);
+            fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs);
+            Assert.True(fileProcessedSuccessfully);
+
+            string expectedStatusFile = processor.GetStatusFile(testFile);
+            Assert.True(File.Exists(testFile));
+            Assert.True(File.Exists(expectedStatusFile));
+            string[] lines = File.ReadAllLines(expectedStatusFile);
+            Assert.Equal(4, lines.Length);
+
+            StatusFileEntry entry = (StatusFileEntry)_serializer.Deserialize(new StringReader(lines[0]), typeof(StatusFileEntry));
+            Assert.Equal(ProcessingState.Processing, entry.State);
+            Assert.Equal(WatcherChangeTypes.Created, entry.ChangeType);
+            Assert.Equal(InstanceId.Substring(0, 20), entry.InstanceId);
+
+            entry = (StatusFileEntry)_serializer.Deserialize(new StringReader(lines[1]), typeof(StatusFileEntry));
+            Assert.Equal(ProcessingState.Processed, entry.State);
+            Assert.Equal(WatcherChangeTypes.Created, entry.ChangeType);
+            Assert.Equal(InstanceId.Substring(0, 20), entry.InstanceId);
+
+            entry = (StatusFileEntry)_serializer.Deserialize(new StringReader(lines[2]), typeof(StatusFileEntry));
+            Assert.Equal(ProcessingState.Processing, entry.State);
+            Assert.Equal(WatcherChangeTypes.Changed, entry.ChangeType);
+            Assert.Equal(InstanceId.Substring(0, 20), entry.InstanceId);
+
+            entry = (StatusFileEntry)_serializer.Deserialize(new StringReader(lines[3]), typeof(StatusFileEntry));
+            Assert.Equal(ProcessingState.Processed, entry.State);
+            Assert.Equal(WatcherChangeTypes.Changed, entry.ChangeType);
+            Assert.Equal(InstanceId.Substring(0, 20), entry.InstanceId);
         }
 
         [Fact]
@@ -122,26 +185,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             Assert.True(File.Exists(testFile));
             Assert.True(File.Exists(expectedStatusFile));
 
-            string[] lines = File.ReadAllLines(expectedStatusFile);
-            Assert.Equal(2, lines.Length);
-            Assert.True(lines[0].StartsWith("Processing"));
-            Assert.True(lines[1].StartsWith("Processed"));
-        }
-
-        [Fact]
-        public async Task ProcessFileAsync_JobFunctionFails()
-        {
-            string testFile = WriteTestFile("dat");
-
-            FunctionResult result = new FunctionResult(false);
-            mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData<FileSystemEventArgs>>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
-
-            FileSystemEventArgs eventArgs = new FileSystemEventArgs(WatcherChangeTypes.Created, combinedTestFilePath, Path.GetFileName(testFile));
-            await processor.ProcessFileAsync(eventArgs);
-
-            // expect the status file to be removed
-            Assert.True(File.Exists(testFile));
-            Assert.Equal(1, Directory.GetFiles(combinedTestFilePath).Length);
+            string[] statusLines = File.ReadAllLines(expectedStatusFile);
+            Assert.Equal(2, statusLines.Length);
+            StatusFileEntry entry = (StatusFileEntry)_serializer.Deserialize(new StringReader(statusLines[0]), typeof(StatusFileEntry));
+            Assert.Equal(ProcessingState.Processing, entry.State);
+            Assert.Equal(WatcherChangeTypes.Created, entry.ChangeType);
+            Assert.Equal(processor.InstanceId, entry.InstanceId);
+            entry = (StatusFileEntry)_serializer.Deserialize(new StringReader(statusLines[1]), typeof(StatusFileEntry));
+            Assert.Equal(ProcessingState.Processed, entry.State);
+            Assert.Equal(WatcherChangeTypes.Created, entry.ChangeType);
+            Assert.Equal(processor.InstanceId, entry.InstanceId);
         }
 
         [Fact]
@@ -153,7 +206,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             // create a completed file set
             string completedFile = WriteTestFile("dat");
             string completedStatusFile = localProcessor.GetStatusFile(completedFile);
-            File.WriteAllLines(completedStatusFile, new string[] { "Processing", "Processed" });
+            StatusFileEntry status = new StatusFileEntry
+            {
+                State = ProcessingState.Processing,
+                Timestamp = DateTime.UtcNow,
+                ChangeType = WatcherChangeTypes.Created,
+                InstanceId = "1"
+            };
+            StringWriter sw = new StringWriter();
+            _serializer.Serialize(sw, status);
+            sw.WriteLine();
+            status.State = ProcessingState.Processed;
+            status.Timestamp = status.Timestamp + TimeSpan.FromSeconds(15);
+            _serializer.Serialize(sw, status);
+            sw.WriteLine();
+            sw.Flush();
+            File.WriteAllText(completedStatusFile, sw.ToString());
 
             // include an additional companion metadata file
             string completedAdditionalFile = completedFile + ".metadata";
@@ -166,7 +234,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             // create an incomplete file set
             string incompleteFile = WriteTestFile("dat");
             string incompleteStatusFile = localProcessor.GetStatusFile(incompleteFile);
-            File.WriteAllLines(incompleteStatusFile, new string[] { "Processing" });
+            status = new StatusFileEntry
+            {
+                State = ProcessingState.Processing,
+                Timestamp = DateTime.UtcNow,
+                ChangeType = WatcherChangeTypes.Created,
+                InstanceId = "1"
+            };
+            sw = new StringWriter();
+            _serializer.Serialize(sw, status);
+            sw.WriteLine();
+            File.WriteAllText(incompleteStatusFile, sw.ToString());
 
             localProcessor.Cleanup();
 

@@ -13,10 +13,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files
         /// Constructs a new instance.
         /// </summary>
         /// <param name="path">The root path that this trigger is configured to watch for files on.</param>
-        /// <param name="filter">The optional file filter that will be used. The default is no filter.</param>
+        /// <param name="filter">The optional file filter that will be used.</param>
         /// <param name="changeTypes">The <see cref="WatcherChangeTypes"/> that will be used by the file watcher. The Default is Created.</param>
         /// <param name="autoDelete">True if processed files should be deleted automatically, false otherwise. The default is False.</param>
-        public FileTriggerAttribute(string path, string filter = null, WatcherChangeTypes changeTypes = WatcherChangeTypes.Created, bool autoDelete = false)
+        public FileTriggerAttribute(string path, string filter, WatcherChangeTypes changeTypes = WatcherChangeTypes.Created, bool autoDelete = false)
         {
             this.Path = path;
             this.Filter = filter;

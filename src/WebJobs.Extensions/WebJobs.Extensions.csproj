@@ -110,6 +110,8 @@
     <Compile Include="Files\Listener\FileProcessor.cs" />
     <Compile Include="Files\Listener\FileProcessorFactoryContext.cs" />
     <Compile Include="Files\Listener\IFileProcessorFactory.cs" />
+    <Compile Include="Files\Listener\ProcessingStates.cs" />
+    <Compile Include="Files\Listener\StatusFileEntry.cs" />
     <Compile Include="Files\Triggers\FileTriggerAttributeBindingProvider.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
