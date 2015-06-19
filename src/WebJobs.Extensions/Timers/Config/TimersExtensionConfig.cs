@@ -29,7 +29,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Config
             IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
 
             // register our trigger binding provider
-            TimersTriggerAttributeBindingProvider triggerBindingProvider = new TimersTriggerAttributeBindingProvider(_config);
+            TimerTriggerAttributeBindingProvider triggerBindingProvider = new TimerTriggerAttributeBindingProvider(_config);
             extensions.RegisterExtension<ITriggerBindingProvider>(triggerBindingProvider);
         }
     }

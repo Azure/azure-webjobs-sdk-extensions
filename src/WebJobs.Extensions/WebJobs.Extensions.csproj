@@ -137,7 +137,7 @@
     <Compile Include="Timers\TimerInfo.cs" />
     <Compile Include="Timers\TimerTriggerAttribute.cs" />
     <Compile Include="Timers\TimerTriggerParameterDescriptor.cs" />
-    <Compile Include="Timers\Triggers\TimersTriggerAttributeBindingProvider.cs" />
+    <Compile Include="Timers\Triggers\TimerTriggerAttributeBindingProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

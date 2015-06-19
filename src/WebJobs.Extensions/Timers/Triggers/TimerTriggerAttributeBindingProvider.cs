@@ -9,14 +9,14 @@ using Microsoft.Azure.WebJobs.Host.Triggers;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers.Triggers
 {
-    internal class TimersTriggerAttributeBindingProvider : ITriggerBindingProvider
+    internal class TimerTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
         private static readonly ITimerTriggerArgumentBindingProvider ArgumentBindingProvider =
             new TimerInfoConverterArgumentBindingProvider<TimerInfo>(new AsyncConverter<TimerInfo, TimerInfo>(new IdentityConverter<TimerInfo>()));
 
         private TimersConfiguration _config;
 
-        public TimersTriggerAttributeBindingProvider(TimersConfiguration config)
+        public TimerTriggerAttributeBindingProvider(TimersConfiguration config)
         {
             _config = config;
         }
