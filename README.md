@@ -2,7 +2,7 @@
 ===
 This repo contains binding extensions to the **Azure WebJobs SDK**. See the [Azure WebJobs SDK repo](https://github.com/Azure/azure-webjobs-sdk) for more information.
 
-The binding extensions in this repo are available as the **Microsoft.Azure.WebJobs.Extensions** nuget package on the [Azure AppService MyGet feed](https://www.myget.org/feed/Packages/azure-appservice).
+The binding extensions in this repo are available as the **Microsoft.Azure.WebJobs.Extensions** nuget package on the [Azure AppService MyGet feed](https://www.myget.org/gallery/azure-appservice).
 
 The wiki also contains information on how to author your own binding extensions. See the [Binding Extensions Overview](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Binding-Extensions-Overview) for more details.
 
