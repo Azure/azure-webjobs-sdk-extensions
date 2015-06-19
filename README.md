@@ -4,7 +4,7 @@ This repo contains binding extensions to the **Azure WebJobs SDK**. See the [Azu
 
 The wiki also contains information on how to author your own binding extensions. See the [Binding Extensions Overview](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Binding-Extensions-Overview) for more details.
 
-The extensions included in this repo include:
+The extensions included in this repo include the following extensions. This repo contains a [sample project](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Program.cs) that demonstrates the bindings.
 
 ###TimerTrigger###
 
