@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Common.Converters;
 using Microsoft.Azure.WebJobs.Extensions.Files.Converters;
 using Microsoft.Azure.WebJobs.Files.Listeners;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -57,14 +58,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 
         public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
         {
-            FileSystemEventArgs message = null;
+            FileSystemEventArgs eventArgs = null;
 
-            if (!_converter.TryConvert(value, out message))
+            if (!_converter.TryConvert(value, out eventArgs))
             {
                 throw new InvalidOperationException("Unable to convert value to FileSystemEventArgs.");
             }
 
-            return BindAsync(message, context);
+            return BindAsync(eventArgs, context);
         }
 
         public IListenerFactory CreateListenerFactory(FunctionDescriptor descriptor, ITriggeredFunctionExecutor<FileSystemEventArgs> executor)
@@ -140,8 +141,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
         private static IObjectToTypeConverter<FileSystemEventArgs> CreateConverter(Type parameterType)
         {
             return new CompositeObjectToTypeConverter<FileSystemEventArgs>(
-                    new OutputConverter<FileSystemEventArgs>(new IdentityConverter<FileSystemEventArgs>()),
-                    new OutputConverter<string>(new StringToFileSystemEventArgsConverter()));
+                    new OutputConverter<FileSystemEventArgs, FileSystemEventArgs>(new IdentityConverter<FileSystemEventArgs>()),
+                    new OutputConverter<string, FileSystemEventArgs>(new StringToFileSystemEventArgsConverter()));
         }
     }
 }

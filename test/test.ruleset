@@ -41,5 +41,8 @@
     <Rule Id="CA2100" Action="None" />
     <Rule Id="CA1054" Action="None" />
     <Rule Id="CA1014" Action="None" />
+    <Rule Id="CA1801" Action="None" />
+    <Rule Id="CA1021" Action="None" />
+    <Rule Id="CA2211" Action="None" />
   </Rules>
 </RuleSet>

@@ -1,8 +1,7 @@
-﻿// Copyright (c) .NET Foundation. All rights reserved.
-// Licensed under the MIT License. See License.txt in the project root for license information.
-
-using System;
+﻿using System;
+using Microsoft.Azure.WebJobs.Extensions.Files.Bindings;
 using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 
@@ -51,9 +50,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files
             // get the services we need to construct our binding providers
             IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
 
-            // register our trigger binding provider
+            // register our FileTriggerAttribute binding provider
             FileTriggerAttributeBindingProvider triggerBindingProvider = new FileTriggerAttributeBindingProvider(_filesConfig);
             extensions.RegisterExtension<ITriggerBindingProvider>(triggerBindingProvider);
+
+            // register our FileAttribute provider
+            FileAttributeBindingProvider bindingProvider = new FileAttributeBindingProvider(_filesConfig);
+            extensions.RegisterExtension<IBindingProvider>(bindingProvider);
         }
     }
 }
