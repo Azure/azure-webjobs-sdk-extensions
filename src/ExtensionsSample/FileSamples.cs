@@ -32,7 +32,7 @@ namespace WebJobsSandbox
             log.WriteLine(string.Format("Processed input file '{0}'!", fileTrigger.Name));
         }
 
-        // Drop a file in the "convert" directory, and this function will reverseit guigit gui
+        // Drop a file in the "convert" directory, and this function will reverse it
         // the contents and write the file to the "converted" directory.
         public static void Converter(
             [FileTrigger(@"convert\{name}", "*.txt", autoDelete: true)] string file,
