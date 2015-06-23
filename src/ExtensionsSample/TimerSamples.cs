@@ -16,7 +16,7 @@ namespace WebJobsSandbox
         /// <summary>
         /// Example job triggered by a timespan schedule.
         /// </summary>
-        public static void TimerJob([TimerTrigger("00:00:30")] TimerInfo timerInfo)
+        public static void TimerJob([TimerTrigger("00:15:00")] TimerInfo timerInfo)
         {
             Console.WriteLine("Scheduled job fired!");
         }

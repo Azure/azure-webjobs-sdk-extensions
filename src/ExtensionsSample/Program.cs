@@ -24,7 +24,13 @@ namespace ExtensionsSample
 
             config.UseTimers();
 
+            config.UseSample();
+
             JobHost host = new JobHost(config);
+
+            host.Call(typeof(SampleSamples).GetMethod("Sample_BindToStream"));
+            host.Call(typeof(SampleSamples).GetMethod("Sample_BindToString"));
+
             host.RunAndBlock();
         }
     }
