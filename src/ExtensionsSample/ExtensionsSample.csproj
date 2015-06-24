@@ -96,7 +96,7 @@
     </CodeAnalysisDictionary>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Sample.Extension\Sample.Extension.csproj">
+    <ProjectReference Include="..\Sample.Extension\Sample.Extension.csproj">
       <Project>{55edaba0-8d31-43c9-ab3c-2a40d0eff28a}</Project>
       <Name>Sample.Extension</Name>
     </ProjectReference>
