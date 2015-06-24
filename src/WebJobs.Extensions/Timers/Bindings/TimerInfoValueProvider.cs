@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
@@ -9,9 +7,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
     {
         private readonly object _value;
         private readonly Type _valueType;
-        private readonly string _invokeString;
 
-        private TimerInfoValueProvider(object value, Type valueType, string invokeString)
+        public TimerInfoValueProvider(object value, Type valueType)
         {
             if (value != null && !valueType.IsAssignableFrom(value.GetType()))
             {
@@ -20,7 +17,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 
             _value = value;
             _valueType = valueType;
-            _invokeString = invokeString;
         }
 
         public Type Type
@@ -35,20 +31,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 
         public string ToInvokeString()
         {
-            return _invokeString;
-        }
-
-        public static async Task<TimerInfoValueProvider> CreateAsync(TimerInfo clone, object value, Type valueType, CancellationToken cancellationToken)
-        {
-            string invokeString = await CreateInvokeStringAsync(clone, cancellationToken);
-            return new TimerInfoValueProvider(value, valueType, invokeString);
-        }
-
-        private static Task<string> CreateInvokeStringAsync(TimerInfo clone, CancellationToken cancellationToken)
-        {
-            string invokeString = DateTime.UtcNow.ToString("o");
-
-            return Task.FromResult<string>(invokeString);
+            return DateTime.UtcNow.ToString("o");
         }
     }
 }

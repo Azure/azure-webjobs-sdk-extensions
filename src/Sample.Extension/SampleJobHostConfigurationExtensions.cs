@@ -2,6 +2,7 @@
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Microsoft.Azure.WebJobs.Host.Triggers;
 using Sample.Extension;
 
 namespace Microsoft.Azure.WebJobs
@@ -41,8 +42,8 @@ namespace Microsoft.Azure.WebJobs
                 IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
 
                 // Register our extension binding providers
-                SampleAttributeBindingProvider bindingProvider = new SampleAttributeBindingProvider(_config);
-                extensions.RegisterExtension<IBindingProvider>(bindingProvider);
+                extensions.RegisterExtension<IBindingProvider>(new SampleAttributeBindingProvider(_config));
+                extensions.RegisterExtension<ITriggerBindingProvider>(new SampleTriggerAttributeBindingProvider(_config));
             }
         }
     }

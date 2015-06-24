@@ -47,11 +47,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 
             public async Task<IValueProvider> BindAsync(TimerInfo value, ValueBindingContext context)
             {
-                // TODO: need to clone value?
-                TimerInfo clone = value;
-
                 object converted = await _converter.ConvertAsync(value, context.CancellationToken);
-                IValueProvider provider = await TimerInfoValueProvider.CreateAsync(clone, converted, typeof(T), context.CancellationToken);
+                IValueProvider provider = new TimerInfoValueProvider(converted, typeof(T));
 
                 return provider;
             }

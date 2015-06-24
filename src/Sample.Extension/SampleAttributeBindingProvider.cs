@@ -30,7 +30,7 @@ namespace Sample.Extension
 
             // We know our attribute is applied to this parameter. Ensure that the parameter
             // Type is one we support
-            if (!Binding.ValueBinder.CanBind(parameter))
+            if (!Binding.CanBind(parameter))
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, "Can't bind Sample to type '{0}'.", parameter.ParameterType));
             }
@@ -47,6 +47,13 @@ namespace Sample.Extension
             {
                 _parameter = parameter;
                 _attribute = attribute;
+            }
+
+            public static bool CanBind(ParameterInfo parameter)
+            {
+                // TODO: Define the types your binding supports here and below
+                return parameter.ParameterType == typeof(Stream) ||
+                        (parameter.IsOut && parameter.ParameterType == typeof(string).MakeByRefType());
             }
 
             public Task<IValueProvider> BindAsync(BindingContext context)
@@ -82,7 +89,7 @@ namespace Sample.Extension
                 };
             }
 
-            internal class ValueBinder : IOrderedValueBinder
+            private class ValueBinder : IOrderedValueBinder
             {
                 private ParameterInfo _parameter;
 
@@ -99,13 +106,6 @@ namespace Sample.Extension
                 public Type Type
                 {
                     get { return _parameter.ParameterType; }
-                }
-
-                public static bool CanBind(ParameterInfo parameter)
-                {
-                    // TODO: Define the types your binding supports here and below
-                    return parameter.ParameterType == typeof(Stream) ||
-                            (parameter.IsOut && parameter.ParameterType == typeof(string).MakeByRefType());
                 }
 
                 public object GetValue()

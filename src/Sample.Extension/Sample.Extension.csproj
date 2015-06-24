@@ -77,6 +77,8 @@
     <Compile Include="SampleAttributeBindingProvider.cs" />
     <Compile Include="SampleConfiguration.cs" />
     <Compile Include="SampleJobHostConfigurationExtensions.cs" />
+    <Compile Include="SampleTriggerAttribute.cs" />
+    <Compile Include="SampleTriggerAttributeBindingProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
