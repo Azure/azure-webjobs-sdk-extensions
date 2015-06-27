@@ -18,7 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
         private FilesConfiguration config;
         private readonly string combinedTestFilePath;
         private readonly string rootPath;
-        private Mock<ITriggeredFunctionExecutor<FileSystemEventArgs>> mockExecutor;
+        private Mock<ITriggeredFunctionExecutor> mockExecutor;
         private const string attributeSubPath = @"webjobs_extensionstests\import";
         private JsonSerializer _serializer;
 
@@ -60,7 +60,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
                 bool fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs);
 
                 Assert.False(fileProcessedSuccessfully);
-                mockExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData<FileSystemEventArgs>>(), It.IsAny<CancellationToken>()), Times.Never);
+                mockExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Never);
             }
 
             string statusFilePath = processor.GetStatusFile(testFile);
@@ -73,7 +73,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             string testFile = WriteTestFile("dat");
 
             FunctionResult result = new FunctionResult(false);
-            mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData<FileSystemEventArgs>>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
+            mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
 
             FileSystemEventArgs eventArgs = new FileSystemEventArgs(WatcherChangeTypes.Created, Path.GetDirectoryName(testFile), Path.GetFileName(testFile));
             bool fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs);
@@ -94,7 +94,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             string testFile = WriteTestFile("dat");
 
             FunctionResult result = new FunctionResult(true);
-            mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData<FileSystemEventArgs>>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
+            mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
 
             string testFilePath = Path.GetDirectoryName(testFile);
             string testFileName = Path.GetFileName(testFile);
@@ -128,7 +128,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             string testFile = WriteTestFile("dat");
 
             FunctionResult result = new FunctionResult(true);
-            mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData<FileSystemEventArgs>>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
+            mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
 
             // first process a Create event
             string testFilePath = Path.GetDirectoryName(testFile);
@@ -176,7 +176,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             string testFile = WriteTestFile("dat");
 
             FunctionResult result = new FunctionResult(true);
-            mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData<FileSystemEventArgs>>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
+            mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
 
             FileSystemEventArgs eventArgs = new FileSystemEventArgs(WatcherChangeTypes.Created, combinedTestFilePath, Path.GetFileName(testFile));
             await processor.ProcessFileAsync(eventArgs);
@@ -280,7 +280,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
 
         private FileProcessor CreateTestProcessor(FileTriggerAttribute attribute)
         {
-            mockExecutor = new Mock<ITriggeredFunctionExecutor<FileSystemEventArgs>>(MockBehavior.Strict);
+            mockExecutor = new Mock<ITriggeredFunctionExecutor>(MockBehavior.Strict);
             FileProcessorFactoryContext context = new FileProcessorFactoryContext(config, attribute, mockExecutor.Object);
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 

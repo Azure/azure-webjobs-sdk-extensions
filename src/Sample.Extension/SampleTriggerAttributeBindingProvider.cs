@@ -54,7 +54,7 @@ namespace Sample.Extension
             return Task.FromResult<ITriggerBinding>(new SampleBinding(context.Parameter));
         }
 
-        private class SampleBinding : ITriggerBinding<SampleTriggerValue>
+        private class SampleBinding : ITriggerBinding
         {
             private ParameterInfo _parameter;
             private IReadOnlyDictionary<string, Type> _bindingContract;
@@ -75,12 +75,6 @@ namespace Sample.Extension
                 get { return typeof(SampleTriggerValue); }
             }
 
-            public Task<ITriggerData> BindAsync(SampleTriggerValue value, ValueBindingContext context)
-            {
-                IValueBinder valueBinder = new SampleValueBinder(_parameter, value);
-                return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, GetBindingData(value)));
-            }
-
             public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
             {
                 // TODO: Perform any required conversions on the value
@@ -90,14 +84,9 @@ namespace Sample.Extension
                 return BindAsync(triggerValue, context);
             }
 
-            public IListenerFactory CreateListenerFactory(FunctionDescriptor descriptor, ITriggeredFunctionExecutor<SampleTriggerValue> executor)
-            {
-                return new ListenerFactory(executor);
-            }
-
             public IListenerFactory CreateListenerFactory(FunctionDescriptor descriptor, ITriggeredFunctionExecutor executor)
             {
-                return new ListenerFactory((ITriggeredFunctionExecutor<SampleTriggerValue>)executor);
+                return new ListenerFactory(executor);
             }
 
             public ParameterDescriptor ToParameterDescriptor()
@@ -173,9 +162,9 @@ namespace Sample.Extension
 
             private class ListenerFactory : IListenerFactory
             {
-                private ITriggeredFunctionExecutor<SampleTriggerValue> _executor;
+                private ITriggeredFunctionExecutor _executor;
 
-                public ListenerFactory(ITriggeredFunctionExecutor<SampleTriggerValue> executor)
+                public ListenerFactory(ITriggeredFunctionExecutor executor)
                 {
                     _executor = executor;
                 }
@@ -187,10 +176,10 @@ namespace Sample.Extension
 
                 private class Listener : IListener
                 {
-                    private ITriggeredFunctionExecutor<SampleTriggerValue> _executor;
+                    private ITriggeredFunctionExecutor _executor;
                     private System.Timers.Timer _timer;
 
-                    public Listener(ITriggeredFunctionExecutor<SampleTriggerValue> executor)
+                    public Listener(ITriggeredFunctionExecutor executor)
                     {
                         _executor = executor;
 
@@ -232,7 +221,7 @@ namespace Sample.Extension
                     {
                         // TODO: When you receive new events from your event source,
                         // invoke the function executor
-                        TriggeredFunctionData<SampleTriggerValue> input = new TriggeredFunctionData<SampleTriggerValue>
+                        TriggeredFunctionData input = new TriggeredFunctionData
                         {
                             TriggerValue = new SampleTriggerValue()
                         };

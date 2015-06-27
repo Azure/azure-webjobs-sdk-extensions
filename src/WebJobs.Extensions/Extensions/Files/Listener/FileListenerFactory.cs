@@ -9,10 +9,10 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
     internal class FileListenerFactory : IListenerFactory
     {
         private readonly FileTriggerAttribute _attribute;
-        private readonly ITriggeredFunctionExecutor<FileSystemEventArgs> _executor;
+        private readonly ITriggeredFunctionExecutor _executor;
         private readonly FilesConfiguration _config;
 
-        public FileListenerFactory(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor<FileSystemEventArgs> executor)
+        public FileListenerFactory(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor executor)
         {
             _config = config;
             _attribute = attribute;

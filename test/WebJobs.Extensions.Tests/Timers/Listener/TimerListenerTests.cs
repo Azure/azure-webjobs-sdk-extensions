@@ -18,8 +18,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         private Mock<ScheduleMonitor> _mockScheduleMonitor;
         private TimersConfiguration _config;
         private TimerTriggerAttribute _attribute;
-        private Mock<ITriggeredFunctionExecutor<TimerInfo>> _mockTriggerExecutor;
-        private TriggeredFunctionData<TimerInfo> _triggeredFunctionData;
+        private Mock<ITriggeredFunctionExecutor> _mockTriggerExecutor;
+        private TriggeredFunctionData _triggeredFunctionData;
 
         public TimerListenerTests()
         {
@@ -73,7 +73,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             CancellationToken cancellationToken = new CancellationToken();
             await _listener.StartAsync(cancellationToken);
 
-            Assert.True(_triggeredFunctionData.TriggerValue.IsPastDue);
+            TimerInfo timerInfo = (TimerInfo)_triggeredFunctionData.TriggerValue;
+            Assert.True(timerInfo.IsPastDue);
 
             _listener.Dispose();
         }
@@ -87,7 +88,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             CancellationToken cancellationToken = new CancellationToken();
             await _listener.StartAsync(cancellationToken);
 
-            _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData<TimerInfo>>(), It.IsAny<CancellationToken>()), Times.Never());
+            _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Never());
 
             _listener.Dispose();
         }
@@ -130,7 +131,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             Assert.Equal(TimerListener.MaxTimerInterval.TotalMilliseconds, _listener.Timer.Interval);
 
             // verify that the job function was only invoked once
-            _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData<TimerInfo>>(), It.IsAny<CancellationToken>()), Times.Once());
+            _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Once());
 
             _listener.Dispose();
         }
@@ -156,11 +157,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _config = new TimersConfiguration();
             _mockScheduleMonitor = new Mock<ScheduleMonitor>(MockBehavior.Strict);
             _config.ScheduleMonitor = _mockScheduleMonitor.Object;
-            _mockTriggerExecutor = new Mock<ITriggeredFunctionExecutor<TimerInfo>>(MockBehavior.Strict);
+            _mockTriggerExecutor = new Mock<ITriggeredFunctionExecutor>(MockBehavior.Strict);
             TimerTriggerExecutor executor = new TimerTriggerExecutor(_mockTriggerExecutor.Object);
             FunctionResult result = new FunctionResult(true);
-            _mockTriggerExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData<TimerInfo>>(), It.IsAny<CancellationToken>()))
-                .Callback<TriggeredFunctionData<TimerInfo>, CancellationToken>((mockFunctionData, mockToken) =>
+            _mockTriggerExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
+                .Callback<TriggeredFunctionData, CancellationToken>((mockFunctionData, mockToken) =>
                 {
                     _triggeredFunctionData = mockFunctionData;
                 })

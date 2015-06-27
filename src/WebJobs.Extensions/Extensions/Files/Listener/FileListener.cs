@@ -17,7 +17,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
         private readonly TimeSpan _changeEventDebounceInterval = TimeSpan.FromSeconds(1);
 
         private readonly FileTriggerAttribute _attribute;
-        private readonly ITriggeredFunctionExecutor<FileSystemEventArgs> _triggerExecutor;
+        private readonly ITriggeredFunctionExecutor _triggerExecutor;
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly FilesConfiguration _config;
         private readonly string _watchPath;
@@ -28,7 +28,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
         private FileSystemWatcher _watcher;
         private bool _disposed;
 
-        public FileListener(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor<FileSystemEventArgs> triggerExecutor)
+        public FileListener(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor triggerExecutor)
         {
             _config = config;
             _attribute = attribute;

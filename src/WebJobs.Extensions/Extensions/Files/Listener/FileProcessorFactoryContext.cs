@@ -15,7 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// <param name="config">The <see cref="FilesConfiguration"/></param>
         /// <param name="attribute">The <see cref="FileTriggerAttribute"/></param>
         /// <param name="executor">The function executor.</param>
-        public FileProcessorFactoryContext(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor<FileSystemEventArgs> executor)
+        public FileProcessorFactoryContext(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor executor)
         {
             if (config == null)
             {
@@ -48,6 +48,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// <summary>
         /// Gets the function executor
         /// </summary>
-        public ITriggeredFunctionExecutor<FileSystemEventArgs> Executor { get; private set; }
+        public ITriggeredFunctionExecutor Executor { get; private set; }
     }
 }

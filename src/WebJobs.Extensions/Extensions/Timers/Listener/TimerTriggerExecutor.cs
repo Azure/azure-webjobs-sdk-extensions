@@ -7,16 +7,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 {
     internal class TimerTriggerExecutor
     {
-        private readonly ITriggeredFunctionExecutor<TimerInfo> _innerExecutor;
+        private readonly ITriggeredFunctionExecutor _innerExecutor;
 
-        public TimerTriggerExecutor(ITriggeredFunctionExecutor<TimerInfo> innerExecutor)
+        public TimerTriggerExecutor(ITriggeredFunctionExecutor innerExecutor)
         {
             _innerExecutor = innerExecutor;
         }
 
         public async Task<FunctionResult> ExecuteAsync(TimerInfo value, CancellationToken cancellationToken)
         {
-            TriggeredFunctionData<TimerInfo> input = new TriggeredFunctionData<TimerInfo>
+            TriggeredFunctionData input = new TriggeredFunctionData
             {
                 // TODO: how to set this properly?
                 ParentId = null,

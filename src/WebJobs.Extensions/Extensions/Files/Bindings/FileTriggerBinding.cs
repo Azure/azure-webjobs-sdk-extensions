@@ -13,7 +13,7 @@ using Microsoft.Azure.WebJobs.Host.Triggers;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
-    internal class FileTriggerBinding : ITriggerBinding<FileSystemEventArgs>
+    internal class FileTriggerBinding : ITriggerBinding
     {
         private ParameterInfo _parameter;
         private FileTriggerAttribute _attribute;
@@ -41,14 +41,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             get { return typeof(FileSystemEventArgs); }
         }
 
-        public Task<ITriggerData> BindAsync(FileSystemEventArgs value, ValueBindingContext context)
-        {
-            IValueBinder valueBinder = new FileValueBinder(_parameter, value);
-            IReadOnlyDictionary<string, object> bindingData = GetBindingData(value);
-
-            return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, bindingData));
-        }
-
         public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
         {
             FileSystemEventArgs fileEvent = value as FileSystemEventArgs;
@@ -66,15 +58,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 }
             }
 
-            return BindAsync(fileEvent, context);
+            IValueBinder valueBinder = new FileValueBinder(_parameter, fileEvent);
+            IReadOnlyDictionary<string, object> bindingData = GetBindingData(fileEvent);
+
+            return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, bindingData));
         }
 
         public IListenerFactory CreateListenerFactory(FunctionDescriptor descriptor, ITriggeredFunctionExecutor executor)
-        {
-            return CreateListenerFactory(descriptor, (ITriggeredFunctionExecutor<FileSystemEventArgs>)executor);
-        }
-
-        public IListenerFactory CreateListenerFactory(FunctionDescriptor descriptor, ITriggeredFunctionExecutor<FileSystemEventArgs> executor)
         {
             return new FileListenerFactory(_config, _attribute, executor);
         }

@@ -37,14 +37,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
         public async Task ConcurrentListeners_ProcessFilesCorrectly(int concurrentListenerCount, int inputFileCount)
         {
             // mock out the executor so we can capture function invocations
-            Mock<ITriggeredFunctionExecutor<FileSystemEventArgs>> mockExecutor = new Mock<ITriggeredFunctionExecutor<FileSystemEventArgs>>(MockBehavior.Strict);
+            Mock<ITriggeredFunctionExecutor> mockExecutor = new Mock<ITriggeredFunctionExecutor>(MockBehavior.Strict);
             ConcurrentBag<string> processedFiles = new ConcurrentBag<string>();
             FunctionResult result = new FunctionResult(true);
-            mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData<FileSystemEventArgs>>(), It.IsAny<CancellationToken>()))
-                .Callback<TriggeredFunctionData<FileSystemEventArgs>, CancellationToken>(async (mockData, mockToken) =>
+            mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
+                .Callback<TriggeredFunctionData, CancellationToken>(async (mockData, mockToken) =>
                     {
                         await Task.Delay(50);
-                        processedFiles.Add(mockData.TriggerValue.Name);
+                        FileSystemEventArgs fileEvent = mockData.TriggerValue as FileSystemEventArgs;
+                        processedFiles.Add(fileEvent.Name);
                     })
                 .ReturnsAsync(result);
 

@@ -17,7 +17,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
     {
         private FilesConfiguration _config;
         private FileTriggerAttribute _attribute;
-        private ITriggeredFunctionExecutor<FileSystemEventArgs> _executor;
+        private ITriggeredFunctionExecutor _executor;
         private CancellationTokenSource _cancellationTokenSource;
         private string _filePath;
         private string _instanceId;
@@ -150,7 +150,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
                     statusWriter.WriteLine();
 
                     // invoke the job function
-                    TriggeredFunctionData<FileSystemEventArgs> input = new TriggeredFunctionData<FileSystemEventArgs>
+                    TriggeredFunctionData input = new TriggeredFunctionData
                     {
                         // TODO: set this properly
                         ParentId = null,

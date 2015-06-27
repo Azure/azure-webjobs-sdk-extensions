@@ -11,7 +11,7 @@ using Microsoft.Azure.WebJobs.Host.Triggers;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 {
-    internal class TimerTriggerBinding : ITriggerBinding<TimerInfo>
+    internal class TimerTriggerBinding : ITriggerBinding
     {
         private readonly ParameterInfo _parameter;
         private readonly TimerTriggerAttribute _attribute;
@@ -39,14 +39,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             get { return _bindingContract; }
         }
 
-        public Task<ITriggerData> BindAsync(TimerInfo value, ValueBindingContext context)
-        {
-            IValueProvider valueProvider = new ValueProvider(value, _parameter.ParameterType);
-            IReadOnlyDictionary<string, object> bindingData = CreateBindingData(value);
-
-            return Task.FromResult<ITriggerData>(new TriggerData(valueProvider, bindingData));
-        }
-
         public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
         {
             TimerInfo timerInfo = value as TimerInfo;
@@ -54,11 +46,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             {
                 timerInfo = new TimerInfo(_attribute.Schedule);
             }
- 
-            return BindAsync(timerInfo, context);
+
+            IValueProvider valueProvider = new ValueProvider(value, _parameter.ParameterType);
+            IReadOnlyDictionary<string, object> bindingData = CreateBindingData(timerInfo);
+
+            return Task.FromResult<ITriggerData>(new TriggerData(valueProvider, bindingData));
         }
 
-        public IListenerFactory CreateListenerFactory(FunctionDescriptor descriptor, ITriggeredFunctionExecutor<TimerInfo> executor)
+        public IListenerFactory CreateListenerFactory(FunctionDescriptor descriptor, ITriggeredFunctionExecutor executor)
         {
             if (descriptor == null)
             {
@@ -66,11 +61,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             }
             string timerName = descriptor.Id;
             return new TimerListenerFactory(_attribute, timerName, _config, executor);
-        }
-
-        public IListenerFactory CreateListenerFactory(FunctionDescriptor descriptor, ITriggeredFunctionExecutor executor)
-        {
-            return CreateListenerFactory(descriptor, (ITriggeredFunctionExecutor<TimerInfo>)executor);
         }
 
         public ParameterDescriptor ToParameterDescriptor()

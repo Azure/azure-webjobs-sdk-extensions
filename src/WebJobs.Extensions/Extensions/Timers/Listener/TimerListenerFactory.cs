@@ -10,10 +10,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     {
         private readonly TimerTriggerAttribute _attribute;
         private readonly TimersConfiguration _config;
-        private readonly ITriggeredFunctionExecutor<TimerInfo> _executor;
+        private readonly ITriggeredFunctionExecutor _executor;
         private readonly string _timerName;
 
-        public TimerListenerFactory(TimerTriggerAttribute attribute, string timerName, TimersConfiguration config, ITriggeredFunctionExecutor<TimerInfo> executor)
+        public TimerListenerFactory(TimerTriggerAttribute attribute, string timerName, TimersConfiguration config, ITriggeredFunctionExecutor executor)
         {
             _attribute = attribute;
             _timerName = timerName;
