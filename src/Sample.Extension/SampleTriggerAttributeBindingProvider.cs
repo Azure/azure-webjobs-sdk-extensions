@@ -47,16 +47,11 @@ namespace Sample.Extension
             if (parameter.ParameterType != typeof(SampleTriggerValue) &&
                 parameter.ParameterType != typeof(string))
             {
-                return Task.FromResult<ITriggerBinding>(null);
+                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 
+                    "Can't bind SampleTrigger to type '{0}'.", parameter.ParameterType));
             }
 
-            ITriggerBinding<SampleTriggerValue> binding = new SampleBinding(context.Parameter);
-            if (binding == null)
-            {
-                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, "Can't bind SampleTrigger to type '{0}'.", parameter.ParameterType));
-            }
-
-            return Task.FromResult<ITriggerBinding>(binding);
+            return Task.FromResult<ITriggerBinding>(new SampleBinding(context.Parameter));
         }
 
         private class SampleBinding : ITriggerBinding<SampleTriggerValue>

@@ -34,18 +34,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             // Determine whether we should bind to the current parameter
             ParameterInfo parameter = context.Parameter;
             FileAttribute attribute = parameter.GetCustomAttribute<FileAttribute>(inherit: false);
-            if (attribute == null || !CanBind(context))
+            if (attribute == null)
             {
                 return Task.FromResult<IBinding>(null);
             }
 
-            IBinding binding = new FileBinding(_config, parameter);
-            if (binding == null)
+            if (!CanBind(context))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, "Can't bind FileAttribute to type '{0}'.", parameter.ParameterType));
+                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 
+                    "Can't bind FileAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            return Task.FromResult<IBinding>(binding);
+            return Task.FromResult<IBinding>(new FileBinding(_config, parameter));
         }
 
         private static bool CanBind(BindingProviderContext context)

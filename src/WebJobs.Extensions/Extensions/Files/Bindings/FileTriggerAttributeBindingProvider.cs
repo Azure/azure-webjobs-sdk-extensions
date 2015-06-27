@@ -43,16 +43,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             IEnumerable<Type> types = StreamValueBinder.SupportedTypes.Union(new Type[] { typeof(FileStream), typeof(FileSystemEventArgs), typeof(FileInfo) });
             if (!ValueBinder.MatchParameterType(context.Parameter, types))
             {
-                return Task.FromResult<ITriggerBinding>(null);
+                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 
+                    "Can't bind FileTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            ITriggerBinding<FileSystemEventArgs> binding = new FileTriggerBinding(_config, parameter);
-            if (binding == null)
-            {
-                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, "Can't bind FileTriggerAttribute to type '{0}'.", parameter.ParameterType));
-            }
-
-            return Task.FromResult<ITriggerBinding>(binding);
+            return Task.FromResult<ITriggerBinding>(new FileTriggerBinding(_config, parameter));
         }
     }
 }

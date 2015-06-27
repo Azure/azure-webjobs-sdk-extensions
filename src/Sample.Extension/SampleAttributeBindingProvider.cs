@@ -37,16 +37,11 @@ namespace Sample.Extension
             // TODO: Include any other parameter types this binding supports in this check
             if (!ValueBinder.MatchParameterType(context.Parameter, StreamValueBinder.SupportedTypes))
             {
-                return Task.FromResult<IBinding>(null);
+                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 
+                    "Can't bind SampleAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            IBinding binding = new SampleBinding(parameter);
-            if (binding == null)
-            {
-                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, "Can't bind SampleAttribute to type '{0}'.", parameter.ParameterType));
-            }
-
-            return Task.FromResult<IBinding>(binding);
+            return Task.FromResult<IBinding>(new SampleBinding(parameter));
         }
 
         private class SampleBinding : IBinding
