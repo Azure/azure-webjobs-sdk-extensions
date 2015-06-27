@@ -93,20 +93,58 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
         }
 
         [Fact]
-        public async Task FileAttribute_SupportsExpectedBindings()
+        public async Task FileAttribute_SupportsExpectedOutputBindings()
         {
             JobHost host = CreateTestJobHost();
             host.Start();
 
-            await VerifyAttributeBinding(typeof(FilesTestJobs).GetMethod("BindToStringOutput"));
-            await VerifyAttributeBinding(typeof(FilesTestJobs).GetMethod("BindToByteArrayOutput"));
-            await VerifyAttributeBinding(typeof(FilesTestJobs).GetMethod("BindToStreamOutput"));
-            await VerifyAttributeBinding(typeof(FilesTestJobs).GetMethod("BindToFileStreamOutput"));
+            await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToStringOutput"));
+            await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToByteArrayOutput"));
+            await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToStreamOutput"));
+            //await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToFileStreamOutput"));
+            await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToStreamWriterOutput"));
+            await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToTextWriterOutput"));
 
             host.Stop();
         }
 
-        private async Task VerifyAttributeBinding(MethodInfo method)
+        [Fact]
+        public async Task FileAttribute_SupportsExpectedInputBindings()
+        {
+            JobHost host = CreateTestJobHost();
+            host.Start();
+
+            await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToStringInput"));
+            await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToByteArrayInput"));
+            await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToStreamInput"));
+            await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToStreamReaderInput"));
+            await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToTextReaderInput"));
+
+            host.Stop();
+        }
+
+        private async Task VerifyInputBinding(JobHost host, MethodInfo method)
+        {
+            string data = Guid.NewGuid().ToString();
+            string inputFile = Path.Combine(rootPath, ImportTestPath, string.Format("{0}.txt", method.Name));
+            File.WriteAllText(inputFile, data);
+
+            host.Call(method);
+
+            string outputFile = Path.Combine(rootPath, OutputTestPath, string.Format("{0}.txt", method.Name));
+            await TestHelpers.Await(() =>
+            {
+                return File.Exists(outputFile);
+            });
+
+            // give time for file to close
+            await Task.Delay(1000);
+
+            string result = File.ReadAllText(outputFile);
+            Assert.Equal(data, result);
+        }
+
+        private async Task VerifyOutputBinding(MethodInfo method)
         {
             string data = Guid.NewGuid().ToString();
             string inputFile = Path.Combine(rootPath, ImportTestPath, string.Format("{0}.txt", method.Name));
@@ -174,21 +212,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
 
             public static void BindToStringOutput(
                 [FileTrigger(ImportTestPath + @"\{name}", filter: "BindToStringOutput.txt")] string input,
-                [File(OutputTestPath + @"\{name}")] out string output)
+                [File(OutputTestPath + @"\{name}", FileAccess.Write)] out string output)
             {
                 output = input;
             }
 
             public static void BindToByteArrayOutput(
-                [FileTrigger(ImportTestPath + @"\{name}", filter: "BindToByteArrayOutput.txt")] string input,
-                [File(OutputTestPath + @"\{name}")] out byte[] output)
+                [FileTrigger(ImportTestPath + @"\{name}", filter: "BindToByteArrayOutput.txt")] FileStream input,
+                [File(OutputTestPath + @"\{name}", FileAccess.Write)] out byte[] output)
             {
-                output = Encoding.UTF8.GetBytes(input);
+                using (StreamReader reader = new StreamReader(input))
+                {
+                    string text = reader.ReadToEnd();
+                    output = Encoding.UTF8.GetBytes(text);
+                }
             }
 
             public static void BindToStreamOutput(
                 [FileTrigger(ImportTestPath + @"\{name}", filter: "BindToStreamOutput.txt")] string input,
-                [File(OutputTestPath + @"\{name}")] Stream output)
+                [File(OutputTestPath + @"\{name}", FileAccess.Write)] Stream output)
             {
                 using (StreamWriter sw = new StreamWriter(output))
                 {
@@ -196,14 +238,76 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
                 }
             }
 
-            public static void BindToFileStreamOutput(
-                [FileTrigger(ImportTestPath + @"\{name}", filter: "BindToFileStreamOutput.txt")] string input,
-                [File(OutputTestPath + @"\{name}")] FileStream output)
+            public static void BindToStreamWriterOutput(
+                [FileTrigger(ImportTestPath + @"\{name}", filter: "BindToStreamWriterOutput.txt")] Stream input,
+                [File(OutputTestPath + @"\{name}", FileAccess.Write)] StreamWriter output)
             {
+                using (StreamReader reader = new StreamReader(input))
+                {
+                    string text = reader.ReadToEnd();
+                    output.Write(text);
+                } 
+            }
+
+            public static void BindToTextWriterOutput(
+                [FileTrigger(ImportTestPath + @"\{name}", filter: "BindToTextWriterOutput.txt")] FileSystemEventArgs input,
+                [File(OutputTestPath + @"\{name}", FileAccess.Write)] TextWriter output)
+            {
+                string text = File.ReadAllText(input.FullPath);
+                output.Write(text);
+            }
+
+            public static void BindToFileStreamOutput(
+                [FileTrigger(ImportTestPath + @"\{name}", filter: "BindToFileStreamOutput.txt")] FileInfo input,
+                [File(OutputTestPath + @"\{name}", FileAccess.Write)] FileStream output)
+            {
+                using (FileStream stream = input.OpenRead())
+                {
+                    stream.CopyTo(output);
+                }
+            }
+
+            public static void BindToStreamInput(
+                [File(ImportTestPath + @"\BindToStreamInput.txt")] Stream input,
+                [File(OutputTestPath + @"\BindToStreamInput.txt", FileAccess.Write)] Stream output)
+            {
+                input.CopyTo(output);
+            }
+
+            public static void BindToStreamReaderInput(
+                [File(ImportTestPath + @"\BindToStreamReaderInput.txt")] StreamReader input,
+                [File(OutputTestPath + @"\BindToStreamReaderInput.txt", FileAccess.Write)] Stream output)
+            {
+                string text = input.ReadToEnd();
                 using (StreamWriter sw = new StreamWriter(output))
                 {
-                    sw.Write(input);
+                    sw.Write(text);
                 }
+            }
+
+            public static void BindToTextReaderInput(
+                [File(ImportTestPath + @"\BindToTextReaderInput.txt")] TextReader input,
+                [File(OutputTestPath + @"\BindToTextReaderInput.txt", FileAccess.Write)] Stream output)
+            {
+                string text = input.ReadToEnd();
+                using (StreamWriter sw = new StreamWriter(output))
+                {
+                    sw.Write(text);
+                }
+            }
+
+            public static void BindToStringInput(
+                [File(ImportTestPath + @"\BindToStringInput.txt")] string input,
+                [File(OutputTestPath + @"\BindToStringInput.txt", FileAccess.Write)] out string output)
+            {
+                output = input;
+            }
+
+            public static void BindToByteArrayInput(
+                [File(ImportTestPath + @"\BindToByteArrayInput.txt")] byte[] input,
+                [File(OutputTestPath + @"\BindToByteArrayInput.txt", FileAccess.Write)] out byte[] output)
+            {
+                output = input;
             }
         }
     }

@@ -2,8 +2,8 @@
 using System.Globalization;
 using System.IO;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Framework;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 
@@ -18,8 +18,14 @@ namespace Sample.Extension
             _config = config;
         }
 
+        /// <inheritdoc/>
         public Task<IBinding> TryCreateAsync(BindingProviderContext context)
         {
+            if (context == null)
+            {
+                throw new ArgumentNullException("context");
+            }
+
             // Determine whether we should bind to the current parameter
             ParameterInfo parameter = context.Parameter;
             SampleAttribute attribute = parameter.GetCustomAttribute<SampleAttribute>(inherit: false);
@@ -28,50 +34,45 @@ namespace Sample.Extension
                 return Task.FromResult<IBinding>(null);
             }
 
-            // We know our attribute is applied to this parameter. Ensure that the parameter
-            // Type is one we support
-            if (!Binding.CanBind(parameter))
+            // TODO: Include any other parameter types this binding supports in this check
+            if (!ValueBinder.MatchParameterType(context.Parameter, StreamValueBinder.SupportedTypes))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, "Can't bind Sample to type '{0}'.", parameter.ParameterType));
+                return Task.FromResult<IBinding>(null);
             }
 
-            return Task.FromResult<IBinding>(new Binding(parameter, attribute));
+            IBinding binding = new SampleBinding(parameter);
+            if (binding == null)
+            {
+                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, "Can't bind SampleAttribute to type '{0}'.", parameter.ParameterType));
+            }
+
+            return Task.FromResult<IBinding>(binding);
         }
 
-        internal class Binding : IBinding
+        private class SampleBinding : IBinding
         {
             private ParameterInfo _parameter;
-            private SampleAttribute _attribute;
 
-            public Binding(ParameterInfo parameter, SampleAttribute attribute)
+            public SampleBinding(ParameterInfo parameter)
             {
                 _parameter = parameter;
-                _attribute = attribute;
-            }
-
-            public static bool CanBind(ParameterInfo parameter)
-            {
-                // TODO: Define the types your binding supports here and below
-                return parameter.ParameterType == typeof(Stream) ||
-                        (parameter.IsOut && parameter.ParameterType == typeof(string).MakeByRefType());
-            }
-
-            public Task<IValueProvider> BindAsync(BindingContext context)
-            {
-                return Task.FromResult<IValueProvider>(new ValueBinder(_parameter));
-            }
-
-            public Task<IValueProvider> BindAsync(object value, ValueBindingContext context)
-            {
-                // TODO: convert the incoming value as needed
-                // before binding. For example, this may be a string
-                // value coming from a Dashboard Run/Replay invocation
-                return Task.FromResult<IValueProvider>(new ValueBinder(_parameter));
             }
 
             public bool FromAttribute
             {
                 get { return true; }
+            }
+
+            public Task<IValueProvider> BindAsync(BindingContext context)
+            {
+                return Task.FromResult<IValueProvider>(new SampleValueBinder(_parameter));
+            }
+
+            public Task<IValueProvider> BindAsync(object value, ValueBindingContext context)
+            {
+                // TODO: Perform any conversions on the incoming value
+                // E.g., it may be a Dashboard invocation string value
+                return Task.FromResult<IValueProvider>(new SampleValueBinder(_parameter));
             }
 
             public ParameterDescriptor ToParameterDescriptor()
@@ -89,77 +90,30 @@ namespace Sample.Extension
                 };
             }
 
-            private class ValueBinder : IOrderedValueBinder
+            // TODO: Implement your binder. You can derive from StreamValueBinder
+            // to get a bunch of built in bindings for free (mapping from string to
+            // other param types), or you may chose to derive from ValueBinder and
+            // implement everything yourself
+            private class SampleValueBinder : StreamValueBinder
             {
                 private ParameterInfo _parameter;
 
-                public ValueBinder(ParameterInfo parameter)
+                public SampleValueBinder(ParameterInfo parameter)
+                    : base(parameter)
                 {
                     _parameter = parameter;
                 }
 
-                public BindStepOrder StepOrder
+                protected override Stream GetStream()
                 {
-                    get { return BindStepOrder.Enqueue; }
+                    return new MemoryStream();
                 }
 
-                public Type Type
-                {
-                    get { return _parameter.ParameterType; }
-                }
-
-                public object GetValue()
-                {           
-                    if (_parameter.IsOut)
-                    {
-                        return null;
-                    }
-
-                    // TODO: Generate the parameter value that will be passed to
-                    // the function.
-                    object value = null;
-                    if (_parameter.ParameterType == typeof(Stream))
-                    {
-                        value = new MemoryStream();
-                    }
-                    
-                    return value;
-                }
-
-                public string ToInvokeString()
+                public override string ToInvokeString()
                 {
                     // TODO: Return the string that should be shown in the Dashboard
                     // for this parameter
                     return "Sample";
-                }
-
-                public Task SetValueAsync(object value, CancellationToken cancellationToken)
-                {
-                    if (value == null)
-                    {
-                        return Task.FromResult(0);
-                    }
-
-                    // TODO: Process the final value as needed. For example, persist the value
-                    // to an external service, etc.
-                    if (_parameter.IsOut)
-                    {
-                        if (_parameter.ParameterType == typeof(string).MakeByRefType())
-                        {
-                            string stringValue = (string)value;
-                        }
-                    }
-                    else
-                    {
-                        if (_parameter.ParameterType == typeof(Stream))
-                        {
-                            Stream stream = (Stream)value;
-                            stream.Flush();
-                            stream.Close();
-                        }
-                    }
-
-                    return Task.FromResult(true);
                 }
             }
         }

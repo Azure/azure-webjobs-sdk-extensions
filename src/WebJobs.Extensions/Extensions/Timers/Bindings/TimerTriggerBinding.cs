@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Config;
-using Microsoft.Azure.WebJobs.Extensions.Timers.Converters;
 using Microsoft.Azure.WebJobs.Host.Bindings;
-using Microsoft.Azure.WebJobs.Host.Converters;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
@@ -14,19 +13,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 {
     internal class TimerTriggerBinding : ITriggerBinding<TimerInfo>
     {
-        private readonly string _parameterName;
-        private readonly IObjectToTypeConverter<TimerInfo> _converter;
-        private readonly IArgumentBinding<TimerInfo> _argumentBinding;
+        private readonly ParameterInfo _parameter;
         private readonly TimerTriggerAttribute _attribute;
         private readonly TimersConfiguration _config;
         private IReadOnlyDictionary<string, Type> _bindingContract;
 
-        public TimerTriggerBinding(string parameterName, Type parameterType, IArgumentBinding<TimerInfo> argumentBinding, TimerTriggerAttribute attribute, TimersConfiguration config)
+        public TimerTriggerBinding(ParameterInfo parameter, TimerTriggerAttribute attribute, TimersConfiguration config)
         {
             _attribute = attribute;
-            _parameterName = parameterName;
-            _converter = CreateConverter(parameterType);
-            _argumentBinding = argumentBinding;
+            _parameter = parameter;
             _config = config;
             _bindingContract = CreateBindingDataContract();
         }
@@ -44,24 +39,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             get { return _bindingContract; }
         }
 
-        public async Task<ITriggerData> BindAsync(TimerInfo value, ValueBindingContext context)
+        public Task<ITriggerData> BindAsync(TimerInfo value, ValueBindingContext context)
         {
-            IValueProvider valueProvider = await _argumentBinding.BindAsync(value, context);
+            IValueProvider valueProvider = new ValueProvider(value, _parameter.ParameterType);
             IReadOnlyDictionary<string, object> bindingData = CreateBindingData(value);
 
-            return new TriggerData(valueProvider, bindingData);
+            return Task.FromResult<ITriggerData>(new TriggerData(valueProvider, bindingData));
         }
 
         public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
         {
-            TimerInfo message = null;
-
-            if (!_converter.TryConvert(value, out message))
+            TimerInfo timerInfo = value as TimerInfo;
+            if (timerInfo == null)
             {
-                throw new InvalidOperationException("Unable to convert value to TimerInfo.");
+                timerInfo = new TimerInfo(_attribute.Schedule);
             }
-
-            return BindAsync(message, context);
+ 
+            return BindAsync(timerInfo, context);
         }
 
         public IListenerFactory CreateListenerFactory(FunctionDescriptor descriptor, ITriggeredFunctionExecutor<TimerInfo> executor)
@@ -83,7 +77,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
         {
             TimerTriggerParameterDescriptor descriptor = new TimerTriggerParameterDescriptor
             {
-                Name = _parameterName,
+                Name = _parameter.Name,
                 DisplayHints = new ParameterDisplayHints
                 {
                     Prompt = "Enter an ISO DateTime string (yyyy-mm-ddThh:mm:ssZ)",
@@ -112,11 +106,39 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             return bindingData;
         }
 
-        private IObjectToTypeConverter<TimerInfo> CreateConverter(Type parameterType)
+        private class ValueProvider : IValueProvider
         {
-            return new CompositeObjectToTypeConverter<TimerInfo>(
-                    new TimerInfoOutputConverter<TimerInfo>(new IdentityConverter<TimerInfo>()),
-                    new TimerInfoOutputConverter<string>(new StringToTimerInfoConverter(_attribute.Schedule)));
+            private readonly object _value;
+            private readonly Type _valueType;
+
+            public ValueProvider(object value, Type valueType)
+            {
+                _value = value;
+                _valueType = valueType;
+            }
+
+            public Type Type
+            {
+                get { return _valueType; }
+            }
+
+            public object GetValue()
+            {
+                return _value;
+            }
+
+            public string ToInvokeString()
+            {
+                return DateTime.UtcNow.ToString("o");
+            }
+        }
+
+        private class TimerTriggerParameterDescriptor : TriggerParameterDescriptor
+        {
+            public override string GetTriggerReason(IDictionary<string, string> arguments)
+            {
+                return string.Format("Timer fired at {0}", DateTime.UtcNow.ToString("o"));
+            }
         }
     }
 }

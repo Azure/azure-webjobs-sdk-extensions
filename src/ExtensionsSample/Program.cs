@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Files;
+using WebJobsSandbox;
 
 namespace ExtensionsSample
 {
@@ -28,6 +29,7 @@ namespace ExtensionsSample
 
             JobHost host = new JobHost(config);
 
+            host.Call(typeof(FileSamples).GetMethod("ReadWrite"));
             host.Call(typeof(SampleSamples).GetMethod("Sample_BindToStream"));
             host.Call(typeof(SampleSamples).GetMethod("Sample_BindToString"));
 

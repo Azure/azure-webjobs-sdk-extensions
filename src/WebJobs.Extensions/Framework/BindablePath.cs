@@ -5,7 +5,7 @@ using System.Linq;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Common.Bindings
+namespace Microsoft.Azure.WebJobs.Extensions.Framework
 {
     /// <summary>
     /// Encapsulates a path that may contain "route parameters" (e.g. "import/{name}") and provides
@@ -30,12 +30,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Common.Bindings
 
         public string Bind(IReadOnlyDictionary<string, object> bindingData)
         {
-            if (bindingData == null)
-            {
-                throw new ArgumentNullException("bindingData");
-            }
-
-            if (!_bindingTemplate.ParameterNames.Any())
+            if (bindingData == null ||
+                !_bindingTemplate.ParameterNames.Any())
             {
                 return _bindingTemplate.Pattern;
             }

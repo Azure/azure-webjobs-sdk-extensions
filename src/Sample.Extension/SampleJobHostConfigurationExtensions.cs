@@ -1,8 +1,5 @@
 ﻿using System;
-using Microsoft.Azure.WebJobs.Host;
-using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
-using Microsoft.Azure.WebJobs.Host.Triggers;
 using Sample.Extension;
 
 namespace Microsoft.Azure.WebJobs
@@ -16,11 +13,8 @@ namespace Microsoft.Azure.WebJobs
                 throw new ArgumentNullException("config");
             }
 
-            SampleExtensionConfig extensionConfig = new SampleExtensionConfig(sampleConfig);
-
             // Register our extension configuration provider
-            IExtensionRegistry extensions = config.GetService<IExtensionRegistry>();
-            extensions.RegisterExtension<IExtensionConfigProvider>(extensionConfig);
+            config.RegisterExtensionConfigProvider(new SampleExtensionConfig(sampleConfig));
         }
 
         private class SampleExtensionConfig : IExtensionConfigProvider
@@ -39,11 +33,11 @@ namespace Microsoft.Azure.WebJobs
                     throw new ArgumentNullException("context");
                 }
 
-                IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
-
                 // Register our extension binding providers
-                extensions.RegisterExtension<IBindingProvider>(new SampleAttributeBindingProvider(_config));
-                extensions.RegisterExtension<ITriggerBindingProvider>(new SampleTriggerAttributeBindingProvider(_config));
+                context.Config.RegisterBindingExtensions(
+                    new SampleAttributeBindingProvider(_config), 
+                    new SampleTriggerAttributeBindingProvider(_config)
+                );
             }
         }
     }

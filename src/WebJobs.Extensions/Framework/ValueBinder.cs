@@ -1,0 +1,95 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Host.Bindings;
+
+namespace Microsoft.Azure.WebJobs.Extensions.Framework
+{
+    /// <summary>
+    /// Base class for value binders.
+    /// </summary>
+    public abstract class ValueBinder : IOrderedValueBinder
+    {
+        private Type _type;
+        private BindStepOrder _bindStepOrder;
+
+        /// <summary>
+        /// Constructs a new instance
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="bindStepOrder"></param>
+        protected ValueBinder(Type type, BindStepOrder bindStepOrder = BindStepOrder.Default)
+        {
+            _type = type;
+            _bindStepOrder = bindStepOrder;
+        }
+
+        /// <inheritdoc/>
+        public BindStepOrder StepOrder
+        {
+            get { return _bindStepOrder; }
+        }
+
+        /// <inheritdoc/>
+        public Type Type
+        {
+            get { return _type; }
+        }
+
+        /// <inheritdoc/>
+        public abstract object GetValue();
+
+        /// <inheritdoc/>
+        public abstract string ToInvokeString();
+
+        /// <inheritdoc/>
+        public virtual Task SetValueAsync(object value, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(true);
+        }
+
+        /// <summary>
+        /// Determines whether the Type of the specified parameter matches one of the specified
+        /// types.
+        /// </summary>
+        /// <param name="parameter">The parameter to check.</param>
+        /// <param name="types">The set of types to check against.</param>
+        /// <returns>True if a match is found, false otherwise.</returns>
+        public static bool MatchParameterType(ParameterInfo parameter, params Type[] types)
+        {
+            if (parameter == null)
+            {
+                throw new ArgumentNullException("parameter");
+            }
+
+            if (parameter.IsOut)
+            {
+                return types.Any(p => p.MakeByRefType() == parameter.ParameterType);
+            }
+            else
+            {
+                return types.Contains(parameter.ParameterType);
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the Type of the specified parameter matches one of the specified
+        /// types.
+        /// </summary>
+        /// <param name="parameter">The parameter to check.</param>
+        /// <param name="types">The set of types to check against.</param>
+        /// <returns>True if a match is found, false otherwise.</returns>
+        public static bool MatchParameterType(ParameterInfo parameter, IEnumerable<Type> types)
+        {
+            if (types == null)
+            {
+                throw new ArgumentNullException("types");
+            }
+
+            return MatchParameterType(parameter, types.ToArray());
+        }
+    }
+}

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Framework;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
@@ -27,6 +28,7 @@ namespace Sample.Extension
             _config = config;
         }
 
+        /// <inheritdoc/>
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
         {
             if (context == null)
@@ -36,38 +38,36 @@ namespace Sample.Extension
 
             ParameterInfo parameter = context.Parameter;
             SampleTriggerAttribute attribute = parameter.GetCustomAttribute<SampleTriggerAttribute>(inherit: false);
-
             if (attribute == null)
             {
                 return Task.FromResult<ITriggerBinding>(null);
             }
 
-            // We know our attribute is applied to this parameter. Ensure that the parameter
-            // Type is one we support
-            if (!Binding.CanBind(parameter))
+            // TODO: Define the types your binding supports here
+            if (parameter.ParameterType != typeof(SampleTriggerValue) &&
+                parameter.ParameterType != typeof(string))
+            {
+                return Task.FromResult<ITriggerBinding>(null);
+            }
+
+            ITriggerBinding<SampleTriggerValue> binding = new SampleBinding(context.Parameter);
+            if (binding == null)
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, "Can't bind SampleTrigger to type '{0}'.", parameter.ParameterType));
             }
 
-            return Task.FromResult<ITriggerBinding>(new Binding(parameter, attribute));
+            return Task.FromResult<ITriggerBinding>(binding);
         }
 
-        private class Binding : ITriggerBinding<SampleTriggerValue>
+        private class SampleBinding : ITriggerBinding<SampleTriggerValue>
         {
             private ParameterInfo _parameter;
-            private SampleTriggerAttribute _attribute;
             private IReadOnlyDictionary<string, Type> _bindingContract;
 
-            public Binding(ParameterInfo parameter, SampleTriggerAttribute attribute)
+            public SampleBinding(ParameterInfo parameter)
             {
                 _parameter = parameter;
-                _attribute = attribute;
                 _bindingContract = CreateBindingDataContract();
-            }
-
-            public Type TriggerValueType
-            {
-                get { return typeof(SampleTriggerValue); }
             }
 
             public IReadOnlyDictionary<string, Type> BindingDataContract
@@ -75,35 +75,23 @@ namespace Sample.Extension
                 get { return _bindingContract; }
             }
 
-            public static bool CanBind(ParameterInfo parameter)
+            public Type TriggerValueType
             {
-                // TODO: Define the types your binding supports here
-                return parameter.ParameterType == typeof(SampleTriggerValue) ||
-                       parameter.ParameterType == typeof(string);
+                get { return typeof(SampleTriggerValue); }
             }
 
             public Task<ITriggerData> BindAsync(SampleTriggerValue value, ValueBindingContext context)
             {
-                // TODO: perform any required conversions from the trigger value
-                // to the parameter type
-                object converted = value;
-                if (_parameter.ParameterType == typeof(string))
-                {
-                    converted = value.ToString();
-                }
-
-                IValueProvider valueProvider = new ValueProvider(converted, _parameter.ParameterType);
-                IReadOnlyDictionary<string, object> bindingData = CreateBindingData(value);
-
-                return Task.FromResult<ITriggerData>(new TriggerData(valueProvider, bindingData));
+                IValueBinder valueBinder = new SampleValueBinder(_parameter, value);
+                return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, GetBindingData(value)));
             }
 
             public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
             {
-                // TODO: convert the incoming value as needed into your
-                // trigger value type. For example, this may be a string
-                // value coming from a Dashboard Run/Replay invocation
-                SampleTriggerValue triggerValue = new SampleTriggerValue();
+                // TODO: Perform any required conversions on the value
+                // E.g. convert from Dashboard invoke string to our trigger
+                // value type
+                SampleTriggerValue triggerValue = value as SampleTriggerValue;
                 return BindAsync(triggerValue, context);
             }
 
@@ -114,7 +102,7 @@ namespace Sample.Extension
 
             public IListenerFactory CreateListenerFactory(FunctionDescriptor descriptor, ITriggeredFunctionExecutor executor)
             {
-                return CreateListenerFactory(descriptor, (ITriggeredFunctionExecutor<SampleTriggerValue>)executor);
+                return new ListenerFactory((ITriggeredFunctionExecutor<SampleTriggerValue>)executor);
             }
 
             public ParameterDescriptor ToParameterDescriptor()
@@ -132,6 +120,16 @@ namespace Sample.Extension
                 };
             }
 
+            private IReadOnlyDictionary<string, object> GetBindingData(SampleTriggerValue value)
+            {
+                Dictionary<string, object> bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                bindingData.Add("SampleTrigger", value);
+
+                // TODO: Add any additional binding data
+
+                return bindingData;
+            }
+
             private IReadOnlyDictionary<string, Type> CreateBindingDataContract()
             {
                 Dictionary<string, Type> contract = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
@@ -142,22 +140,39 @@ namespace Sample.Extension
                 return contract;
             }
 
-            private IReadOnlyDictionary<string, object> CreateBindingData(SampleTriggerValue value)
-            {
-                Dictionary<string, object> bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                bindingData.Add("SampleTrigger", value);
-
-                // TODO: Add any additional binding data
-
-                return bindingData;
-            }
-
-            internal class SampleTriggerParameterDescriptor : TriggerParameterDescriptor
+            private class SampleTriggerParameterDescriptor : TriggerParameterDescriptor
             {
                 public override string GetTriggerReason(IDictionary<string, string> arguments)
                 {
                     // TODO: Customize your Dashboard display string
                     return string.Format("Sample trigger fired at {0}", DateTime.UtcNow.ToString("o"));
+                }
+            }
+
+            private class SampleValueBinder : ValueBinder
+            {
+                private object _value;
+
+                public SampleValueBinder(ParameterInfo parameter, SampleTriggerValue value)
+                    : base (parameter.ParameterType)
+                {
+                    _value = value;
+                }
+
+                public override object GetValue()
+                {
+                    // TODO: Perform any required conversions
+                    if (Type == typeof(string))
+                    {
+                        return _value.ToString();
+                    }
+                    return _value;
+                }
+
+                public override string ToInvokeString()
+                {
+                    // TODO: Customize your Dashboard invoke string
+                    return "Sample";
                 }
             }
 
@@ -186,7 +201,7 @@ namespace Sample.Extension
 
                         // TODO: For this sample, we're using a timer to generate
                         // trigger events. You'll replace this with your event source.
-                        _timer = new System.Timers.Timer(5 * 1000)
+                        _timer = new System.Timers.Timer(10 * 1000)
                         {
                             AutoReset = true
                         };
@@ -229,30 +244,6 @@ namespace Sample.Extension
                         _executor.TryExecuteAsync(input, CancellationToken.None).Wait();
                     }
                 }
-            }
-
-            private class ValueProvider : IValueProvider
-            {
-                private object _value;
-
-                public ValueProvider(object value, Type type)
-                {
-                    _value = value;
-                    Type = type;
-                }
-
-                public object GetValue()
-                {
-                    return _value;
-                }
-
-                public string ToInvokeString()
-                {
-                    // TODO: Customize your Dashboard invoke string
-                    return "Sample";
-                }
-
-                public Type Type { get; private set; }
             }
         }
     }

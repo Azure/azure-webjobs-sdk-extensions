@@ -1,6 +1,6 @@
 ﻿using System;
+using Microsoft.Azure.WebJobs.Extensions.Timers.Bindings;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Config;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Config;
 
 namespace Microsoft.Azure.WebJobs
@@ -31,10 +31,27 @@ namespace Microsoft.Azure.WebJobs
                 throw new ArgumentNullException("config");
             }
 
-            TimersExtensionConfig extensionConfig = new TimersExtensionConfig(timersConfig);
+            config.RegisterExtensionConfigProvider(new TimersExtensionConfig(timersConfig));
+        }
 
-            IExtensionRegistry extensions = config.GetService<IExtensionRegistry>();
-            extensions.RegisterExtension<IExtensionConfigProvider>(extensionConfig);
+        private class TimersExtensionConfig : IExtensionConfigProvider
+        {
+            private TimersConfiguration _config;
+
+            public TimersExtensionConfig(TimersConfiguration config)
+            {
+                _config = config;
+            }
+
+            public void Initialize(ExtensionConfigContext context)
+            {
+                if (context == null)
+                {
+                    throw new ArgumentNullException("context");
+                }
+
+                context.Config.RegisterBindingExtension(new TimerTriggerAttributeBindingProvider(_config));
+            }
         }
     }
 }

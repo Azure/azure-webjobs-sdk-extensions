@@ -1,7 +1,6 @@
 ﻿using System;
-using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Files;
-using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Azure.WebJobs.Extensions.Files.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
 
 namespace Microsoft.Azure.WebJobs
@@ -43,10 +42,29 @@ namespace Microsoft.Azure.WebJobs
                 throw new ArgumentNullException("filesConfig");
             }
 
-            FilesExtensionConfig extensionConfig = new FilesExtensionConfig(filesConfig);
+            config.RegisterExtensionConfigProvider(new FilesExtensionConfig(filesConfig));
+        }
 
-            IExtensionRegistry extensions = config.GetService<IExtensionRegistry>();
-            extensions.RegisterExtension<IExtensionConfigProvider>(extensionConfig);
+        private class FilesExtensionConfig : IExtensionConfigProvider
+        {
+            private FilesConfiguration _filesConfig;
+
+            public FilesExtensionConfig(FilesConfiguration filesConfig)
+            {
+                _filesConfig = filesConfig;
+            }
+
+            public void Initialize(ExtensionConfigContext context)
+            {
+                if (context == null)
+                {
+                    throw new ArgumentNullException("context");
+                }
+
+                context.Config.RegisterBindingExtensions(
+                    new FileTriggerAttributeBindingProvider(_filesConfig),
+                    new FileAttributeBindingProvider(_filesConfig));
+            }
         }
     }
 }

@@ -53,5 +53,12 @@ namespace WebJobsSandbox
                 sw.WriteLine("Heartbeat timer triggered at " + DateTime.Now);
             }
         }
+
+        public static void ReadWrite(
+            [File(@"input.txt", FileAccess.Read, FileMode.OpenOrCreate)] Stream input,
+            [File(@"output.txt", FileAccess.Write, FileMode.Append)] Stream output)
+        {
+            input.CopyTo(output);
+        }
     }
 }
