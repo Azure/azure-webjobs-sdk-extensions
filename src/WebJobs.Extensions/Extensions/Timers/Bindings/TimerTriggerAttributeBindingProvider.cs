@@ -8,7 +8,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 {
     internal class TimerTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
-        private TimersConfiguration _config;
+        private readonly TimersConfiguration _config;
 
         public TimerTriggerAttributeBindingProvider(TimersConfiguration config)
         {

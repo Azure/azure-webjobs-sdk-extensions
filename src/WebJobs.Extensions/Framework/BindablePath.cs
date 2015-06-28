@@ -13,7 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Framework
     /// </summary>
     internal class BindablePath
     {
-        private BindingTemplate _bindingTemplate;
+        private readonly BindingTemplate _bindingTemplate;
 
         public BindablePath(string pattern)
         {

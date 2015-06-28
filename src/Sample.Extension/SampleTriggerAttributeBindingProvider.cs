@@ -16,19 +16,18 @@ namespace Sample.Extension
     public class SampleTriggerValue
     {
         // TODO: Define the default type that your trigger binding
-        // binds to.
+        // binds to (the type representing the trigger event).
     }
 
     internal class SampleTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
-        private SampleConfiguration _config;
+        private readonly SampleConfiguration _config;
 
         public SampleTriggerAttributeBindingProvider(SampleConfiguration config)
         {
             _config = config;
         }
 
-        /// <inheritdoc/>
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
         {
             if (context == null)
@@ -56,8 +55,8 @@ namespace Sample.Extension
 
         private class SampleBinding : ITriggerBinding
         {
-            private ParameterInfo _parameter;
-            private IReadOnlyDictionary<string, Type> _bindingContract;
+            private readonly ParameterInfo _parameter;
+            private readonly IReadOnlyDictionary<string, Type> _bindingContract;
 
             public SampleBinding(ParameterInfo parameter)
             {
@@ -81,7 +80,8 @@ namespace Sample.Extension
                 // E.g. convert from Dashboard invoke string to our trigger
                 // value type
                 SampleTriggerValue triggerValue = value as SampleTriggerValue;
-                return BindAsync(triggerValue, context);
+                IValueBinder valueBinder = new SampleValueBinder(_parameter, triggerValue);
+                return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, GetBindingData(triggerValue)));
             }
 
             public IListenerFactory CreateListenerFactory(FunctionDescriptor descriptor, ITriggeredFunctionExecutor executor)
@@ -135,7 +135,7 @@ namespace Sample.Extension
 
             private class SampleValueBinder : ValueBinder
             {
-                private object _value;
+                private readonly object _value;
 
                 public SampleValueBinder(ParameterInfo parameter, SampleTriggerValue value)
                     : base (parameter.ParameterType)
@@ -162,7 +162,7 @@ namespace Sample.Extension
 
             private class ListenerFactory : IListenerFactory
             {
-                private ITriggeredFunctionExecutor _executor;
+                private readonly ITriggeredFunctionExecutor _executor;
 
                 public ListenerFactory(ITriggeredFunctionExecutor executor)
                 {

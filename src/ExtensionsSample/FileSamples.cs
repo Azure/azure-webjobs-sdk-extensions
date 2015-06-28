@@ -36,7 +36,7 @@ namespace WebJobsSandbox
         // the contents and write the file to the "converted" directory.
         public static void Converter(
             [FileTrigger(@"convert\{name}", "*.txt", autoDelete: true)] string file,
-            [File(@"converted\{name}")] out string converted)
+            [File(@"converted\{name}", FileAccess.Write)] out string converted)
         {
             char[] arr = file.ToCharArray();
             Array.Reverse(arr);

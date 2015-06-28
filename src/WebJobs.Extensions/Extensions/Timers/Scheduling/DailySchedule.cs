@@ -10,7 +10,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     /// </summary>
     public class DailySchedule : TimerSchedule
     {
-        private List<TimeSpan> schedule = new List<TimeSpan>();
+        private readonly List<TimeSpan> schedule = new List<TimeSpan>();
 
         /// <summary>
         /// Constructs a new instance.

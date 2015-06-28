@@ -13,7 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
     {
         private readonly TimerTriggerAttribute _attribute;
         private readonly TimersConfiguration _config;
-        private readonly TimerTriggerExecutor _triggerExecutor;
+        private readonly ITriggeredFunctionExecutor _executor;
         private readonly CancellationTokenSource _cancellationTokenSource;
 
         // Since Timer uses an integer internally for it's interval,
@@ -27,12 +27,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private bool _disposed;
         private TimeSpan _remainingInterval;
 
-        public TimerListener(TimerTriggerAttribute attribute, string timerName, TimersConfiguration config, TimerTriggerExecutor triggerExecutor)
+        public TimerListener(TimerTriggerAttribute attribute, string timerName, TimersConfiguration config, ITriggeredFunctionExecutor executor)
         {
             _attribute = attribute;
             _timerName = timerName;
             _config = config;
-            _triggerExecutor = triggerExecutor;
+            _executor = executor;
             _cancellationTokenSource = new CancellationTokenSource();
 
             _schedule = _attribute.Schedule;
@@ -163,7 +163,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             TimerInfo timerInfo = new TimerInfo(_attribute.Schedule);
             timerInfo.IsPastDue = isPastDue;
-            FunctionResult result = await _triggerExecutor.ExecuteAsync(timerInfo, token);
+
+            TriggeredFunctionData input = new TriggeredFunctionData
+            {
+                // TODO: how to set this properly?
+                ParentId = null,
+                TriggerValue = timerInfo
+            };
+            FunctionResult result = await _executor.TryExecuteAsync(input, token);
             if (!result.Succeeded)
             {
                 token.ThrowIfCancellationRequested();

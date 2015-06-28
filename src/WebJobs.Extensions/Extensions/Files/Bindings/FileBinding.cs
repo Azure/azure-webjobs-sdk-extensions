@@ -10,9 +10,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
     internal class FileBinding : IBinding
     {
-        private FilesConfiguration _config;
-        private ParameterInfo _parameter;
-        private FileAttribute _attribute;
+        private readonly FilesConfiguration _config;
+        private readonly ParameterInfo _parameter;
+        private readonly FileAttribute _attribute;
 
         public FileBinding(FilesConfiguration config, ParameterInfo parameter)
         {
@@ -68,15 +68,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 Name = _parameter.Name,
                 DisplayHints = new ParameterDisplayHints
                 {
-                    // TODO: Finish Dashboard integration
+                    Prompt = "Enter a file path",
+                    Description = string.Format("{0} file {1}", _attribute.Access.ToString(), _attribute.Path),
+                    DefaultValue = Path.Combine(_config.RootPath, _attribute.Path)
                 }
             };
         }
 
         private class FileValueBinder : StreamValueBinder
         {
-            private FileAttribute _attribute;
-            private FileInfo _fileInfo;
+            private readonly FileAttribute _attribute;
+            private readonly FileInfo _fileInfo;
 
             public FileValueBinder(ParameterInfo parameter, FileAttribute attribute, FileInfo fileInfo)
                 : base(parameter)

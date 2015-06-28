@@ -15,13 +15,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
     /// </summary>
     public class FileProcessor
     {
-        private FilesConfiguration _config;
-        private FileTriggerAttribute _attribute;
-        private ITriggeredFunctionExecutor _executor;
-        private CancellationTokenSource _cancellationTokenSource;
-        private string _filePath;
+        private readonly FilesConfiguration _config;
+        private readonly FileTriggerAttribute _attribute;
+        private readonly ITriggeredFunctionExecutor _executor;
+        private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly string _filePath;
+        private readonly JsonSerializer _serializer;
         private string _instanceId;
-        private JsonSerializer _serializer;
  
         /// <summary>
         /// Constructs a new instance

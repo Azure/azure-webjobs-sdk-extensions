@@ -36,7 +36,7 @@ namespace Microsoft.Azure.WebJobs
 
         private class TimersExtensionConfig : IExtensionConfigProvider
         {
-            private TimersConfiguration _config;
+            private readonly TimersConfiguration _config;
 
             public TimersExtensionConfig(TimersConfiguration config)
             {

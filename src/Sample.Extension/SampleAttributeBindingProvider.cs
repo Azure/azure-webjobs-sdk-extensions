@@ -11,14 +11,13 @@ namespace Sample.Extension
 {
     internal class SampleAttributeBindingProvider : IBindingProvider
     {
-        private SampleConfiguration _config;
+        private readonly SampleConfiguration _config;
 
         public SampleAttributeBindingProvider(SampleConfiguration config)
         {
             _config = config;
         }
 
-        /// <inheritdoc/>
         public Task<IBinding> TryCreateAsync(BindingProviderContext context)
         {
             if (context == null)
@@ -46,7 +45,7 @@ namespace Sample.Extension
 
         private class SampleBinding : IBinding
         {
-            private ParameterInfo _parameter;
+            private readonly ParameterInfo _parameter;
 
             public SampleBinding(ParameterInfo parameter)
             {
@@ -91,7 +90,7 @@ namespace Sample.Extension
             // implement everything yourself
             private class SampleValueBinder : StreamValueBinder
             {
-                private ParameterInfo _parameter;
+                private readonly ParameterInfo _parameter;
 
                 public SampleValueBinder(ParameterInfo parameter)
                     : base(parameter)

@@ -10,7 +10,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     /// </summary>
     public class WeeklySchedule : TimerSchedule
     {
-        private List<TimeSpan>[] schedule = new List<TimeSpan>[7];
+        private readonly List<TimeSpan>[] schedule = new List<TimeSpan>[7];
 
         /// <summary>
         /// Adds the specified day/time occurrence to the schedule.

@@ -119,7 +119,6 @@
     <Compile Include="Extensions\Timers\Config\TimersConfiguration.cs" />
     <Compile Include="Extensions\Timers\Listener\TimerListener.cs" />
     <Compile Include="Extensions\Timers\Listener\TimerListenerFactory.cs" />
-    <Compile Include="Extensions\Timers\Listener\TimerTriggerExecutor.cs" />
     <Compile Include="Extensions\Timers\Scheduling\ConstantSchedule.cs" />
     <Compile Include="Extensions\Timers\Scheduling\CronSchedule.cs" />
     <Compile Include="Extensions\Timers\Scheduling\DailySchedule.cs" />

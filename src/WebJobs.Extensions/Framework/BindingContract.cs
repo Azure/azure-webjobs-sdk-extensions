@@ -9,8 +9,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Framework
     /// </summary>
     public class BindingContract
     {
-        private BindingTemplateSource _bindingTemplateSource;
-        private IReadOnlyDictionary<string, Type> _bindingDataContract;
+        private readonly BindingTemplateSource _bindingTemplateSource;
+        private readonly IReadOnlyDictionary<string, Type> _bindingDataContract;
 
         /// <summary>
         /// Creates a new instance

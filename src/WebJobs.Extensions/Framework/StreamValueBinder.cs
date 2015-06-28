@@ -14,7 +14,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Framework
     /// </summary>
     public abstract class StreamValueBinder : ValueBinder
     {
-        private ParameterInfo _parameter;
+        private readonly ParameterInfo _parameter;
 
         /// <summary>
         /// Constructs a new instance

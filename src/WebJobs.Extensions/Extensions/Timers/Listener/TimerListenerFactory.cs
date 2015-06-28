@@ -23,8 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
 
         public Task<IListener> CreateAsync(ListenerFactoryContext context)
         {
-            TimerTriggerExecutor triggerExecutor = new TimerTriggerExecutor(_executor);
-            TimerListener listener = new TimerListener(_attribute, _timerName, _config, triggerExecutor);
+            TimerListener listener = new TimerListener(_attribute, _timerName, _config, _executor);
             return Task.FromResult<IListener>(listener);
         }
     }

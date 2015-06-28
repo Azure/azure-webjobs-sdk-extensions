@@ -10,7 +10,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     /// </summary>
     public class CronSchedule : TimerSchedule
     {
-        private CrontabSchedule _cronSchedule;
+        private readonly CrontabSchedule _cronSchedule;
 
         /// <summary>
         /// Constructs a new instance based on the specified crontab expression

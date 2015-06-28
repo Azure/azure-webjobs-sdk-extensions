@@ -13,8 +13,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Framework
     /// </summary>
     public abstract class ValueBinder : IOrderedValueBinder
     {
-        private Type _type;
-        private BindStepOrder _bindStepOrder;
+        private readonly Type _type;
+        private readonly BindStepOrder _bindStepOrder;
 
         /// <summary>
         /// Constructs a new instance

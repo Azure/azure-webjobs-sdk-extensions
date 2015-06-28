@@ -19,7 +19,7 @@ namespace Microsoft.Azure.WebJobs
 
         private class SampleExtensionConfig : IExtensionConfigProvider
         {
-            private SampleConfiguration _config;
+            private readonly SampleConfiguration _config;
 
             public SampleExtensionConfig(SampleConfiguration config)
             {

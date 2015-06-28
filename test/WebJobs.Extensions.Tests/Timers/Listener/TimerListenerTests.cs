@@ -158,7 +158,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _mockScheduleMonitor = new Mock<ScheduleMonitor>(MockBehavior.Strict);
             _config.ScheduleMonitor = _mockScheduleMonitor.Object;
             _mockTriggerExecutor = new Mock<ITriggeredFunctionExecutor>(MockBehavior.Strict);
-            TimerTriggerExecutor executor = new TimerTriggerExecutor(_mockTriggerExecutor.Object);
             FunctionResult result = new FunctionResult(true);
             _mockTriggerExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
                 .Callback<TriggeredFunctionData, CancellationToken>((mockFunctionData, mockToken) =>
@@ -166,7 +165,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                     _triggeredFunctionData = mockFunctionData;
                 })
                 .Returns(Task.FromResult(result));
-            _listener = new TimerListener(_attribute, _testTimerName, _config, executor);
+            _listener = new TimerListener(_attribute, _testTimerName, _config, _mockTriggerExecutor.Object);
         }
     }
 }

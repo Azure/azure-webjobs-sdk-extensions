@@ -8,7 +8,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     /// </summary>
     public class ConstantSchedule : TimerSchedule
     {
-        private TimeSpan _interval;
+        private readonly TimeSpan _interval;
         private TimeSpan? _intervalOverride;
 
         /// <summary>

@@ -15,16 +15,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
     internal class FileTriggerBinding : ITriggerBinding
     {
-        private ParameterInfo _parameter;
-        private FileTriggerAttribute _attribute;
-        private FilesConfiguration _config;
-        private BindingContract _bindingContract;
+        private readonly ParameterInfo _parameter;
+        private readonly FileTriggerAttribute _attribute;
+        private readonly FilesConfiguration _config;
+        private readonly BindingContract _bindingContract;
 
         public FileTriggerBinding(FilesConfiguration config, ParameterInfo parameter)
         {
+            _config = config;
             _parameter = parameter;
             _attribute = parameter.GetCustomAttribute<FileTriggerAttribute>(inherit: false);
-            _config = config;
             _bindingContract = CreateBindingContract();
         }
 
@@ -78,7 +78,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 {
                     Prompt = "Enter a file path",
                     Description = string.Format("File event occurred on path '{0}'", _attribute.GetNormalizedPath()),
-                    DefaultValue = Path.Combine(_config.RootPath, _attribute.GetNormalizedPath(), "{name}")
+                    DefaultValue = Path.Combine(_config.RootPath, _attribute.Path)
                 }
             };
         }
@@ -109,8 +109,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 
         private class FileValueBinder : StreamValueBinder
         {
-            private ParameterInfo _parameter;
-            private FileSystemEventArgs _fileEvent;
+            private readonly ParameterInfo _parameter;
+            private readonly FileSystemEventArgs _fileEvent;
 
             public FileValueBinder(ParameterInfo parameter, FileSystemEventArgs fileEvent)
                 : base(parameter)

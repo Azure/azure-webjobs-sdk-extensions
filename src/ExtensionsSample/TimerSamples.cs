@@ -8,7 +8,7 @@ namespace WebJobsSandbox
         /// <summary>
         /// Example job triggered by a crontab schedule.
         /// </summary>
-        public static void CronJob([TimerTrigger("0 */1 * * * *")] TimerInfo timerInfo)
+        public static void CronJob([TimerTrigger("*/15 * * * * *")] TimerInfo timerInfo)
         {
             Console.WriteLine("Scheduled job fired!");
         }

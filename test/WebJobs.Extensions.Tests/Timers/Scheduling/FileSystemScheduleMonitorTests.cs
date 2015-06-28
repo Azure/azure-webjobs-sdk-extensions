@@ -38,8 +38,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             Assert.Equal(expectedPath, localMonitor.StatusFilePath);
 
             Environment.SetEnvironmentVariable("HOME", @"C:\home");
-            localMonitor = new FileSystemScheduleMonitor();
-            Assert.Equal(@"C:\home\data\webjobssdk\timers", localMonitor.StatusFilePath);
+            string currentDirectory = @"D:\local\Temp\jobs\continuous\Test\mlxx1xht.zmv";  // example from actual Azure WebJob
+            string jobDirectory = @"C:\home\data\jobs\continuous\Test";
+            Directory.CreateDirectory(jobDirectory);
+            localMonitor = new FileSystemScheduleMonitor(currentDirectory);
+            Assert.Equal(@"C:\home\data\jobs\continuous\Test", localMonitor.StatusFilePath);
+            Directory.Delete(jobDirectory);
 
             Environment.SetEnvironmentVariable("HOME", null);
         }
