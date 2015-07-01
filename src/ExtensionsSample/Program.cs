@@ -34,6 +34,7 @@ namespace ExtensionsSample
             host.Call(typeof(FileSamples).GetMethod("ReadWrite"));
             host.Call(typeof(SampleSamples).GetMethod("Sample_BindToStream"));
             host.Call(typeof(SampleSamples).GetMethod("Sample_BindToString"));
+            host.Call(typeof(TableSamples).GetMethod("CustomBinding"));
 
             host.RunAndBlock();
         }

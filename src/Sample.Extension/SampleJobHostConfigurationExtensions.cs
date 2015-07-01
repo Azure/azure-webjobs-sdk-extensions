@@ -1,5 +1,7 @@
 ﻿using System;
+using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Microsoft.Azure.WebJobs.Host.Tables;
 using Sample.Extension;
 
 namespace Microsoft.Azure.WebJobs
@@ -38,6 +40,9 @@ namespace Microsoft.Azure.WebJobs
                     new SampleAttributeBindingProvider(_config), 
                     new SampleTriggerAttributeBindingProvider(_config)
                 );
+
+                // Register our Table binding extension
+                context.Config.RegisterTableBindingExtension(new SampleTableBindingProvider());
             }
         }
     }
