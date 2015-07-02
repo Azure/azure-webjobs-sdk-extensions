@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Config;
+using Microsoft.Azure.WebJobs.Extensions.Timers.Listeners;
 using Microsoft.Azure.WebJobs.Host.Bindings;
-using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
@@ -53,14 +53,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             return Task.FromResult<ITriggerData>(new TriggerData(valueProvider, bindingData));
         }
 
-        public IListenerFactory CreateListenerFactory(FunctionDescriptor descriptor, ITriggeredFunctionExecutor executor)
+        public Task<IListener> CreateListenerAsync(ListenerFactoryContext context)
         {
-            if (descriptor == null)
+            if (context == null)
             {
-                throw new ArgumentNullException("descriptor");
+                throw new ArgumentNullException("context");
             }
-            string timerName = descriptor.Id;
-            return new TimerListenerFactory(_attribute, timerName, _config, executor);
+            return Task.FromResult<IListener>(new TimerListener(_attribute, context.Descriptor.Id, _config, context.Executor));
         }
 
         public ParameterDescriptor ToParameterDescriptor()

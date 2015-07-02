@@ -50,15 +50,15 @@ namespace Sample.Extension
                     "Can't bind SampleTrigger to type '{0}'.", parameter.ParameterType));
             }
 
-            return Task.FromResult<ITriggerBinding>(new SampleBinding(context.Parameter));
+            return Task.FromResult<ITriggerBinding>(new SampleTriggerBinding(context.Parameter));
         }
 
-        private class SampleBinding : ITriggerBinding
+        private class SampleTriggerBinding : ITriggerBinding
         {
             private readonly ParameterInfo _parameter;
             private readonly IReadOnlyDictionary<string, Type> _bindingContract;
 
-            public SampleBinding(ParameterInfo parameter)
+            public SampleTriggerBinding(ParameterInfo parameter)
             {
                 _parameter = parameter;
                 _bindingContract = CreateBindingDataContract();
@@ -84,9 +84,9 @@ namespace Sample.Extension
                 return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, GetBindingData(triggerValue)));
             }
 
-            public IListenerFactory CreateListenerFactory(FunctionDescriptor descriptor, ITriggeredFunctionExecutor executor)
+            public Task<IListener> CreateListenerAsync(ListenerFactoryContext context)
             {
-                return new ListenerFactory(executor);
+                return Task.FromResult<IListener>(new Listener(context.Executor));
             }
 
             public ParameterDescriptor ToParameterDescriptor()
@@ -160,73 +160,58 @@ namespace Sample.Extension
                 }
             }
 
-            private class ListenerFactory : IListenerFactory
+            private class Listener : IListener
             {
-                private readonly ITriggeredFunctionExecutor _executor;
+                private ITriggeredFunctionExecutor _executor;
+                private System.Timers.Timer _timer;
 
-                public ListenerFactory(ITriggeredFunctionExecutor executor)
+                public Listener(ITriggeredFunctionExecutor executor)
                 {
                     _executor = executor;
+
+                    // TODO: For this sample, we're using a timer to generate
+                    // trigger events. You'll replace this with your event source.
+                    _timer = new System.Timers.Timer(10 * 1000)
+                    {
+                        AutoReset = true
+                    };
+                    _timer.Elapsed += OnTimer;
                 }
 
-                public Task<IListener> CreateAsync(ListenerFactoryContext context)
+                public Task StartAsync(CancellationToken cancellationToken)
                 {
-                    return Task.FromResult<IListener>(new Listener(_executor));
+                    // TODO: Start monitoring your event source
+                    _timer.Start();
+                    return Task.FromResult(true);
                 }
 
-                private class Listener : IListener
+                public Task StopAsync(CancellationToken cancellationToken)
                 {
-                    private ITriggeredFunctionExecutor _executor;
-                    private System.Timers.Timer _timer;
+                    // TODO: Stop monitoring your event source
+                    _timer.Stop();
+                    return Task.FromResult(true);
+                }
 
-                    public Listener(ITriggeredFunctionExecutor executor)
+                public void Dispose()
+                {
+                    // TODO: Perform any final cleanup
+                    _timer.Dispose();
+                }
+
+                public void Cancel()
+                {
+                    // TODO: cancel any outstanding tasks initiated by this listener
+                }
+
+                private void OnTimer(object sender, System.Timers.ElapsedEventArgs e)
+                {
+                    // TODO: When you receive new events from your event source,
+                    // invoke the function executor
+                    TriggeredFunctionData input = new TriggeredFunctionData
                     {
-                        _executor = executor;
-
-                        // TODO: For this sample, we're using a timer to generate
-                        // trigger events. You'll replace this with your event source.
-                        _timer = new System.Timers.Timer(10 * 1000)
-                        {
-                            AutoReset = true
-                        };
-                        _timer.Elapsed += OnTimer;
-                    }
-
-                    public Task StartAsync(CancellationToken cancellationToken)
-                    {
-                        // TODO: Start monitoring your event source
-                        _timer.Start();
-                        return Task.FromResult(true);
-                    }
-
-                    public Task StopAsync(CancellationToken cancellationToken)
-                    {
-                        // TODO: Stop monitoring your event source
-                        _timer.Stop();
-                        return Task.FromResult(true);
-                    }
-
-                    public void Dispose()
-                    {
-                        // TODO: Perform any final cleanup
-                        _timer.Dispose();
-                    }
-
-                    public void Cancel()
-                    {
-                        // TODO: cancel any outstanding tasks initiated by this listener
-                    }
-
-                    private void OnTimer(object sender, System.Timers.ElapsedEventArgs e)
-                    {
-                        // TODO: When you receive new events from your event source,
-                        // invoke the function executor
-                        TriggeredFunctionData input = new TriggeredFunctionData
-                        {
-                            TriggerValue = new SampleTriggerValue()
-                        };
-                        _executor.TryExecuteAsync(input, CancellationToken.None).Wait();
-                    }
+                        TriggerValue = new SampleTriggerValue()
+                    };
+                    _executor.TryExecuteAsync(input, CancellationToken.None).Wait();
                 }
             }
         }

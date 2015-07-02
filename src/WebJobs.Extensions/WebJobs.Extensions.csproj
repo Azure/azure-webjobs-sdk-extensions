@@ -42,12 +42,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Azure.WebJobs, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.Core.1.1.0-alpha1-10027\lib\net45\Microsoft.Azure.WebJobs.dll</HintPath>
-      <Private>True</Private>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.Core.1.1.0-alpha1-10028\lib\net45\Microsoft.Azure.WebJobs.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Azure.WebJobs.Host, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.1.1.0-alpha1-10027\lib\net45\Microsoft.Azure.WebJobs.Host.dll</HintPath>
-      <Private>True</Private>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.1.1.0-alpha1-10028\lib\net45\Microsoft.Azure.WebJobs.Host.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Data.Edm, Version=5.6.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <Private>True</Private>
@@ -101,7 +101,6 @@
     <Compile Include="Extensions\Files\FileTriggerAttribute.cs" />
     <Compile Include="Extensions\Files\Listener\DefaultFileProcessorFactory.cs" />
     <Compile Include="Extensions\Files\Listener\FileListener.cs" />
-    <Compile Include="Extensions\Files\Listener\FileListenerFactory.cs" />
     <Compile Include="Extensions\Files\Listener\FileProcessor.cs" />
     <Compile Include="Extensions\Files\Listener\FileProcessorFactoryContext.cs" />
     <Compile Include="Extensions\Files\Listener\IFileProcessorFactory.cs" />
@@ -118,7 +117,6 @@
     <Compile Include="Extensions\Timers\Config\TimerJobHostConfigurationExtensions.cs" />
     <Compile Include="Extensions\Timers\Config\TimersConfiguration.cs" />
     <Compile Include="Extensions\Timers\Listener\TimerListener.cs" />
-    <Compile Include="Extensions\Timers\Listener\TimerListenerFactory.cs" />
     <Compile Include="Extensions\Timers\Scheduling\ConstantSchedule.cs" />
     <Compile Include="Extensions\Timers\Scheduling\CronSchedule.cs" />
     <Compile Include="Extensions\Timers\Scheduling\DailySchedule.cs" />

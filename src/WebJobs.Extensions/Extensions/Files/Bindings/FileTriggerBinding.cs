@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Framework;
 using Microsoft.Azure.WebJobs.Files.Listeners;
 using Microsoft.Azure.WebJobs.Host.Bindings;
-using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
@@ -64,9 +63,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, bindingData));
         }
 
-        public IListenerFactory CreateListenerFactory(FunctionDescriptor descriptor, ITriggeredFunctionExecutor executor)
+        public Task<IListener> CreateListenerAsync(ListenerFactoryContext context)
         {
-            return new FileListenerFactory(_config, _attribute, executor);
+            if (context == null)
+            {
+                throw new ArgumentNullException("context");
+            }
+            return Task.FromResult<IListener>(new FileListener(_config, _attribute, context.Executor));
         }
 
         public ParameterDescriptor ToParameterDescriptor()
