@@ -45,7 +45,7 @@ namespace Microsoft.Azure.WebJobs
                 throw new ArgumentNullException("extension");
             }
 
-            config.RegisterExtension < IArgumentBindingProvider<ITableArgumentBinding>>(extension);
+            config.RegisterExtension<IArgumentBindingProvider<ITableArgumentBinding>>(extension);
         }
 
         /// <summary>

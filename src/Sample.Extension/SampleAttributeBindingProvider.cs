@@ -11,13 +11,6 @@ namespace Sample.Extension
 {
     internal class SampleAttributeBindingProvider : IBindingProvider
     {
-        private readonly SampleConfiguration _config;
-
-        public SampleAttributeBindingProvider(SampleConfiguration config)
-        {
-            _config = config;
-        }
-
         public Task<IBinding> TryCreateAsync(BindingProviderContext context)
         {
             if (context == null)

@@ -14,9 +14,7 @@
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <tags>Microsoft Azure WebJobs Jobs Extensions Storage Table Blob Queue windowsazureofficial Web</tags>
     <dependencies>
-      <dependency id="Microsoft.Azure.WebJobs" version="1.1.0-alpha1-10028" />
-      <dependency id="Newtonsoft.Json" version="6.0.4"/>
-      <dependency id="WindowsAzure.Storage" version="4.0.1"/>
+      <dependency id="Microsoft.Azure.WebJobs" version="1.1.0-alpha1-10029" />
     </dependencies>
   </metadata>
 </package>

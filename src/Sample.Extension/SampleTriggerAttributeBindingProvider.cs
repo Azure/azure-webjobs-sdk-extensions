@@ -21,13 +21,6 @@ namespace Sample.Extension
 
     internal class SampleTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
-        private readonly SampleConfiguration _config;
-
-        public SampleTriggerAttributeBindingProvider(SampleConfiguration config)
-        {
-            _config = config;
-        }
-
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
         {
             if (context == null)
@@ -171,7 +164,7 @@ namespace Sample.Extension
 
                     // TODO: For this sample, we're using a timer to generate
                     // trigger events. You'll replace this with your event source.
-                    _timer = new System.Timers.Timer(10 * 1000)
+                    _timer = new System.Timers.Timer(5 * 1000)
                     {
                         AutoReset = true
                     };

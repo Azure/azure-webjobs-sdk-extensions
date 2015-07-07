@@ -5,7 +5,7 @@ using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.WindowsAzure.Storage.Blob;
 
-namespace WebJobsSandbox
+namespace ExtensionsSample
 {
     public static class FileSamples
     {

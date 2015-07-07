@@ -2,7 +2,6 @@
 using System.IO;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Files;
-using WebJobsSandbox;
 
 namespace ExtensionsSample
 {
