@@ -47,7 +47,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
                 timerInfo = new TimerInfo(_attribute.Schedule);
             }
 
-            IValueProvider valueProvider = new ValueProvider(value, _parameter.ParameterType);
+            IValueProvider valueProvider = new ValueProvider(timerInfo);
             IReadOnlyDictionary<string, object> bindingData = CreateBindingData(timerInfo);
 
             return Task.FromResult<ITriggerData>(new TriggerData(valueProvider, bindingData));
@@ -69,9 +69,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
                 Name = _parameter.Name,
                 DisplayHints = new ParameterDisplayHints
                 {
-                    Prompt = "Enter an ISO DateTime string (yyyy-mm-ddThh:mm:ssZ)",
-                    Description = string.Format("Timer executed on schedule ({0})", _attribute.Schedule.ToString()),
-                    DefaultValue = DateTime.UtcNow.ToString("o")
+                    Description = string.Format("Timer executed on schedule ({0})", _attribute.Schedule.ToString())
                 }
             };
             return descriptor;
@@ -98,17 +96,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
         private class ValueProvider : IValueProvider
         {
             private readonly object _value;
-            private readonly Type _valueType;
 
-            public ValueProvider(object value, Type valueType)
+            public ValueProvider(object value)
             {
                 _value = value;
-                _valueType = valueType;
             }
 
             public Type Type
             {
-                get { return _valueType; }
+                get { return typeof(TimerInfo); }
             }
 
             public object GetValue()

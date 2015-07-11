@@ -91,6 +91,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions\Core\CoreJobHostConfigurationExtensions.cs" />
+    <Compile Include="Extensions\Core\ExecutionContext.cs" />
+    <Compile Include="Extensions\Core\ExecutionContextBindingProvider.cs" />
     <Compile Include="Extensions\Files\Bindings\FileBinding.cs" />
     <Compile Include="Extensions\Files\Bindings\FileTriggerBinding.cs" />
     <Compile Include="Framework\BindablePath.cs" />

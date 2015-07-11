@@ -25,8 +25,8 @@ namespace ExtensionsSample
             config.UseFiles(filesConfig);
 
             config.UseTimers();
-
             config.UseSample();
+            config.UseCore();
 
             JobHost host = new JobHost(config);
 
