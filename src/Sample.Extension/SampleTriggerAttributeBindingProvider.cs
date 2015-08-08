@@ -40,7 +40,7 @@ namespace Sample.Extension
                 parameter.ParameterType != typeof(string))
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 
-                    "Can't bind SampleTrigger to type '{0}'.", parameter.ParameterType));
+                    "Can't bind SampleTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
             return Task.FromResult<ITriggerBinding>(new SampleTriggerBinding(context.Parameter));

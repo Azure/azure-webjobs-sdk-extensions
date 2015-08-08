@@ -57,7 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
                 // now attempt to process the file
                 FileSystemEventArgs eventArgs = new FileSystemEventArgs(WatcherChangeTypes.Created, Path.GetDirectoryName(testFile), Path.GetFileName(testFile));
 
-                bool fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs);
+                bool fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs, CancellationToken.None);
 
                 Assert.False(fileProcessedSuccessfully);
                 mockExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -76,7 +76,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
 
             FileSystemEventArgs eventArgs = new FileSystemEventArgs(WatcherChangeTypes.Created, Path.GetDirectoryName(testFile), Path.GetFileName(testFile));
-            bool fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs);
+            bool fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs, CancellationToken.None);
 
             Assert.False(fileProcessedSuccessfully);
             Assert.True(File.Exists(testFile));
@@ -99,7 +99,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             string testFilePath = Path.GetDirectoryName(testFile);
             string testFileName = Path.GetFileName(testFile);
             FileSystemEventArgs eventArgs = new FileSystemEventArgs(WatcherChangeTypes.Created, testFilePath, testFileName);
-            bool fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs);
+            bool fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs, CancellationToken.None);
 
             Assert.True(fileProcessedSuccessfully);
             string expectedStatusFile = processor.GetStatusFile(testFile);
@@ -134,13 +134,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             string testFilePath = Path.GetDirectoryName(testFile);
             string testFileName = Path.GetFileName(testFile);
             FileSystemEventArgs eventArgs = new FileSystemEventArgs(WatcherChangeTypes.Created, testFilePath, testFileName);
-            bool fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs);
+            bool fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs, CancellationToken.None);
             Assert.True(fileProcessedSuccessfully);
 
             // now process a Change event
             File.WriteAllText(testFile, "update");
             eventArgs = new FileSystemEventArgs(WatcherChangeTypes.Changed, testFilePath, testFileName);
-            fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs);
+            fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs, CancellationToken.None);
             Assert.True(fileProcessedSuccessfully);
 
             string expectedStatusFile = processor.GetStatusFile(testFile);
@@ -179,7 +179,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
 
             FileSystemEventArgs eventArgs = new FileSystemEventArgs(WatcherChangeTypes.Created, combinedTestFilePath, Path.GetFileName(testFile));
-            await processor.ProcessFileAsync(eventArgs);
+            await processor.ProcessFileAsync(eventArgs, CancellationToken.None);
 
             Assert.Equal(2, Directory.GetFiles(combinedTestFilePath).Length);
             string expectedStatusFile = processor.GetStatusFile(testFile);
@@ -282,9 +282,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
         {
             mockExecutor = new Mock<ITriggeredFunctionExecutor>(MockBehavior.Strict);
             FileProcessorFactoryContext context = new FileProcessorFactoryContext(config, attribute, mockExecutor.Object);
-            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
-            return new FileProcessor(context, cancellationTokenSource);
+            return new FileProcessor(context);
         }
     }
 }

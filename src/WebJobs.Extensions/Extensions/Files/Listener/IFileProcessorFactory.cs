@@ -12,8 +12,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// Create a <see cref="FileProcessor"/> for the specified inputs.
         /// </summary>
         /// <param name="context">The context to use.</param>
-        /// <param name="cancellationTokenSource">The <see cref="CancellationTokenSource"/> to use.</param>
         /// <returns>The <see cref="FileProcessor"/></returns>
-        FileProcessor CreateFileProcessor(FileProcessorFactoryContext context, CancellationTokenSource cancellationTokenSource);
+        FileProcessor CreateFileProcessor(FileProcessorFactoryContext context);
     }
 }

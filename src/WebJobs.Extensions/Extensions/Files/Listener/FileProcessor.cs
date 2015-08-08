@@ -18,7 +18,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         private readonly FilesConfiguration _config;
         private readonly FileTriggerAttribute _attribute;
         private readonly ITriggeredFunctionExecutor _executor;
-        private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly string _filePath;
         private readonly JsonSerializer _serializer;
         private string _instanceId;
@@ -27,22 +26,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// Constructs a new instance
         /// </summary>
         /// <param name="context">The <see cref="FileProcessorFactoryContext"/></param>
-        /// <param name="cancellationTokenSource">The <see cref="CancellationTokenSource"/></param>
-        public FileProcessor(FileProcessorFactoryContext context, CancellationTokenSource cancellationTokenSource)
+        public FileProcessor(FileProcessorFactoryContext context)
         {
             if (context == null)
             {
                 throw new ArgumentNullException("context");
             }
-            if (cancellationTokenSource == null)
-            {
-                throw new ArgumentNullException("cancellationTokenSource");
-            }
 
             _config = context.Config;
             _attribute = context.Attribute;
             _executor = context.Executor;
-            _cancellationTokenSource = cancellationTokenSource;
 
             string attributePath = _attribute.GetNormalizedPath();
             _filePath = Path.Combine(_config.RootPath, attributePath);
@@ -124,8 +117,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// Process the file indicated by the specified <see cref="FileSystemEventArgs"/>.
         /// </summary>
         /// <param name="eventArgs">The <see cref="FileSystemEventArgs"/> indicating the file to process.</param>
-        /// <returns>A <see cref="Task"/> that returns true if the file was processed successfully, false otherwise.</returns>
-        public virtual async Task<bool> ProcessFileAsync(FileSystemEventArgs eventArgs)
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use.</param>
+        /// <returns>
+        /// A <see cref="Task"/> that returns true if the file was processed successfully, false otherwise.
+        /// </returns>
+        public virtual async Task<bool> ProcessFileAsync(FileSystemEventArgs eventArgs, CancellationToken cancellationToken)
         {
             try
             {
@@ -156,8 +152,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
                         ParentId = null,
                         TriggerValue = eventArgs
                     };
-                    CancellationToken token = _cancellationTokenSource.Token;
-                    FunctionResult result = await _executor.TryExecuteAsync(input, token);
+                    FunctionResult result = await _executor.TryExecuteAsync(input, cancellationToken);
 
                     if (result.Succeeded)
                     {
@@ -174,7 +169,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
                         // file as is (it will show "Processing"). The file will be
                         // reprocessed later on a clean-up pass.
                         statusWriter.Close();
-                        token.ThrowIfCancellationRequested();
+                        cancellationToken.ThrowIfCancellationRequested();
                         return false;
                     }
                 }             

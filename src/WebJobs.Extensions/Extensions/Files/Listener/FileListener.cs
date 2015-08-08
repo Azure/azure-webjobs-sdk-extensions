@@ -63,7 +63,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
             CreateFileWatcher();
 
             FileProcessorFactoryContext context = new FileProcessorFactoryContext(_config, _attribute, _triggerExecutor);
-            _processor = _config.ProcessorFactory.CreateFileProcessor(context, _cancellationTokenSource);
+            _processor = _config.ProcessorFactory.CreateFileProcessor(context);
 
             ExecutionDataflowBlockOptions options = new ExecutionDataflowBlockOptions
             {
@@ -97,8 +97,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
             {
                 throw new InvalidOperationException("The listener has not yet been started or has already been stopped.");
             }
- 
-            // Signal ProcessMessage to shut down gracefully
+
             _cancellationTokenSource.Cancel();
 
             _watcher.EnableRaisingEvents = false;
@@ -211,7 +210,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
         private async Task ProcessWorkItem(FileSystemEventArgs e)
         {
-            await _processor.ProcessFileAsync(e);
+            await _processor.ProcessFileAsync(e, _cancellationTokenSource.Token);
         }
 
         private void ProcessFiles()
