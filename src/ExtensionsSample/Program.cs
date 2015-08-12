@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Files;
@@ -10,6 +11,8 @@ namespace ExtensionsSample
         static void Main(string[] args)
         {
             JobHostConfiguration config = new JobHostConfiguration();
+
+            config.Tracing.ConsoleLevel = TraceLevel.Verbose;
 
             // Set to a short polling interval to facilitate local
             // debugging. You wouldn't want to run prod this way.
