@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Config;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
@@ -9,10 +10,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
     internal class TimerTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
         private readonly TimersConfiguration _config;
+        private readonly TraceWriter _trace;
 
-        public TimerTriggerAttributeBindingProvider(TimersConfiguration config)
+        public TimerTriggerAttributeBindingProvider(TimersConfiguration config, TraceWriter trace)
         {
             _config = config;
+            _trace = trace;
         }
 
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
@@ -35,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
                 throw new InvalidOperationException(string.Format("Can't bind TimerTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            return Task.FromResult<ITriggerBinding>(new TimerTriggerBinding(parameter, timerTriggerAttribute, _config));
+            return Task.FromResult<ITriggerBinding>(new TimerTriggerBinding(parameter, timerTriggerAttribute, _config, _trace));
         }
     }
 }

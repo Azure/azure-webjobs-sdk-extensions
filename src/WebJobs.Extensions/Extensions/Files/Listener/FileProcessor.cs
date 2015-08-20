@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Newtonsoft.Json;
 
@@ -17,6 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
     {
         private readonly FilesConfiguration _config;
         private readonly FileTriggerAttribute _attribute;
+        private readonly TraceWriter _trace;
         private readonly ITriggeredFunctionExecutor _executor;
         private readonly string _filePath;
         private readonly JsonSerializer _serializer;
@@ -36,6 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
             _config = context.Config;
             _attribute = context.Attribute;
             _executor = context.Executor;
+            _trace = context.Trace;
 
             string attributePath = _attribute.GetNormalizedPath();
             _filePath = Path.Combine(_config.RootPath, attributePath);
@@ -148,8 +151,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
                     // invoke the job function
                     TriggeredFunctionData input = new TriggeredFunctionData
                     {
-                        // TODO: set this properly
-                        ParentId = null,
                         TriggerValue = eventArgs
                     };
                     FunctionResult result = await _executor.TryExecuteAsync(input, cancellationToken);
@@ -300,6 +301,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// </summary>
         public virtual void CleanupProcessedFiles()
         {
+            int filesDeleted = 0;
             string[] statusFiles = Directory.GetFiles(_filePath, GetStatusFile("*"));
             foreach (string statusFilePath in statusFiles)
             {
@@ -325,16 +327,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
                         {
                             continue;
                         }
-                        TryDelete(filePath);
+                        if (TryDelete(filePath))
+                        {
+                            filesDeleted++;
+                        }
                     }
 
                     // then delete the status file
-                    TryDelete(statusFilePath);
+                    if (TryDelete(statusFilePath))
+                    {
+                        filesDeleted++;
+                    }
                 }
                 catch
                 {
                     // ignore any delete failures
                 }
+            }
+
+            if (filesDeleted > 0)
+            {
+                _trace.Verbose(string.Format("File Cleanup ({0}): {1} files deleted", _filePath, filesDeleted));
             }
         }
 

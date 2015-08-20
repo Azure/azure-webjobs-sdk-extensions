@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Config;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Listeners;
@@ -165,7 +166,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                     _triggeredFunctionData = mockFunctionData;
                 })
                 .Returns(Task.FromResult(result));
-            _listener = new TimerListener(_attribute, _testTimerName, _config, _mockTriggerExecutor.Object);
+            _listener = new TimerListener(_attribute, _testTimerName, _config, _mockTriggerExecutor.Object, new TestTraceWriter());
         }
     }
 }

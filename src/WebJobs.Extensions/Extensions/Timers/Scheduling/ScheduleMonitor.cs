@@ -14,6 +14,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Scheduling
         /// <summary>
         /// Determines whether the schedule is currently past due.
         /// </summary>
+        /// <remarks>
+        /// On startup, all schedules are checked to see if they are past due. Any
+        /// timers that are past due will be executed immediately by default. Subclasses can
+        /// change this behavior by inspecting the current time and schedule to determine
+        /// whether it should be considered past due.
+        /// </remarks>
         /// <param name="timerName">The name of the timer to check</param>
         /// <param name="now">The time to check</param>
         /// <param name="schedule">The <see cref="TimerSchedule"/></param>

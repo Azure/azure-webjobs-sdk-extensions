@@ -99,6 +99,7 @@
   <ItemGroup>
     <Compile Include="Common\ExplicitTypeLocator.cs" />
     <Compile Include="Common\TestHelpers.cs" />
+    <Compile Include="Common\TestTraceWriter.cs" />
     <Compile Include="Core\CoreBindingEndToEndTests.cs" />
     <Compile Include="Files\Config\FilesConfigurationTests.cs" />
     <Compile Include="Files\Listener\FileListenerTests.cs" />

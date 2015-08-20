@@ -62,7 +62,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             List<FileListener> listeners = new List<FileListener>();
             for (int i = 0; i < concurrentListenerCount; i++)
             {
-                FileListener listener = new FileListener(config, attribute, mockExecutor.Object);
+                FileListener listener = new FileListener(config, attribute, mockExecutor.Object, new TestTraceWriter());
                 listeners.Add(listener);
                 listenerStartupTasks.Add(listener.StartAsync(cancellationToken));
             };

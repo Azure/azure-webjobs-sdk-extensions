@@ -58,7 +58,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Scheduling
 
             if (string.IsNullOrEmpty(_statusFilePath) || !Directory.Exists(_statusFilePath))
             {
-                _statusFilePath = Path.Combine(rootPath, @"webjobssdk\timers");
+                _statusFilePath = Path.Combine(rootPath, @"webjobs\timers");
             }
             Directory.CreateDirectory(_statusFilePath);
 
@@ -95,33 +95,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Scheduling
         /// <inheritdoc/>
         public override async Task<bool> IsPastDueAsync(string timerName, DateTime now, TimerSchedule schedule)
         {
-            StatusEntry status = GetStatus(timerName);
-            DateTime recordedNextOccurrence;
-            if (status == null)
-            {
-                // If we've never recorded a status for this timer, write an initial
-                // status entry. This ensures that for a new timer, we've captured a
-                // status log for the next occurrence even though no occurrence has happened yet
-                // (ensuring we don't miss an occurrence)
-                DateTime nextOccurrence = schedule.GetNextOccurrence(now);
-                await UpdateAsync(timerName, default(DateTime), nextOccurrence);
-                recordedNextOccurrence = nextOccurrence;
-            }
-            else
-            {
-                // ensure that the schedule hasn't been updated since the last
-                // time we checked, and if it has, update the status file
-                DateTime expectedNextOccurrence = schedule.GetNextOccurrence(status.Last);
-                if (status.Next != expectedNextOccurrence)
-                {
-                    await UpdateAsync(timerName, status.Last, expectedNextOccurrence);
-                }
-                recordedNextOccurrence = status.Next;
-            }
-
-            // if now is after the last next occurrence we recorded, we know we've missed
-            // at least one schedule instance
-            return now > recordedNextOccurrence;
+            TimeSpan pastDueDuration = await GetPastDueDuration(timerName, now, schedule);
+            return pastDueDuration != TimeSpan.Zero;
         }
 
         /// <inheritdoc/>
@@ -151,6 +126,52 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Scheduling
             }
 
             return Task.FromResult(true);
+        }
+
+        /// <summary>
+        /// Returns the <see cref="TimeSpan"/> duration that the specified timer is past due.
+        /// </summary>
+        /// <param name="timerName">The name of the timer.</param>
+        /// <param name="now">The current time.</param>
+        /// <param name="schedule">The <see cref="TimerSchedule"/>.</param>
+        /// <returns>The duration the timer is past due.</returns>
+        protected async Task<TimeSpan> GetPastDueDuration(string timerName, DateTime now, TimerSchedule schedule)
+        {
+            StatusEntry status = GetStatus(timerName);
+            DateTime recordedNextOccurrence;
+            if (status == null)
+            {
+                // If we've never recorded a status for this timer, write an initial
+                // status entry. This ensures that for a new timer, we've captured a
+                // status log for the next occurrence even though no occurrence has happened yet
+                // (ensuring we don't miss an occurrence)
+                DateTime nextOccurrence = schedule.GetNextOccurrence(now);
+                await UpdateAsync(timerName, default(DateTime), nextOccurrence);
+                recordedNextOccurrence = nextOccurrence;
+            }
+            else
+            {
+                // ensure that the schedule hasn't been updated since the last
+                // time we checked, and if it has, update the status file
+                DateTime expectedNextOccurrence = schedule.GetNextOccurrence(status.Last);
+                if (status.Next != expectedNextOccurrence)
+                {
+                    await UpdateAsync(timerName, status.Last, expectedNextOccurrence);
+                }
+                recordedNextOccurrence = status.Next;
+            }
+
+            if (now > recordedNextOccurrence)
+            {
+                // if now is after the last next occurrence we recorded, we know we've missed
+                // at least one schedule instance and we are past due
+                return now - recordedNextOccurrence;
+            }
+            else
+            {
+                // not past due
+                return TimeSpan.Zero;
+            }   
         }
 
         /// <summary>

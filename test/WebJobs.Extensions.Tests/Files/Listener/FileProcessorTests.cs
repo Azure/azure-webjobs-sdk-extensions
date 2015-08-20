@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
+using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Moq;
 using Newtonsoft.Json;
@@ -281,7 +282,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
         private FileProcessor CreateTestProcessor(FileTriggerAttribute attribute)
         {
             mockExecutor = new Mock<ITriggeredFunctionExecutor>(MockBehavior.Strict);
-            FileProcessorFactoryContext context = new FileProcessorFactoryContext(config, attribute, mockExecutor.Object);
+            FileProcessorFactoryContext context = new FileProcessorFactoryContext(config, attribute, mockExecutor.Object, new TestTraceWriter());
 
             return new FileProcessor(context);
         }

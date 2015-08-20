@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Config;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Scheduling;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 
@@ -15,6 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private readonly TimerTriggerAttribute _attribute;
         private readonly TimersConfiguration _config;
         private readonly ITriggeredFunctionExecutor _executor;
+        private readonly TraceWriter _trace;
         private readonly CancellationTokenSource _cancellationTokenSource;
 
         // Since Timer uses an integer internally for it's interval,
@@ -28,12 +30,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private bool _disposed;
         private TimeSpan _remainingInterval;
 
-        public TimerListener(TimerTriggerAttribute attribute, string timerName, TimersConfiguration config, ITriggeredFunctionExecutor executor)
+        public TimerListener(TimerTriggerAttribute attribute, string timerName, TimersConfiguration config, ITriggeredFunctionExecutor executor, TraceWriter trace)
         {
             _attribute = attribute;
             _timerName = timerName;
             _config = config;
             _executor = executor;
+            _trace = trace;
             _cancellationTokenSource = new CancellationTokenSource();
 
             _schedule = _attribute.Schedule;
@@ -73,6 +76,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             {
                 if (await _scheduleMonitor.IsPastDueAsync(_timerName, now, _schedule))
                 {
+                    _trace.Verbose(string.Format("Timer '{0}' is past due on startup. Executing now.", _timerName));
+
                     // we've missed an occurrence so invoke the job function immediately
                     await InvokeJobFunction(now, true);
                 }
@@ -167,8 +172,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             TriggeredFunctionData input = new TriggeredFunctionData
             {
-                // TODO: how to set this properly?
-                ParentId = null,
                 TriggerValue = timerInfo
             };
             FunctionResult result = await _executor.TryExecuteAsync(input, token);

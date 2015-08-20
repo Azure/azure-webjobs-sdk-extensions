@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Framework;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
@@ -13,15 +14,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
     internal class FileTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
         private readonly FilesConfiguration _config;
+        private readonly TraceWriter _trace;
 
-        public FileTriggerAttributeBindingProvider(FilesConfiguration config)
+        public FileTriggerAttributeBindingProvider(FilesConfiguration config, TraceWriter trace)
         {
             if (config == null)
             {
                 throw new ArgumentNullException("config");
             }
+            if (trace == null)
+            {
+                throw new ArgumentNullException("trace");
+            }
 
             _config = config;
+            _trace = trace;
         }
 
         /// <inheritdoc/>
@@ -47,7 +54,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                     "Can't bind FileTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            return Task.FromResult<ITriggerBinding>(new FileTriggerBinding(_config, parameter));
+            return Task.FromResult<ITriggerBinding>(new FileTriggerBinding(_config, parameter, _trace));
         }
     }
 }

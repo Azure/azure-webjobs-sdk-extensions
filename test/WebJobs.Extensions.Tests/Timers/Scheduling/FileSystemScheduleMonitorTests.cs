@@ -22,7 +22,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             _testTimerName = "Program.TestJob";
             _statusFile = _monitor.GetStatusFileName(_testTimerName);
 
-            _statusRoot = Path.Combine(Path.GetTempPath(), @"webjobssdk\timers");
+            _statusRoot = Path.Combine(Path.GetTempPath(), @"webjobs\timers");
             Directory.CreateDirectory(_statusRoot);
             CleanStatusFiles();
         }
@@ -34,7 +34,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
 
             // when HOME is not defined, default to local temp directory
             FileSystemScheduleMonitor localMonitor = new FileSystemScheduleMonitor();
-            string expectedPath = Path.Combine(Path.GetTempPath(), @"webjobssdk\timers");
+            string expectedPath = Path.Combine(Path.GetTempPath(), @"webjobs\timers");
             Assert.Equal(expectedPath, localMonitor.StatusFilePath);
 
             Environment.SetEnvironmentVariable("HOME", @"C:\home");
@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             Directory.CreateDirectory(jobDirectory);
             localMonitor = new FileSystemScheduleMonitor(currentDirectory);
             Assert.Equal(@"C:\home\data\jobs\continuous\Test", localMonitor.StatusFilePath);
-            Directory.Delete(jobDirectory);
+            Directory.Delete(@"C:\home\", true);
 
             Environment.SetEnvironmentVariable("HOME", null);
         }
@@ -52,12 +52,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         public void StatusFilePath_OverridesDefaultWhenSet()
         {
             FileSystemScheduleMonitor localMonitor = new FileSystemScheduleMonitor();
-            string expectedPath = Path.Combine(Path.GetTempPath(), @"webjobssdk\timers");
+            string expectedPath = Path.Combine(Path.GetTempPath(), @"webjobs\timers");
             Assert.Equal(expectedPath, localMonitor.StatusFilePath);
             string statusFileName = localMonitor.GetStatusFileName(_testTimerName);
             Assert.Equal(expectedPath, Path.GetDirectoryName(statusFileName));
 
-            expectedPath = Path.Combine(Path.GetTempPath(), @"webjobssdktests\anotherstatuspath");
+            expectedPath = Path.Combine(Path.GetTempPath(), @"webjobstests\anotherstatuspath");
             Directory.CreateDirectory(expectedPath);
             localMonitor.StatusFilePath = expectedPath;
             Assert.Equal(expectedPath, localMonitor.StatusFilePath);
@@ -68,7 +68,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void StatusFilePath_ThrowsWhenPathDoesNotExist()
         {
-            string invalidPath = @"c:\temp\webjobssdktests\doesnotexist";
+            string invalidPath = @"c:\temp\webjobstests\doesnotexist";
             Assert.False(Directory.Exists(invalidPath));
 
             FileSystemScheduleMonitor localMonitor = new FileSystemScheduleMonitor();
@@ -84,6 +84,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             DateTime now = DateTime.Now;
             DateTime expectedNext = DateTime.UtcNow + TimeSpan.FromMinutes(1);
 
+            File.Delete(_statusFile);
             Assert.False(File.Exists(_statusFile));
 
             await _monitor.UpdateAsync(_testTimerName, now, expectedNext);
@@ -100,6 +101,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public async Task IsPastDue_NoStatusFile_CreatesInitialStatusFile()
         {
+            File.Delete(_statusFile);
             Assert.False(File.Exists(_statusFile));
             DateTime now = DateTime.UtcNow;
             DateTime next = now + TimeSpan.FromDays(5);

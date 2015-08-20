@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
@@ -15,7 +16,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// <param name="config">The <see cref="FilesConfiguration"/></param>
         /// <param name="attribute">The <see cref="FileTriggerAttribute"/></param>
         /// <param name="executor">The function executor.</param>
-        public FileProcessorFactoryContext(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor executor)
+        /// <param name="trace">The <see cref="TraceWriter"/>.</param>
+        public FileProcessorFactoryContext(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor executor, TraceWriter trace)
         {
             if (config == null)
             {
@@ -29,10 +31,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
             {
                 throw new ArgumentNullException("executor");
             }
+            if (trace == null)
+            {
+                throw new ArgumentNullException("trace");
+            }
 
             Config = config;
             Attribute = attribute;
             Executor = executor;
+            Trace = trace;
         }
 
         /// <summary>
@@ -49,5 +56,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// Gets the function executor
         /// </summary>
         public ITriggeredFunctionExecutor Executor { get; private set; }
+
+        /// <summary>
+        /// Gets the <see cref="TraceWriter"/>.
+        /// </summary>
+        public TraceWriter Trace { get; private set; }
     }
 }

@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Framework;
 using Microsoft.Azure.WebJobs.Files.Listeners;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
@@ -18,11 +19,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
         private readonly FileTriggerAttribute _attribute;
         private readonly FilesConfiguration _config;
         private readonly BindingContract _bindingContract;
+        private readonly TraceWriter _trace;
 
-        public FileTriggerBinding(FilesConfiguration config, ParameterInfo parameter)
+        public FileTriggerBinding(FilesConfiguration config, ParameterInfo parameter, TraceWriter trace)
         {
             _config = config;
             _parameter = parameter;
+            _trace = trace;
             _attribute = parameter.GetCustomAttribute<FileTriggerAttribute>(inherit: false);
             _bindingContract = CreateBindingContract();
         }
@@ -69,7 +72,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             {
                 throw new ArgumentNullException("context");
             }
-            return Task.FromResult<IListener>(new FileListener(_config, _attribute, context.Executor));
+            return Task.FromResult<IListener>(new FileListener(_config, _attribute, context.Executor, _trace));
         }
 
         public ParameterDescriptor ToParameterDescriptor()

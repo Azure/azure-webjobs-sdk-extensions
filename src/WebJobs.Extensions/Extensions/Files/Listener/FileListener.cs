@@ -5,8 +5,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using System.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 
@@ -26,13 +28,15 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
         private System.Timers.Timer _cleanupTimer;
         private Random _rand = new Random();
         private FileSystemWatcher _watcher;
+        private TraceWriter _trace;
         private bool _disposed;
 
-        public FileListener(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor triggerExecutor)
+        public FileListener(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor triggerExecutor, TraceWriter trace)
         {
             _config = config;
             _attribute = attribute;
             _triggerExecutor = triggerExecutor;
+            _trace = trace;
             _cancellationTokenSource = new CancellationTokenSource();
             _watchPath = Path.Combine(_config.RootPath, _attribute.GetNormalizedPath());
         }
@@ -62,7 +66,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
             CreateFileWatcher();
 
-            FileProcessorFactoryContext context = new FileProcessorFactoryContext(_config, _attribute, _triggerExecutor);
+            FileProcessorFactoryContext context = new FileProcessorFactoryContext(_config, _attribute, _triggerExecutor, _trace);
             _processor = _config.ProcessorFactory.CreateFileProcessor(context);
 
             ExecutionDataflowBlockOptions options = new ExecutionDataflowBlockOptions
@@ -181,7 +185,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
             _watcher.EnableRaisingEvents = true;
         }
 
-        private void OnCleanupTimer(object sender, System.Timers.ElapsedEventArgs e)
+        private void OnCleanupTimer(object sender, ElapsedEventArgs e)
         {
             _processor.Cleanup();
         }
@@ -217,8 +221,13 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
         {
             // scan for any files that require processing (either new unprocessed files,
             // or files that have failed previous processing)
-            IEnumerable<string> unprocessedFiles = Directory.GetFiles(_watchPath, _attribute.Filter)
+            string[] unprocessedFiles = Directory.GetFiles(_watchPath, _attribute.Filter)
                 .Where(p => _processor.ShouldProcessFile(p)).ToArray();
+
+            if (unprocessedFiles.Length > 0)
+            {
+                _trace.Verbose(string.Format("Found {0} file(s) at path '{1}' for ready processing", unprocessedFiles.Length, _watchPath));
+            }
 
             foreach (string fileToProcess in unprocessedFiles)
             {
