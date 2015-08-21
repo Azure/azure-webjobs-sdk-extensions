@@ -23,7 +23,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Packages", "src\Packages\Pa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Extension", "src\Sample.Extension\Sample.Extension.csproj", "{55EDABA0-8D31-43C9-AB3C-2A40D0EFF28A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.SendGrid", "WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.csproj", "{6EAB68D8-EBF7-4BC2-89F9-30E6E3BB4423}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.SendGrid", "src\WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.csproj", "{6EAB68D8-EBF7-4BC2-89F9-30E6E3BB4423}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
