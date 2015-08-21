@@ -19,10 +19,16 @@
     <NuGetProject Include="..\WebJobs.Extensions.NuGet\WebJobs.Extensions.nuproj">
       <Link>WebJobs.Extensions\WebJobs.Extensions.nuproj</Link>
     </NuGetProject>
+    <NuGetProject Include="..\WebJobs.Extensions.SendGrid.NuGet\WebJobs.Extensions.SendGrid.nuproj">
+      <Link>WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.nuproj</Link>
+    </NuGetProject>
   </ItemGroup>
   <ItemGroup>
     <NuGetSpec Include="..\WebJobs.Extensions.NuGet\WebJobs.Extensions.nuspec">
-      <Link>WebJobs.Extensions\\WebJobs.Extensions.nuspec</Link>
+      <Link>WebJobs.Extensions\WebJobs.Extensions.nuspec</Link>
+    </NuGetSpec>
+    <NuGetSpec Include="..\WebJobs.Extensions.SendGrid.NuGet\WebJobs.Extensions.SendGrid.nuspec">
+      <Link>WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.nuspec</Link>
     </NuGetSpec>
   </ItemGroup>
   <ItemGroup>
@@ -30,6 +36,7 @@
       <Link>NuGetProj.settings.targets</Link>
     </None>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="Build">
     <MSBuild Projects="@(NuGetProject)" Targets="Build" />
