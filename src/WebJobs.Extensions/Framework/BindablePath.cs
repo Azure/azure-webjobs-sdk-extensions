@@ -11,15 +11,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Framework
     /// Encapsulates a path that may contain "route parameters" (e.g. "import/{name}") and provides
     /// pattern parsing and binding.
     /// </summary>
-    internal class BindablePath
+    public class BindablePath
     {
         private readonly BindingTemplate _bindingTemplate;
 
+        /// <summary>
+        /// Constructs a new instance.
+        /// </summary>
+        /// <param name="pattern"></param>
         public BindablePath(string pattern)
         {
             _bindingTemplate = BindingTemplate.FromString(pattern);
         }
 
+        /// <summary>
+        /// Gets the names of the parameters in the binding expression.
+        /// </summary>
         public IEnumerable<string> ParameterNames
         {
             get
@@ -28,6 +35,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Framework
             }
         }
 
+        /// <summary>
+        /// Bind using the specified binding data.
+        /// </summary>
+        /// <param name="bindingData"></param>
+        /// <returns></returns>
         public string Bind(IReadOnlyDictionary<string, object> bindingData)
         {
             if (bindingData == null ||
@@ -42,6 +54,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Framework
             return path;
         }
 
+        /// <summary>
+        /// Validate the binding contract.
+        /// </summary>
+        /// <param name="bindingDataContract"></param>
         public void ValidateContractCompatibility(IReadOnlyDictionary<string, Type> bindingDataContract)
         {
             IEnumerable<string> parameterNames = ParameterNames;

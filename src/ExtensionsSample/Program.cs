@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Mail;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Files;
+using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 
 namespace ExtensionsSample
 {
@@ -30,6 +32,10 @@ namespace ExtensionsSample
             config.UseTimers();
             config.UseSample();
             config.UseCore();
+            config.UseSendGrid(new SendGridConfiguration()
+            {
+                FromAddress = new MailAddress("orders@webjobssamples.com", "Order Processor")
+            });
 
             JobHost host = new JobHost(config);
 
