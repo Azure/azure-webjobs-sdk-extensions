@@ -1,18 +1,15 @@
-﻿extern alias SendGridSdk;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mail;
 using System.Reflection;
 using System.Threading;
-using Microsoft.Azure.WebJobs.Extensions.SendGrid;
+using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Host.Bindings;
+using SendGrid;
 using Xunit;
 
-using SendGridBinding = Microsoft.Azure.WebJobs.Extensions.SendGrid.SendGridAttributeBindingProvider.SendGridBinding;
-using SendGridMessage = SendGridSdk.SendGrid.SendGridMessage;
-
+using SendGridBinding = Microsoft.Azure.WebJobs.Extensions.SendGridAttributeBindingProvider.SendGridBinding;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.SendGrid
 {

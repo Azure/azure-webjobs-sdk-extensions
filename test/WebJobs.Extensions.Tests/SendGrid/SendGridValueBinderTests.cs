@@ -1,13 +1,10 @@
-﻿extern alias SendGridSdk;
-
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using SendGrid;
 using Xunit;
 
-using SendGridMessage = SendGridSdk.SendGrid.SendGridMessage;
-using SendGridValueBinder = Microsoft.Azure.WebJobs.Extensions.SendGrid.SendGridAttributeBindingProvider.SendGridBinding.SendGridValueBinder;
-using Web = SendGridSdk::SendGrid.Web;
+using SendGridValueBinder = Microsoft.Azure.WebJobs.Extensions.SendGridAttributeBindingProvider.SendGridBinding.SendGridValueBinder;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.SendGrid
 {
@@ -68,7 +65,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.SendGrid
 
             // SendGrid isn't mockable, so we're just catching their exception as proof
             // that we called send
-            await Assert.ThrowsAsync<SendGridSdk::Exceptions.InvalidApiRequestException>(
+            await Assert.ThrowsAsync<Exceptions.InvalidApiRequestException>(
                 async () => { await binder.SetValueAsync(message, CancellationToken.None); });
         }
     }

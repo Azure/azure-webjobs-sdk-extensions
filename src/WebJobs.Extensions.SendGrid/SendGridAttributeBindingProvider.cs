@@ -1,6 +1,4 @@
-﻿extern alias SendGridSdk;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Mail;
@@ -10,11 +8,9 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Framework;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Protocols;
+using SendGrid;
 
-using SendGridMessage = SendGridSdk::SendGrid.SendGridMessage;
-using Web = SendGridSdk::SendGrid.Web;
-
-namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
+namespace Microsoft.Azure.WebJobs.Extensions
 {
     internal class SendGridAttributeBindingProvider : IBindingProvider
     {
@@ -39,7 +35,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
                 return Task.FromResult<IBinding>(null);
             }
 
-            if (context.Parameter.ParameterType != typeof(SendGridMessage))
+            if (context.Parameter.ParameterType != typeof(SendGrid.SendGridMessage))
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 
                     "Can't bind SendGridAttribute to type '{0}'.", parameter.ParameterType));

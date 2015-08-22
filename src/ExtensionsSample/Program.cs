@@ -4,7 +4,7 @@ using System.IO;
 using System.Net.Mail;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Files;
-using Microsoft.Azure.WebJobs.Extensions.SendGrid;
+using Microsoft.Azure.WebJobs.Extensions;
 
 namespace ExtensionsSample
 {

@@ -1,5 +1,5 @@
 ﻿using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.SendGrid;
+using Microsoft.Azure.WebJobs.Extensions;
 
 using SendGridMessage = SendGrid.SendGridMessage;
 

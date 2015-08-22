@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
+namespace Microsoft.Azure.WebJobs.Extensions
 {
     /// <summary>
     /// Binds a function parameter to a SendGridMessage that will automatically be
