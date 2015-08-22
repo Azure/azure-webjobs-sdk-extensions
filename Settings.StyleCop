@@ -19,6 +19,7 @@
       <Value>eTag</Value>
       <Value>bindable</Value>
       <Value>crontab</Value>
+      <Value>Api</Value>
     </CollectionProperty>
   </GlobalSettings>
   <Parsers>

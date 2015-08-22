@@ -150,7 +150,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
 
             internal class SendGridValueBinder : IValueBinder
             {
-                private SendGridMessage _message;
+                private readonly SendGridMessage _message;
                 private readonly Web _sendGrid;
 
                 public SendGridValueBinder(Web sendGrid, SendGridMessage message)

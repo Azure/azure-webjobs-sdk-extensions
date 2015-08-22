@@ -4,7 +4,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
 {
     /// <summary>
     /// Binds a function parameter to a SendGridMessage that will automatically be
-    /// sent when the function conpletes.
+    /// sent when the function completes.
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter)]
     public sealed class SendGridAttribute : Attribute

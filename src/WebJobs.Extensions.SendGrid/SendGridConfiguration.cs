@@ -37,7 +37,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
         /// <remarks>
         /// An example of when it would be useful to provide a default value for 'to' 
         /// would be for emailing your own admin account to notify you when particular
-        /// jobs are executed. In this case, job functions can specify minmal info in
+        /// jobs are executed. In this case, job functions can specify minimal info in
         /// their bindings, for example just a Subject and Text body.
         /// </remarks>
         public string ToAddress { get; set; }
