@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Net.Mail;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
