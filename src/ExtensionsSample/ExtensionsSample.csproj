@@ -92,7 +92,9 @@
     <Compile Include="MiscellaneousSamples.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
     <Compile Include="SampleSamples.cs" />
     <Compile Include="SendGridSamples.cs" />
     <Compile Include="TableSamples.cs" />
