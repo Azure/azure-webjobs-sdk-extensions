@@ -22,6 +22,9 @@
     <NuGetProject Include="..\WebJobs.Extensions.SendGrid.NuGet\WebJobs.Extensions.SendGrid.nuproj">
       <Link>WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.nuproj</Link>
     </NuGetProject>
+    <NuGetProject Include="..\WebJobs.Extensions.WebHooks.NuGet\WebJobs.Extensions.WebHooks.nuproj">
+      <Link>WebJobs.Extensions.WebHooks\WebJobs.Extensions.WebHooks.nuproj</Link>
+    </NuGetProject>
   </ItemGroup>
   <ItemGroup>
     <NuGetSpec Include="..\WebJobs.Extensions.NuGet\WebJobs.Extensions.nuspec">
@@ -29,6 +32,10 @@
     </NuGetSpec>
     <NuGetSpec Include="..\WebJobs.Extensions.SendGrid.NuGet\WebJobs.Extensions.SendGrid.nuspec">
       <Link>WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.nuspec</Link>
+    </NuGetSpec>
+    <NuGetSpec Include="..\WebJobs.Extensions.WebHooks.NuGet\WebJobs.Extensions.WebHooks.nuspec">
+      <Link>WebJobs.Extensions.WebHooks\WebJobs.Extensions.WebHooks.nuspec</Link>
+      <SubType>Designer</SubType>
     </NuGetSpec>
   </ItemGroup>
   <ItemGroup>

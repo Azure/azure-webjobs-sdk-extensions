@@ -5,6 +5,7 @@ using System.Net.Mail;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions;
+using Microsoft.Azure.WebJobs.Extensions.WebHooks;
 
 namespace ExtensionsSample
 {
@@ -38,7 +39,9 @@ namespace ExtensionsSample
             });
 
             JobHost host = new JobHost(config);
+            config.UseWebHooks(host);
 
+            host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
             host.Call(typeof(FileSamples).GetMethod("ReadWrite"));
             host.Call(typeof(SampleSamples).GetMethod("Sample_BindToStream"));
             host.Call(typeof(SampleSamples).GetMethod("Sample_BindToString"));

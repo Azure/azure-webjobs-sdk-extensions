@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Extensions.Core;
-using Microsoft.Azure.WebJobs.Extensions.Timers;
 
 namespace ExtensionsSample
 {
@@ -10,8 +10,8 @@ namespace ExtensionsSample
         /// <summary>
         /// Demonstrates use of the ExecutionContext binding
         /// </summary>
+        [NoAutomaticTrigger]
         public static void ExecutionContext(
-            [TimerTrigger("*/10 * * * * *")] TimerInfo timerInfo, 
             ExecutionContext context,
             TextWriter log)
         {

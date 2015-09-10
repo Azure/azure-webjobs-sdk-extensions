@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), WebJobs.Extensions.sln))\tools\NuGetProj.settings.targets"/>
+  <PropertyGroup>
+    <NuSpecFile>$(MSBuildProjectName).nuspec</NuSpecFile>
+    <NuGetPackageId>Microsoft.Azure.WebJobs.Extensions.WebHooks</NuGetPackageId>
+    <NuGetPackageVersion>$(WebJobsPackageVersion)</NuGetPackageVersion>
+    <NuGetPackSymbols>false</NuGetPackSymbols>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WebJobs.Extensions.WebHooks\WebJobs.Extensions.WebHooks.csproj">
+      <Project>{E6F59990-F3A1-469F-A9D8-6D529121D385}</Project>
+      <Name>WebJobs.Extensions.WebHooks</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <NuGetContent Include="$(WebJobsRootPath)\src\WebJobs.Extensions.WebHooks\bin\$(Configuration)\Microsoft.Azure.WebJobs.Extensions.WebHooks.dll">
+      <Destination>lib\net45\Microsoft.Azure.WebJobs.Extensions.WebHooks.dll</Destination>
+    </NuGetContent>
+    <NuGetContent Include="$(WebJobsRootPath)\src\WebJobs.Extensions.WebHooks\bin\$(Configuration)\Microsoft.Azure.WebJobs.Extensions.WebHooks.xml">
+      <Destination>lib\net45\Microsoft.Azure.WebJobs.Extensions.WebHooks.xml</Destination>
+    </NuGetContent>
+  </ItemGroup>
+  <Import Project="$(WebJobsToolsPath)NuGetProj.targets"/>
+  <Target Name="BeforeBuild">
+    <PropertyGroup>
+      <!-- Define properties you want to use inside your nuspec file. -->
+      <NuSpecProperties>NuGetPackageId=$(NuGetPackageId);NuGetPackageVersion=$(NuGetPackageVersion);PackageEULA=$(WebJobsPackageEULA);WebJobsPackageVersion=$(WebJobsPackageVersion)</NuSpecProperties>
+    </PropertyGroup>
+  </Target>
+</Project>

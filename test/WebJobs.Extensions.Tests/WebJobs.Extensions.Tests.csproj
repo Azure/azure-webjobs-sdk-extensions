@@ -87,6 +87,11 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Net.Http.Formatting, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.WebApi.Client.5.2.3\lib\net45\System.Net.Http.Formatting.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Spatial, Version=5.6.4.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\System.Spatial.5.6.4\lib\net40\System.Spatial.dll</HintPath>
       <Private>True</Private>
@@ -127,9 +132,14 @@
     <Compile Include="Timers\Listener\TimerListenerTests.cs" />
     <Compile Include="Timers\TimerTriggerEndToEndTests.cs" />
     <Compile Include="Timers\TimerTriggerAttributeTests.cs" />
+    <Compile Include="WebHooks\WebHookEndToEndTests.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.WebHooks\WebJobs.Extensions.WebHooks.csproj">
+      <Project>{0c4675e2-3cea-4e86-988b-f180325b48e7}</Project>
+      <Name>WebJobs.Extensions.WebHooks</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\WebJobs.Extensions\WebJobs.Extensions.csproj">
       <Project>{e6f59990-f3a1-469f-a9d8-6d529121d385}</Project>
       <Name>WebJobs.Extensions</Name>
