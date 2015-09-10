@@ -22,7 +22,7 @@ public static void TimerJob([TimerTrigger("00:00:30")] TimerInfo timer)
 }
 ```
 
-For more information, see the [Timer samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/TimerSamples.cs).
+For more information, see the [Timer samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/TimerSamples.cs).
 
 ###FileTrigger / File###
 
@@ -41,7 +41,7 @@ public static void ImportFile(
 }
 ```
 
-For more information, see the [File samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/FileSamples.cs).
+For more information, see the [File samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/FileSamples.cs).
 
 ###SendGrid###
 
@@ -72,7 +72,7 @@ public static void Purge(
 }
 ```
 
-The above messages are fully declarative, but you can also set the message properties in your job function code (e.g. add message attachments, etc.). For more information on the SendGrid binding, see the [SendGrid samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/SendGridSamples.cs).
+The above messages are fully declarative, but you can also set the message properties in your job function code (e.g. add message attachments, etc.). For more information on the SendGrid binding, see the [SendGrid samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/SendGridSamples.cs).
 
 ###WebHooks###
 
