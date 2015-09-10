@@ -68,24 +68,26 @@ The above messages are fully declarative, but you can also set the message prope
 
 ###WebHooks###
 
-A WebHook trigger that allows you to write job functions that can be invoked by http requests. Here's an example job function that will be invoked whenever an issue in a source repo is created or modified. The web hook URL to invoke is configured in the source repo ([more on GitHub web hooks here](https://developer.github.com/webhooks/)).
+A WebHook trigger that allows you to write job functions that can be invoked by http requests. Here's an example job function that will be invoked whenever an issue in a source GitHub repo is created or modified:
 
     public static void IssueChanged([WebHookTrigger] string body)
     {
         // Parse and process the JSON body sent to us by GitHub
     }
 
-GitHub is just one example. Any event source supporting webhooks can be used. Another popular source is [IFTTT](https://ifttt.com/). Using IFTTT, you can configure your web job to be invoked when stock prices change, on events coming from Facebook, Instagram, YouTube, EBay etc., or even when someone alters your Nest thermostat setting! WebHooks opens the WebJobs SDK up to a huge new set of triggers, above and beyond the existing first class SDK triggers (and extension triggers).
+The web hook URL used to invoke the function is configured in the source repo ([more on GitHub web hooks here](https://developer.github.com/webhooks/)). Details on how to construct this URL can be found below.
 
-When running in Azure Web Apps, your WebHook job will be running in the context of a [Continuous WebJob](https://github.com/projectkudu/kudu/wiki/Web-jobs). This host will accept incoming requests and forward them to the SDK JobHost. The URL used to trigger a WebHook function has the following format:
+GitHub is just one example. Any event source supporting WebHooks can be used. Another popular source is [IFTTT](https://ifttt.com/). Using IFTTT ("If This, Then That"), you can configure your web job to be invoked when stock prices change, on events coming from Facebook, Instagram, YouTube, EBay etc., or even when someone alters your Nest thermostat setting! WebHooks opens the WebJobs SDK up to a huge new set of triggers, complimenting the existing first class SDK triggers (and extension triggers).
 
-    https://{uid}:{pwd}@{site}.scm.azurewebsites.net/api/continuouswebjobs/{job}/passthrough/{*path}
+When running in Azure Web Apps, your WebHook job will be running in the context of a [Continuous WebJob](https://github.com/projectkudu/kudu/wiki/Web-jobs). This host will accept (and **authenticate**) incoming requests and forward them to the SDK JobHost. The URL used to trigger a WebHook function has the following format:
+
+    https://{uid}:{pwd}@{site}/api/continuouswebjobs/{job}/passthrough/{*path}
 
 To manually construct your WebHook URL, you need to replace the following tokens:
 * uid : This is the user ID from your SCM/Kudu credentials
 * pwd : This is the password from your SCM/Kudu credentials
-* site : Your Web App name
+* site : Your SCM site (e.g. myapp.scm.azurewebsites.net)
 * job : The name of your Continuous WebJob
 * *path : This is the route identifying the specific WebHook function to invoke. By convention, this is {ClassName}/{MethodName}, but can be overridded/specified explicitly via the WebHookTrigger attribute.
 
-In addition to functions using the WebHook trigger, you can invoke *any* of your job functions via an http request. When resolving an incoming POST request (only POST is supported), if the route doesn't match a WebHookTrigger decorated function, a search is performed for a function matching the {ClassName}/{MethodName} convention described above. If found that function is invoked, and the function parameters are parsed from the JSON body of the request. An example of this can bee seen in the tests [here](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/test/WebJobs.Extensions.Tests/WebHooks/WebHookEndToEndTests.cs#L72). This ability to invoke your functions via REST requests opens the door for automation scenarios, and compliments the way you can invoke/replay functions via Dashboard.
+In addition to functions using the WebHook trigger, you can invoke **any** of your job functions via an http request. When resolving an incoming POST request (only POST is supported), if the route doesn't match a WebHookTrigger decorated function, a search is performed for a function matching the {ClassName}/{MethodName} convention described above. If found that function is invoked, and the function parameters are parsed from the JSON body of the request. An example of this can bee seen in the tests [here](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/test/WebJobs.Extensions.Tests/WebHooks/WebHookEndToEndTests.cs#L72). This ability to invoke your functions via REST requests opens the door for automation scenarios, and compliments the way you can invoke/replay functions via Dashboard.
