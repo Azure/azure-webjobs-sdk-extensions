@@ -21,7 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.SendGrid
         [Fact]
         public void CreateDefaultMessage_CreatesExpectedMessage()
         {
-            ParameterInfo parameter = GetType().GetMethod("TestMethod", BindingFlags.Static|BindingFlags.NonPublic).GetParameters().First();
+            ParameterInfo parameter = GetType().GetMethod("TestMethod", BindingFlags.Static | BindingFlags.NonPublic).GetParameters().First();
             SendGridAttribute attribute = new SendGridAttribute
             {
                 To = "{Param1}",
@@ -63,6 +63,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.SendGrid
             Assert.Equal("test3@test.com", message.To.Single().Address);
         }
 
-        private static void TestMethod([SendGrid] SendGridMessage message) { }
+        private static void TestMethod([SendGrid] SendGridMessage message)
+        {
+        }
     }
 }

@@ -29,7 +29,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
 
         public static class CoreTestJobs
         {
-            public static ExecutionContext Context;
+            public static ExecutionContext Context { get; set; }
 
             [NoAutomaticTrigger]
             public static void ExecutionContext(ExecutionContext context)

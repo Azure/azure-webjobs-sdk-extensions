@@ -78,48 +78,68 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
             host.Stop();
         }
-    }
 
-    public static class CronScheduleTestJobs
-    {
-        public static int InvocationCount = 0;
-
-        public static void EveryTwoSeconds(
-            [TimerTrigger("*/2 * * * * *")] TimerInfo timer)
+        public static class CronScheduleTestJobs
         {
-            InvocationCount++;
-        }
-    }
+            static CronScheduleTestJobs()
+            {
+                InvocationCount = 0;
+            }
 
-    public static class ConstantScheduleTestJobs
-    {
-        public static int InvocationCount = 0;
+            public static int InvocationCount { get; set; }
 
-        public static void EveryTwoSeconds(
-            [TimerTrigger("00:00:02")] TimerInfo timer)
-        {
-            InvocationCount++;
-        }
-    }
-
-    public static class CustomScheduleTestJobs
-    {
-        public static int InvocationCount = 0;
-
-        public static void CustomJob(
-            [TimerTrigger(typeof(CustomSchedule))] TimerInfo timer)
-        {
-            InvocationCount++;
-        }
-
-        public class CustomSchedule : TimerSchedule
-        {
-            public static int InvocationCount = 0;
-
-            public override DateTime GetNextOccurrence(DateTime now)
+            public static void EveryTwoSeconds(
+                [TimerTrigger("*/2 * * * * *")] TimerInfo timer)
             {
                 InvocationCount++;
-                return now + TimeSpan.FromSeconds(2);
+            }
+        }
+
+        public static class ConstantScheduleTestJobs
+        {
+            static ConstantScheduleTestJobs()
+            {
+                InvocationCount = 0;
+            }
+
+            public static int InvocationCount { get; set; }
+
+            public static void EveryTwoSeconds(
+                [TimerTrigger("00:00:02")] TimerInfo timer)
+            {
+                InvocationCount++;
+            }
+        }
+
+        public static class CustomScheduleTestJobs
+        {
+            static CustomScheduleTestJobs()
+            {
+                InvocationCount = 0;
+            }
+
+            public static int InvocationCount { get; set; }
+
+            public static void CustomJob(
+                [TimerTrigger(typeof(CustomSchedule))] TimerInfo timer)
+            {
+                InvocationCount++;
+            }
+
+            public class CustomSchedule : TimerSchedule
+            {
+                static CustomSchedule()
+                {
+                    InvocationCount = 0;
+                }
+
+                public static int InvocationCount { get; set; }
+
+                public override DateTime GetNextOccurrence(DateTime now)
+                {
+                    InvocationCount++;
+                    return now + TimeSpan.FromSeconds(2);
+                }
             }
         }
     }

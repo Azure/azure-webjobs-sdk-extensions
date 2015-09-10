@@ -16,12 +16,6 @@ using Microsoft.Azure.WebJobs.Host.Triggers;
 
 namespace Sample.Extension
 {
-    public class SampleTriggerValue
-    {
-        // TODO: Define the default type that your trigger binding
-        // binds to (the type representing the trigger event).
-    }
-
     internal class SampleTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
@@ -134,7 +128,7 @@ namespace Sample.Extension
                 private readonly object _value;
 
                 public SampleValueBinder(ParameterInfo parameter, SampleTriggerValue value)
-                    : base (parameter.ParameterType)
+                    : base(parameter.ParameterType)
                 {
                     _value = value;
                 }

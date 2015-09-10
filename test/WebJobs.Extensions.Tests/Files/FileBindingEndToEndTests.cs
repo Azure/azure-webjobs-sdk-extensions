@@ -203,7 +203,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
 
         public static class FilesTestJobs
         {
-            public static List<string> Processed = new List<string>();
+            static FilesTestJobs()
+            {
+                Processed = new List<string>();
+            }
+
+            public static List<string> Processed { get; private set; }
 
             public static void ImportTestJob(
                 [FileTrigger(ImportTestPath + @"\{name}", filter: "*.dat")] FileStream file,

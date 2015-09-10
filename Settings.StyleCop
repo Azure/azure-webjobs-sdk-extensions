@@ -21,6 +21,7 @@
       <Value>crontab</Value>
       <Value>Api</Value>
 	  <Value>WebHookTriggerAttribute</Value>
+	  <Value>localhost</Value>
     </CollectionProperty>
   </GlobalSettings>
   <Parsers>

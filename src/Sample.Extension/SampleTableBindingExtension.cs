@@ -13,36 +13,6 @@ using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Sample.Extension
 {
-    /// <summary>
-    /// Binding type demonstrating how custom binding extensions can be used to bind to
-    /// arbitrary types
-    /// </summary>
-    public class Table<TEntity>
-    {
-        private readonly CloudTable _table;
-
-        public Table(CloudTable table)
-        {
-            _table = table;
-        }
-
-        public void Add(TEntity entity)
-        {
-            // storage operations here
-        }
-
-        public void Delete(TEntity entity)
-        {
-            // storage operations here
-        }
-
-        internal Task FlushAsync(CancellationToken cancellationToken)
-        {
-            // complete and flush all storage operations
-            return Task.FromResult(true);
-        }
-    }
-
     internal class SampleTableBindingProvider : IArgumentBindingProvider<ITableArgumentBinding>
     {
         public ITableArgumentBinding TryCreate(ParameterInfo parameter)
@@ -77,7 +47,13 @@ namespace Sample.Extension
                 get { return FileAccess.ReadWrite; }
             }
 
-            public Type ValueType { get { return typeof(Table<TElement>); } }
+            public Type ValueType
+            {
+                get
+                {
+                    return typeof(Table<TElement>);
+                }
+            }
 
             public Task<IValueProvider> BindAsync(CloudTable value, ValueBindingContext context)
             {

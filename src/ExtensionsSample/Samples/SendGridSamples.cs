@@ -8,14 +8,6 @@ using SendGridMessage = SendGrid.SendGridMessage;
 
 namespace ExtensionsSample
 {
-    // { "OrderId": "12345", "CustomerName": "John Doe", "CustomerEmail": "john@johndoe.net" }
-    public class Order
-    {
-        public string OrderId { get; set; }
-        public string CustomerName { get; set; }
-        public string CustomerEmail { get; set; }
-    }
-
     public static class SendGridSamples
     {
         /// <summary>

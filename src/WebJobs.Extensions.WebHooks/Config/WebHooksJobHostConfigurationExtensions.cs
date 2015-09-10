@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using System;
 using Microsoft.Azure.WebJobs.Extensions.WebHooks;
 using Microsoft.Azure.WebJobs.Host.Config;
 
@@ -13,15 +16,18 @@ namespace Microsoft.Azure.WebJobs
         /// Enables use of the WebHooks extensions.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// In addition to enabling HTTP POST invocation of functions decorated with <see cref="WebHookTriggerAttribute"/>
         /// this also enables HTTP invocation of other functions as well. For functions not decorated with
         /// <see cref="WebHookTriggerAttribute"/>, they can be invoked via an implicit route of the form
         /// {TypeName}/{FunctionName}. The body should be a valid json string representing the data that you would
         /// pass in to <see cref="JobHost.Call(System.Reflection.MethodInfo, object)"/>.
-        /// 
+        /// </para>
+        /// <para>
         /// Authentication of incoming requests is handled outside of this extension. When running under the normal
         /// Azure Web App host, the extension will be listening on a loopback port that the SCM host has opened for
-        /// the job, and SCM forwards authenticated requests through (SCM creds are required to invoke the SCM endpoints).
+        /// the job, and SCM forwards authenticated requests through (SCM credentials are required to invoke the SCM endpoints).
+        /// </para>
         /// </remarks>
         /// <param name="config">The <see cref="JobHostConfiguration"/> to configure.</param>
         /// <param name="host">The <see cref="JobHost"/></param>
@@ -50,10 +56,7 @@ namespace Microsoft.Azure.WebJobs
             {
                 _webHooksConfig = webHooksConfig;
                 _host = host;
-            }// Copyright (c) .NET Foundation. All rights reserved.
-             // Licensed under the MIT License. See License.txt in the project root for license information.
-
-
+            }
 
             public void Initialize(ExtensionConfigContext context)
             {

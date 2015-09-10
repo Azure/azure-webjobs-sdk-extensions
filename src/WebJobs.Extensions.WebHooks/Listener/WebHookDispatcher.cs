@@ -24,13 +24,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
     /// </summary>
     internal class WebHookDispatcher : IDisposable
     {
-        private ConcurrentDictionary<string, ITriggeredFunctionExecutor> _functions;
         private readonly TraceWriter _trace;
         private readonly int _port;
-        private HttpHost _httpHost;
         private readonly Type[] _types;
         private readonly ConcurrentDictionary<string, MethodInfo> _methodNameMap = new ConcurrentDictionary<string, MethodInfo>();
         private readonly JobHost _host;
+
+        private ConcurrentDictionary<string, ITriggeredFunctionExecutor> _functions;
+        private HttpHost _httpHost;
 
         public WebHookDispatcher(WebHooksConfiguration webHooksConfig, JobHost host, JobHostConfiguration config, TraceWriter trace)
         {

@@ -68,7 +68,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
                 FileListener listener = new FileListener(config, attribute, mockExecutor.Object, new TestTraceWriter());
                 listeners.Add(listener);
                 listenerStartupTasks.Add(listener.StartAsync(cancellationToken));
-            };
+            }
             await Task.WhenAll(listenerStartupTasks);
 
             // now start creating files

@@ -18,18 +18,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
     public class FileProcessorTests
     {
         private const string InstanceId = "3b151065ae0740f5c4c278989981d9090cd27d8440cdd27ee155a9f0d0ef6bb9";
-        private FileProcessor processor;
-        private FilesConfiguration config;
+        private const string AttributeSubPath = @"webjobs_extensionstests\import";
+
         private readonly string combinedTestFilePath;
         private readonly string rootPath;
+
+        private FileProcessor processor;
+        private FilesConfiguration config;
         private Mock<ITriggeredFunctionExecutor> mockExecutor;
-        private const string attributeSubPath = @"webjobs_extensionstests\import";
         private JsonSerializer _serializer;
 
         public FileProcessorTests()
         {
             rootPath = Path.GetTempPath();
-            combinedTestFilePath = Path.Combine(rootPath, attributeSubPath);
+            combinedTestFilePath = Path.Combine(rootPath, AttributeSubPath);
             Directory.CreateDirectory(combinedTestFilePath);
             DeleteTestFiles(combinedTestFilePath);
 
@@ -38,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
                 RootPath = rootPath
             };
             
-            FileTriggerAttribute attribute = new FileTriggerAttribute(attributeSubPath, "*.dat");
+            FileTriggerAttribute attribute = new FileTriggerAttribute(AttributeSubPath, "*.dat");
             processor = CreateTestProcessor(attribute);
 
             JsonSerializerSettings settings = new JsonSerializerSettings
@@ -92,7 +94,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
         [Fact]
         public async Task ProcessFileAsync_ChangeTypeCreate_Success()
         {
-            FileTriggerAttribute attribute = new FileTriggerAttribute(attributeSubPath, "*.dat");
+            FileTriggerAttribute attribute = new FileTriggerAttribute(AttributeSubPath, "*.dat");
             processor = CreateTestProcessor(attribute);
 
             string testFile = WriteTestFile("dat");
@@ -126,7 +128,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
         [Fact]
         public async Task ProcessFileAsync_ChangeTypeChange_Success()
         {
-            FileTriggerAttribute attribute = new FileTriggerAttribute(attributeSubPath, "*.dat");
+            FileTriggerAttribute attribute = new FileTriggerAttribute(AttributeSubPath, "*.dat");
             processor = CreateTestProcessor(attribute);
 
             string testFile = WriteTestFile("dat");
@@ -205,7 +207,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
         [Fact]
         public void Cleanup_AutoDeleteOn_DeletesCompletedFiles()
         {
-            FileTriggerAttribute attribute = new FileTriggerAttribute(attributeSubPath, "*.dat", autoDelete: true);
+            FileTriggerAttribute attribute = new FileTriggerAttribute(AttributeSubPath, "*.dat", autoDelete: true);
             FileProcessor localProcessor = CreateTestProcessor(attribute);
 
             // create a completed file set

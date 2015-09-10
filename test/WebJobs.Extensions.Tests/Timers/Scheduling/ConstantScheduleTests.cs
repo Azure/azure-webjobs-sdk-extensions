@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using System;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Xunit;
 
@@ -13,7 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
 
             DateTime now = DateTime.Now;
 
-            for (int i=0; i<10; i++)
+            for (int i = 0; i < 10; i++)
             {
                 DateTime nextOccurrence = schedule.GetNextOccurrence(now);
                 Assert.Equal(new TimeSpan(1, 0, 0), nextOccurrence - now);

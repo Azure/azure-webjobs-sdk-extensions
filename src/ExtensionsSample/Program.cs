@@ -6,15 +6,14 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Mail;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions;
-using Microsoft.Azure.WebJobs.Extensions.WebHooks;
+using Microsoft.Azure.WebJobs.Extensions.Files;
 
 namespace ExtensionsSample
 {
-    class Program
+    public static class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             JobHostConfiguration config = new JobHostConfiguration();
 
@@ -29,7 +28,7 @@ namespace ExtensionsSample
             {
                 // when running locally, set this to a valid directory
                 filesConfig.RootPath = @"c:\temp\files";
-            };
+            }
             EnsureSampleDirectoriesExist(filesConfig.RootPath);
             config.UseFiles(filesConfig);
 

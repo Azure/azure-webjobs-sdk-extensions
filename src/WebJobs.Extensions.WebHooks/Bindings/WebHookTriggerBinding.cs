@@ -170,21 +170,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                     body = task.Result;
                 }
 
-                JObject jObject = new JObject()
+                JObject invokeObject = new JObject()
                 {
                     { "url", request.RequestUri.ToString() },
                     { "body", body }
                 };
 
-                string invokeString = jObject.ToString();
+                string invokeString = invokeObject.ToString();
                 return invokeString;
             }
 
             internal static HttpRequestMessage FromInvokeString(string value)
             {
-                JObject jObject = JObject.Parse((string)value);
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, (string)jObject["url"]);
-                request.Content = new StringContent((string)jObject["body"]);
+                JObject invokeObject = JObject.Parse((string)value);
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, (string)invokeObject["url"]);
+                request.Content = new StringContent((string)invokeObject["body"]);
 
                 return request;
             }

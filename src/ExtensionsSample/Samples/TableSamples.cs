@@ -6,13 +6,6 @@ using Sample.Extension;
 
 namespace ExtensionsSample
 {
-    public class Person
-    {
-        public string PartitionKey { get; set; }
-        public string RowKey { get; set; }
-        public string Name { get; set; }
-    }
-
     public static class TableSamples
     {
         // Demonstrates use of a custom table binding extension to bind Table
