@@ -53,7 +53,7 @@ public static void ProcessOrder(
     [SendGrid(
         To = "{CustomerEmail}",
         Subject = "Thanks for your order (#{OrderId})!",
-        Text = "{CustomerName}, we've received your order ({OrderId}) and have begun processing it!")]
+        Text = "{CustomerName}, we've received your order ({OrderId})!")]
     SendGridMessage message)
 {
     // You can set additional message properties here
