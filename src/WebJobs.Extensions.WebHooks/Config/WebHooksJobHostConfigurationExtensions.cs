@@ -50,7 +50,10 @@ namespace Microsoft.Azure.WebJobs
             {
                 _webHooksConfig = webHooksConfig;
                 _host = host;
-            }
+            }// Copyright (c) .NET Foundation. All rights reserved.
+             // Licensed under the MIT License. See License.txt in the project root for license information.
+
+
 
             public void Initialize(ExtensionConfigContext context)
             {

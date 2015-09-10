@@ -1,4 +1,7 @@
-﻿namespace Microsoft.Azure.WebJobs.Extensions.Timers
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
     /// <summary>
     /// Provides access to timer information for jobs triggered by <see cref="TimerTriggerAttribute"/>
