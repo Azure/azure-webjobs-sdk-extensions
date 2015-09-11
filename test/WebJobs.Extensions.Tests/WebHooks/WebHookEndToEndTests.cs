@@ -48,6 +48,39 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.WebHooks
         }
 
         [Fact]
+        public async Task BindToStream_Succeeds()
+        {
+            string testData = Guid.NewGuid().ToString();
+            HttpResponseMessage response = await _fixture.Client.PostAsync("WebHookTestFunctions/BindToStream", new StringContent(testData));
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            string body = (string)WebHookTestFunctions.InvokeData;
+            Assert.Equal(testData, body);
+        }
+
+        [Fact]
+        public async Task BindToPoco_Succeeds()
+        {
+            string testData = Guid.NewGuid().ToString();
+            TestPoco poco = new TestPoco
+            {
+                A = Guid.NewGuid().ToString(),
+                B = Guid.NewGuid().ToString()
+            };
+            HttpResponseMessage response = await _fixture.Client.PostAsJsonAsync("WebHookTestFunctions/BindToPoco", poco);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            object[] results = (object[])WebHookTestFunctions.InvokeData;
+            TestPoco resultPoco = (TestPoco)results[0];
+            Assert.Equal(poco.A, resultPoco.A);
+            Assert.Equal(poco.B, resultPoco.B);
+
+            // verify model binding
+            Assert.Equal(poco.A, (string)results[1]);
+            Assert.Equal(poco.B, (string)results[2]);
+        }
+
+        [Fact]
         public async Task InvalidHttpMethod_ReturnsMethodNotAllowed()
         {
             HttpResponseMessage response = await _fixture.Client.GetAsync("WebHookTestFunctions/BindToString");
@@ -151,6 +184,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.WebHooks
                 InvokeData = body;
             }
 
+            public static void BindToStream([WebHookTrigger] Stream body)
+            {
+                string result = new StreamReader(body).ReadToEnd();
+                InvokeData = result;
+            }
+
+            public static void BindToPoco([WebHookTrigger] TestPoco poco, string a, string b)
+            {
+                InvokeData = new object[] { poco, a, b };
+            }
+
             public static void NonWebHook([QueueTrigger("testqueue")] TestPoco poco)
             {
                 InvokeData = poco;
@@ -176,10 +220,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.WebHooks
                 {
                     TypeLocator = new ExplicitTypeLocator(typeof(WebHookTestFunctions))
                 };
-                WebHooksConfiguration webHooksConfig = new WebHooksConfiguration(testPort);
+                config.UseWebHooks(new WebHooksConfiguration(testPort));
                 Host = new JobHost(config);
-                config.UseWebHooks(Host, webHooksConfig);
-
                 Host.Start();
             }
 

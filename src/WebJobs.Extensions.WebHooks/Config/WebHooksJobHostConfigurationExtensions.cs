@@ -30,9 +30,8 @@ namespace Microsoft.Azure.WebJobs
         /// </para>
         /// </remarks>
         /// <param name="config">The <see cref="JobHostConfiguration"/> to configure.</param>
-        /// <param name="host">The <see cref="JobHost"/></param>
         /// <param name="webHooksConfig">The <see cref="WebHooksConfiguration"/> to use.</param>
-        public static void UseWebHooks(this JobHostConfiguration config, JobHost host, WebHooksConfiguration webHooksConfig = null)
+        public static void UseWebHooks(this JobHostConfiguration config, WebHooksConfiguration webHooksConfig = null)
         {
             if (config == null)
             {
@@ -44,18 +43,16 @@ namespace Microsoft.Azure.WebJobs
                 webHooksConfig = new WebHooksConfiguration();
             }
 
-            config.RegisterExtensionConfigProvider(new WebHooksExtensionConfig(webHooksConfig, host));
+            config.RegisterExtensionConfigProvider(new WebHooksExtensionConfig(webHooksConfig));
         }
 
         private class WebHooksExtensionConfig : IExtensionConfigProvider
         {
             private readonly WebHooksConfiguration _webHooksConfig;
-            private readonly JobHost _host;
 
-            public WebHooksExtensionConfig(WebHooksConfiguration webHooksConfig, JobHost host)
+            public WebHooksExtensionConfig(WebHooksConfiguration webHooksConfig)
             {
                 _webHooksConfig = webHooksConfig;
-                _host = host;
             }
 
             public void Initialize(ExtensionConfigContext context)
@@ -65,7 +62,7 @@ namespace Microsoft.Azure.WebJobs
                     throw new ArgumentNullException("context");
                 }
 
-                WebHookDispatcher dispatcher = new WebHookDispatcher(_webHooksConfig, _host, context.Config, context.Trace);
+                WebHookDispatcher dispatcher = new WebHookDispatcher(_webHooksConfig, context.Host, context.Config, context.Trace);
                 context.Config.RegisterBindingExtension(new WebHookTriggerAttributeBindingProvider(dispatcher));
             }
         }

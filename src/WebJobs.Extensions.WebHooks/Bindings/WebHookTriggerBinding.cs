@@ -12,6 +12,7 @@ using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
@@ -20,14 +21,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
     {
         private readonly WebHookDispatcher _dispatcher;
         private readonly ParameterInfo _parameter;
-        private readonly IReadOnlyDictionary<string, Type> _bindingContract;
+        private readonly IBindingDataProvider _bindingDataProvider;
+        private readonly bool _isUserTypeBinding;
         private Uri _route;
-
-        public WebHookTriggerBinding(WebHookDispatcher dispatcher, ParameterInfo parameter, WebHookTriggerAttribute attribute)
+        
+        public WebHookTriggerBinding(WebHookDispatcher dispatcher, ParameterInfo parameter, bool isUserTypeBinding, WebHookTriggerAttribute attribute)
         {
             _dispatcher = dispatcher;
             _parameter = parameter;
-            _bindingContract = CreateBindingDataContract();
+            _isUserTypeBinding = isUserTypeBinding;
+
+            if (_isUserTypeBinding)
+            {
+                _bindingDataProvider = BindingDataProvider.FromType(parameter.ParameterType);
+            }
 
             Uri baseAddress = new Uri(string.Format("http://localhost:{0}", dispatcher.Port));
             _route = FormatWebHookUri(baseAddress, attribute, parameter);
@@ -35,7 +42,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
 
         public IReadOnlyDictionary<string, Type> BindingDataContract
         {
-            get { return _bindingContract; }
+            get { return _bindingDataProvider != null ? _bindingDataProvider.Contract : null; }
         }
 
         public Type TriggerValueType
@@ -43,16 +50,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             get { return typeof(HttpRequestMessage); }
         }
 
-        public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
+        public async Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
         {
             HttpRequestMessage request = value as HttpRequestMessage;
             if (request == null && value != null && value.GetType() == typeof(string))
             {
-                request = WebHookValueBinder.FromInvokeString((string)value);
+                // We've received an invoke string (e.g. from a Dashboard replay/invoke
+                // so convert to a request
+                request = FromInvokeString((string)value);
             }
 
-            IValueBinder valueBinder = new WebHookValueBinder(_parameter, request);
-            return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, GetBindingData(request)));
+            IValueProvider valueProvider = null;  
+            IReadOnlyDictionary<string, object> bindingData = null;
+            string invokeString = ToInvokeString(request);
+            if (_isUserTypeBinding)
+            {
+                // For user type bindings, we deserialize the json body into an
+                // instance of their type
+                string json = await request.Content.ReadAsStringAsync();
+                value = JsonConvert.DeserializeObject(json, _parameter.ParameterType);
+                valueProvider = new WebHookUserTypeValueBinder(_parameter.ParameterType, value, invokeString);
+                bindingData = _bindingDataProvider.GetBindingData(value);
+            }
+            else
+            {
+                valueProvider = new WebHookRequestValueBinder(_parameter, request, invokeString);
+            }
+
+            return new TriggerData(valueProvider, bindingData);
         }
 
         public Task<IListener> CreateListenerAsync(ListenerFactoryContext context)
@@ -74,7 +99,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 DisplayHints = new ParameterDisplayHints
                 {
                     Prompt = "Enter request info",
-                    DefaultValue = WebHookValueBinder.ToInvokeString(new HttpRequestMessage(HttpMethod.Post, _route))
+                    DefaultValue = ToInvokeString(new HttpRequestMessage(HttpMethod.Post, _route))
                 }
             };
         }
@@ -95,22 +120,38 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             return new Uri(baseAddress, subRoute);
         }
 
-        private IReadOnlyDictionary<string, object> GetBindingData(HttpRequestMessage value)
+        internal static bool IsValidUserType(Type parameterType)
         {
-            Dictionary<string, object> bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            bindingData.Add("WebHookTrigger", value);
-
-            // TODO: Add any additional binding data
-
-            return bindingData;
+            return parameterType.IsClass;
         }
 
-        private IReadOnlyDictionary<string, Type> CreateBindingDataContract()
+        internal static string ToInvokeString(HttpRequestMessage request)
         {
-            Dictionary<string, Type> contract = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
-            contract.Add("WebHookTrigger", typeof(HttpRequestMessage));
+            string body = string.Empty;
+            if (request.Content != null)
+            {
+                Task<string> task = request.Content.ReadAsStringAsync();
+                task.Wait();
+                body = task.Result;
+            }
 
-            return contract;
+            JObject invokeObject = new JObject()
+                {
+                    { "url", request.RequestUri.ToString() },
+                    { "body", body }
+                };
+
+            string invokeString = invokeObject.ToString();
+            return invokeString;
+        }
+
+        internal static HttpRequestMessage FromInvokeString(string value)
+        {
+            JObject invokeObject = JObject.Parse((string)value);
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, (string)invokeObject["url"]);
+            request.Content = new StringContent((string)invokeObject["body"]);
+
+            return request;
         }
 
         private class WebHookTriggerParameterDescriptor : TriggerParameterDescriptor
@@ -120,23 +161,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 string invokeString = null;
                 if (arguments != null && arguments.TryGetValue(Name, out invokeString))
                 {
-                    HttpRequestMessage request = WebHookValueBinder.FromInvokeString(invokeString);
+                    HttpRequestMessage request = WebHookTriggerBinding.FromInvokeString(invokeString);
                     return string.Format("WebHook triggered by request to '{0}'", request.RequestUri);
                 }
                 return null;
             }
         }
 
-        private class WebHookValueBinder : StreamValueBinder
+        /// <summary>
+        /// ValueBinder for all our built in supported Types
+        /// </summary>
+        private class WebHookRequestValueBinder : StreamValueBinder
         {
             private readonly ParameterInfo _parameter;
             private readonly HttpRequestMessage _request;
+            private readonly string _invokeString;
 
-            public WebHookValueBinder(ParameterInfo parameter, HttpRequestMessage request)
+            public WebHookRequestValueBinder(ParameterInfo parameter, HttpRequestMessage request, string invokeString)
                 : base(parameter)
             {
                 _parameter = parameter;
                 _request = request;
+                _invokeString = invokeString;
             }
 
             public override object GetValue()
@@ -157,36 +203,42 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
 
             public override string ToInvokeString()
             {
-                return ToInvokeString(_request);
+                return _invokeString;
+            }
+        }
+
+        /// <summary>
+        /// ValueBinder for custom user Types
+        /// </summary>
+        private class WebHookUserTypeValueBinder : IValueProvider
+        {
+            private readonly Type _type;
+            private readonly object _value;
+            private readonly string _invokeString;
+
+            public WebHookUserTypeValueBinder(Type type, object value, string invokeString)
+            {
+                _type = type;
+                _value = value;
+                _invokeString = invokeString;
             }
 
-            internal static string ToInvokeString(HttpRequestMessage request)
+            public Type Type
             {
-                string body = string.Empty;
-                if (request.Content != null)
+                get
                 {
-                    Task<string> task = request.Content.ReadAsStringAsync();
-                    task.Wait();
-                    body = task.Result;
+                    return _type;
                 }
-
-                JObject invokeObject = new JObject()
-                {
-                    { "url", request.RequestUri.ToString() },
-                    { "body", body }
-                };
-
-                string invokeString = invokeObject.ToString();
-                return invokeString;
             }
 
-            internal static HttpRequestMessage FromInvokeString(string value)
+            public object GetValue()
             {
-                JObject invokeObject = JObject.Parse((string)value);
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, (string)invokeObject["url"]);
-                request.Content = new StringContent((string)invokeObject["body"]);
+                return _value;
+            }
 
-                return request;
+            public string ToInvokeString()
+            {
+                return _invokeString;
             }
         }
     }

@@ -61,8 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 throw new InvalidOperationException(string.Format("Duplicate route detected. There is already a route registered for '{0}'", routeKey));
             }
 
-            _functions.AddOrUpdate(routeKey, executor, 
-                (k, v) => { return executor; });
+            _functions.AddOrUpdate(routeKey, executor, (k, v) => { return executor; });
 
             _trace.Verbose(string.Format("WebHook route '{0}' registered for function '{1}'", route.LocalPath, methodName));
         }
@@ -118,6 +117,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 if (TryGetMethodInfo(routeKey, out methodInfo))
                 {
                     // Read the method arguments from the request body
+                    // and invoke the function
                     string body = await request.Content.ReadAsStringAsync();
                     IDictionary<string, JToken> parsed = JObject.Parse(body);
                     IDictionary<string, object> args = parsed.ToDictionary(p => p.Key, q => (object)q.Value.ToString());

@@ -2,10 +2,13 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Framework;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 
 namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
@@ -34,14 +37,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 return Task.FromResult<ITriggerBinding>(null);
             }
 
-            if (parameter.ParameterType != typeof(HttpRequestMessage) &&
-                parameter.ParameterType != typeof(string))
+            // Can bind to user types, HttpRequestMessage, and all the types supported by StreamValueBinder
+            IEnumerable<Type> supportedTypes = StreamValueBinder.SupportedTypes.Union(new Type[] { typeof(HttpRequestMessage) });
+            bool isSupportedTypeBinding = ValueBinder.MatchParameterType(parameter, supportedTypes);
+            bool isUserTypeBinding = !isSupportedTypeBinding && WebHookTriggerBinding.IsValidUserType(parameter.ParameterType);
+            if (!isSupportedTypeBinding && !isUserTypeBinding)
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 
+                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture,
                     "Can't bind WebHookTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            return Task.FromResult<ITriggerBinding>(new WebHookTriggerBinding(_dispatcher, context.Parameter, attribute));
+            return Task.FromResult<ITriggerBinding>(new WebHookTriggerBinding(_dispatcher, context.Parameter, isUserTypeBinding, attribute));
         }
 
         protected virtual void Dispose(bool disposing)

@@ -39,9 +39,9 @@ namespace ExtensionsSample
             {
                 FromAddress = new MailAddress("orders@webjobssamples.com", "Order Processor")
             });
+            config.UseWebHooks();
 
             JobHost host = new JobHost(config);
-            config.UseWebHooks(host);
 
             host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
             host.Call(typeof(FileSamples).GetMethod("ReadWrite"));

@@ -21,7 +21,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
         private readonly ParameterInfo _parameter;
         private readonly FileTriggerAttribute _attribute;
         private readonly FilesConfiguration _config;
-        private readonly BindingContract _bindingContract;
+        private readonly IReadOnlyDictionary<string, Type> _bindingContract;
+        private readonly BindingDataProvider _bindingDataProvider;
         private readonly TraceWriter _trace;
 
         public FileTriggerBinding(FilesConfiguration config, ParameterInfo parameter, TraceWriter trace)
@@ -30,6 +31,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             _parameter = parameter;
             _trace = trace;
             _attribute = parameter.GetCustomAttribute<FileTriggerAttribute>(inherit: false);
+            _bindingDataProvider = BindingDataProvider.FromTemplate(_attribute.Path);
             _bindingContract = CreateBindingContract();
         }
 
@@ -37,7 +39,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
         {
             get
             {
-                return _bindingContract.BindingDataContract;
+                return _bindingContract;
             }
         }
 
@@ -92,11 +94,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             };
         }
 
-        private BindingContract CreateBindingContract()
+        private IReadOnlyDictionary<string, Type> CreateBindingContract()
         {
             Dictionary<string, Type> contract = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
             contract.Add("FileTrigger", typeof(FileSystemEventArgs));
-            return new BindingContract(_attribute.Path, contract);
+
+            if (_bindingDataProvider.Contract != null)
+            {
+                foreach (KeyValuePair<string, Type> item in _bindingDataProvider.Contract)
+                {
+                    // In case of conflict, binding data from the value type overrides the built-in binding data above.
+                    contract[item.Key] = item.Value;
+                }
+            }
+
+            return contract;
         }
 
         private IReadOnlyDictionary<string, object> GetBindingData(FileSystemEventArgs value)
@@ -106,6 +118,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 throw new ArgumentNullException("value");
             }
 
+            // built in binding data
             Dictionary<string, object> bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
             bindingData.Add("FileTrigger", value);
 
@@ -113,7 +126,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             int idx = value.FullPath.IndexOf(pathRoot, StringComparison.OrdinalIgnoreCase);
             string pathToMatch = value.FullPath.Substring(idx);
 
-            return _bindingContract.GetBindingData(pathToMatch, bindingData);
+            // binding data from the path template
+            IReadOnlyDictionary<string, object> bindingDataFromPath = _bindingDataProvider.GetBindingData(pathToMatch);
+            if (bindingDataFromPath != null)
+            {
+                foreach (KeyValuePair<string, object> item in bindingDataFromPath)
+                {
+                    // In case of conflict, binding data from the path overrides
+                    // the built-in binding data above.
+                    bindingData[item.Key] = item.Value;
+                }
+            }
+
+            return bindingData;
         }
 
         private class FileValueBinder : StreamValueBinder
