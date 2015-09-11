@@ -98,6 +98,6 @@ To manually construct your WebHook URL, you need to replace the following tokens
 * pwd : This is the password from your SCM/Kudu credentials
 * site : Your SCM site (e.g. myapp.scm.azurewebsites.net)
 * job : The name of your Continuous WebJob
-* *path : This is the route identifying the specific WebHook function to invoke. By convention, this is {ClassName}/{MethodName}, but can be overridded/specified explicitly via the WebHookTrigger attribute.
+* *path : This is the route identifying the specific WebHook function to invoke. By convention, this is {ClassName}/{MethodName}, but can be overridden/specified explicitly via the WebHookTrigger attribute.
 
 In addition to functions using the WebHook trigger, you can invoke **any** of your job functions via an http request. When resolving an incoming POST request (only POST is supported), if the route doesn't match a WebHookTrigger decorated function, a search is performed for a function matching the {ClassName}/{MethodName} convention described above. If found that function is invoked, and the function parameters are parsed from the JSON body of the request. An example of this can bee seen in the tests [here](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/test/WebJobs.Extensions.Tests/WebHooks/WebHookEndToEndTests.cs#L72). This ability to invoke your functions via REST requests opens the door for automation scenarios, and compliments the way you can invoke/replay functions via Dashboard.
