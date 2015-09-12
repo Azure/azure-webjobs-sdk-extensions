@@ -1,6 +1,6 @@
 ﻿Azure WebJobs SDK Extensions
 ===
-This repo contains binding extensions for the **Azure WebJobs SDK**. See the [Azure WebJobs SDK repo](https://github.com/Azure/azure-webjobs-sdk) for more information. The binding extensions in this repo are available as the **Microsoft.Azure.WebJobs.Extensions** [nuget package](http://www.nuget.org/packages/Microsoft.Azure.WebJobs.Extensions). Note: some of the extensions in this repo (like SendGrid) live in their own separate nuget packages following a standard naming scheme (e.g. Microsoft.Azure.WebJobs.Extensions.SendGrid).
+This repo contains binding extensions for the **Azure WebJobs SDK**. See the [Azure WebJobs SDK repo](https://github.com/Azure/azure-webjobs-sdk) for more information. The binding extensions in this repo are available as the **Microsoft.Azure.WebJobs.Extensions** [nuget package](http://www.nuget.org/packages/Microsoft.Azure.WebJobs.Extensions). Note: some of the extensions in this repo (like SendGrid, WebHooks, etc.) live in their own separate nuget packages following a standard naming scheme (e.g. Microsoft.Azure.WebJobs.Extensions.SendGrid).
 
 The [wiki](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki) contains information on how to **author your own binding extensions**. See the [Binding Extensions Overview](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Binding-Extensions-Overview) for more details. A [sample project](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Program.cs) is also provided that demonstrates the bindings in action.
 
@@ -21,6 +21,7 @@ public static void TimerJob([TimerTrigger("00:00:30")] TimerInfo timer)
     Console.WriteLine("Timer job fired!");
 }
 ```
+The TimerTrigger also handles multi-instance scale out automatically - only a single instance of a particular timer function will be running across all instances (you don't want multiple instances to process the same timer event).
 
 For more information, see the [Timer samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/TimerSamples.cs).
 
@@ -45,7 +46,7 @@ For more information, see the [File samples](https://github.com/Azure/azure-webj
 
 ###SendGrid###
 
-A [SendGrid](https://sendgrid.com) binding that allows you to easily send emails after your job functions complete. Simply add your SendGrid ApiKey as an app setting, and you can write functions like the below which demonstrates full route binding for message fields. In this scenario, an email is sent each time a new order is successfully placed. The message fields are automatically bound to the CustomerEmail/CustomerName/OrderId properties of the Order object that triggered the function.
+A [SendGrid](https://sendgrid.com) binding that allows you to easily send emails after your job functions complete. Simply add your SendGrid ApiKey as an app setting, and you can write functions like the below which demonstrates full route binding for message fields. In this scenario, an email is sent each time a new order is successfully placed. The message fields are automatically bound to the `CustomerEmail/CustomerName/OrderId` properties of the Order object that triggered the function.
 
 ```csharp
 public static void ProcessOrder(
@@ -87,7 +88,7 @@ public static void IssueChanged([WebHookTrigger] string body)
 
 The web hook URL used to invoke the function is configured in the source repo ([more on GitHub web hooks here](https://developer.github.com/webhooks/)). Details on how to construct this URL can be found below.
 
-GitHub is just one example. Any event source supporting WebHooks can be used. Another popular source is [IFTTT](https://ifttt.com/). Using IFTTT ("If This, Then That"), you can configure your web job to be invoked when stock prices change, on events coming from Facebook, Instagram, YouTube, EBay etc., or even when someone alters your Nest thermostat setting! WebHooks opens the WebJobs SDK up to a huge new set of triggers, complimenting the existing first class SDK triggers (and extension triggers). Here's an IFTTT triggered function that will get invoked whenever a new article is added to [Pocket](https://getpocket.com/) in the browser for later reading. The function demonstrates model binding to a custom type, and pushes the articles to blob storage:
+GitHub is just one example. Any event source supporting WebHooks can be used. Another popular source is [IFTTT](https://ifttt.com/). Using IFTTT ("If This, Then That"), you can configure your webjob to be invoked when stock prices change, on events coming from Facebook, Instagram, YouTube, EBay etc., or even when someone alters your Nest thermostat setting! WebHooks opens the WebJobs SDK up to a huge new set of triggers, complimenting the existing first class SDK triggers (and extension triggers). Here's an IFTTT triggered function that will get invoked whenever a new article is added to [Pocket](https://getpocket.com/) in the browser for later reading. The function demonstrates model binding to a custom type, and pushes the articles to blob storage:
 
 ```csharp
 public static void NewArticle(
@@ -107,10 +108,10 @@ When running in Azure Web Apps, your WebHook job will be running in the context 
     https://{uid}:{pwd}@{site}/api/continuouswebjobs/{job}/passthrough/{*path}
 
 To manually construct your WebHook URL, you need to replace the following tokens:
-* uid : This is the user ID from your SCM/Kudu credentials
-* pwd : This is the password from your SCM/Kudu credentials
-* site : Your SCM site (e.g. myapp.scm.azurewebsites.net)
-* job : The name of your Continuous WebJob
-* *path : This is the route identifying the specific WebHook function to invoke. By convention, this is {ClassName}/{MethodName}, but can be overridden/specified explicitly via the WebHookTrigger attribute.
+* **uid** : This is the user ID from your SCM/Kudu credentials
+* **pwd** : This is the password from your SCM/Kudu credentials
+* **site** : Your SCM site (e.g. myapp.scm.azurewebsites.net)
+* **job** : The name of your Continuous WebJob
+* **path** : This is the route identifying the specific WebHook function to invoke. By convention, this is {ClassName}/{MethodName}, but can be overridden/specified explicitly via the WebHookTrigger attribute.
 
 In addition to functions using the WebHook trigger, you can invoke **any** of your job functions via an http request. When resolving an incoming POST request (only POST is supported), if the route doesn't match a WebHookTrigger decorated function, a search is performed for a function matching the {ClassName}/{MethodName} convention described above. If found that function is invoked, and the function parameters are parsed from the JSON body of the request. An example of this can bee seen in the tests [here](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/test/WebJobs.Extensions.Tests/WebHooks/WebHookEndToEndTests.cs#L72). This ability to invoke your functions via REST requests opens the door for automation scenarios, and compliments the way you can invoke/replay functions via the WebJobs Dashboard.
