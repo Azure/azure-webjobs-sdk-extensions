@@ -8,14 +8,16 @@ The extensions included in this repo include the following:
 
 ###TimerTrigger###
 
-A fully featured Timer trigger that supports cron expressions, as well as other schedule expressions. A couple of examples:
+A fully featured Timer trigger for scheduled jobs that supports cron expressions, as well as other schedule expressions. A couple of examples:
 
 ```csharp
-public static void CronJob([TimerTrigger("0 */1 * * * *")] TimerInfo timer)
+// Runs once every 5 minutes
+public static void CronJob([TimerTrigger("0 */5 * * * *")] TimerInfo timer)
 {
     Console.WriteLine("Cron job fired!");
 }
 
+// Runs once every 30 seconds
 public static void TimerJob([TimerTrigger("00:00:30")] TimerInfo timer)
 {
     Console.WriteLine("Timer job fired!");
