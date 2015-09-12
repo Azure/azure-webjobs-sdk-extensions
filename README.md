@@ -87,13 +87,17 @@ public static void IssueChanged([WebHookTrigger] string body)
 
 The web hook URL used to invoke the function is configured in the source repo ([more on GitHub web hooks here](https://developer.github.com/webhooks/)). Details on how to construct this URL can be found below.
 
-GitHub is just one example. Any event source supporting WebHooks can be used. Another popular source is [IFTTT](https://ifttt.com/). Using IFTTT ("If This, Then That"), you can configure your web job to be invoked when stock prices change, on events coming from Facebook, Instagram, YouTube, EBay etc., or even when someone alters your Nest thermostat setting! WebHooks opens the WebJobs SDK up to a huge new set of triggers, complimenting the existing first class SDK triggers (and extension triggers). Here's an IFTTT triggered function that will get invoked whenever a new article is added to [Pocket](https://getpocket.com/) in the browser for later reading:
+GitHub is just one example. Any event source supporting WebHooks can be used. Another popular source is [IFTTT](https://ifttt.com/). Using IFTTT ("If This, Then That"), you can configure your web job to be invoked when stock prices change, on events coming from Facebook, Instagram, YouTube, EBay etc., or even when someone alters your Nest thermostat setting! WebHooks opens the WebJobs SDK up to a huge new set of triggers, complimenting the existing first class SDK triggers (and extension triggers). Here's an IFTTT triggered function that will get invoked whenever a new article is added to [Pocket](https://getpocket.com/) in the browser for later reading. The function demonstrates model binding, and pushes the articles to blob storage:
 
 ```csharp
 public static void NewArticle(
-    [WebHookTrigger] Article article, 
+    [WebHookTrigger] Article article,
+    [Blob("articles/{Title}", FileAccess.Write)] TextWriter output,
     TraceWriter trace)
 {
+    output.WriteLine(article.Url);
+    output.WriteLine(article.Excerpt);
+
     trace.Info(string.Format("New article added. '{0}'", article.Title));
 }
 ```
