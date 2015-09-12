@@ -87,7 +87,16 @@ public static void IssueChanged([WebHookTrigger] string body)
 
 The web hook URL used to invoke the function is configured in the source repo ([more on GitHub web hooks here](https://developer.github.com/webhooks/)). Details on how to construct this URL can be found below.
 
-GitHub is just one example. Any event source supporting WebHooks can be used. Another popular source is [IFTTT](https://ifttt.com/). Using IFTTT ("If This, Then That"), you can configure your web job to be invoked when stock prices change, on events coming from Facebook, Instagram, YouTube, EBay etc., or even when someone alters your Nest thermostat setting! WebHooks opens the WebJobs SDK up to a huge new set of triggers, complimenting the existing first class SDK triggers (and extension triggers).
+GitHub is just one example. Any event source supporting WebHooks can be used. Another popular source is [IFTTT](https://ifttt.com/). Using IFTTT ("If This, Then That"), you can configure your web job to be invoked when stock prices change, on events coming from Facebook, Instagram, YouTube, EBay etc., or even when someone alters your Nest thermostat setting! WebHooks opens the WebJobs SDK up to a huge new set of triggers, complimenting the existing first class SDK triggers (and extension triggers). Here's an IFTTT triggered function that will get invoked whenever a new article is added to [Pocket](https://getpocket.com/) in the browser for later reading:
+
+```csharp
+public static void NewArticle(
+    [WebHookTrigger] Article article, 
+    TraceWriter trace)
+{
+    trace.Info(string.Format("New article added. '{0}'", article.Title));
+}
+```
 
 When running in Azure Web Apps, your WebHook job will be running in the context of a [Continuous WebJob](https://github.com/projectkudu/kudu/wiki/Web-jobs). This host will accept (and **authenticate**) incoming requests and forward them to the SDK JobHost. The URL used to trigger a WebHook function has the following format:
 
