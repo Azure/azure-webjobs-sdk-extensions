@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
@@ -23,6 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
         private readonly ParameterInfo _parameter;
         private readonly IBindingDataProvider _bindingDataProvider;
         private readonly bool _isUserTypeBinding;
+        private readonly WebHookTriggerAttribute _attribute;
         private Uri _route;
         
         public WebHookTriggerBinding(WebHookDispatcher dispatcher, ParameterInfo parameter, bool isUserTypeBinding, WebHookTriggerAttribute attribute)
@@ -30,6 +32,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             _dispatcher = dispatcher;
             _parameter = parameter;
             _isUserTypeBinding = isUserTypeBinding;
+            _attribute = attribute;
 
             if (_isUserTypeBinding)
             {
@@ -74,16 +77,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             string invokeString = ToInvokeString(request);
             if (_isUserTypeBinding)
             {
-                // For user type bindings, we deserialize the json body into an
-                // instance of their type
-                string json = await request.Content.ReadAsStringAsync();
-                value = JsonConvert.DeserializeObject(json, _parameter.ParameterType);
-                valueProvider = new WebHookUserTypeValueBinder(_parameter.ParameterType, value, invokeString);
+                valueProvider = await CreateUserTypeValueProvider(request, invokeString);
                 if (_bindingDataProvider != null)
                 {
                     // the provider might be null if the Type is invalid, or if the Type
                     // has no public properties to bind to
-                    bindingData = _bindingDataProvider.GetBindingData(value);
+                    bindingData = _bindingDataProvider.GetBindingData(valueProvider.GetValue());
                 }    
             }
             else
@@ -166,6 +165,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             request.Content = new StringContent((string)invokeObject["body"]);
 
             return request;
+        }
+
+        private async Task<IValueProvider> CreateUserTypeValueProvider(HttpRequestMessage request, string invokeString)
+        {
+            object value = null;
+            if (_attribute.FromUri)
+            {
+                // deserialize from Uri parameters
+                NameValueCollection parameters = request.RequestUri.ParseQueryString();
+                JObject intermediate = new JObject();
+                foreach (var propertyName in parameters.AllKeys)
+                {
+                    intermediate[propertyName] = parameters[propertyName];
+                }
+                value = intermediate.ToObject(_parameter.ParameterType);
+            }
+            else
+            {
+                // deserialize from message body
+                string json = await request.Content.ReadAsStringAsync();
+                value = JsonConvert.DeserializeObject(json, _parameter.ParameterType);
+            }
+
+            return new WebHookUserTypeValueBinder(_parameter.ParameterType, value, invokeString);
         }
 
         private class WebHookTriggerParameterDescriptor : TriggerParameterDescriptor

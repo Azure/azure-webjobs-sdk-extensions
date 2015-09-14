@@ -110,6 +110,31 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.WebHooks
         }
 
         [Fact]
+        public async Task BindToPoco_FromUri_Succeeds()
+        {
+            string a = Guid.NewGuid().ToString();
+            string b = Guid.NewGuid().ToString();
+            string uri = string.Format("WebHookTestFunctions/BindToPoco_FromUri?A={0}&B={1}&Foo=Bar", a, b);
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, uri);
+            HttpResponseMessage response = await _fixture.Client.SendAsync(request);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            TestPoco resultPoco = (TestPoco)WebHookTestFunctions.InvokeData;
+            Assert.Equal(a, resultPoco.A);
+            Assert.Equal(b, resultPoco.B);
+
+            // show that casing of property names doesn't matter
+            uri = string.Format("WebHookTestFunctions/BindToPoco_FromUri?a={0}&b={1}&Foo=Bar", a, b);
+            request = new HttpRequestMessage(HttpMethod.Post, uri);
+            response = await _fixture.Client.SendAsync(request);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            resultPoco = (TestPoco)WebHookTestFunctions.InvokeData;
+            Assert.Equal(a, resultPoco.A);
+            Assert.Equal(b, resultPoco.B);
+        }
+
+        [Fact]
         public async Task InvalidHttpMethod_ReturnsMethodNotAllowed()
         {
             HttpResponseMessage response = await _fixture.Client.GetAsync("WebHookTestFunctions/BindToString");
@@ -232,6 +257,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.WebHooks
             public static void BindToPoco_WithModelBinding([WebHookTrigger] TestPoco poco, string a, string b)
             {
                 InvokeData = new object[] { poco, a, b };
+            }
+
+            public static void BindToPoco_FromUri([WebHookTrigger(FromUri = true)] TestPoco poco)
+            {
+                InvokeData = poco;
             }
 
             public static void NonWebHook([QueueTrigger("testqueue")] TestPoco poco)

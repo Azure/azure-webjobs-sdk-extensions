@@ -47,6 +47,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                     "Can't bind WebHookTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
+            if (!isUserTypeBinding && attribute.FromUri)
+            {
+                throw new InvalidOperationException("'FromUri' can only be set to True when binding to custom Types.");
+            }
+
             return Task.FromResult<ITriggerBinding>(new WebHookTriggerBinding(_dispatcher, context.Parameter, isUserTypeBinding, attribute));
         }
 

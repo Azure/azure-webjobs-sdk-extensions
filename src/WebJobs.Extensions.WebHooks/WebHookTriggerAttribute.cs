@@ -15,8 +15,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
-        /// <param name="route">Optional override of the default route the function will
-        /// be triggered on.</param>
         public WebHookTriggerAttribute(string route = null)
         {
             Route = route;
@@ -26,5 +24,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
         /// Gets the route this function is triggered on.
         /// </summary>
         public string Route { get; private set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether values should come
+        /// from Uri parameters or the request body, when binding to a
+        /// user Type. By default, values come from the POST body.
+        /// </summary>
+        public bool FromUri { get; set; }
     }
 }
