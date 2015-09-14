@@ -60,7 +60,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 request = FromInvokeString((string)value);
             }
 
-            IValueProvider valueProvider = null;  
+            IValueProvider valueProvider = null;
             IReadOnlyDictionary<string, object> bindingData = null;
             string invokeString = ToInvokeString(request);
             if (_isUserTypeBinding)
@@ -70,7 +70,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 string json = await request.Content.ReadAsStringAsync();
                 value = JsonConvert.DeserializeObject(json, _parameter.ParameterType);
                 valueProvider = new WebHookUserTypeValueBinder(_parameter.ParameterType, value, invokeString);
-                bindingData = _bindingDataProvider.GetBindingData(value);
+                if (_bindingDataProvider != null)
+                {
+                    // the provider might be null if the Type is invalid, or if the Type
+                    // has no public properties to bind to
+                    bindingData = _bindingDataProvider.GetBindingData(value);
+                }    
             }
             else
             {

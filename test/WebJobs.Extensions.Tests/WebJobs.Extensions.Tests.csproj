@@ -119,6 +119,7 @@
     <Compile Include="Files\Config\FilesConfigurationTests.cs" />
     <Compile Include="Files\Listener\FileListenerTests.cs" />
     <Compile Include="Files\Listener\FileProcessorTests.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Files\FileBindingEndToEndTests.cs" />
     <Compile Include="SendGrid\SendGridBindingTests.cs" />

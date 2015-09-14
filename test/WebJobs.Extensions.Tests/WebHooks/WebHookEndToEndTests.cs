@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -67,7 +68,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.WebHooks
                 A = Guid.NewGuid().ToString(),
                 B = Guid.NewGuid().ToString()
             };
-            HttpResponseMessage response = await _fixture.Client.PostAsJsonAsync("WebHookTestFunctions/BindToPoco", poco);
+            HttpResponseMessage response = await _fixture.Client.PostAsJsonAsync("WebHookTestFunctions/BindToPoco_WithModelBinding", poco);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             object[] results = (object[])WebHookTestFunctions.InvokeData;
@@ -78,6 +79,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.WebHooks
             // verify model binding
             Assert.Equal(poco.A, (string)results[1]);
             Assert.Equal(poco.B, (string)results[2]);
+        }
+
+        [Fact]
+        public async Task BindToPoco_UsingFields_Succeeds()
+        {
+            string testData = Guid.NewGuid().ToString();
+            TestPoco_Fields poco = new TestPoco_Fields
+            {
+                A = Guid.NewGuid().ToString(),
+                B = Guid.NewGuid().ToString()
+            };
+            HttpResponseMessage response = await _fixture.Client.PostAsJsonAsync("WebHookTestFunctions/BindToPoco_Fields", poco);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            TestPoco_Fields resultPoco = (TestPoco_Fields)WebHookTestFunctions.InvokeData;
+            Assert.Equal(poco.A, resultPoco.A);
+            Assert.Equal(poco.B, resultPoco.B);
+        }
+
+        [Fact]
+        public async Task BindToPoco_EmptyBody_Succeeds()
+        {
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "WebHookTestFunctions/BindToPoco");
+            HttpResponseMessage response = await _fixture.Client.SendAsync(request);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            TestPoco resultPoco = (TestPoco)WebHookTestFunctions.InvokeData;
+            Assert.Null(resultPoco);
         }
 
         [Fact]
@@ -190,7 +219,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.WebHooks
                 InvokeData = result;
             }
 
-            public static void BindToPoco([WebHookTrigger] TestPoco poco, string a, string b)
+            public static void BindToPoco([WebHookTrigger] TestPoco poco)
+            {
+                InvokeData = poco;
+            }
+
+            public static void BindToPoco_Fields([WebHookTrigger] TestPoco_Fields poco)
+            {
+                InvokeData = poco;
+            }
+
+            public static void BindToPoco_WithModelBinding([WebHookTrigger] TestPoco poco, string a, string b)
             {
                 InvokeData = new object[] { poco, a, b };
             }
@@ -242,6 +281,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.WebHooks
         {
             public string A { get; set; }
             public string B { get; set; }
+        }
+
+        /// <summary>
+        /// Demonstrate that binding to a POCO using fields (rather than properties)
+        /// works. While this works, one thing that won't work is binding data coming
+        /// from such types being used in other attributes. This is because currently
+        /// BindingDataProvider only supports Properties.
+        /// </summary>
+        [SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1401:FieldsMustBePrivate")]
+        public class TestPoco_Fields
+        {
+            public string A;
+            public string B;
         }
     }
 }
