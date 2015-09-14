@@ -4,6 +4,23 @@ This repo contains binding extensions for the **Azure WebJobs SDK**. See the [Az
 
 The [wiki](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki) contains information on how to **author your own binding extensions**. See the [Binding Extensions Overview](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Binding-Extensions-Overview) for more details. A [sample project](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Program.cs) is also provided that demonstrates the bindings in action.
 
+Extensions all follow the same "using" pattern for registration - after referencing the package the extension lives in, you call the corresponding "using" method to register the extension. These "using" methods are extension methods on `JobHostConfiguration` and often take optional configuration objects to customize the behavior of the extension. For example, the `config.UseSendGrid(...)` call below registers the SendGrid extension using the specified configuration options.
+
+```csharp
+JobHostConfiguration config = new JobHostConfiguration();
+
+config.UseFiles
+config.UseTimers();
+config.UseSendGrid(new SendGridConfiguration()
+{
+    FromAddress = new MailAddress("orders@webjobssamples.com", "Order Processor")
+});
+config.UseWebHooks();
+
+JobHost host = new JobHost(config);
+host.RunAndBlock();
+```
+
 The extensions included in this repo include the following:
 
 ###TimerTrigger###
