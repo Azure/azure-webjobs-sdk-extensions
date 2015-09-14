@@ -33,6 +33,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
 
             if (_isUserTypeBinding)
             {
+                // Create the BindingDataProvider from the user Type. The BindingDataProvider
+                // is used to define the binding parameters that the binding exposes to other
+                // bindings (i.e. the properties of the POCO can be bound to by other bindings).
+                // It is also used to extract the binding data from an instance of the Type.
                 _bindingDataProvider = BindingDataProvider.FromType(parameter.ParameterType);
             }
 
@@ -42,7 +46,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
 
         public IReadOnlyDictionary<string, Type> BindingDataContract
         {
-            get { return _bindingDataProvider != null ? _bindingDataProvider.Contract : null; }
+            get
+            {
+                // if we're binding to a user Type, we'll have a contract,
+                // otherwise none
+                return _bindingDataProvider != null ? _bindingDataProvider.Contract : null;
+            }
         }
 
         public Type TriggerValueType
