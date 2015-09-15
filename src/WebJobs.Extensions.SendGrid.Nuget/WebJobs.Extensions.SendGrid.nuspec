@@ -14,7 +14,7 @@
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <tags>Microsoft Azure WebJobs Jobs Extensions SendGrid windowsazureofficial Web</tags>
     <dependencies>
-      <dependency id="Microsoft.Azure.WebJobs.Extensions" version="1.0.0-alpha2" />
+      <dependency id="Microsoft.Azure.WebJobs.Extensions" version="1.0.0-beta1" />
       <dependency id="Sendgrid" version="6.1.0" />
     </dependencies>
   </metadata>

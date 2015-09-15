@@ -14,7 +14,7 @@
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <tags>Microsoft Azure WebJobs Jobs Extensions WebHooks windowsazureofficial Web</tags>
     <dependencies>
-      <dependency id="Microsoft.Azure.WebJobs.Extensions" version="1.0.0-alpha2" />
+      <dependency id="Microsoft.Azure.WebJobs.Extensions" version="1.0.0-beta1" />
       <dependency id="SuaveServerWrapper" version="0.0.2" />
     </dependencies>
   </metadata>

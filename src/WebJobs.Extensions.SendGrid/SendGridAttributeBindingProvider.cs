@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Net.Mail;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -60,6 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
             private readonly SendGridConfiguration _config;
             private readonly Web _sendGrid;
             private readonly BindablePath _toFieldBinding;
+            private readonly BindablePath _fromFieldBinding;
             private readonly BindablePath _subjectFieldBinding;
             private readonly BindablePath _textFieldBinding;
 
@@ -75,6 +77,12 @@ namespace Microsoft.Azure.WebJobs.Extensions
                 {
                     _toFieldBinding = new BindablePath(_attribute.To);
                     _toFieldBinding.ValidateContractCompatibility(context.BindingDataContract);
+                }
+
+                if (!string.IsNullOrEmpty(_attribute.From))
+                {
+                    _fromFieldBinding = new BindablePath(_attribute.From);
+                    _fromFieldBinding.ValidateContractCompatibility(context.BindingDataContract);
                 }
 
                 if (!string.IsNullOrEmpty(_attribute.Subject))
@@ -121,9 +129,22 @@ namespace Microsoft.Azure.WebJobs.Extensions
             {
                 SendGridMessage message = new SendGridMessage();
 
-                if (_config.FromAddress != null)
+                if (_fromFieldBinding != null)
                 {
-                    message.From = _config.FromAddress;
+                    MailAddress fromAddress = null;
+                    string boundFromAddress = _fromFieldBinding.Bind(bindingData);
+                    if (!ParseFromAddress(boundFromAddress, out fromAddress))
+                    {
+                        throw new ArgumentException("Invalid 'From' address specified");
+                    }
+                    message.From = fromAddress;
+                }
+                else
+                {
+                    if (_config.FromAddress != null)
+                    {
+                        message.From = _config.FromAddress;
+                    }
                 }
 
                 if (_toFieldBinding != null)
@@ -149,6 +170,31 @@ namespace Microsoft.Azure.WebJobs.Extensions
                 }
 
                 return message;
+            }
+
+            internal static bool ParseFromAddress(string from, out MailAddress fromAddress)
+            {
+                fromAddress = null;
+                
+                int idx = from.IndexOf('@');
+                if (idx < 0)
+                {
+                    return false;
+                }
+
+                idx = from.IndexOf(':', idx);
+                if (idx > 0)
+                {
+                    string address = from.Substring(0, idx);
+                    string displayName = from.Substring(idx + 1);
+                    fromAddress = new MailAddress(address, displayName);
+                    return true;
+                }
+                else
+                {
+                    fromAddress = new MailAddress(from);
+                    return true;
+                }
             }
 
             internal class SendGridValueBinder : IValueBinder
