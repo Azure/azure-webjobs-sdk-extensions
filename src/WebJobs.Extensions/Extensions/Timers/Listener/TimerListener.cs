@@ -93,11 +93,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             };
             _timer.Elapsed += OnTimer;
 
-            if (_trace.Level == TraceLevel.Verbose)
-            {
-                string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5);
-                _trace.Verbose(nextOccurrences);
-            }
+            string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5);
+            _trace.Verbose(nextOccurrences);
 
             DateTime nextOccurrence = _schedule.GetNextOccurrence(now);
             TimeSpan nextInterval = nextOccurrence - now;
