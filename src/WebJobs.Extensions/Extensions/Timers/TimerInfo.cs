@@ -1,6 +1,10 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using System;
+using System.Collections.Generic;
+using System.Text;
+
 namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
     /// <summary>
@@ -27,5 +31,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// is due to a missed schedule occurrence.
         /// </summary>
         public bool IsPastDue { get; set; }
+
+        /// <summary>
+        /// Formats the next 'count' occurrences of the schedule into an
+        /// easily loggable string.
+        /// </summary>
+        /// <param name="count">The number of occurrences to format.</param>
+        /// <param name="now">The optional <see cref="DateTime"/> to start from.</param>
+        /// <returns>A formatted string with the next occurrences.</returns>
+        public string FormatNextOccurrences(int count, DateTime? now = null)
+        {
+            return FormatNextOccurrences(Schedule, count, now);
+        }
+
+        internal static string FormatNextOccurrences(TimerSchedule schedule, int count, DateTime? now = null)
+        {
+            if (schedule == null)
+            {
+                throw new ArgumentNullException("schedule");
+            }
+
+            IEnumerable<DateTime> nextOccurrences = schedule.GetNextOccurrences(count, now);
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine(string.Format("The next {0} occurrences of the schedule will be:", count));
+            foreach (DateTime occurrence in nextOccurrences)
+            {
+                builder.AppendLine(occurrence.ToString());
+            }
+
+            return builder.ToString();
+        }
     }
 }

@@ -67,6 +67,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         }
 
         [Fact]
+        public void OneTimePerDay()
+        {
+            // previously we had a bug in calculating the next occurrence
+            // when the current time was greater than the single daily time.
+            DailySchedule schedule = new DailySchedule("2:00:00");
+
+            DateTime now = new DateTime(2015, 9, 15, 21, 57, 40);
+            DateTime nextOccurrence = schedule.GetNextOccurrence(now);
+            TimeSpan nextInterval = nextOccurrence - now;
+            Assert.Equal(14540000, nextInterval.TotalMilliseconds);
+        }
+
+        [Fact]
         public void ToString_ReturnsExpectedValue()
         {
             DailySchedule schedule = new DailySchedule(

@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
@@ -91,6 +92,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 AutoReset = false
             };
             _timer.Elapsed += OnTimer;
+
+            if (_trace.Level == TraceLevel.Verbose)
+            {
+                string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5);
+                _trace.Verbose(nextOccurrences);
+            }
 
             DateTime nextOccurrence = _schedule.GetNextOccurrence(now);
             TimeSpan nextInterval = nextOccurrence - now;

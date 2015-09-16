@@ -12,7 +12,7 @@
     <projectUrl>https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources</projectUrl>
     <licenseUrl>$PackageEULA$</licenseUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
-    <tags>Microsoft Azure WebJobs Jobs Extensions WebHooks windowsazureofficial Web</tags>
+    <tags>Microsoft Azure WebJobs Jobs Extensions WebHooks WebHook windowsazureofficial Web</tags>
     <dependencies>
       <dependency id="Microsoft.Azure.WebJobs.Extensions" version="1.0.0-beta1" />
       <dependency id="SuaveServerWrapper" version="0.0.2" />

@@ -12,7 +12,7 @@
     <projectUrl>https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources</projectUrl>
     <licenseUrl>$PackageEULA$</licenseUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
-    <tags>Microsoft Azure WebJobs Jobs Extensions SendGrid windowsazureofficial Web</tags>
+    <tags>Microsoft Azure WebJobs Jobs Extensions SendGrid Email windowsazureofficial Web</tags>
     <dependencies>
       <dependency id="Microsoft.Azure.WebJobs.Extensions" version="1.0.0-beta1" />
       <dependency id="Sendgrid" version="6.1.0" />

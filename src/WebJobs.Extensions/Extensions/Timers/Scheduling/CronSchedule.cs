@@ -20,8 +20,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// </summary>
         /// <param name="cronTabExpression">The crontab expression defining the schedule</param>
         public CronSchedule(string cronTabExpression)
-            : this(CrontabSchedule.Parse(cronTabExpression))
         {
+            CrontabSchedule.ParseOptions options = new CrontabSchedule.ParseOptions()
+            {
+                IncludingSeconds = true
+            };
+            _cronSchedule = CrontabSchedule.Parse(cronTabExpression, options);
         }
 
         /// <summary>

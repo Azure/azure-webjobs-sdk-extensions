@@ -13,7 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         public void GetNextOccurrence_ThreeDaySchedule_MultipleScheduleIterations()
         {
             // 11:59AM on Mondays, Tuesdays, Wednesdays, Thursdays and Fridays
-            CronSchedule schedule = new CronSchedule("59 11 * * 1-5");
+            CronSchedule schedule = new CronSchedule("0 59 11 * * 1-5");
 
             DateTime now = new DateTime(2015, 5, 23, 9, 0, 0);
 
@@ -31,8 +31,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void ToString_ReturnsExpectedValue()
         {
-            CronSchedule schedule = new CronSchedule("59 11 * * 1-5");
-            Assert.Equal("Cron: '59 11 * * 1-5'", schedule.ToString());
+            CronSchedule schedule = new CronSchedule("0 59 11 * * 1-5");
+            Assert.Equal("Cron: '0 59 11 * * 1-5'", schedule.ToString());
         }
     }
 }
