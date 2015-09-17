@@ -8,6 +8,7 @@ Extensions all follow the same "using" pattern for registration - after referenc
 
 ```csharp
 JobHostConfiguration config = new JobHostConfiguration();
+config.Tracing.ConsoleLevel = TraceLevel.Verbose;
 
 config.UseFiles
 config.UseTimers();
