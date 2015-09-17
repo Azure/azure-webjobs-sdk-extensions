@@ -49,6 +49,8 @@ public static void CustomJob([TimerTrigger(typeof(MySchedule))] TimerInfo timer)
 ```
 The TimerTrigger also handles multi-instance scale out automatically - only a single instance of a particular timer function will be running across all instances (you don't want multiple instances to process the same timer event).
 
+The first example above uses a [cron expression](http://code.google.com/p/ncrontab/wiki/CrontabExpression) to declare the schedule. Using these 6 fields `{second} {minute} {hour} {day} {month} {day of the week}` you can express arbitrarily complex schedules very concisely.
+
 For more information, see the [Timer samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/TimerSamples.cs).
 
 ###FileTrigger / File###
