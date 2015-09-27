@@ -135,9 +135,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             };
             FunctionResult result = await executor.TryExecuteAsync(data, CancellationToken.None);
 
-            HttpStatusCode statusCode = result.Succeeded ? HttpStatusCode.OK : HttpStatusCode.InternalServerError;
+            HttpResponseMessage response = null;
+            object value = null;
+            if (request.Properties.TryGetValue(WebHookTriggerBinding.WebHookContextRequestKey, out value))
+            {
+                // If this is a WebHookContext binding, see if a custom response has been set.
+                // If so, we'll return that.
+                WebHookContext context = (WebHookContext)value;
+                if (context.Response != null)
+                {
+                    response = context.Response;
+                    response.RequestMessage = request;
+                }
+            }
 
-            return new HttpResponseMessage(statusCode);
+            if (response != null)
+            {
+                return response;
+            }
+            else
+            {
+                HttpStatusCode statusCode = result.Succeeded ? 
+                    HttpStatusCode.OK : HttpStatusCode.InternalServerError;
+                return new HttpResponseMessage(statusCode);
+            }
         }
 
         private bool TryGetMethodInfo(string routeKey, out MethodInfo methodInfo)

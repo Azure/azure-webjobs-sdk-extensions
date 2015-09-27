@@ -20,6 +20,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
 {
     internal class WebHookTriggerBinding : ITriggerBinding
     {
+        internal const string WebHookContextRequestKey = "WebHookContext";
+
         private readonly WebHookDispatcher _dispatcher;
         private readonly ParameterInfo _parameter;
         private readonly IBindingDataProvider _bindingDataProvider;
@@ -227,6 +229,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 if (_parameter.ParameterType == typeof(HttpRequestMessage))
                 {
                     return _request;
+                }
+                else if (_parameter.ParameterType == typeof(WebHookContext))
+                {
+                    // when binding to WebHookContext, we add the context to the request
+                    // property bag so we can pull it out later in the WebHookDispatcher to access
+                    // the response value, etc.
+                    WebHookContext context = new WebHookContext(_request);
+                    _request.Properties.Add(WebHookContextRequestKey, context);
+
+                    return context;
                 }
                 return base.GetValue();
             }

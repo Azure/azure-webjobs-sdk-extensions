@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Files;
@@ -42,6 +43,18 @@ namespace ExtensionsSample
         {
             output = "Order Received!";
             trace.Info(string.Format("HookC invoked! OrderId: {0}", order.OrderId));
+        }
+
+        /// <summary>
+        /// Demonstrates binding to <see cref="WebHookContext"/> which enables you to
+        /// control the response returned.
+        /// </summary>
+        public static void HookD([WebHookTrigger] WebHookContext context)
+        {
+            context.Response = new HttpResponseMessage(HttpStatusCode.Accepted)
+            {
+                Content = new StringContent("Custom Response!")
+            };
         }
     }
 }

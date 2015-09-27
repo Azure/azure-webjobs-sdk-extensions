@@ -37,8 +37,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 return Task.FromResult<ITriggerBinding>(null);
             }
 
-            // Can bind to user types, HttpRequestMessage, and all the types supported by StreamValueBinder
-            IEnumerable<Type> supportedTypes = StreamValueBinder.SupportedTypes.Union(new Type[] { typeof(HttpRequestMessage) });
+            // Can bind to user types, HttpRequestMessage, WebHookContext, and all the types supported by StreamValueBinder
+            IEnumerable<Type> supportedTypes = StreamValueBinder.SupportedTypes.Union(new Type[] { typeof(HttpRequestMessage), typeof(WebHookContext) });
             bool isSupportedTypeBinding = ValueBinder.MatchParameterType(parameter, supportedTypes);
             bool isUserTypeBinding = !isSupportedTypeBinding && WebHookTriggerBinding.IsValidUserType(parameter.ParameterType);
             if (!isSupportedTypeBinding && !isUserTypeBinding)

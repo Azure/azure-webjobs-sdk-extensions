@@ -49,6 +49,38 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.WebHooks
         }
 
         [Fact]
+        public async Task CustomResponse_Success_ReturnsExpectedResponse()
+        {
+            string testData = Guid.NewGuid().ToString();
+            HttpResponseMessage response = await _fixture.Client.PostAsync("WebHookTestFunctions/CustomResponse_Success", new StringContent(testData));
+            Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+
+            WebHookContext context = (WebHookContext)WebHookTestFunctions.InvokeData;
+            string result = await context.Response.Content.ReadAsStringAsync();
+            Assert.Equal("Custom Response Data", result);
+        }
+
+        [Fact]
+        public async Task CustomResponse_Failure_ReturnsExpectedResponses()
+        {
+            string testData = Guid.NewGuid().ToString();
+            HttpResponseMessage response = await _fixture.Client.PostAsync("WebHookTestFunctions/CustomResponse_Failure", new StringContent(testData));
+            Assert.Equal(HttpStatusCode.NotImplemented, response.StatusCode);
+
+            WebHookContext context = (WebHookContext)WebHookTestFunctions.InvokeData;
+            string result = await context.Response.Content.ReadAsStringAsync();
+            Assert.Equal("Does Not Compute!", result);
+        }
+
+        [Fact]
+        public async Task CustomResponse_NoResponseSet_ReturnsExpectedResponses()
+        {
+            string testData = Guid.NewGuid().ToString();
+            HttpResponseMessage response = await _fixture.Client.PostAsync("WebHookTestFunctions/CustomResponse_NoResponseSet", new StringContent(testData));
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        [Fact]
         public async Task BindToStream_Succeeds()
         {
             string testData = Guid.NewGuid().ToString();
@@ -272,6 +304,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.WebHooks
             public static void Throw([WebHookTrigger] HttpRequestMessage request)
             {
                 throw new Exception("Kaboom!");
+            }
+
+            public static void CustomResponse_Success([WebHookTrigger] WebHookContext context)
+            {
+                InvokeData = context;
+
+                context.Response = new HttpResponseMessage(HttpStatusCode.Accepted)
+                {
+                    Content = new StringContent("Custom Response Data")
+                };
+            }
+
+            public static void CustomResponse_Failure([WebHookTrigger] WebHookContext context)
+            {
+                InvokeData = context;
+
+                context.Response = new HttpResponseMessage(HttpStatusCode.NotImplemented)
+                {
+                    Content = new StringContent("Does Not Compute!")
+                };
+ 
+                throw new Exception("Kaboom!");
+            }
+
+            public static void CustomResponse_NoResponseSet([WebHookTrigger] WebHookContext context)
+            {
+                InvokeData = context;
+
+                // intentionally don't set a response
             }
         }
 

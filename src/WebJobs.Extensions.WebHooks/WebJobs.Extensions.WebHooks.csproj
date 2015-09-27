@@ -110,6 +110,7 @@
     <Compile Include="Listener\WebHookDispatcher.cs" />
     <Compile Include="Config\WebHooksConfiguration.cs" />
     <Compile Include="Config\WebHooksJobHostConfigurationExtensions.cs" />
+    <Compile Include="WebHookContext.cs" />
     <Compile Include="WebHookTriggerAttribute.cs" />
     <Compile Include="Bindings\WebHookTriggerAttributeBindingProvider.cs" />
   </ItemGroup>
