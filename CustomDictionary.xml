@@ -42,7 +42,7 @@
 	  <Word>SendGrid</Word>
 	  <Word>ApiKey</Word>
       <Word>Api</Word>
-	 <Word>WebHookTriggerAttribute</Word>
+      <Word>WebHookTriggerAttribute</Word>
     </Recognized>
     <Deprecated/>
     <Compound>

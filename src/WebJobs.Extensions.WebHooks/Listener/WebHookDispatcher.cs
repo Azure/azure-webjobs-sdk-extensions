@@ -59,7 +59,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             }
         }
 
-        public async Task RegisterRoute(Uri route, string methodName, ITriggeredFunctionExecutor executor)
+        public async Task RegisterRoute(Uri route, ParameterInfo triggerParameter, ITriggeredFunctionExecutor executor)
         {
             await EnsureServerOpen();
 
@@ -72,7 +72,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
 
             _functions.AddOrUpdate(routeKey, executor, (k, v) => { return executor; });
 
-            _trace.Verbose(string.Format("WebHook route '{0}' registered for function '{1}'", route.LocalPath, methodName));
+            WebHookTriggerAttribute attribute = triggerParameter.GetCustomAttribute<WebHookTriggerAttribute>();
+            string receiver = string.Empty;
+            if (attribute != null && !string.IsNullOrEmpty(attribute.Receiver))
+            {
+                receiver = string.Format(" (Receiver: '{0}', Id: '{1}')", attribute.Receiver, attribute.ReceiverId);
+            }
+
+            MethodInfo method = (MethodInfo)triggerParameter.Member;
+            string methodName = string.Format("{0}.{1}", method.DeclaringType, method.Name);
+            _trace.Verbose(string.Format("WebHook route '{0}' registered for function '{1}'{2}", route.LocalPath, methodName, receiver));
         }
 
         public Task UnregisterRoute(Uri route)

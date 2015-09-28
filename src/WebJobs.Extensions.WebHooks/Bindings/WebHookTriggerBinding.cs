@@ -102,7 +102,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 throw new ArgumentNullException("context");
             }
 
-            WebHookListener listener = new WebHookListener(_dispatcher, (MethodInfo)_parameter.Member, _route, context.Executor);
+            WebHookListener listener = new WebHookListener(_dispatcher, _parameter, _route, context.Executor);
             return Task.FromResult<IListener>(listener);
         }
 
