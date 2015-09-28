@@ -29,6 +29,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
         private readonly Type[] _types;
         private readonly ConcurrentDictionary<string, MethodInfo> _methodNameMap = new ConcurrentDictionary<string, MethodInfo>();
         private readonly JobHost _host;
+        private readonly WebHooksConfiguration _webHooksConfig;
+        private WebJobsWebHookHandler _webHookHandler;
 
         private ConcurrentDictionary<string, ITriggeredFunctionExecutor> _functions;
         private HttpHost _httpHost;
@@ -40,6 +42,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             _port = webHooksConfig.Port;
             _types = config.TypeLocator.GetTypes().ToArray();
             _host = host;
+            _webHooksConfig = webHooksConfig;
+
+            if (_webHooksConfig.WebHookReceivers.Count > 0)
+            {
+                _webHookHandler = new WebJobsWebHookHandler(_webHooksConfig.WebHookReceivers, _trace);
+                _webHookHandler.Initialize();
+            }
         }
 
         internal int Port
@@ -72,7 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
 
             ITriggeredFunctionExecutor executor = null;
             _functions.TryRemove(routeKey, out executor);
-       
+
             if (_functions.Count == 0)
             {
                 // routes are only unregistered when function listeners are
@@ -105,60 +114,85 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
 
         private async Task<HttpResponseMessage> ProcessRequest(HttpRequestMessage request)
         {
-            // First check if we have a WebHook function registered for
-            // this route
+            // First check if we have a WebHook function registered for this route
             string routeKey = request.RequestUri.LocalPath.ToLowerInvariant();
             ITriggeredFunctionExecutor executor = null;
+            HttpResponseMessage response = null;
             if (!_functions.TryGetValue(routeKey, out executor))
             {
-                // If no WebHook function is registered, we'll see if there is a job function
-                // that matches based on name, and if so invoke it directly
-                MethodInfo methodInfo = null;
-                if (TryGetMethodInfo(routeKey, out methodInfo))
-                {
-                    // Read the method arguments from the request body
-                    // and invoke the function
-                    string body = await request.Content.ReadAsStringAsync();
-                    IDictionary<string, JToken> parsed = JObject.Parse(body);
-                    IDictionary<string, object> args = parsed.ToDictionary(p => p.Key, q => (object)q.Value.ToString());
-                    await _host.CallAsync(methodInfo, args);
-
-                    return new HttpResponseMessage(HttpStatusCode.OK);
-                }
-
-                return new HttpResponseMessage(HttpStatusCode.NotFound);
-            }
-
-            TriggeredFunctionData data = new TriggeredFunctionData
-            {
-                TriggerValue = request
-            };
-            FunctionResult result = await executor.TryExecuteAsync(data, CancellationToken.None);
-
-            HttpResponseMessage response = null;
-            object value = null;
-            if (request.Properties.TryGetValue(WebHookTriggerBinding.WebHookContextRequestKey, out value))
-            {
-                // If this is a WebHookContext binding, see if a custom response has been set.
-                // If so, we'll return that.
-                WebHookContext context = (WebHookContext)value;
-                if (context.Response != null)
-                {
-                    response = context.Response;
-                    response.RequestMessage = request;
-                }
-            }
-
-            if (response != null)
-            {
-                return response;
+                // No WebHook function is registered for this route
+                // See see if there is a job function that matches based
+                // on name, and if so invoke it directly
+                response = await TryInvokeNonWebHook(routeKey, executor, request);
             }
             else
             {
-                HttpStatusCode statusCode = result.Succeeded ? 
-                    HttpStatusCode.OK : HttpStatusCode.InternalServerError;
-                return new HttpResponseMessage(statusCode);
+                // Define a function to invoke the job function that we can reuse below
+                Func<HttpRequestMessage, Task<HttpResponseMessage>> invokeJobFunction = async (req) =>
+                {
+                    TriggeredFunctionData data = new TriggeredFunctionData
+                    {
+                        TriggerValue = req
+                    };
+                    FunctionResult result = await executor.TryExecuteAsync(data, CancellationToken.None);
+
+                    object value = null;
+                    if (request.Properties.TryGetValue(WebHookTriggerBinding.WebHookContextRequestKey, out value))
+                    {
+                        // If this is a WebHookContext binding, see if a custom response has been set.
+                        // If so, we'll return that.
+                        WebHookContext context = (WebHookContext)value;
+                        if (context.Response != null)
+                        {
+                            response = context.Response;
+                            response.RequestMessage = request;
+                        }
+                    }
+
+                    if (response != null)
+                    {
+                        return response;
+                    }
+                    else
+                    {
+                        return new HttpResponseMessage(result.Succeeded ? HttpStatusCode.OK : HttpStatusCode.InternalServerError);
+                    }
+                };
+
+                if (_webHookHandler != null)
+                {
+                    response = await _webHookHandler.TryHandle(request, invokeJobFunction);
+                }
+                
+                if (response == null)
+                {
+                    // No WebHook receivers have been registered for this request, so dispatch
+                    // it directly.
+                    response = await invokeJobFunction(request);
+                }
             }
+
+            return response;
+        }
+
+        private async Task<HttpResponseMessage> TryInvokeNonWebHook(string routeKey, ITriggeredFunctionExecutor executor, HttpRequestMessage request)
+        {
+            // If no WebHook function is registered, we'll see if there is a job function
+            // that matches based on name, and if so invoke it directly
+            MethodInfo methodInfo = null;
+            if (TryGetMethodInfo(routeKey, out methodInfo))
+            {
+                // Read the method arguments from the request body
+                // and invoke the function
+                string body = await request.Content.ReadAsStringAsync();
+                IDictionary<string, JToken> parsed = JObject.Parse(body);
+                IDictionary<string, object> args = parsed.ToDictionary(p => p.Key, q => (object)q.Value.ToString());
+                await _host.CallAsync(methodInfo, args);
+
+                return new HttpResponseMessage(HttpStatusCode.OK);
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
         }
 
         private bool TryGetMethodInfo(string routeKey, out MethodInfo methodInfo)
@@ -207,6 +241,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             {
                 ((IDisposable)_httpHost).Dispose();
                 _httpHost = null;
+            }
+
+            if (_webHookHandler != null)
+            {
+                ((IDisposable)_webHookHandler).Dispose();
+                _webHookHandler = null;
             }
         }
     }

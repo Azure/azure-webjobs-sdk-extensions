@@ -5,9 +5,11 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Mail;
+using Microsoft.AspNet.WebHooks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Extensions.Files;
+using Microsoft.Azure.WebJobs.Extensions.WebHooks;
 
 namespace ExtensionsSample
 {
@@ -39,7 +41,10 @@ namespace ExtensionsSample
             {
                 FromAddress = new MailAddress("orders@webjobssamples.com", "Order Processor")
             });
-            config.UseWebHooks();
+
+            WebHooksConfiguration webHooksConfig = new WebHooksConfiguration();
+            webHooksConfig.UseReceiver<GitHubWebHookReceiver>();
+            config.UseWebHooks(webHooksConfig);
 
             JobHost host = new JobHost(config);
 

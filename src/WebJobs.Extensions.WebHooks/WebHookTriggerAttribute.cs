@@ -21,6 +21,42 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
         }
 
         /// <summary>
+        /// Constructs a new instance.
+        /// </summary>
+        /// <param name="receiver">The WebHook receiver to use for this WebHook. This should be a receiver that
+        /// has been registered on startup using <see cref="WebHooksConfiguration.UseReceiver{T}()"/>.</param>
+        /// <param name="receiverId">Optional WebHook ID.</param>
+        public WebHookTriggerAttribute(string receiver, string receiverId = null)
+        {
+            if (string.IsNullOrEmpty(receiver))
+            {
+                throw new ArgumentNullException("receiver");
+            }
+
+            Receiver = receiver.ToLowerInvariant();
+
+            if (!string.IsNullOrEmpty(receiverId))
+            {
+                ReceiverId = receiverId.ToLowerInvariant();
+                Route = string.Format("{0}/{1}", Receiver, ReceiverId);
+            }
+            else
+            {
+                Route = Receiver;
+            }
+        }
+
+        /// <summary>
+        /// Gets the WebHook receiver to use for this WebHook.
+        /// </summary>
+        public string Receiver { get; private set; }
+
+        /// <summary>
+        /// Gets the WebHook receiver to use for this WebHook.
+        /// </summary>
+        public string ReceiverId { get; private set; }
+
+        /// <summary>
         /// Gets the route this function is triggered on.
         /// </summary>
         public string Route { get; private set; }

@@ -56,5 +56,12 @@ namespace ExtensionsSample
                 Content = new StringContent("Custom Response!")
             };
         }
+
+        /// GitHub WebHook
+        /// GitHub WebHook example, showing integration with the ASP.NET WebHooks SDK.
+        /// </summary>
+        public static void GitHub([WebHookTrigger("github", "issues")] string body)
+        {
+        }
     }
 }
