@@ -27,7 +27,9 @@ namespace ExtensionsSample
         /// This WebHook declares its route, and is invoked by POST requests
         /// to http://localhost:{port}/Sample/HookB.
         /// </summary>
-        public static async Task HookB([WebHookTrigger("Sample/HookB")] HttpRequestMessage request, TraceWriter trace)
+        public static async Task HookB(
+            [WebHookTrigger("Sample/HookB")] HttpRequestMessage request, 
+            TraceWriter trace)
         {
             string body = await request.Content.ReadAsStringAsync();
             trace.Info(string.Format("HookB invoked! Body: {0}", body));
@@ -68,7 +70,7 @@ namespace ExtensionsSample
             dynamic issueEvent = JObject.Parse(body);
 
             trace.Info(string.Format("GitHub Issues WebHook invoked - Issue: '{0}', Action: '{1}', ",
-                issueEvent.action, issueEvent.issue.title));
+                issueEvent.issue.title, issueEvent.action));
         }
     }
 }

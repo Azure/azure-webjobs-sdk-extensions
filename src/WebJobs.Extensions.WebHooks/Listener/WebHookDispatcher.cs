@@ -43,12 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             _types = config.TypeLocator.GetTypes().ToArray();
             _host = host;
             _webHooksConfig = webHooksConfig;
-
-            if (_webHooksConfig.WebHookReceivers.Count > 0)
-            {
-                _webHookHandler = new WebJobsWebHookHandler(_webHooksConfig.WebHookReceivers, _trace);
-                _webHookHandler.Initialize();
-            }
+            _webHookHandler = new WebJobsWebHookHandler(_webHooksConfig.HttpConfiguration, _trace);
         }
 
         internal int Port
@@ -106,11 +101,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
         {
             try
             {
-                if (request.Method != HttpMethod.Post)
-                {
-                    return new HttpResponseMessage(HttpStatusCode.MethodNotAllowed);
-                }
-
                 _trace.Verbose(string.Format("Http request received: {0} {1}", request.Method, request.RequestUri));
 
                 return await ProcessRequest(request);
@@ -129,6 +119,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             HttpResponseMessage response = null;
             if (!_functions.TryGetValue(routeKey, out executor))
             {
+                if (request.Method != HttpMethod.Post)
+                {
+                    return new HttpResponseMessage(HttpStatusCode.MethodNotAllowed);
+                }
+
                 // No WebHook function is registered for this route
                 // See see if there is a job function that matches based
                 // on name, and if so invoke it directly
@@ -168,13 +163,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                     }
                 };
 
-                if (_webHookHandler != null)
-                {
-                    response = await _webHookHandler.TryHandle(request, invokeJobFunction);
-                }
-                
+                // See if there is a WebHookReceiver registered for this request
+                // Note: receivers will do their own HttpMethod validation (e.g. some
+                // support HEAD/GET/etc.
+                response = await _webHookHandler.TryHandle(request, invokeJobFunction);
+
                 if (response == null)
                 {
+                    if (request.Method != HttpMethod.Post)
+                    {
+                        return new HttpResponseMessage(HttpStatusCode.MethodNotAllowed);
+                    }
+
                     // No WebHook receivers have been registered for this request, so dispatch
                     // it directly.
                     response = await invokeJobFunction(request);

@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.ObjectModel;
+using System.Web.Http;
 using Microsoft.AspNet.WebHooks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
@@ -10,9 +10,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
     /// <summary>
     /// Configuration object for <see cref="WebHookTriggerAttribute"/> decorated job functions.
     /// </summary>
-    public class WebHooksConfiguration
+    public class WebHooksConfiguration : IDisposable
     {
-        private Collection<WebHookReceiver> _receivers = new Collection<WebHookReceiver>();
+        private HttpConfiguration _httpConfiguration;
+        private bool disposedValue = false;
 
         /// <summary>
         /// Constructs a new instance.
@@ -39,13 +40,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
         public int Port { get; private set; }
 
         /// <summary>
-        /// Gets the collection of <see cref="WebHookReceiver"/>s.
+        /// Gets the <see cref="HttpConfiguration"/> that will be used by <see cref="Microsoft.AspNet.WebHooks.WebHookReceiver"/>s.
         /// </summary>
-        internal Collection<WebHookReceiver> WebHookReceivers
+        internal HttpConfiguration HttpConfiguration
         {
             get
             {
-                return _receivers;
+                if (_httpConfiguration == null)
+                {
+                    _httpConfiguration = new HttpConfiguration();
+                }
+                return _httpConfiguration;
             }
         }
 
@@ -53,19 +58,40 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
         /// Adds the specified <see cref="WebHookReceiver"/> to the request pipeline.
         /// </summary>
         /// <typeparam name="T">The Type of <see cref="WebHookReceiver"/> to add.</typeparam>
-        public void UseReceiver<T>() where T : WebHookReceiver, new()
+        public void UseReceiver<T>() where T : WebHookReceiver
         {
-            WebHookReceivers.Add(new T());
+            // Noop - just to ensure receiver assembly is loaded in to memory so it's
+            // receivers can be discovered.
         }
 
+        #region IDisposable Support
         /// <summary>
-        /// Adds the specified <see cref="WebHookReceiver"/> to the request pipeline.
+        /// Disposes the instance.
         /// </summary>
-        /// <typeparam name="T">The Type of <see cref="WebHookReceiver"/> to add.</typeparam>
-        /// <param name="receiver">The <see cref="WebHookReceiver"/> instance to add.</param>
-        public void UseReceiver<T>(T receiver) where T : WebHookReceiver
+        /// <param name="disposing">Flag indicating whether we're being disposed.</param>
+        protected virtual void Dispose(bool disposing)
         {
-            WebHookReceivers.Add(receiver);
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    if (_httpConfiguration != null)
+                    {
+                        _httpConfiguration.Dispose();
+                        _httpConfiguration = null;
+                    }
+                }
+
+                disposedValue = true;
+            }
         }
+
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }

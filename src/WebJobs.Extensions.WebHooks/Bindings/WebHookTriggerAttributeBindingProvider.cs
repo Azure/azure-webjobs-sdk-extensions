@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.AspNet.WebHooks;
 using Microsoft.Azure.WebJobs.Extensions.Framework;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 
@@ -54,8 +55,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 throw new InvalidOperationException("'FromUri' can only be set to True when binding to custom Types.");
             }
 
+            var receiverManager = _webHooksConfig.HttpConfiguration.DependencyResolver.GetReceiverManager();
             if (!string.IsNullOrEmpty(attribute.Receiver) &&
-                !_webHooksConfig.WebHookReceivers.Any(p => string.Compare(p.Name, attribute.Receiver, StringComparison.OrdinalIgnoreCase) == 0))
+                receiverManager.GetReceiver(attribute.Receiver) == null)
             {
                 throw new InvalidOperationException(string.Format("WebHook receiver '{0}' has not been registered.", attribute.Receiver));
             }
