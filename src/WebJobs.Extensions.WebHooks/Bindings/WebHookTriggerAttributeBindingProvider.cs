@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.AspNet.WebHooks;
 using Microsoft.Azure.WebJobs.Extensions.Framework;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 
@@ -15,11 +16,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
 {
     internal class WebHookTriggerAttributeBindingProvider : ITriggerBindingProvider, IDisposable
     {
+        private readonly WebHooksConfiguration _webHooksConfig;
         private WebHookDispatcher _dispatcher;
         private bool disposedValue = false;
 
-        public WebHookTriggerAttributeBindingProvider(WebHookDispatcher dispatcher)
+        public WebHookTriggerAttributeBindingProvider(WebHooksConfiguration webHooksConfig, WebHookDispatcher dispatcher)
         {
+            _webHooksConfig = webHooksConfig;
             _dispatcher = dispatcher;
         }
 
@@ -50,6 +53,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             if (!isUserTypeBinding && attribute.FromUri)
             {
                 throw new InvalidOperationException("'FromUri' can only be set to True when binding to custom Types.");
+            }
+
+            var receiverManager = _webHooksConfig.HttpConfiguration.DependencyResolver.GetReceiverManager();
+            if (!string.IsNullOrEmpty(attribute.Receiver) &&
+                receiverManager.GetReceiver(attribute.Receiver) == null)
+            {
+                throw new InvalidOperationException(string.Format("WebHook receiver '{0}' has not been registered.", attribute.Receiver));
             }
 
             return Task.FromResult<ITriggerBinding>(new WebHookTriggerBinding(_dispatcher, context.Parameter, isUserTypeBinding, attribute));

@@ -6,7 +6,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Microsoft.AspNet.WebHooks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.WebHooks;
 using Newtonsoft.Json;
@@ -221,6 +223,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.WebHooks
             Assert.Empty(await response.Content.ReadAsStringAsync());
         }
 
+        [Fact]
+        public async Task GitHubReceiverIntegration_Succeeds()
+        {
+            string testData = "{ \"data\": \"Test GitHub Data\" }";
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "github/issues");
+            request.Headers.Add("X-Hub-Signature", "sha1=e8ccc2d25c6bc5e6b522f9f230188347baa291ab");
+            request.Headers.Add("User-Agent", "GitHub-Hookshot/d74c40b");
+            request.Headers.Add("X-GitHub-Event", "issue_comment");
+            request.Content = new StringContent(testData);
+            request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+            HttpResponseMessage response = await _fixture.Client.SendAsync(request);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            string result = (string)WebHookTestFunctions.InvokeData;
+            Assert.Equal(testData, result);
+        }
+
         private async Task VerifyWebHook(string route)
         {
             string testData = Guid.NewGuid().ToString();
@@ -334,6 +354,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.WebHooks
 
                 // intentionally don't set a response
             }
+
+            public static void GitHubReceiverIntegration([WebHookTrigger("github", "issues")] string body)
+            {
+                InvokeData = body;
+            }
         }
 
         public class TestFixture : IDisposable
@@ -350,7 +375,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.WebHooks
                 {
                     TypeLocator = new ExplicitTypeLocator(typeof(WebHookTestFunctions))
                 };
-                config.UseWebHooks(new WebHooksConfiguration(testPort));
+
+                WebHooksConfiguration webHooksConfig = new WebHooksConfiguration(testPort);
+                webHooksConfig.UseReceiver<GitHubWebHookReceiver>();
+                config.UseWebHooks(webHooksConfig);
+
                 Host = new JobHost(config);
                 Host.Start();
             }

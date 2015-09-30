@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.WebHooks;
 using Microsoft.Azure.WebJobs.Host;
+using Newtonsoft.Json.Linq;
 
 namespace ExtensionsSample
 {
@@ -26,7 +27,9 @@ namespace ExtensionsSample
         /// This WebHook declares its route, and is invoked by POST requests
         /// to http://localhost:{port}/Sample/HookB.
         /// </summary>
-        public static async Task HookB([WebHookTrigger("Sample/HookB")] HttpRequestMessage request, TraceWriter trace)
+        public static async Task HookB(
+            [WebHookTrigger("Sample/HookB")] HttpRequestMessage request, 
+            TraceWriter trace)
         {
             string body = await request.Content.ReadAsStringAsync();
             trace.Info(string.Format("HookB invoked! Body: {0}", body));
@@ -55,6 +58,19 @@ namespace ExtensionsSample
             {
                 Content = new StringContent("Custom Response!")
             };
+        }
+
+        /// <summary>
+        /// GitHub WebHook example, showing integration with the ASP.NET WebHooks SDK.
+        /// </summary>
+        public static void GitHub(
+            [WebHookTrigger("github", "issues")] string body, 
+            TraceWriter trace)
+        {
+            dynamic issueEvent = JObject.Parse(body);
+
+            trace.Info(string.Format("GitHub Issues WebHook invoked - Issue: '{0}', Action: '{1}', ",
+                issueEvent.issue.title, issueEvent.action));
         }
     }
 }

@@ -102,7 +102,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 throw new ArgumentNullException("context");
             }
 
-            WebHookListener listener = new WebHookListener(_dispatcher, (MethodInfo)_parameter.Member, _route, context.Executor);
+            WebHookListener listener = new WebHookListener(_dispatcher, _parameter, _route, context.Executor);
             return Task.FromResult<IListener>(listener);
         }
 
@@ -247,7 +247,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             {
                 Task<Stream> task = _request.Content.ReadAsStreamAsync();
                 task.Wait();
-                return task.Result;
+                Stream stream = task.Result;
+
+                if (stream.Position > 0 && stream.CanSeek)
+                {
+                    // we have to seek back to the beginning when reading as a stream,
+                    // since once the Content is read somewhere else, the stream will
+                    // be at the end
+                    stream.Seek(0, SeekOrigin.Begin);
+                }
+
+                return stream;
             }
 
             public override string ToInvokeString()

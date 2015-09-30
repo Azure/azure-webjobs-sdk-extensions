@@ -13,22 +13,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
     internal class WebHookListener : IListener
     {
         private readonly WebHookDispatcher _dispatcher;
-        private readonly MethodInfo _method;
+        private readonly ParameterInfo _triggerParameter;
         private readonly Uri _route;
         private readonly ITriggeredFunctionExecutor _executor;
 
-        public WebHookListener(WebHookDispatcher dispatcher, MethodInfo method, Uri route, ITriggeredFunctionExecutor executor)
+        public WebHookListener(WebHookDispatcher dispatcher, ParameterInfo triggerParameter, Uri route, ITriggeredFunctionExecutor executor)
         {
             _dispatcher = dispatcher;
-            _method = method;
+            _triggerParameter = triggerParameter;
             _route = route;
             _executor = executor;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            string methodName = string.Format("{0}.{1}", _method.DeclaringType, _method.Name);
-            await _dispatcher.RegisterRoute(_route, methodName, _executor);
+            await _dispatcher.RegisterRoute(_route, _triggerParameter, _executor);
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
