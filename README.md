@@ -148,4 +148,15 @@ To manually construct your WebHook URL, you need to replace the following tokens
 
 In addition to functions using the WebHook trigger, you can invoke **any** of your job functions via an http request. When resolving an incoming POST request (only POST is supported), if the route doesn't match a WebHookTrigger decorated function, a search is performed for a function matching the {ClassName}/{MethodName} convention described above. If found that function is invoked, and the function parameters are parsed from the JSON body of the request. An example of this can bee seen in the tests [here](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/test/WebJobs.Extensions.Tests/WebHooks/WebHookEndToEndTests.cs#L72). This ability to invoke your functions via REST requests opens the door for automation scenarios, and compliments the way you can invoke/replay functions via the WebJobs Dashboard.
 
+Support for the [ASP.NET WebHooks SDK](http://blogs.msdn.com/b/webdev/archive/2015/09/04/introducing-microsoft-asp-net-webhooks-preview.aspx) is also built in. That SDK provides WebHook Receiver classes that handle the diverse WebHook authentication schemes of various providers. For providers it supports it is recommended that you use those receivers for authentication. For example, to leverage this for GitHub, you would:
+
+* reference the **Microsoft.AspNet.WebHooks.Receivers.GitHub** package
+* add the **MS_WebHookReceiverSecret_GitHub** app setting containing your secret
+* set the same shared secret on your GitHub WebHook
+* add [one line of code](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Program.cs#L46) to register the receiver on job startup
+* use the overload of WebHookTriggerAttribute that takes a reveiver and optional id ([as in this example](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/WebHookSamples.cs#L67))
+* use a corresponding route format {receiver}/{id} for the WebHook in GitHub. I.e. for this example the route would be "github/issues"
+
+That's it - whenever a request comes in for your WebHook, the WebHook reveiver will perform all the authentication checks and your job function will only be invoked if the request is authenticated. For more information on the various ASP.NET WebHooks SDK reveivers supported, see their documentation.
+
 For more information, see the [WebHook samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/WebHookSamples.cs).
