@@ -127,7 +127,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 // No WebHook function is registered for this route
                 // See see if there is a job function that matches based
                 // on name, and if so invoke it directly
-                response = await TryInvokeNonWebHook(routeKey, executor, request);
+                response = await TryInvokeNonWebHook(routeKey, request);
             }
             else
             {
@@ -184,7 +184,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             return response;
         }
 
-        private async Task<HttpResponseMessage> TryInvokeNonWebHook(string routeKey, ITriggeredFunctionExecutor executor, HttpRequestMessage request)
+        private async Task<HttpResponseMessage> TryInvokeNonWebHook(string routeKey, HttpRequestMessage request)
         {
             // If no WebHook function is registered, we'll see if there is a job function
             // that matches based on name, and if so invoke it directly
