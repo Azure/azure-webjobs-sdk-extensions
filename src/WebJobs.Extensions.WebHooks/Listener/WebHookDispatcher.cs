@@ -30,7 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
         private readonly ConcurrentDictionary<string, MethodInfo> _methodNameMap = new ConcurrentDictionary<string, MethodInfo>();
         private readonly JobHost _host;
         private readonly WebHooksConfiguration _webHooksConfig;
-        private WebJobsWebHookHandler _webHookHandler;
+        private WebHookReceiverManager _webHookReceiverManager;
 
         private ConcurrentDictionary<string, ITriggeredFunctionExecutor> _functions;
         private HttpHost _httpHost;
@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             _types = config.TypeLocator.GetTypes().ToArray();
             _host = host;
             _webHooksConfig = webHooksConfig;
-            _webHookHandler = new WebJobsWebHookHandler(_webHooksConfig.HttpConfiguration, _trace);
+            _webHookReceiverManager = new WebHookReceiverManager(_webHooksConfig.HttpConfiguration, _trace);
         }
 
         internal int Port
@@ -166,7 +166,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 // See if there is a WebHookReceiver registered for this request
                 // Note: receivers will do their own HttpMethod validation (e.g. some
                 // support HEAD/GET/etc.
-                response = await _webHookHandler.TryHandle(request, invokeJobFunction);
+                response = await _webHookReceiverManager.TryHandle(request, invokeJobFunction);
 
                 if (response == null)
                 {
@@ -252,10 +252,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 _httpHost = null;
             }
 
-            if (_webHookHandler != null)
+            if (_webHookReceiverManager != null)
             {
-                ((IDisposable)_webHookHandler).Dispose();
-                _webHookHandler = null;
+                ((IDisposable)_webHookReceiverManager).Dispose();
+                _webHookReceiverManager = null;
             }
         }
     }

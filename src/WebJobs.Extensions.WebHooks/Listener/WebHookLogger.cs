@@ -11,18 +11,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
     /// <summary>
     /// Custom <see cref="ILogger"/> implementation used for ASP.NET WebHooks SDK integration.
     /// </summary>
-    internal class WebHooksLogger : ILogger
+    internal class WebHookLogger : ILogger
     {
         private readonly TraceWriter _traceWriter;
 
-        public WebHooksLogger(TraceWriter traceWriter)
+        public WebHookLogger(TraceWriter traceWriter)
         {
             _traceWriter = traceWriter;
         }
 
         public void Log(TraceLevel level, string message, Exception ex)
         {
-            // route all logs coming from the WebHooks SDK to the WebHobs SDK
+            // Route all logs coming from the WebHooks SDK to the WebJobs SDK
             // as Verbose.
             _traceWriter.Trace(System.Diagnostics.TraceLevel.Verbose, string.Empty, message, ex);
         }

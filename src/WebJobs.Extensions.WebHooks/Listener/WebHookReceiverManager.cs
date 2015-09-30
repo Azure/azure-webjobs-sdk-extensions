@@ -16,12 +16,10 @@ using Microsoft.Azure.WebJobs.Host;
 namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
 {
     /// <summary>
-    /// Custom <see cref="WebHookHandler"/> used to integrate ASP.NET WebHooks into the WebJobs
-    /// WebHook request pipeline.
-    /// When a request is dispatched to a <see cref="WebHookReceiver"/>, after validating the request
-    /// fully, it will delegate to this handler, allowing us to resume processing.
+    /// Class managing routing of requests to registered WebHook Receivers. It initializes an
+    /// <see cref="HttpConfiguration"/> and loads all registered WebHook Receivers.
     /// </summary>
-    internal class WebJobsWebHookHandler : WebHookHandler
+    internal class WebHookReceiverManager
     {
         internal const string WebHookJobFunctionInvokerKey = "WebHookJobFunctionInvoker";
 
@@ -29,15 +27,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
         private HttpConfiguration _httpConfiguration;
         private IWebHookReceiverManager _receiverManager;
 
-        public WebJobsWebHookHandler(HttpConfiguration httpConfiguration, TraceWriter trace)
+        public WebHookReceiverManager(HttpConfiguration httpConfiguration, TraceWriter trace)
         {
             _trace = trace;
             _httpConfiguration = httpConfiguration;
 
             var builder = new ContainerBuilder();
-            ILogger logger = new WebHooksLogger(_trace);
+            ILogger logger = new WebHookLogger(_trace);
             builder.RegisterInstance<ILogger>(logger);
-            builder.RegisterInstance<IWebHookHandler>(this);
+            builder.RegisterInstance<IWebHookHandler>(new WebJobsWebHookHandler());
             var container = builder.Build();
 
             WebHooksConfig.Initialize(_httpConfiguration);
@@ -83,17 +81,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             return null;
         }
 
-        public override async Task ExecuteAsync(string receiver, WebHookHandlerContext context)
+        /// <summary>
+        /// Custom <see cref="WebHookHandler"/> used to integrate ASP.NET WebHooks into the WebJobs
+        /// WebHook request pipeline.
+        /// When a request is dispatched to a <see cref="WebHookReceiver"/>, after validating the request
+        /// fully, it will delegate to this handler, allowing us to resume processing and dispatch the request
+        /// to the WebJob function.
+        /// </summary>
+        private class WebJobsWebHookHandler : WebHookHandler
         {
-            // At this point, the WebHookReceiver has validated this request, so we
-            // now need to dispatch it to the actual job function.
+            public override async Task ExecuteAsync(string receiver, WebHookHandlerContext context)
+            {
+                // At this point, the WebHookReceiver has validated this request, so we
+                // now need to dispatch it to the actual job function.
 
-            // get the request handler from message properties
-            var requestHandler = (Func<HttpRequestMessage, Task<HttpResponseMessage>>)
-                context.Request.Properties[WebHookJobFunctionInvokerKey];
+                // get the request handler from message properties
+                var requestHandler = (Func<HttpRequestMessage, Task<HttpResponseMessage>>)
+                    context.Request.Properties[WebHookJobFunctionInvokerKey];
 
-            // Invoke the job function
-            context.Response = await requestHandler(context.Request);
+                // Invoke the job function
+                context.Response = await requestHandler(context.Request);
+            }
         }
     }
 }
