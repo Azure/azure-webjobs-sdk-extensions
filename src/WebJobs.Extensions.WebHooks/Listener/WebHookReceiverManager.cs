@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web.Http;
@@ -23,9 +25,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
     {
         internal const string WebHookJobFunctionInvokerKey = "WebHookJobFunctionInvoker";
 
+        private readonly Dictionary<string, IWebHookReceiver> _receiverLookup;
         private readonly TraceWriter _trace;
         private HttpConfiguration _httpConfiguration;
-        private IWebHookReceiverManager _receiverManager;
 
         public WebHookReceiverManager(HttpConfiguration httpConfiguration, TraceWriter trace)
         {
@@ -41,7 +43,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             WebHooksConfig.Initialize(_httpConfiguration);
 
             _httpConfiguration.DependencyResolver = new AutofacWebApiDependencyResolver(container);
-            _receiverManager = _httpConfiguration.DependencyResolver.GetReceiverManager();
+
+            IEnumerable<IWebHookReceiver> receivers = _httpConfiguration.DependencyResolver.GetReceivers();
+            _receiverLookup = receivers.ToDictionary(p => p.Name, q => q, StringComparer.OrdinalIgnoreCase);
         }
 
         public async Task<HttpResponseMessage> TryHandle(HttpRequestMessage request, Func<HttpRequestMessage, Task<HttpResponseMessage>> invokeJobFunction)
@@ -53,29 +57,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             if (routeSegements.Length == 1 || routeSegements.Length == 2)
             {
                 string receiverName = routeSegements[0];
-                IWebHookReceiver webHookReceiver = _receiverManager.GetReceiver(receiverName);
-
-                if (webHookReceiver != null)
+                IWebHookReceiver webHookReceiver = null;
+                if (!_receiverLookup.TryGetValue(receiverName, out webHookReceiver))
                 {
-                    // parse the optional WebHook ID from the route if specified
-                    string id = string.Empty;
-                    if (routeSegements.Length == 2)
-                    {
-                        id = routeSegements[1];
-                    }
-
-                    HttpRequestContext context = new HttpRequestContext
-                    {
-                        Configuration = _httpConfiguration
-                    };
-                    request.SetConfiguration(_httpConfiguration);
-
-                    // add the anonymous handler function from above to the request properties
-                    // so our custom WebHookHandler can invoke it at the right time
-                    request.Properties.Add(WebHookJobFunctionInvokerKey, invokeJobFunction);
-
-                    return await webHookReceiver.ReceiveAsync(id, context, request);
+                    return null;
                 }
+
+                // parse the optional WebHook ID from the route if specified
+                string id = string.Empty;
+                if (routeSegements.Length == 2)
+                {
+                    id = routeSegements[1];
+                }
+
+                HttpRequestContext context = new HttpRequestContext
+                {
+                    Configuration = _httpConfiguration
+                };
+                request.SetConfiguration(_httpConfiguration);
+
+                // add the anonymous handler function from above to the request properties
+                // so our custom WebHookHandler can invoke it at the right time
+                request.Properties.Add(WebHookJobFunctionInvokerKey, invokeJobFunction);
+
+                return await webHookReceiver.ReceiveAsync(id, context, request);
             }
 
             return null;
