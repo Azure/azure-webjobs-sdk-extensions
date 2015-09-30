@@ -109,9 +109,12 @@ The above messages are fully declarative, but you can also set the message prope
 A WebHook trigger that allows you to write job functions that can be invoked by http requests. Here's an example job function that will be invoked whenever an issue in a source GitHub repo is created or modified:
 
 ```csharp
-public static void IssueChanged([WebHookTrigger] string body)
+public static void GitHub([WebHookTrigger] string body, TraceWriter trace)
 {
-    // Parse and process the JSON body sent to us by GitHub
+    dynamic issueEvent = JObject.Parse(body);
+
+    trace.Info(string.Format("GitHub WebHook invoked - Issue: '{0}', Action: '{1}', ",
+        issueEvent.issue.title, issueEvent.action));
 }
 ```
 
