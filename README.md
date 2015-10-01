@@ -109,7 +109,7 @@ The above messages are fully declarative, but you can also set the message prope
 A WebHook trigger that allows you to write job functions that can be invoked by http requests. Here's an example job function that will be invoked whenever an issue in a source GitHub repo is created or modified:
 
 ```csharp
-public static void GitHub([WebHookTrigger] string body, TraceWriter trace)
+public static void Issues([WebHookTrigger] string body, TraceWriter trace)
 {
     dynamic issueEvent = JObject.Parse(body);
 
@@ -155,7 +155,7 @@ Support for the [ASP.NET WebHooks SDK](http://blogs.msdn.com/b/webdev/archive/20
 * set the same shared secret on your GitHub WebHook
 * add [one line of code](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Program.cs#L46) to register the receiver on job startup
 * use the overload of WebHookTriggerAttribute that takes a reveiver and optional id ([as in this example](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/WebHookSamples.cs#L67))
-* use a corresponding route format {receiver}/{id} for the WebHook in GitHub. I.e. for this example the route would be "github/issues"
+* use a corresponding route format {receiver}/{id} for the WebHook in GitHub (the "id" portion is optional). I.e. for this example the route would be "github/issues"
 
 That's it - whenever a request comes in for your WebHook, the WebHook reveiver will perform all the authentication checks and your job function will *only* be invoked if the request is authenticated. For more information on the various ASP.NET WebHooks SDK reveivers supported, see their documentation.
 
