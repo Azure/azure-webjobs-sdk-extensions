@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Sample.Extension
+namespace Microsoft.Azure.WebJobs
 {
     [AttributeUsage(AttributeTargets.Parameter)]
     public sealed class SampleTriggerAttribute : Attribute

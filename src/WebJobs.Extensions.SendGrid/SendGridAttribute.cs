@@ -4,7 +4,7 @@
 using System;
 using System.Net.Mail;
 
-namespace Microsoft.Azure.WebJobs.Extensions
+namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
     /// Binds a function parameter to a SendGridMessage that will automatically be

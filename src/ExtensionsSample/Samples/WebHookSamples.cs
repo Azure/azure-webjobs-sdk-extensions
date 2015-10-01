@@ -5,6 +5,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.WebHooks;
 using Microsoft.Azure.WebJobs.Host;

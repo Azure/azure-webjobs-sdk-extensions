@@ -3,8 +3,9 @@
 
 using System;
 using System.Linq;
+using Microsoft.Azure.WebJobs.Extensions.Timers;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Timers
+namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
     /// Trigger attribute used to declare that a job function should be invoked periodically

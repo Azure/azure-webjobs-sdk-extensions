@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using Microsoft.Azure.WebJobs;
 using Sample.Extension;
 
 namespace ExtensionsSample

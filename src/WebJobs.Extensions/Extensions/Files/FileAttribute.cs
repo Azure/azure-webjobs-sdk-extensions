@@ -4,7 +4,7 @@
 using System;
 using System.IO;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Files
+namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
     /// Binds a parameter to a file.

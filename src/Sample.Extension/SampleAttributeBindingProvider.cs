@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Framework;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Protocols;
