@@ -140,8 +140,8 @@ When running in Azure Web Apps, your WebHook job will be running in the context 
     https://{uid}:{pwd}@{site}/api/continuouswebjobs/{job}/passthrough/{*path}
 
 To manually construct your WebHook URL, you need to replace the following tokens:
-* **uid** : This is the user ID from your SCM/Kudu credentials
-* **pwd** : This is the password from your SCM/Kudu credentials
+* **uid** : This is the user ID from your publishing credentials. You can download your publishing credentials from the portal [as detailed in this blog post](http://blog.davidebbo.com/2015/05/scheduled-webjob.html)
+* **pwd** : This is the password from your publising credentials
 * **site** : Your SCM site (e.g. myapp.scm.azurewebsites.net)
 * **job** : The name of your Continuous WebJob
 * **path** : This is the route identifying the specific WebHook function to invoke. By convention, this is {ClassName}/{MethodName}, but can be overridden/specified explicitly via the WebHookTrigger attribute.
