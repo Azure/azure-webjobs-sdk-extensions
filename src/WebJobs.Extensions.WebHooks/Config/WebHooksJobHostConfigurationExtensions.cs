@@ -63,7 +63,7 @@ namespace Microsoft.Azure.WebJobs
                 }
 
                 WebHookDispatcher dispatcher = new WebHookDispatcher(_webHooksConfig, context.Host, context.Config, context.Trace);
-                context.Config.RegisterBindingExtension(new WebHookTriggerAttributeBindingProvider(_webHooksConfig, dispatcher));
+                context.Config.RegisterBindingExtension(new WebHookTriggerAttributeBindingProvider(dispatcher));
             }
         }
     }

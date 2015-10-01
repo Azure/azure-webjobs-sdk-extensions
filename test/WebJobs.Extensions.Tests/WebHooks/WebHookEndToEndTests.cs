@@ -355,7 +355,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.WebHooks
                 // intentionally don't set a response
             }
 
-            public static void GitHubReceiverIntegration([WebHookTrigger("github", "issues")] string body)
+            public static void GitHubReceiverIntegration([WebHookTrigger("github/issues")] string body)
             {
                 InvokeData = body;
             }

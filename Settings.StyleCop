@@ -23,6 +23,7 @@
       <Value>Git</Value>
 	  <Value>WebHookTriggerAttribute</Value>
 	  <Value>localhost</Value>
+	  <Value>github</Value>
     </CollectionProperty>
   </GlobalSettings>
   <Parsers>

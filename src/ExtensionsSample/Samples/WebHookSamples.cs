@@ -6,7 +6,6 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.WebHooks;
 using Microsoft.Azure.WebJobs.Host;
 using Newtonsoft.Json.Linq;
@@ -63,9 +62,15 @@ namespace ExtensionsSample
 
         /// <summary>
         /// GitHub WebHook example, showing integration with the ASP.NET WebHooks SDK.
+        /// The route uses the format {receiver}/{id} where the receiver "github" corresponds
+        /// to the <see cref="GitHubWebHookReceiver"/> that was registered on startup via
+        /// <see cref="WebHooksConfiguration.UseReceiver{T}"/>, and the "issues" Id component
+        /// corresponds to the "Issues" secret configured in app.config.
+        /// Incoming requests will be authenticated by <see cref="GitHubWebHookReceiver"/> prior
+        /// to invoking this job function.
         /// </summary>
         public static void GitHub(
-            [WebHookTrigger("github", "issues")] string body, 
+            [WebHookTrigger("github/issues")] string body,
             TraceWriter trace)
         {
             dynamic issueEvent = JObject.Parse(body);

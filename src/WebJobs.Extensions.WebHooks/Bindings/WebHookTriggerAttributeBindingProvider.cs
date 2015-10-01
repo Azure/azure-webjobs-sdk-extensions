@@ -8,7 +8,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.AspNet.WebHooks;
 using Microsoft.Azure.WebJobs.Extensions.Framework;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 
@@ -16,13 +15,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
 {
     internal class WebHookTriggerAttributeBindingProvider : ITriggerBindingProvider, IDisposable
     {
-        private readonly WebHooksConfiguration _webHooksConfig;
         private WebHookDispatcher _dispatcher;
         private bool disposedValue = false;
 
-        public WebHookTriggerAttributeBindingProvider(WebHooksConfiguration webHooksConfig, WebHookDispatcher dispatcher)
+        public WebHookTriggerAttributeBindingProvider(WebHookDispatcher dispatcher)
         {
-            _webHooksConfig = webHooksConfig;
             _dispatcher = dispatcher;
         }
 
@@ -55,13 +52,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 throw new InvalidOperationException("'FromUri' can only be set to True when binding to custom Types.");
             }
 
-            var receiverManager = _webHooksConfig.HttpConfiguration.DependencyResolver.GetReceiverManager();
-            if (!string.IsNullOrEmpty(attribute.Receiver) &&
-                receiverManager.GetReceiver(attribute.Receiver) == null)
+            // Validate route format
+            if (!string.IsNullOrEmpty(attribute.Route))
             {
-                throw new InvalidOperationException(string.Format("WebHook receiver '{0}' has not been registered.", attribute.Receiver));
+                string[] routeSegements = attribute.Route.Split('/');
+                if (routeSegements.Length > 2)
+                {
+                    throw new InvalidOperationException("WebHook routes can only have a maximum of two segments.");
+                }
             }
-
+            
             return Task.FromResult<ITriggerBinding>(new WebHookTriggerBinding(_dispatcher, context.Parameter, isUserTypeBinding, attribute));
         }
 

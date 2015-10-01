@@ -21,18 +21,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
     /// Class managing routing of requests to registered WebHook Receivers. It initializes an
     /// <see cref="HttpConfiguration"/> and loads all registered WebHook Receivers.
     /// </summary>
-    internal class WebHookReceiverManager
+    internal class WebHookReceiverManager : IDisposable
     {
         internal const string WebHookJobFunctionInvokerKey = "WebHookJobFunctionInvoker";
 
         private readonly Dictionary<string, IWebHookReceiver> _receiverLookup;
         private readonly TraceWriter _trace;
         private HttpConfiguration _httpConfiguration;
+        private bool disposedValue = false;
 
-        public WebHookReceiverManager(HttpConfiguration httpConfiguration, TraceWriter trace)
+        public WebHookReceiverManager(TraceWriter trace)
         {
             _trace = trace;
-            _httpConfiguration = httpConfiguration;
+            _httpConfiguration = new HttpConfiguration();
 
             var builder = new ContainerBuilder();
             ILogger logger = new WebHookLogger(_trace);
@@ -45,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             _httpConfiguration.DependencyResolver = new AutofacWebApiDependencyResolver(container);
 
             IEnumerable<IWebHookReceiver> receivers = _httpConfiguration.DependencyResolver.GetReceivers();
-            _receiverLookup = receivers.ToDictionary(p => p.Name, q => q, StringComparer.OrdinalIgnoreCase);
+            _receiverLookup = receivers.ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
         }
 
         public async Task<HttpResponseMessage> TryHandle(HttpRequestMessage request, Func<HttpRequestMessage, Task<HttpResponseMessage>> invokeJobFunction)
@@ -53,23 +54,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             // First check if there is a registered WebHook Receiver for this request, and if
             // so use it
             string route = request.RequestUri.LocalPath.ToLowerInvariant();
-            string[] routeSegements = route.ToLowerInvariant().TrimStart('/').Split('/');
-            if (routeSegements.Length == 1 || routeSegements.Length == 2)
+            IWebHookReceiver receiver = null;
+            string receiverId = null;
+
+            if (TryParseReceiver(route, out receiver, out receiverId))
             {
-                string receiverName = routeSegements[0];
-                IWebHookReceiver webHookReceiver = null;
-                if (!_receiverLookup.TryGetValue(receiverName, out webHookReceiver))
-                {
-                    return null;
-                }
-
-                // parse the optional WebHook ID from the route if specified
-                string id = string.Empty;
-                if (routeSegements.Length == 2)
-                {
-                    id = routeSegements[1];
-                }
-
                 HttpRequestContext context = new HttpRequestContext
                 {
                     Configuration = _httpConfiguration
@@ -80,10 +69,58 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 // so our custom WebHookHandler can invoke it at the right time
                 request.Properties.Add(WebHookJobFunctionInvokerKey, invokeJobFunction);
 
-                return await webHookReceiver.ReceiveAsync(id, context, request);
+                return await receiver.ReceiveAsync(receiverId, context, request);
             }
 
             return null;
+        }
+
+        public bool TryParseReceiver(string route, out IWebHookReceiver receiver, out string receiverId)
+        {
+            receiver = null;
+            receiverId = null;
+
+            string[] routeSegements = route.ToLowerInvariant().TrimStart('/').Split('/');
+            if (routeSegements.Length == 1 || routeSegements.Length == 2)
+            {
+                string receiverName = routeSegements[0];
+                if (!_receiverLookup.TryGetValue(receiverName, out receiver))
+                {
+                    return false;
+                }
+
+                // parse the optional WebHook ID from the route if specified
+                if (routeSegements.Length == 2)
+                {
+                    receiverId = routeSegements[1];
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    if (_httpConfiguration != null)
+                    {
+                        _httpConfiguration.Dispose();
+                    }
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>

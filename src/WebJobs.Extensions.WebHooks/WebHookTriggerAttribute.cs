@@ -2,13 +2,12 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.Azure.WebJobs.Extensions.WebHooks;
 
 namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
-    /// Trigger attribute used to declare that a job function should be invoked
-    /// when WebHook HTTP messages are posted to the configured address.
+    /// Attribute used to declare that a job function should be triggered
+    /// by incoming HTTP messages.
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter)]
     public sealed class WebHookTriggerAttribute : Attribute
@@ -16,46 +15,13 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
+        /// <param name="route">The optional route that the function should be triggered on.
+        /// When not explicitly set, the route will be defaulted by convention to 
+        /// {ClassName}/{MethodName}.</param>
         public WebHookTriggerAttribute(string route = null)
         {
             Route = route;
         }
-
-        /// <summary>
-        /// Constructs a new instance.
-        /// </summary>
-        /// <param name="receiver">The WebHook Receiver to use for this WebHook. This should be a receiver that
-        /// has been registered on startup using <see cref="WebHooksConfiguration.UseReceiver{T}()"/>.</param>
-        /// <param name="receiverId">Optional WebHook Id.</param>
-        public WebHookTriggerAttribute(string receiver, string receiverId = null)
-        {
-            if (string.IsNullOrEmpty(receiver))
-            {
-                throw new ArgumentNullException("receiver");
-            }
-
-            Receiver = receiver.ToLowerInvariant();
-
-            if (!string.IsNullOrEmpty(receiverId))
-            {
-                ReceiverId = receiverId.ToLowerInvariant();
-                Route = string.Format("{0}/{1}", Receiver, ReceiverId);
-            }
-            else
-            {
-                Route = Receiver;
-            }
-        }
-
-        /// <summary>
-        /// Gets the WebHook Receiver to use for this WebHook.
-        /// </summary>
-        public string Receiver { get; private set; }
-
-        /// <summary>
-        /// Gets the WebHook Receiver Id to use for this WebHook.
-        /// </summary>
-        public string ReceiverId { get; private set; }
 
         /// <summary>
         /// Gets the WebHook route the function will be triggered on.

@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNet.WebHooks;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Newtonsoft.Json.Linq;
@@ -29,7 +30,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
         private readonly Type[] _types;
         private readonly ConcurrentDictionary<string, MethodInfo> _methodNameMap = new ConcurrentDictionary<string, MethodInfo>();
         private readonly JobHost _host;
-        private readonly WebHooksConfiguration _webHooksConfig;
         private WebHookReceiverManager _webHookReceiverManager;
 
         private ConcurrentDictionary<string, ITriggeredFunctionExecutor> _functions;
@@ -42,8 +42,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             _port = webHooksConfig.Port;
             _types = config.TypeLocator.GetTypes().ToArray();
             _host = host;
-            _webHooksConfig = webHooksConfig;
-            _webHookReceiverManager = new WebHookReceiverManager(_webHooksConfig.HttpConfiguration, _trace);
+            _webHookReceiverManager = new WebHookReceiverManager(_trace);
         }
 
         internal int Port
@@ -68,15 +67,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             _functions.AddOrUpdate(routeKey, executor, (k, v) => { return executor; });
 
             WebHookTriggerAttribute attribute = triggerParameter.GetCustomAttribute<WebHookTriggerAttribute>();
-            string receiver = string.Empty;
-            if (attribute != null && !string.IsNullOrEmpty(attribute.Receiver))
+            IWebHookReceiver receiver = null;
+            string receiverId = string.Empty;
+            string receiverLog = string.Empty;
+            if (attribute != null && _webHookReceiverManager.TryParseReceiver(route.LocalPath, out receiver, out receiverId))
             {
-                receiver = string.Format(" (Receiver: '{0}', Id: '{1}')", attribute.Receiver, attribute.ReceiverId);
+                receiverLog = string.Format(" (Receiver: '{0}', Id: '{1}')", receiver.Name, receiverId);
             }
 
             MethodInfo method = (MethodInfo)triggerParameter.Member;
             string methodName = string.Format("{0}.{1}", method.DeclaringType, method.Name);
-            _trace.Verbose(string.Format("WebHook route '{0}' registered for function '{1}'{2}", route.LocalPath, methodName, receiver));
+            _trace.Verbose(string.Format("WebHook route '{0}' registered for function '{1}'{2}", route.LocalPath, methodName, receiverLog));
         }
 
         public Task UnregisterRoute(Uri route)
