@@ -9,6 +9,19 @@ namespace Microsoft.Azure.WebJobs
     /// Attribute used to declare that a job function should be triggered
     /// by incoming HTTP messages.
     /// </summary>
+    /// <remarks>
+    /// The method parameter type can be one of the following:
+    /// <list type="bullet">
+    /// <item><description><see cref="System.Net.Http.HttpRequestMessage"/></description></item>
+    /// <item><description><see cref="Microsoft.Azure.WebJobs.Extensions.WebHooks.WebHookContext"/></description></item>
+    /// <item><description><see cref="string"/></description></item>
+    /// <item><description><see cref="T:byte[]"/></description></item>
+    /// <item><description><see cref="System.IO.Stream"/></description></item>
+    /// <item><description><see cref="System.IO.TextReader"/></description></item>
+    /// <item><description><see cref="System.IO.StreamReader"/></description></item>
+    /// <item><description>A user-defined type (serialized as JSON)</description></item>
+    /// </list>
+    /// </remarks>
     [AttributeUsage(AttributeTargets.Parameter)]
     public sealed class WebHookTriggerAttribute : Attribute
     {

@@ -9,7 +9,7 @@ namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
     /// Trigger attribute used to declare that a job function should be invoked periodically
-    /// based on a timer schedule.
+    /// based on a timer schedule. The parameter type must be <see cref="TimerInfo"/>.
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter)]
     public sealed class TimerTriggerAttribute : Attribute

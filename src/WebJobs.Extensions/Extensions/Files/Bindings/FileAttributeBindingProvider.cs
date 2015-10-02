@@ -65,7 +65,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             path.ValidateContractCompatibility(context.BindingDataContract);
 
             // next, verify that the type is one of the types we support
-            IEnumerable<Type> types = StreamValueBinder.SupportedTypes.Union(new Type[] { typeof(FileStream) });
+            IEnumerable<Type> types = StreamValueBinder.SupportedTypes.Union(new Type[] { typeof(FileStream), typeof(FileInfo) });
             return ValueBinder.MatchParameterType(parameter, types);
         }
     }

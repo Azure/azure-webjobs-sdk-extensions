@@ -80,12 +80,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 
         private class FileValueBinder : StreamValueBinder
         {
+            private readonly ParameterInfo _parameter;
             private readonly FileAttribute _attribute;
             private readonly FileInfo _fileInfo;
 
             public FileValueBinder(ParameterInfo parameter, FileAttribute attribute, FileInfo fileInfo)
                 : base(parameter)
             {
+                _parameter = parameter;
                 _attribute = attribute;
                 _fileInfo = fileInfo;
             }
@@ -93,6 +95,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             protected override Stream GetStream()
             {
                 return _fileInfo.Open(_attribute.Mode, _attribute.Access);
+            }
+
+            public override object GetValue()
+            {
+                if (_parameter.ParameterType == typeof(FileInfo))
+                {
+                    return _fileInfo;
+                }
+                return base.GetValue();
             }
 
             public override string ToInvokeString()

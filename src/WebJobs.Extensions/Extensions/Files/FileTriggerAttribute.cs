@@ -9,6 +9,20 @@ namespace Microsoft.Azure.WebJobs
     /// <summary>
     /// Trigger for invoking jobs based on file events.
     /// </summary>
+    /// <remarks>
+    /// The method parameter type can be one of the following:
+    /// <list type="bullet">
+    /// <item><description><see cref="FileStream"/></description></item>
+    /// <item><description><see cref="FileInfo"/></description></item>
+    /// <item><description><see cref="FileSystemEventArgs"/></description></item>
+    /// <item><description><see cref="string"/></description></item>
+    /// <item><description><see cref="T:byte[]"/></description></item>
+    /// <item><description><see cref="System.IO.Stream"/></description></item>
+    /// <item><description><see cref="System.IO.TextReader"/></description></item>
+    /// <item><description><see cref="System.IO.StreamReader"/></description></item>
+    /// <item><description>A user-defined type (serialized as JSON)</description></item>
+    /// </list>
+    /// </remarks>
     [AttributeUsage(AttributeTargets.Parameter)]
     public sealed class FileTriggerAttribute : Attribute
     {

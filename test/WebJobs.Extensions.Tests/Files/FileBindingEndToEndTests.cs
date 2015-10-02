@@ -104,7 +104,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
             await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToStringOutput"));
             await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToByteArrayOutput"));
             await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToStreamOutput"));
-            //await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToFileStreamOutput"));
+            await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToFileStreamOutput"));
             await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToStreamWriterOutput"));
             await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToTextWriterOutput"));
 
@@ -122,6 +122,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
             await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToStreamInput"));
             await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToStreamReaderInput"));
             await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToTextReaderInput"));
+            await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToFileInfoInput"));
 
             host.Stop();
         }
@@ -316,6 +317,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
                 [File(OutputTestPath + @"\BindToByteArrayInput.txt", FileAccess.Write)] out byte[] output)
             {
                 output = input;
+            }
+
+            public static void BindToFileInfoInput(
+                [File(ImportTestPath + @"\BindToFileInfoInput.txt")] FileInfo input,
+                [File(OutputTestPath + @"\BindToFileInfoInput.txt", FileAccess.Write)] Stream output)
+            {
+                using (FileStream stream = input.OpenRead())
+                {
+                    stream.CopyTo(output);
+                }
             }
         }
     }
