@@ -106,7 +106,7 @@ The above messages are fully declarative, but you can also set the message prope
 
 ###WebHooks###
 
-A WebHook trigger that allows you to write job functions that can be invoked by http requests. Here's an example job function that will be invoked whenever an issue in a source GitHub repo is created or modified:
+A WebHook trigger that allows you to write job functions that can be invoked by HTTP requests. Here's an example job function that will be invoked whenever an issue in a source GitHub repo is created or modified:
 
 ```csharp
 public static void GitHub([WebHookTrigger] string body, TraceWriter trace)
@@ -118,7 +118,7 @@ public static void GitHub([WebHookTrigger] string body, TraceWriter trace)
 }
 ```
 
-The web hook URL used to invoke the function is configured in the source repo ([more on GitHub web hooks here](https://developer.github.com/webhooks/)). Details on how to construct this URL can be found below. You can also find a complete step-by-step walkthrough for setting up WebJob WebHooks [here](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/WebHooks-Walkthrough).
+The web hook URL used to invoke the function is configured in the source repo ([more on GitHub web hooks here](https://developer.github.com/webhooks/)). Details on how to construct this URL can be found below. You can also find a **complete step-by-step walkthrough** for setting up WebJob WebHooks [here](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/WebHooks-Walkthrough).
 
 GitHub is just one example. Any event source supporting WebHooks can be used. Another popular source is [IFTTT](https://ifttt.com/). Using IFTTT ("If This, Then That"), you can configure your webjob to be invoked when stock prices change, on events coming from Facebook, Instagram, YouTube, EBay etc., or even when someone alters your Nest thermostat setting! WebHooks opens the WebJobs SDK up to a huge new set of triggers, complimenting the existing first class SDK triggers (and extension triggers). Here's an IFTTT triggered function that will get invoked whenever a new article is added to [Pocket](https://getpocket.com/) in the browser for later reading. The function demonstrates model binding to a custom type, and pushes the articles to blob storage:
 
@@ -146,7 +146,7 @@ To manually construct your WebHook URL, you need to replace the following tokens
 * **job** : The name of your Continuous WebJob
 * **path** : This is the route identifying the specific WebHook function to invoke. By convention, this is {ClassName}/{MethodName}, but can be overridden/specified explicitly via the WebHookTrigger attribute.
 
-In addition to functions using the WebHook trigger, you can invoke **any** of your job functions via an http request. When resolving an incoming POST request (only POST is supported), if the route doesn't match a WebHookTrigger decorated function, a search is performed for a function matching the {ClassName}/{MethodName} convention described above. If found that function is invoked, and the function parameters are parsed from the JSON body of the request. An example of this can bee seen in the tests [here](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/test/WebJobs.Extensions.Tests/WebHooks/WebHookEndToEndTests.cs#L72). This ability to invoke your functions via REST requests opens the door for automation scenarios, and compliments the way you can invoke/replay functions via the WebJobs Dashboard.
+In addition to functions using the WebHook trigger, you can invoke **any** of your job functions via an http request. When resolving an incoming POST request, if the route doesn't match a WebHookTrigger decorated function, a search is performed for a function matching the {ClassName}/{MethodName} convention described above. If found, that function is invoked, and the function parameters are parsed from the JSON body of the request. An example of this can be seen [in the walkthrough](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/WebHooks-Walkthrough). This ability to invoke your functions via HTTP requests opens the door for automation scenarios, and compliments the way you can invoke/replay functions via the WebJobs Dashboard.
 
 Support for the [ASP.NET WebHooks SDK](http://blogs.msdn.com/b/webdev/archive/2015/09/04/introducing-microsoft-asp-net-webhooks-preview.aspx) is also built in. That SDK provides WebHook Receiver classes that handle the diverse WebHook authentication schemes of various providers. For providers that the SDK supports it is recommended that you use those receivers for authentication. For example, to leverage this for GitHub, you would:
 
