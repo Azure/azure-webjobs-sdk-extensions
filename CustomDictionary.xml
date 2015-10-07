@@ -43,6 +43,7 @@
 	  <Word>ApiKey</Word>
       <Word>Api</Word>
       <Word>WebHookTriggerAttribute</Word>
+      <Word>Notifier</Word>
     </Recognized>
     <Deprecated/>
     <Compound>

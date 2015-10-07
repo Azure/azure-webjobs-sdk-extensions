@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Mail;
@@ -10,6 +11,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.WebHooks;
+using Microsoft.Azure.WebJobs.Host;
 
 namespace ExtensionsSample
 {
@@ -37,10 +39,14 @@ namespace ExtensionsSample
             config.UseTimers();
             config.UseSample();
             config.UseCore();
-            config.UseSendGrid(new SendGridConfiguration()
+            var sendGridConfiguration = new SendGridConfiguration()
             {
-                FromAddress = new MailAddress("orders@webjobssamples.com", "Order Processor")
-            });
+                ToAddress = "admin@webjobssamples.com",
+                FromAddress = new MailAddress("samples@webjobssamples.com", "WebJobs Extensions Samples")
+            };
+            config.UseSendGrid(sendGridConfiguration);
+
+            ConfigureTraceMonitor(config, sendGridConfiguration);
 
             WebHooksConfiguration webHooksConfig = new WebHooksConfiguration();
             webHooksConfig.UseReceiver<GitHubWebHookReceiver>();
@@ -55,6 +61,27 @@ namespace ExtensionsSample
             host.Call(typeof(TableSamples).GetMethod("CustomBinding"));
 
             host.RunAndBlock();
+        }
+
+        /// <summary>
+        /// Set up monitoring + notifications for WebJob errors.
+        /// </summary>
+        private static void ConfigureTraceMonitor(JobHostConfiguration config, SendGridConfiguration sendGridConfiguration)
+        {
+            var notifier = new TraceNotifier(sendGridConfiguration);
+
+            var traceMonitor = new TraceMonitor(TraceLevel.Error)
+                .Filter(new SlidingWindowTraceFilter(TimeSpan.FromMinutes(5), 3))
+                .Filter(p =>
+                {
+                    FunctionInvocationException functionException = p.Exception as FunctionInvocationException;
+                    return p.Level == TraceLevel.Error && functionException != null &&
+                           functionException.MethodName == "ExtensionsSample.FileSamples.ImportFile";
+                }, "ImportFile Job Failed")
+                .Subscribe(notifier.WebNotify, notifier.EmailNotify)
+                .Throttle(TimeSpan.FromMinutes(30));
+
+            config.Tracing.Tracers.Add(traceMonitor);
         }
 
         private static void EnsureSampleDirectoriesExist(string rootFilesPath)

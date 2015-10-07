@@ -43,11 +43,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Azure.WebJobs, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.Core.1.1.0-beta1\lib\net45\Microsoft.Azure.WebJobs.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.Core.1.1.0-beta1-10126\lib\net45\Microsoft.Azure.WebJobs.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.WebJobs.Host, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.1.1.0-beta1\lib\net45\Microsoft.Azure.WebJobs.Host.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.1.1.0-beta1-10126\lib\net45\Microsoft.Azure.WebJobs.Host.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Data.Edm, Version=5.6.4.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -98,6 +98,9 @@
     <Compile Include="Extensions\Core\ExecutionContextBindingProvider.cs" />
     <Compile Include="Extensions\Files\Bindings\FileBinding.cs" />
     <Compile Include="Extensions\Files\Bindings\FileTriggerBinding.cs" />
+    <Compile Include="Extensions\Monitoring\SlidingWindowTraceFilter.cs" />
+    <Compile Include="Extensions\Monitoring\TraceFilter.cs" />
+    <Compile Include="Extensions\Monitoring\TraceMonitor.cs" />
     <Compile Include="Framework\BindablePath.cs" />
     <Compile Include="Extensions\Files\Bindings\FileAttributeBindingProvider.cs" />
     <Compile Include="Extensions\Files\Config\FilesConfiguration.cs" />

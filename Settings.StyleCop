@@ -24,6 +24,7 @@
 	  <Value>WebHookTriggerAttribute</Value>
 	  <Value>localhost</Value>
 	  <Value>github</Value>
+	  <Value>ifttt</Value>
     </CollectionProperty>
   </GlobalSettings>
   <Parsers>

@@ -24,7 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
         {
             // Route all logs coming from the WebHooks SDK to the WebJobs SDK
             // as Verbose.
-            _traceWriter.Trace(System.Diagnostics.TraceLevel.Verbose, string.Empty, message, ex);
+            _traceWriter.Trace(new TraceEvent(System.Diagnostics.TraceLevel.Verbose, message, null, ex));
         }
     }
 }
