@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Extensions.Core
+namespace Microsoft.Azure.WebJobs.Extensions
 {
     /// <summary>
     /// Provides context information for job function invocations.

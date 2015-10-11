@@ -93,14 +93,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Extensions\Core\CoreJobHostConfigurationExtensions.cs" />
+    <Compile Include="Extensions\Core\Config\CoreJobHostConfigurationExtensions.cs" />
     <Compile Include="Extensions\Core\ExecutionContext.cs" />
-    <Compile Include="Extensions\Core\ExecutionContextBindingProvider.cs" />
+    <Compile Include="Extensions\Core\Bindings\ExecutionContextBindingProvider.cs" />
     <Compile Include="Extensions\Files\Bindings\FileBinding.cs" />
     <Compile Include="Extensions\Files\Bindings\FileTriggerBinding.cs" />
-    <Compile Include="Extensions\Monitoring\SlidingWindowTraceFilter.cs" />
-    <Compile Include="Extensions\Monitoring\TraceFilter.cs" />
-    <Compile Include="Extensions\Monitoring\TraceMonitor.cs" />
+    <Compile Include="Extensions\Core\Bindings\ErrorTriggerAttributeBindingProvider.cs" />
+    <Compile Include="Extensions\Core\ErrorTriggerAttribute.cs" />
+    <Compile Include="Extensions\Core\Listener\ErrorTriggerListener.cs" />
+    <Compile Include="Extensions\Core\Monitoring\SlidingWindowTraceFilter.cs" />
+    <Compile Include="Extensions\Core\Monitoring\TraceFilter.cs" />
+    <Compile Include="Extensions\Core\Monitoring\TraceMonitor.cs" />
     <Compile Include="Framework\BindablePath.cs" />
     <Compile Include="Extensions\Files\Bindings\FileAttributeBindingProvider.cs" />
     <Compile Include="Extensions\Files\Config\FilesConfiguration.cs" />

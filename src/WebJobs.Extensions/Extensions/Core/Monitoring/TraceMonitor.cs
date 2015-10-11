@@ -4,6 +4,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using Microsoft.Azure.WebJobs.Extensions.Core.Listener;
 using Microsoft.Azure.WebJobs.Host;
 
 namespace Microsoft.Azure.WebJobs.Extensions
@@ -15,15 +16,15 @@ namespace Microsoft.Azure.WebJobs.Extensions
     /// </summary>
     public class TraceMonitor : TraceWriter
     {
-        private TimeSpan? _subscriptionThrottle = null;
         private DateTime _lastNotification;
+        private Exception _lastException;
 
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
         /// <param name="level">The <see cref="TraceLevel"/> for this <see cref="TraceWriter"/>.
-        /// Defaults to <see cref="TraceLevel.Verbose"/>.</param>
-        public TraceMonitor(TraceLevel level = TraceLevel.Verbose) : base(level)
+        /// Defaults to <see cref="TraceLevel.Error"/>.</param>
+        public TraceMonitor(TraceLevel level = TraceLevel.Error) : base(level)
         {
             Filters = new Collection<TraceFilter>();
             Subscriptions = new Collection<Action<TraceFilter>>();
@@ -41,18 +42,39 @@ namespace Microsoft.Azure.WebJobs.Extensions
         /// </summary>
         internal Collection<Action<TraceFilter>> Subscriptions { get; private set; }
 
+        internal TimeSpan? NotificationThrottle { get; private set; }
+
         /// <inheritdoc/>
         public override void Trace(TraceEvent traceEvent)
         {
-            foreach (TraceFilter filter in Filters)
+            if (traceEvent == null)
             {
-                // trace must be passed to all filters to allow them to
-                // accumulate their results
-                if (filter.Filter(traceEvent))
+                throw new ArgumentNullException("traceEvent");
+            }
+
+            if (ShouldIgnore(traceEvent))
+            {
+                return;
+            }
+
+            try
+            {
+                foreach (TraceFilter filter in Filters)
                 {
-                    // Notify all subscribers
-                    Notify(filter);
+                    // trace must be passed to all filters (even if no notifications will be
+                    // performed due to throttling) to allow them to continue to accumulate their results
+                    if (filter.Filter(traceEvent))
+                    {
+                        // Notify all subscribers
+                        Notify(filter);
+                    }
                 }
+            }
+            catch
+            {
+                // Need to prevent infinite loops when calling out to user code
+                // I.e., user code exception in error handler causes error filter/subscriber
+                // to be called again.
             }
         }
 
@@ -63,8 +85,8 @@ namespace Microsoft.Azure.WebJobs.Extensions
         protected virtual void Notify(TraceFilter filter)
         {
             // Throttle notifications if requested
-            bool shouldNotify = _subscriptionThrottle == null ||
-                (DateTime.UtcNow - _lastNotification) > _subscriptionThrottle;
+            bool shouldNotify = NotificationThrottle == null ||
+                (DateTime.UtcNow - _lastNotification) > NotificationThrottle;
 
             if (shouldNotify)
             {
@@ -72,9 +94,34 @@ namespace Microsoft.Azure.WebJobs.Extensions
                 {
                     subscription(filter);
                 }
-
                 _lastNotification = DateTime.UtcNow;
             }
+        }
+
+        private bool ShouldIgnore(TraceEvent traceEvent)
+        {
+            if (traceEvent.Exception != null)
+            {
+                FunctionInvocationException functionException = traceEvent.Exception as FunctionInvocationException;
+                if (functionException != null && ErrorTriggerListener.ErrorHandlers.Contains(functionException.MethodName))
+                {
+                    // We ignore any errors coming from error handlers themselves to prevent
+                    // infinite recursion
+                    return true;
+                }
+
+                // often we may see multiple sequential error messages for the same
+                // exception, so we want to skip the duplicates
+                bool isDuplicate = Object.ReferenceEquals(_lastException, traceEvent.Exception);
+                if (isDuplicate)
+                {
+                    return true;
+                }
+
+                _lastException = traceEvent.Exception;
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -143,7 +190,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
         /// <returns>This <see cref="TraceMonitor"/> instance.</returns>
         public TraceMonitor Throttle(TimeSpan throttle)
         {
-            _subscriptionThrottle = throttle;
+            NotificationThrottle = throttle;
 
             return this;
         }

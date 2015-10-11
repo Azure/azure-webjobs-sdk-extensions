@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Extensions.Core
+namespace Microsoft.Azure.WebJobs.Extensions.Core
 {
     /// <summary>
     /// This provider provides a binding to Type <see cref="ExecutionContext"/>.

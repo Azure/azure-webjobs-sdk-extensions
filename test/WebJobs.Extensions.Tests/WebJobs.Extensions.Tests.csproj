@@ -132,10 +132,14 @@
     <Compile Include="Common\TestHelpers.cs" />
     <Compile Include="Common\TestTraceWriter.cs" />
     <Compile Include="Core\CoreBindingEndToEndTests.cs" />
+    <Compile Include="Core\ErrorTriggerAttributeTests.cs" />
+    <Compile Include="Core\SlidingWindowTraceFilterTests.cs" />
     <Compile Include="Files\Config\FilesConfigurationTests.cs" />
     <Compile Include="Files\Listener\FileListenerTests.cs" />
     <Compile Include="Files\Listener\FileProcessorTests.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="Core\ErrorTriggerEndToEndTests.cs" />
+    <Compile Include="Core\ErrorTriggerListenerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Files\FileBindingEndToEndTests.cs" />
     <Compile Include="SendGrid\SendGridAttributeBindingProviderTests.cs" />

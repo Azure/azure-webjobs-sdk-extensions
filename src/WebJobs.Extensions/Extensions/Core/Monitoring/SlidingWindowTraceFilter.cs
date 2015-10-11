@@ -17,28 +17,30 @@ namespace Microsoft.Azure.WebJobs.Extensions
     {
         private readonly TimeSpan _window;
         private readonly TraceLevel _level;
-        private readonly int _threshold;
+        private readonly Func<TraceEvent, bool> _filter;
         private readonly object _syncLock = new object();
         private readonly string _notificationMessage;
         private Collection<TraceEvent> _traces = new Collection<TraceEvent>();
-        private Exception _lastException;
 
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
         /// <param name="window">The duration of the sliding window.</param>
         /// <param name="threshold">The maximum number of matching trace messages to allow before triggering a notification.</param>
+        /// <param name="filter">The optional event filter to apply on each <see cref="TraceEvent"/>.</param>
+        /// <param name="message">The optional message to use for notifications.</param>
         /// <param name="level">The maximum trace level of trace messages that will match the filter.</param>
-        public SlidingWindowTraceFilter(TimeSpan window, int threshold, TraceLevel level = TraceLevel.Error)
+        public SlidingWindowTraceFilter(TimeSpan window, int threshold, Func<TraceEvent, bool> filter = null, string message = null, TraceLevel level = TraceLevel.Error)
         {
             _window = window;
             _level = level;
-            _threshold = threshold;
-            _notificationMessage = string.Format("{0} events at level '{1}' or lower have occurred within time window {2}.", _threshold, level.ToString(), _window);
+            Threshold = threshold;
+            _filter = filter;
+            _notificationMessage = message ?? string.Format("{0} events at level '{1}' or lower have occurred within time window {2}.", threshold, level.ToString(), _window);
         }
 
         /// <summary>
-        /// Gets the notification message that should be used in notifications.
+        /// Gets the message that should be used in notifications.
         /// </summary>
         public override string Message
         {
@@ -47,6 +49,11 @@ namespace Microsoft.Azure.WebJobs.Extensions
                 return _notificationMessage;
             }
         }
+
+        /// <summary>
+        /// Gets maximum number of matching trace messages to allow before triggering a notification.
+        /// </summary>
+        public int Threshold { get; private set; }
 
         /// <inheritdoc/>
         public override Collection<TraceEvent> Traces
@@ -66,11 +73,11 @@ namespace Microsoft.Azure.WebJobs.Extensions
                 // fire on errors/warnings, and those events will be rare in normal processing.
                 lock (_syncLock)
                 {
-                    ResizeWindow();
+                    RemoveOldEvents(DateTime.UtcNow);
 
                     _traces.Add(traceEvent);
 
-                    if (_traces.Count > _threshold)
+                    if (_traces.Count >= Threshold)
                     {
                         return true;
                     }
@@ -95,41 +102,25 @@ namespace Microsoft.Azure.WebJobs.Extensions
             }
 
             bool passesFilter = traceEvent.Level <= _level;
-            if (passesFilter && traceEvent.Exception != null)
+            if (_filter != null)
             {
-                // often we may see multiple sequential error messages for the same
-                // exception, so we want to skip the duplicates
-                if (_lastException != null &&
-                    Object.ReferenceEquals(_lastException, traceEvent.Exception))
-                {
-                    return false;
-                }
-                _lastException = traceEvent.Exception;
+                passesFilter &= _filter(traceEvent);
             }
 
             return passesFilter;
         }
 
-        private void ResizeWindow()
+        internal void RemoveOldEvents(DateTime now)
         {
             // remove any events outside of the window
-            int count = 0;
-            DateTime cutoff = DateTime.UtcNow - _window;
-            foreach (TraceEvent currTraceEvent in _traces)
+            DateTime cutoff = now - _window;
+            while (_traces.Count > 0)
             {
-                if (currTraceEvent.Timestamp > cutoff)
+                if (_traces[0].Timestamp > cutoff)
                 {
                     break;
                 }
-                count++;
-            }
-
-            if (count > 0)
-            {
-                for (int i = 0; i < count; i++)
-                {
-                    _traces.RemoveAt(i);
-                }
+                _traces.RemoveAt(0);
             }
         }
     }

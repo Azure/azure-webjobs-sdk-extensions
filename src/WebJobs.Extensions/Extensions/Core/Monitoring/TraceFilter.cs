@@ -39,12 +39,12 @@ namespace Microsoft.Azure.WebJobs.Extensions
         /// <param name="predicate">The function to use to filter events.</param>
         /// <param name="message">The optional subscription notification message to use.</param>
         /// <returns></returns>
-        public static TraceFilter Create(Func<TraceEvent, bool> predicate, string message = null)
+        public static TraceFilter Create(Func<TraceEvent, bool> predicate = null, string message = null)
         {
             return new AnonymousTraceFilter(predicate, message);
         }
 
-        private class AnonymousTraceFilter : TraceFilter
+        internal class AnonymousTraceFilter : TraceFilter
         {
             private readonly string _message;
             private readonly Func<TraceEvent, bool> _predicate;
@@ -52,13 +52,8 @@ namespace Microsoft.Azure.WebJobs.Extensions
             
             public AnonymousTraceFilter(Func<TraceEvent, bool> predicate, string message = null)
             {
-                if (predicate == null)
-                {
-                    throw new ArgumentNullException("predicate");
-                }
-
                 _predicate = predicate;
-                _message = message ?? "WebJob Failure Detected";
+                _message = message ?? "WebJob failure detected.";
             }
 
             public override string Message
@@ -79,7 +74,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
 
             public override bool Filter(TraceEvent traceEvent)
             {
-                if (_predicate(traceEvent))
+                if (_predicate == null || _predicate(traceEvent))
                 {
                     // a filter using a single predicate will only ever result in
                     // a single event, so we reset the collection each time.

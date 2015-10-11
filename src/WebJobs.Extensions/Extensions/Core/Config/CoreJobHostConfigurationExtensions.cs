@@ -2,13 +2,16 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.Azure.WebJobs.Extensions.Extensions.Core;
+using Microsoft.Azure.WebJobs.Extensions;
+using Microsoft.Azure.WebJobs.Extensions.Core;
 using Microsoft.Azure.WebJobs.Host.Config;
 
 namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
-    /// Extension methods for Core extension integration
+    /// Extension methods for Core extension integration. This registers support for
+    /// <see cref="ErrorTriggerAttribute"/> trace monitoring, as well as support for
+    /// the <see cref="ExecutionContext"/> binding.
     /// </summary>
     public static class CoreJobHostConfigurationExtensions
     {
@@ -35,7 +38,9 @@ namespace Microsoft.Azure.WebJobs
                     throw new ArgumentNullException("context");
                 }
 
-                context.Config.RegisterBindingExtension(new ExecutionContextBindingProvider());
+                context.Config.RegisterBindingExtensions(
+                    new ExecutionContextBindingProvider(),
+                    new ErrorTriggerAttributeBindingProvider(context.Config));
             }
         }
     }

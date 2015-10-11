@@ -17,7 +17,7 @@ namespace ExtensionsSample
     /// Contains some sample notification methods used as subscriptions
     /// for <see cref="TraceMonitor"/> events.
     /// </summary>
-    public class TraceNotifier
+    public class ErrorNotifier
     {
         private const string NotificationUriSettingName = "AzureWebJobsErrorNotificationUri";
         private readonly string _webNotificationUri;
@@ -25,7 +25,7 @@ namespace ExtensionsSample
         private readonly Web _sendGrid;
         private SendGridConfiguration _sendGridConfig;
 
-        public TraceNotifier(SendGridConfiguration sendGridConfig)
+        public ErrorNotifier(SendGridConfiguration sendGridConfig)
         {
             if (sendGridConfig == null)
             {
@@ -34,6 +34,7 @@ namespace ExtensionsSample
             _sendGridConfig = sendGridConfig;
             _sendGrid = new Web(sendGridConfig.ApiKey);
 
+            // pull our IFTTT notification URL from app settings (since it contains a secret key)
             _webNotificationUri = ConfigurationManager.AppSettings.Get(NotificationUriSettingName);
             if (string.IsNullOrEmpty(_webNotificationUri))
             {

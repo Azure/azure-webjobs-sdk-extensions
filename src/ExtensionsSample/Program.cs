@@ -64,13 +64,15 @@ namespace ExtensionsSample
         }
 
         /// <summary>
-        /// Set up monitoring + notifications for WebJob errors.
+        /// Set up monitoring + notifications for WebJob errors. This shows how to set things up
+        /// manually on startup. You can also use <see cref="ErrorTriggerAttribute"/> to designate
+        /// error handler functions.
         /// </summary>
         private static void ConfigureTraceMonitor(JobHostConfiguration config, SendGridConfiguration sendGridConfiguration)
         {
-            var notifier = new TraceNotifier(sendGridConfiguration);
+            var notifier = new ErrorNotifier(sendGridConfiguration);
 
-            var traceMonitor = new TraceMonitor(TraceLevel.Error)
+            var traceMonitor = new TraceMonitor()
                 .Filter(new SlidingWindowTraceFilter(TimeSpan.FromMinutes(5), 3))
                 .Filter(p =>
                 {

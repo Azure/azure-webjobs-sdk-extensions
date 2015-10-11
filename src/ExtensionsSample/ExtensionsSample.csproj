@@ -109,6 +109,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Samples\ErrorMonitoringSamples.cs" />
     <Compile Include="Samples\FileSamples.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Samples\MiscellaneousSamples.cs" />
@@ -117,7 +118,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Samples\WebHookSamples.cs" />
-    <Compile Include="TraceNotifiers.cs" />
+    <Compile Include="ErrorNotifier.cs" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
