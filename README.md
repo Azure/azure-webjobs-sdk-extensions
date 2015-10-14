@@ -132,7 +132,7 @@ public static void ErrorMonitor(
 }
 ```
 
-You can choose to send a alert text message to yourself, or a detailed email message, etc. In addition to setting up one or more **global error handlers** like the above, you can also specify **function specific error handlers** that will only handle erros for one function. This is done by naming convention based on an "ErrorHandler" suffix. For example, if your error function is named "**Import**ErrorHandler" and there is a function named "Import" in the same class, that error function will be scoped to errors for that function only:
+You can choose to send a alert text message to yourself, or a detailed email message, etc. The ErrorTrigger extension is part of the **Core extensions** can be registered on your JobHostConfiguration by calling `config.UseCore()`. In addition to setting up one or more **global error handlers** like the above, you can also specify **function specific error handlers** that will only handle erros for one function. This is done by naming convention based on an "ErrorHandler" suffix. For example, if your error function is named "**Import**ErrorHandler" and there is a function named "Import" in the same class, that error function will be scoped to errors for that function only:
 
 ```csharp
 public static void Import(
@@ -151,9 +151,11 @@ public static void ImportErrorHandler(
 }
 ```
 
-The mechanism these error trigger bindings use behind the scenes can also be used directly if you want more control or would like to set things up manually yourself. Each binding is creating a **TraceMonitor** configured with the options specified by the attribute, and adding it to the **JobHostConfiguration.Tracing.Tracers** TraceWriter collection. You can also do this manually yourself as part of your JobHost startup code:
+The mechanism these error trigger bindings use behind the scenes can also be used directly if you want more control or would like to set things up manually yourself. Each binding is creating a **TraceMonitor** configured with the options specified by the attribute, and adding it to the `JobHostConfiguration.Tracing.Tracers` TraceWriter collection. You can also do this manually yourself as part of your JobHost startup code:
 
 ```csharp
+config.UseCore();
+
 var traceMonitor = new TraceMonitor()
     .Filter(new SlidingWindowTraceFilter(TimeSpan.FromMinutes(5), 3))
     .Filter(p =>
