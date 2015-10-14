@@ -104,6 +104,34 @@ public static void Purge(
 
 The above messages are fully declarative, but you can also set the message properties in your job function code (e.g. add message attachments, etc.). For more information on the SendGrid binding, see the [SendGrid samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/SendGridSamples.cs).
 
+###Error Notifications###
+
+An error notification trigger binding that allows you to annotate functions so they'll be automatically called by the runtime when errors occur. Here's an example function that will be called whenever 10 errors occur within a 30 minute sliding window (throttled at a maximum of 1 notification per hour):
+
+```csharp
+public static void ErrorMonitor(
+    [ErrorTrigger("0:30:00", 10, Throttle = "0:01:00")] TraceFilter filter, 
+    TextWriter log)
+{
+    // send Text notification using IFTTT
+    string body = string.Format("{{ \"value1\": \"{0}\" }}", filter.Message);
+    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, WebNotificationUri)
+    {
+        Content = new StringContent(body, Encoding.UTF8, "application/json")
+    };
+    HttpClient.SendAsync(request);
+
+    // log the last 5 detailed errors to the Dashboard
+    log.WriteLine(filter.Message);
+    log.WriteLine();
+    foreach (TraceEvent traceEvent in filter.Traces.Reverse().Take(5))
+    {
+        log.WriteLine(traceEvent.ToString());
+        log.WriteLine();
+    }
+}
+```
+
 ###WebHooks###
 
 A WebHook trigger that allows you to write job functions that can be invoked by HTTP requests. Here's an example job function that will be invoked whenever an issue in a source GitHub repo is created or modified:
