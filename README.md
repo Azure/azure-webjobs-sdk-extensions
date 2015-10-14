@@ -151,7 +151,7 @@ public static void ImportErrorHandler(
 }
 ```
 
-The mechanism these error trigger bindings use behind the scenes can also be used directly if you want more control or would like to set things up manually yourself. Each binding is creating a **TraceMonitor** configured with the options specified by the attribute, and adding it to the **JobHostConfiguration.Tracing.Tracers** TraceWriter collection. You can also do this manually yourself like so:
+The mechanism these error trigger bindings use behind the scenes can also be used directly if you want more control or would like to set things up manually yourself. Each binding is creating a **TraceMonitor** configured with the options specified by the attribute, and adding it to the **JobHostConfiguration.Tracing.Tracers** TraceWriter collection. You can also do this manually yourself as part of your JobHost startup code:
 
 ```csharp
 var traceMonitor = new TraceMonitor()
@@ -172,7 +172,7 @@ var traceMonitor = new TraceMonitor()
 config.Tracing.Tracers.Add(traceMonitor);
 ```
 
-As you can see, TraceMonitors can be defined by defining one or more Filters and Subscribers via a fluent interface. When added to the Tracers collection, the JobHost will route trace events through them, giving them a chance to inspect, filter and act upon events.
+As you can see, TraceMonitors are created by chaining together one or more **Filters** and **Subscribers** via a fluent interface. A TraceMonitor inherits from TraceWriter. When added to the Tracers collection, the JobHost will route trace events through them, giving them a chance to inspect, filter and act upon events. TraceFilters are responsible for inspecting events and aggregating them as needed. They will then trigger notification when their threshold is reached (e.g. sliding window error count, function name match, etc.). Subscribers are simply actions taking a TraceFilter instance.
 
 ###WebHooks###
 
