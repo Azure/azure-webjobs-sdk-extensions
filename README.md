@@ -174,6 +174,8 @@ config.Tracing.Tracers.Add(traceMonitor);
 
 As you can see, TraceMonitors are created by chaining together one or more **Filters** and **Subscribers** via a fluent interface. A TraceMonitor inherits from TraceWriter. When added to the Tracers collection, the JobHost will route trace events through them, giving them a chance to inspect, filter and act upon events. TraceFilters are responsible for inspecting events and aggregating them as needed. They will then trigger notification when their threshold is reached (e.g. sliding window error count, function name match, etc.). Subscribers are simply actions taking a TraceFilter instance and performing whatever action they need, e.g. alert notifications, etc.
 
+For more information see the [Error Monitoring](http://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Error-Monitoring) wiki page, as well as the the [Error Monitoring Sample](http://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/ErrorMonitoringSamples.cs).
+
 ###WebHooks###
 
 A WebHook trigger that allows you to write job functions that can be invoked by HTTP requests. Here's an example job function that will be invoked whenever an issue in a source GitHub repo is created or modified:
