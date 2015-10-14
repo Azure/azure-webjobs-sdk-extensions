@@ -106,7 +106,7 @@ The above messages are fully declarative, but you can also set the message prope
 
 ###Error Notifications###
 
-An error notification trigger binding that allows you to annotate functions so they'll be automatically called by the runtime when errors occur. Here's an example function that will be called whenever 10 errors occur within a 30 minute sliding window (throttled at a maximum of 1 notification per hour):
+An **error notification trigger** binding that allows you to annotate functions so they'll be automatically called by the runtime when errors occur. Here's an example function that will be called whenever 10 errors occur within a 30 minute sliding window (throttled at a maximum of 1 notification per hour):
 
 ```csharp
 public static void ErrorMonitor(
@@ -131,6 +131,8 @@ public static void ErrorMonitor(
     }
 }
 ```
+
+You can choose to send a notification text message to yourself, or a detailed email message, etc.
 
 ###WebHooks###
 
