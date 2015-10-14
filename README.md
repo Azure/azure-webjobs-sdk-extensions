@@ -132,7 +132,7 @@ public static void ErrorMonitor(
 }
 ```
 
-You can choose to send a notification text message to yourself, or a detailed email message, etc. In addition to setting up one or more **global error handlers** like the above, you can also specify **function specific error handlers** that will only handle erros for one function. This is done by naming convention based on an "ErrorHandler" suffix. For example, if your error function is named "**Import**ErrorHandler" and there is a function named "Import" in the same class, that error function will be scoped to errors for that function only:
+You can choose to send a alert text message to yourself, or a detailed email message, etc. In addition to setting up one or more **global error handlers** like the above, you can also specify **function specific error handlers** that will only handle erros for one function. This is done by naming convention based on an "ErrorHandler" suffix. For example, if your error function is named "**Import**ErrorHandler" and there is a function named "Import" in the same class, that error function will be scoped to errors for that function only:
 
 ```csharp
 public static void Import(
@@ -172,7 +172,7 @@ var traceMonitor = new TraceMonitor()
 config.Tracing.Tracers.Add(traceMonitor);
 ```
 
-As you can see, TraceMonitors are created by chaining together one or more **Filters** and **Subscribers** via a fluent interface. A TraceMonitor inherits from TraceWriter. When added to the Tracers collection, the JobHost will route trace events through them, giving them a chance to inspect, filter and act upon events. TraceFilters are responsible for inspecting events and aggregating them as needed. They will then trigger notification when their threshold is reached (e.g. sliding window error count, function name match, etc.). Subscribers are simply actions taking a TraceFilter instance.
+As you can see, TraceMonitors are created by chaining together one or more **Filters** and **Subscribers** via a fluent interface. A TraceMonitor inherits from TraceWriter. When added to the Tracers collection, the JobHost will route trace events through them, giving them a chance to inspect, filter and act upon events. TraceFilters are responsible for inspecting events and aggregating them as needed. They will then trigger notification when their threshold is reached (e.g. sliding window error count, function name match, etc.). Subscribers are simply actions taking a TraceFilter instance and performing whatever action they need, e.g. alert notifications, etc.
 
 ###WebHooks###
 
