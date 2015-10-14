@@ -104,9 +104,9 @@ public static void Purge(
 
 The above messages are fully declarative, but you can also set the message properties in your job function code (e.g. add message attachments, etc.). For more information on the SendGrid binding, see the [SendGrid samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/SendGridSamples.cs).
 
-###Error Notifications###
+###ErrorTrigger###
 
-An **error notification trigger** that allows you to annotate functions so they'll be automatically called by the runtime when errors occur. Here's an example function that will be called whenever 10 errors occur within a 30 minute sliding window (throttled at a maximum of 1 notification per hour):
+An **error trigger** that allows you to annotate functions to be automatically called by the runtime when errors occur. This allows you to set up email/text/etc. notifications to alert you when things are going wrong with your jobs.  Here's an example function that will be called whenever 10 errors occur within a 30 minute sliding window (throttled at a maximum of 1 notification per hour):
 
 ```csharp
 public static void ErrorMonitor(
@@ -132,7 +132,47 @@ public static void ErrorMonitor(
 }
 ```
 
-You can choose to send a notification text message to yourself, or a detailed email message, etc.
+You can choose to send a notification text message to yourself, or a detailed email message, etc. In addition to setting up one or more **global error handlers** like the above, you can also specify **function specific error handlers** that will only handle erros for one function. This is done by naming convention based on an "ErrorHandler" suffix. For example, if your error function is named "**Import**ErrorHandler" and there is a function named "Import" in the same class, that error function will be scoped to errors for that function only:
+
+```csharp
+public static void Import(
+    [FileTrigger(@"import\{name}")] Stream file,
+    [Blob(@"processed/{name}")] CloudBlockBlob output)
+{
+    output.UploadFromStream(file);
+}
+
+public static void ImportErrorHandler(
+    [ErrorTrigger] TraceEvent error, string message, TextWriter log)
+{
+    // Here you could send an error notification, etc.
+
+    log.WriteLine(string.Format("{0} : {1}", message, error.ToString()));
+}
+```
+
+The mechanism these error trigger bindings use behind the scenes can also be used directly if you want more control or would like to set things up manually yourself. Each binding is creating a **TraceMonitor** configured with the options specified by the attribute, and adding it to the **JobHostConfiguration.Tracing.Tracers** TraceWriter collection. You can also do this manually yourself like so:
+
+```csharp
+var traceMonitor = new TraceMonitor()
+    .Filter(new SlidingWindowTraceFilter(TimeSpan.FromMinutes(5), 3))
+    .Filter(p =>
+    {
+        FunctionInvocationException fex = p.Exception as FunctionInvocationException;
+        return fex != null &&
+               fex.MethodName == "ExtensionsSample.FileSamples.ImportFile";
+    }, "ImportFile Job Failed")
+    .Subscribe(WebNotify, EmailNotify)
+    .Subscribe(p =>
+    {
+        // error handler code here
+    })
+    .Throttle(TimeSpan.FromMinutes(30));
+
+config.Tracing.Tracers.Add(traceMonitor);
+```
+
+As you can see, TraceMonitors can be defined by defining one or more Filters and Subscribers via a fluent interface. When added to the Tracers collection, the JobHost will route trace events through them, giving them a chance to inspect, filter and act upon events.
 
 ###WebHooks###
 
