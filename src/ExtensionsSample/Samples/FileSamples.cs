@@ -30,7 +30,7 @@ namespace ExtensionsSample
         public static void ImportFileErrorHandler(
             [ErrorTrigger] TraceEvent error, string message, TextWriter log)
         {
-            // Here you would send an error notification
+            // Here you could send an error notification
 
             log.WriteLine(string.Format("{0} : {1}", message, error.ToString()));
         }

@@ -3,6 +3,8 @@
 
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Text;
 using Microsoft.Azure.WebJobs.Host;
 
 namespace Microsoft.Azure.WebJobs.Extensions
@@ -44,6 +46,35 @@ namespace Microsoft.Azure.WebJobs.Extensions
             return new AnonymousTraceFilter(predicate, message);
         }
 
+        /// <summary>
+        /// Returns a formatted string containing the notification <see cref="Message"/> as well
+        /// as full details on the last <paramref name="count"/> events.
+        /// </summary>
+        /// <param name="count">The number of detailed events to include (starting from
+        /// the most recent).</param>
+        /// <returns>The formatted string.</returns>
+        public virtual string GetDetailedMessage(int count)
+        {
+            if (count <= 0)
+            {
+                throw new ArgumentOutOfRangeException("count");
+            }
+
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine(Message);
+
+            if (Traces.Count > 0)
+            {
+                foreach (TraceEvent traceEvent in Traces.Reverse().Take(count))
+                {
+                    builder.AppendLine();
+                    builder.AppendLine(traceEvent.ToString()); 
+                }
+            }
+            
+            return builder.ToString();
+        }
+
         internal class AnonymousTraceFilter : TraceFilter
         {
             private readonly string _message;
@@ -76,8 +107,8 @@ namespace Microsoft.Azure.WebJobs.Extensions
             {
                 if (_predicate == null || _predicate(traceEvent))
                 {
-                    // a filter using a single predicate will only ever result in
-                    // a single event, so we reset the collection each time.
+                    // this filter does not accumulate - it only keeps track
+                    // of the last event, so we reset the collection each time.
                     _traces.Clear();
                     _traces.Add(traceEvent);
 

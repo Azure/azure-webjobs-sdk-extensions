@@ -134,6 +134,7 @@
     <Compile Include="Core\CoreBindingEndToEndTests.cs" />
     <Compile Include="Core\ErrorTriggerAttributeTests.cs" />
     <Compile Include="Core\SlidingWindowTraceFilterTests.cs" />
+    <Compile Include="Core\TraceFilterTests.cs" />
     <Compile Include="Files\Config\FilesConfigurationTests.cs" />
     <Compile Include="Files\Listener\FileListenerTests.cs" />
     <Compile Include="Files\Listener\FileProcessorTests.cs" />

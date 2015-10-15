@@ -75,21 +75,13 @@ namespace ExtensionsSample
         /// <param name="filter">The <see cref="TraceFilter"/> that triggered the notification.</param>
         public void EmailNotify(TraceFilter filter)
         {
-            SendGridMessage message = new SendGridMessage();
-            message.AddTo(_sendGridConfig.ToAddress);
-            message.From = _sendGridConfig.FromAddress;
-            message.Subject = "WebJob Error Notification";
-
-            // build a email body that contains the last 5 errors
-            StringBuilder builder = new StringBuilder();
-            builder.AppendLine(filter.Message);
-            builder.AppendLine();
-            foreach (TraceEvent traceEvent in filter.Traces.Reverse().Take(5))
+            SendGridMessage message = new SendGridMessage()
             {
-                builder.AppendLine(traceEvent.ToString());
-                builder.AppendLine();
-            }
-            message.Text = builder.ToString();
+                From = _sendGridConfig.FromAddress,
+                Subject = "WebJob Error Notification",
+                Text = filter.GetDetailedMessage(5)
+            };
+            message.AddTo(_sendGridConfig.ToAddress);
 
             _sendGrid.DeliverAsync(message);
         }

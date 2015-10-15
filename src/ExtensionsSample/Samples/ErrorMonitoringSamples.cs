@@ -26,17 +26,11 @@ namespace ExtensionsSample.Samples
         public static void ErrorMonitor(
             [ErrorTrigger("00:30:00", 10)] TraceFilter filter, TextWriter log)
         {
-            // send SMS notifications
+            // send a SMS notification
             _notifier.WebNotify(filter);
 
             // log last 5 detailed errors to the Dashboard
-            log.WriteLine(filter.Message);
-            log.WriteLine();
-            foreach (TraceEvent traceEvent in filter.Traces.Reverse().Take(5))
-            {
-                log.WriteLine(traceEvent.ToString());
-                log.WriteLine();
-            }
+            log.WriteLine(filter.GetDetailedMessage(5));
         }
     }
 }
