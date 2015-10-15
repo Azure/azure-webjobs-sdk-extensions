@@ -73,29 +73,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 throw new InvalidOperationException("The listener has already been started.");
             }
 
-            // if schedule monitoring is enabled for this timer job, check to see if we've
-            // missed an occurrence since we last started
+            // See if we need to invoke the function immediately now, and if
+            // so invoke it.
             DateTime now = DateTime.UtcNow;
-            if (_attribute.UseMonitor)
+            if (_attribute.UseMonitor &&
+                await _scheduleMonitor.IsPastDueAsync(_timerName, now, _schedule))
             {
-                if (await _scheduleMonitor.IsPastDueAsync(_timerName, now, _schedule))
-                {
-                    _trace.Verbose(string.Format("Timer '{0}' is past due on startup. Executing now.", _timerName));
-
-                    // we've missed an occurrence so invoke the job function immediately
-                    await InvokeJobFunction(now, true);
-                }
+                // If schedule monitoring is enabled for this timer job, check to see if we've
+                // missed an occurrence since we last started. If we have, invoke it immediately.
+                _trace.Verbose(string.Format("Function '{0}' is past due on startup. Executing now.", _timerName));
+                await InvokeJobFunction(now, true);
             }
-       
-            _timer = new System.Timers.Timer
+            else if (_attribute.RunOnStartup)
             {
-                AutoReset = false
-            };
-            _timer.Elapsed += OnTimer;
+                // The job is configured to run immediately on startup
+                _trace.Verbose(string.Format("Function '{0}' is configured to run on startup. Executing now.", _timerName));
+                await InvokeJobFunction(now);
+            }
 
+            // log the next several occurrences to console for visibility
             string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5);
             _trace.Verbose(nextOccurrences);
 
+            // start the timer
             now = DateTime.UtcNow;
             DateTime nextOccurrence = _schedule.GetNextOccurrence(now);
             TimeSpan nextInterval = nextOccurrence - now;
@@ -171,7 +171,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             StartTimer(nextInterval);
         }
 
-        internal async Task InvokeJobFunction(DateTime lastOccurrence, bool isPastDue)
+        internal async Task InvokeJobFunction(DateTime lastOccurrence, bool isPastDue = false)
         {
             CancellationToken token = _cancellationTokenSource.Token;
 
@@ -195,8 +195,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             }
         }
 
-        internal void StartTimer(TimeSpan interval)
+        private void StartTimer(TimeSpan interval)
         {
+            _timer = new System.Timers.Timer
+            {
+                AutoReset = false
+            };
+            _timer.Elapsed += OnTimer;
+
             if (interval > MaxTimerInterval)
             {
                 // if the interval exceeds the maximum interval supported by Timer,

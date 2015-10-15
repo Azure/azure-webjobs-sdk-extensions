@@ -56,6 +56,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public async Task StartAsync_SchedulePastDue_InvokesJobFunctionImmediately()
         {
+            // Set this to true to ensure that the function is only executed once
+            // In this case, because it is run on startup due to being behind schedule,
+            // it shouldn't be run twice.
+            _attribute.RunOnStartup = true;
+
             DateTime lastOccurrence = default(DateTime);
 
             _mockScheduleMonitor.Setup(p => p.IsPastDueAsync(_testTimerName, It.IsAny<DateTime>(), It.IsAny<TimerSchedule>()))
@@ -80,6 +85,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             TimerInfo timerInfo = (TimerInfo)_triggeredFunctionData.TriggerValue;
             Assert.True(timerInfo.IsPastDue);
 
+            _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Once());
+
             _listener.Dispose();
         }
 
@@ -93,6 +100,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await _listener.StartAsync(cancellationToken);
 
             _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Never());
+
+            _listener.Dispose();
+        }
+
+        [Fact]
+        public async Task StartAsync_RunOnStartup_InvokesJobFunctionImmediately()
+        {
+            _attribute.UseMonitor = false;
+            _attribute.RunOnStartup = true;
+
+            CancellationToken cancellationToken = new CancellationToken();
+            await _listener.StartAsync(cancellationToken);
+
+            _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Once());
 
             _listener.Dispose();
         }

@@ -73,5 +73,12 @@ namespace Microsoft.Azure.WebJobs
         /// persistence is disabled by default).
         /// </summary>
         public bool UseMonitor { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the function should be invoked
+        /// immediately on startup. The configured schedule will dictate all future
+        /// invocations.
+        /// </summary>
+        public bool RunOnStartup { get; set; }
     }
 }
