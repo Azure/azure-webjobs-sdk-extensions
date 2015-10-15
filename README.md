@@ -121,14 +121,8 @@ public static void ErrorMonitor(
     };
     HttpClient.SendAsync(request);
 
-    // log the last 5 detailed errors to the Dashboard
-    log.WriteLine(filter.Message);
-    log.WriteLine();
-    foreach (TraceEvent traceEvent in filter.Traces.Reverse().Take(5))
-    {
-        log.WriteLine(traceEvent.ToString());
-        log.WriteLine();
-    }
+    // log last 5 detailed errors to the Dashboard
+    log.WriteLine(filter.GetDetailedMessage(5));
 }
 ```
 
