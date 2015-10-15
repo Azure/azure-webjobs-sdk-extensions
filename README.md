@@ -52,7 +52,7 @@ The TimerTrigger also handles multi-instance scale out automatically - only a si
 
 The first example above uses a [cron expression](http://code.google.com/p/ncrontab/wiki/CrontabExpression) to declare the schedule. Using these 6 fields `{second} {minute} {hour} {day} {month} {day of the week}` you can express arbitrarily complex schedules very concisely.
 
-For more information, see the [Timer samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/TimerSamples.cs).
+To register the Timer extensions, call `config.UseTimers()` in your startup code. For more information, see the [Timer samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/TimerSamples.cs).
 
 ###FileTrigger / File###
 
@@ -71,7 +71,7 @@ public static void ImportFile(
 }
 ```
 
-For more information, see the [File samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/FileSamples.cs).
+To register the File extensions, call `config.UseFiles()` in your startup code. For more information, see the [File samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/FileSamples.cs).
 
 ###SendGrid###
 
@@ -102,7 +102,9 @@ public static void Purge(
 }
 ```
 
-The above messages are fully declarative, but you can also set the message properties in your job function code (e.g. add message attachments, etc.). For more information on the SendGrid binding, see the [SendGrid samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/SendGridSamples.cs).
+The above messages are fully declarative, but you can also set the message properties in your job function code (e.g. add message attachments, etc.). 
+
+To register the SendGrid extensions, call `config.UseSendGrid()` in your startup code. For more information on the SendGrid binding, see the [SendGrid samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/SendGridSamples.cs).
 
 ###ErrorTrigger###
 
@@ -145,7 +147,7 @@ public static void ImportErrorHandler(
 }
 ```
 
-For more information see the [Error Monitoring](http://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Error-Monitoring) wiki page, as well as the the [Error Monitoring Sample](http://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/ErrorMonitoringSamples.cs).
+To register the Error extensions, call `config.UseCore()` in your startup code. For more information see the [Error Monitoring](http://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Error-Monitoring) wiki page, as well as the the [Error Monitoring Sample](http://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/ErrorMonitoringSamples.cs).
 
 ###WebHooks###
 
@@ -202,4 +204,4 @@ Support for the [ASP.NET WebHooks SDK](http://blogs.msdn.com/b/webdev/archive/20
 
 That's it - whenever a request comes in for your WebHook, the WebHook reveiver will perform all the authentication checks and your job function will *only* be invoked if the request is authenticated. For more information on the various ASP.NET WebHooks SDK reveivers supported, see their documentation.
 
-For more information, see the [WebHook samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/WebHookSamples.cs).
+To register the File extensions, call `config.UseWebHooks()` in your startup code. For more information, see the [WebHook samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/WebHookSamples.cs).
