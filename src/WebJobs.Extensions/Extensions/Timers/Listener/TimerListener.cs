@@ -96,6 +96,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5);
             _trace.Verbose(nextOccurrences);
 
+            now = DateTime.UtcNow;
             DateTime nextOccurrence = _schedule.GetNextOccurrence(now);
             TimeSpan nextInterval = nextOccurrence - now;
             StartTimer(nextInterval);
