@@ -146,7 +146,7 @@ public static void Import(
 }
 
 public static void ImportErrorHandler(
-    [ErrorTrigger("0:30:00", 10, Throttle = "1:00:00")] TraceFilter filter,
+    [ErrorTrigger("1:00:00", 5)] TraceFilter filter,
     TextWriter log)
 {
     // Here you could send an error notification, etc.
