@@ -35,6 +35,13 @@ public static void CronJob([TimerTrigger("0 */5 * * * *")] TimerInfo timer)
     Console.WriteLine("Cron job fired!");
 }
 
+// Runs immediately on startup, then every two hours thereafter
+public static void StartupJob(
+    [TimerTrigger("0 0 */2 * * *", RunOnStartup = true)] TimerInfo timerInfo)
+{
+    Console.WriteLine("Timer job fired!");
+}
+
 // Runs once every 30 seconds
 public static void TimerJob([TimerTrigger("00:00:30")] TimerInfo timer)
 {
