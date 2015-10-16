@@ -146,11 +146,13 @@ public static void Import(
 }
 
 public static void ImportErrorHandler(
-    [ErrorTrigger] TraceEvent error, string message, TextWriter log)
+    [ErrorTrigger("0:30:00", 10, Throttle = "1:00:00")] TraceFilter filter,
+    TextWriter log)
 {
     // Here you could send an error notification, etc.
 
-    log.WriteLine(string.Format("{0} : {1}", message, error.ToString()));
+    // log last 5 detailed errors to the Dashboard
+    log.WriteLine(filter.GetDetailedMessage(3));
 }
 ```
 
