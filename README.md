@@ -200,7 +200,7 @@ To manually construct your WebHook URL, you need to replace the following tokens
 * **job** : The name of your Continuous WebJob
 * **path** : This is the route identifying the specific WebHook function to invoke. By convention, this is {ClassName}/{MethodName}, but can be overridden/specified explicitly via the WebHookTrigger attribute.
 
-In addition to functions using the WebHook trigger, you can invoke **any** of your job functions via an http request. When resolving an incoming POST request, if the route doesn't match a WebHookTrigger decorated function, a search is performed for a function matching the {ClassName}/{MethodName} convention described above. If found, that function is invoked, and the function parameters are parsed from the JSON body of the request. An example of this can be seen [in the walkthrough](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/WebHooks-Walkthrough). This ability to invoke your functions via HTTP requests opens the door for automation scenarios, and compliments the way you can invoke/replay functions via the WebJobs Dashboard.
+In addition to functions using the WebHook trigger, you can invoke **any** of your job functions via an http request. When resolving an incoming POST request, if the route doesn't match a WebHookTrigger decorated function, a search is performed for a function matching the {ClassName}/{MethodName} convention described above. If found, that function is invoked, and the function parameters are parsed from the JSON body of the request. An example of this can be seen [in the walkthrough](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/WebHooks-Walkthrough). This ability to invoke your functions via HTTP requests opens the door for automation scenarios, and complements the way you can invoke/replay functions via the WebJobs Dashboard.
 
 Support for the [ASP.NET WebHooks SDK](http://blogs.msdn.com/b/webdev/archive/2015/09/04/introducing-microsoft-asp-net-webhooks-preview.aspx) is also built in. That SDK provides WebHook Receiver classes that handle the diverse WebHook authentication schemes of various providers. For providers that the SDK supports it is recommended that you use those receivers for authentication. For example, to leverage this for GitHub, you would:
 
@@ -208,9 +208,9 @@ Support for the [ASP.NET WebHooks SDK](http://blogs.msdn.com/b/webdev/archive/20
 * add the **MS_WebHookReceiverSecret_GitHub** app setting containing your secret
 * set the same shared secret on your GitHub WebHook
 * add [one line of code](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Program.cs#L46) to register the receiver on job startup
-* use the overload of WebHookTriggerAttribute that takes a reveiver and optional id ([as in this example](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/WebHookSamples.cs#L67))
+* use the overload of WebHookTriggerAttribute that takes a receiver and optional id ([as in this example](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/WebHookSamples.cs#L67))
 * use a corresponding route format {receiver}/{id} for the WebHook in GitHub (the "id" portion is optional). I.e. for this example the route would be "github/issues"
 
 That's it - whenever a request comes in for your WebHook, the WebHook reveiver will perform all the authentication checks and your job function will *only* be invoked if the request is authenticated. For more information on the various ASP.NET WebHooks SDK reveivers supported, see their documentation.
 
-To register the File extensions, call `config.UseWebHooks()` in your startup code. For more information, see the [WebHook samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/WebHookSamples.cs).
+To register the WebHook extensions, call `config.UseWebHooks()` in your startup code. For more information, see the [WebHook samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/WebHookSamples.cs).
