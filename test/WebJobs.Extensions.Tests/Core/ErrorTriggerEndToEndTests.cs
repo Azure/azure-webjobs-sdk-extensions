@@ -95,6 +95,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
         }
 
         [Fact]
+        public void FunctionLevelErrorHandler_SlidingWindow_InvokedAsExpected()
+        {
+            ErrorTriggerProgram_FunctionLevelHandler_SlidingWindow instance = new ErrorTriggerProgram_FunctionLevelHandler_SlidingWindow();
+
+            JobHostConfiguration config = new JobHostConfiguration()
+            {
+                TypeLocator = new ExplicitTypeLocator(instance.GetType()),
+                JobActivator = new ExplicitJobActivator(instance)
+            };
+            config.UseCore();
+            JobHost host = new JobHost(config);
+            host.Start();
+
+            MethodInfo method = instance.GetType().GetMethod("Throw");
+            CallSafe(host, method);
+            CallSafe(host, method);
+            Assert.Null(instance.TraceFilter);
+
+            CallSafe(host, method);
+
+            Assert.Equal(3, instance.TraceFilter.Traces.Count);
+            Assert.Equal("3 events at level 'Error' or lower have occurred within time window 00:10:00.", instance.TraceFilter.Message);
+            Assert.True(instance.TraceFilter.Traces.All(p => p.Message == "Exception while executing function: ErrorTriggerProgram_FunctionLevelHandler_SlidingWindow.Throw"));
+        }
+
+        [Fact]
         public void GlobalErrorHandler_HandlerFails_NoInfiniteLoop()
         {
             ErrorTriggerProgram_GlobalCatchAllHandler instance = new ErrorTriggerProgram_GlobalCatchAllHandler(fail: true);
@@ -259,6 +285,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             }
 
             public void ThrowBErrorHandler([ErrorTrigger] TraceFilter filter)
+            {
+                TraceFilter = filter;
+            }
+        }
+
+        public class ErrorTriggerProgram_FunctionLevelHandler_SlidingWindow
+        {
+            public TraceFilter TraceFilter { get; set; }
+
+            [NoAutomaticTrigger]
+            public void Throw()
+            {
+                throw new Exception("Kaboom!");
+            }
+
+            public void ThrowErrorHandler(
+                [ErrorTrigger("00:10:00", 3)] TraceFilter filter)
             {
                 TraceFilter = filter;
             }

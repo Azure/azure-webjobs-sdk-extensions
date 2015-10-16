@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core.Listener
             // Determine whether this is a method level filter, and if so, create the filter
             Func<TraceEvent, bool> methodFilter = null;
             MethodInfo method = (MethodInfo)parameter.Member;
-            string message = null;
+            string functionLevelMessage = null;
             if (method.Name.EndsWith(ErrorHandlerSuffix, StringComparison.OrdinalIgnoreCase))
             {
                 string sourceMethodName = method.Name.Substring(0, method.Name.Length - ErrorHandlerSuffix.Length);
@@ -59,14 +59,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core.Listener
                     };
 
                     string sourceMethodShortName = string.Format("{0}.{1}", method.DeclaringType.Name, sourceMethod.Name);
-                    message = string.Format("Function '{0}' failed.", sourceMethodShortName);
+                    functionLevelMessage = string.Format("Function '{0}' failed.", sourceMethodShortName);
                 }
             }
 
             string errorHandlerFullName = string.Format("{0}.{1}", method.DeclaringType.FullName, method.Name);
             ErrorHandlers.Add(errorHandlerFullName);
-
-            message = message ?? attribute.Message;
 
             // Create the TraceFilter instance
             TraceFilter traceFilter = null;
@@ -75,7 +73,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core.Listener
                 if (methodFilter != null)
                 {
                     TraceFilter innerTraceFilter = (TraceFilter)Activator.CreateInstance(attribute.FilterType);
-                    traceFilter = new CompositeTraceFilter(innerTraceFilter, methodFilter, message);
+                    traceFilter = new CompositeTraceFilter(innerTraceFilter, methodFilter, attribute.Message ?? functionLevelMessage);
                 }
                 else
                 {
@@ -85,11 +83,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core.Listener
             else if (!string.IsNullOrEmpty(attribute.Window))
             {
                 TimeSpan window = TimeSpan.Parse(attribute.Window);
-                traceFilter = new SlidingWindowTraceFilter(window, attribute.Threshold, methodFilter, message);
+                traceFilter = new SlidingWindowTraceFilter(window, attribute.Threshold, methodFilter, attribute.Message);
             }
             else
             {
-                traceFilter = TraceFilter.Create(methodFilter, message);
+                traceFilter = TraceFilter.Create(methodFilter, attribute.Message ?? functionLevelMessage);
             }
             TraceMonitor traceMonitor = new TraceMonitor().Filter(traceFilter);
 
