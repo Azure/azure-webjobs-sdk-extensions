@@ -14,7 +14,7 @@ using Microsoft.Azure.WebJobs.Host.Listeners;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 {
-    [Singleton]
+    [Singleton(Mode = SingletonMode.Listener)]
     internal sealed class TimerListener : IListener
     {
         private readonly TimerTriggerAttribute _attribute;
