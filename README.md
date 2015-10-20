@@ -82,7 +82,7 @@ To register the File extensions, call `config.UseFiles()` in your startup code. 
 
 ###SendGrid###
 
-A [SendGrid](https://sendgrid.com) binding that allows you to easily send emails after your job functions complete. Simply add your SendGrid ApiKey as an app setting, and you can write functions like the below which demonstrates full route binding for message fields. In this scenario, an email is sent each time a new order is successfully placed. The message fields are automatically bound to the `CustomerEmail/CustomerName/OrderId` properties of the Order object that triggered the function.
+A [SendGrid](https://sendgrid.com) binding that allows you to easily send emails after your job functions complete. Simply add your SendGrid ApiKey as an app setting or environment variable (use setting name `AzureWebJobsSendGridApiKey`), and you can write functions like the below which demonstrates full route binding for message fields. In this scenario, an email is sent each time a new order is successfully placed. The message fields are automatically bound to the `CustomerEmail/CustomerName/OrderId` properties of the Order object that triggered the function.
 
 ```csharp
 public static void ProcessOrder(
