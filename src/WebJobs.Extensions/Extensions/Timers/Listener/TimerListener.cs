@@ -161,13 +161,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 return;
             }
 
-            DateTime lastOccurrence = DateTime.Now;
+            DateTime now = DateTime.UtcNow;
 
-            await InvokeJobFunction(lastOccurrence, false);
+            await InvokeJobFunction(now, false);
 
             // restart the timer with the next schedule occurrence
-            DateTime nextOccurrence = _schedule.GetNextOccurrence(lastOccurrence);
-            TimeSpan nextInterval = nextOccurrence - lastOccurrence;
+            now = DateTime.UtcNow;
+            DateTime nextOccurrence = _schedule.GetNextOccurrence(now);
+            TimeSpan nextInterval = nextOccurrence - now;
             StartTimer(nextInterval);
         }
 
