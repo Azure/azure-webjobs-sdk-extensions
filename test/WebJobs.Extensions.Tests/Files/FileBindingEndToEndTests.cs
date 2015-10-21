@@ -127,6 +127,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
             host.Stop();
         }
 
+        [Fact]
+        public async Task FileBinding_SupportsNameResolver()
+        {
+            JobHost host = CreateTestJobHost();
+
+            string expectedOutputFilePath = Path.Combine(rootPath, OutputTestPath, "TestValue.txt");
+            File.Delete(expectedOutputFilePath);
+            Assert.False(File.Exists(expectedOutputFilePath));
+
+            var method = typeof(FilesTestJobs).GetMethod("BindUsingNameResolver");
+            await host.CallAsync(method);
+
+            Assert.True(File.Exists(expectedOutputFilePath));
+        }
+
         private async Task VerifyInputBinding(JobHost host, MethodInfo method)
         {
             string data = Guid.NewGuid().ToString();
@@ -170,9 +185,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
         private JobHost CreateTestJobHost()
         {
             ExplicitTypeLocator locator = new ExplicitTypeLocator(typeof(FilesTestJobs));
+            var resolver = new TestNameResolver();
+            resolver.Values.Add("test", "TestValue");
             JobHostConfiguration config = new JobHostConfiguration
             {
-                TypeLocator = locator
+                TypeLocator = locator,
+                NameResolver = resolver
             };
 
             FilesConfiguration filesConfig = new FilesConfiguration
@@ -217,6 +235,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
             {
                 Processed.Add(name);
                 file.Close();
+            }
+
+            [NoAutomaticTrigger]
+            public static void BindUsingNameResolver(
+                [File(OutputTestPath + @"\%test%.txt", FileAccess.Write)] out string output)
+            {
+                output = "Test";
             }
 
             public static void BindToStringOutput(

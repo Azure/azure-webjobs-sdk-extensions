@@ -93,11 +93,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Bindings\SendGridBinding.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SendGridConfiguration.cs" />
-    <Compile Include="SendGridJobHostConfigurationExtensions.cs" />
+    <Compile Include="Config\SendGridConfiguration.cs" />
+    <Compile Include="Config\SendGridJobHostConfigurationExtensions.cs" />
     <Compile Include="SendGridAttribute.cs" />
-    <Compile Include="SendGridAttributeBindingProvider.cs" />
+    <Compile Include="Bindings\SendGridAttributeBindingProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

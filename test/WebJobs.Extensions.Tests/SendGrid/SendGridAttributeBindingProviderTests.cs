@@ -12,17 +12,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.SendGrid
         public void ParseFromAddress_Success()
         {
             MailAddress address = null;
-            SendGridAttributeBindingProvider.SendGridBinding.ParseFromAddress("test@test.com", out address);
+            SendGridBinding.ParseFromAddress("test@test.com", out address);
             Assert.Equal("test@test.com", address.Address);
             Assert.Equal(string.Empty, address.DisplayName);
 
             address = null;
-            SendGridAttributeBindingProvider.SendGridBinding.ParseFromAddress("test@test.com:Test Account", out address);
+            SendGridBinding.ParseFromAddress("test@test.com:Test Account", out address);
             Assert.Equal("test@test.com", address.Address);
             Assert.Equal("Test Account", address.DisplayName);
 
             address = null;
-            SendGridAttributeBindingProvider.SendGridBinding.ParseFromAddress("test@test.com:Test Acco:unt", out address);
+            SendGridBinding.ParseFromAddress("test@test.com:Test Acco:unt", out address);
             Assert.Equal("test@test.com", address.Address);
             Assert.Equal("Test Acco:unt", address.DisplayName);
         }
@@ -33,7 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.SendGrid
         public void ParseFromAddress_Failure(string value)
         {
             MailAddress address = null;
-            bool result = SendGridAttributeBindingProvider.SendGridBinding.ParseFromAddress(value, out address);
+            bool result = SendGridBinding.ParseFromAddress(value, out address);
             Assert.False(result);
             Assert.Null(address);
         }

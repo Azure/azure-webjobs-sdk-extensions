@@ -66,7 +66,7 @@ namespace Microsoft.Azure.WebJobs
 
                 context.Config.RegisterBindingExtensions(
                     new FileTriggerAttributeBindingProvider(_filesConfig, context.Trace),
-                    new FileAttributeBindingProvider(_filesConfig));
+                    new FileAttributeBindingProvider(_filesConfig, context.Config.NameResolver));
             }
         }
     }

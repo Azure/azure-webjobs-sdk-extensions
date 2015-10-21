@@ -15,12 +15,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
     {
         private readonly FilesConfiguration _config;
         private readonly ParameterInfo _parameter;
+        private readonly BindablePath _bindablePath;
         private readonly FileAttribute _attribute;
 
-        public FileBinding(FilesConfiguration config, ParameterInfo parameter)
+        public FileBinding(FilesConfiguration config, ParameterInfo parameter, BindablePath bindablePath)
         {
             _config = config;
             _parameter = parameter;
+            _bindablePath = bindablePath;
             _attribute = _parameter.GetCustomAttribute<FileAttribute>(inherit: false);
         }
 
@@ -36,14 +38,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 throw new ArgumentNullException("context");
             }
 
-            FileInfo fileInfo = null;
-            if (context != null)
-            {
-                BindablePath path = new BindablePath(_attribute.Path);
-                string boundFileName = path.Bind(context.BindingData);
-                string filePath = Path.Combine(_config.RootPath, boundFileName);
-                fileInfo = new FileInfo(filePath);
-            }
+            string boundFileName = _bindablePath.Bind(context.BindingData);
+            string filePath = Path.Combine(_config.RootPath, boundFileName);
+            FileInfo fileInfo = new FileInfo(filePath);
 
             return BindAsync(fileInfo, context.ValueContext);
         }

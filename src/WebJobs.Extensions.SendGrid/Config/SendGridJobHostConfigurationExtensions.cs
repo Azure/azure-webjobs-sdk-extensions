@@ -48,7 +48,7 @@ namespace Microsoft.Azure.WebJobs
                     throw new ArgumentNullException("context");
                 }
 
-                context.Config.RegisterBindingExtension(new SendGridAttributeBindingProvider(_sendGridConfig));
+                context.Config.RegisterBindingExtension(new SendGridAttributeBindingProvider(_sendGridConfig, context.Config.NameResolver));
             }
         }
     }

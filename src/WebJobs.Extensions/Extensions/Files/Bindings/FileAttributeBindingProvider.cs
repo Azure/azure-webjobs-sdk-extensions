@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Framework;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
@@ -16,14 +17,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
     internal class FileAttributeBindingProvider : IBindingProvider
     {
         private readonly FilesConfiguration _config;
+        private readonly INameResolver _nameResolver;
 
-        public FileAttributeBindingProvider(FilesConfiguration config)
+        public FileAttributeBindingProvider(FilesConfiguration config, INameResolver nameResolver)
         {
             if (config == null)
             {
                 throw new ArgumentNullException("config");
             }
+            if (nameResolver == null)
+            {
+                throw new ArgumentNullException("nameResolver");
+            }
+
             _config = config;
+            _nameResolver = nameResolver;
         }
 
         /// <inheritdoc/>
@@ -42,13 +50,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 return Task.FromResult<IBinding>(null);
             }
 
+            // first, verify the file path binding (if it contains binding parameters)
+            string path = attribute.Path;
+            if (_nameResolver != null)
+            {
+                path = _nameResolver.ResolveWholeString(path);
+            }
+            BindablePath bindablePath = new BindablePath(path);
+            bindablePath.ValidateContractCompatibility(context.BindingDataContract);
+
             if (!CanBind(context))
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 
                     "Can't bind FileAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            return Task.FromResult<IBinding>(new FileBinding(_config, parameter));
+            return Task.FromResult<IBinding>(new FileBinding(_config, parameter, bindablePath));
         }
 
         private static bool CanBind(BindingProviderContext context)
@@ -58,15 +75,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 throw new ArgumentNullException("context");
             }
 
-            // first, verify the file path binding (if it contains binding parameters)
-            ParameterInfo parameter = context.Parameter;
-            FileAttribute attribute = parameter.GetCustomAttribute<FileAttribute>(inherit: false);
-            BindablePath path = new BindablePath(attribute.Path);
-            path.ValidateContractCompatibility(context.BindingDataContract);
-
             // next, verify that the type is one of the types we support
             IEnumerable<Type> types = StreamValueBinder.SupportedTypes.Union(new Type[] { typeof(FileStream), typeof(FileInfo) });
-            return ValueBinder.MatchParameterType(parameter, types);
+            return ValueBinder.MatchParameterType(context.Parameter, types);
         }
     }
 }
