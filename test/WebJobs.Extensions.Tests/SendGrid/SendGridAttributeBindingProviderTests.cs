@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System.Net.Mail;
+using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.SendGrid

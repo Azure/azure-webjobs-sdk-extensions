@@ -5,7 +5,7 @@ using System;
 using System.Configuration;
 using System.Net.Mail;
 
-namespace Microsoft.Azure.WebJobs.Extensions
+namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
 {
     /// <summary>
     /// Defines the configuration options for the SendGrid binding.

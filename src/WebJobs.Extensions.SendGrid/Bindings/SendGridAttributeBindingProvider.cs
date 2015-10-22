@@ -7,7 +7,9 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 
-namespace Microsoft.Azure.WebJobs.Extensions
+using SendGridMessage = SendGrid.SendGridMessage;
+
+namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
 {
     internal class SendGridAttributeBindingProvider : IBindingProvider
     {
@@ -34,8 +36,8 @@ namespace Microsoft.Azure.WebJobs.Extensions
                 return Task.FromResult<IBinding>(null);
             }
 
-            if (context.Parameter.ParameterType != typeof(SendGrid.SendGridMessage) &&
-                context.Parameter.ParameterType != typeof(SendGrid.SendGridMessage).MakeByRefType())
+            if (context.Parameter.ParameterType != typeof(SendGridMessage) &&
+                context.Parameter.ParameterType != typeof(SendGridMessage).MakeByRefType())
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 
                     "Can't bind SendGridAttribute to type '{0}'.", parameter.ParameterType));

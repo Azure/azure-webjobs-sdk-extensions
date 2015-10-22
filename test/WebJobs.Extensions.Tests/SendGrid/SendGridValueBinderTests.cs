@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using SendGrid;
 using Xunit;
 
-using SendGridValueBinder = Microsoft.Azure.WebJobs.Extensions.SendGridBinding.SendGridValueBinder;
+using SendGridValueBinder = Microsoft.Azure.WebJobs.Extensions.SendGrid.SendGridBinding.SendGridValueBinder;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.SendGrid
 {

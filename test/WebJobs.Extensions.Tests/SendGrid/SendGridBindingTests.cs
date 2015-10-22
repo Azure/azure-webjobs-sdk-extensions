@@ -7,12 +7,11 @@ using System.Linq;
 using System.Net.Mail;
 using System.Reflection;
 using System.Threading;
+using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using SendGrid;
 using Xunit;
-
-using SendGridBinding = Microsoft.Azure.WebJobs.Extensions.SendGridBinding;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.SendGrid
 {
