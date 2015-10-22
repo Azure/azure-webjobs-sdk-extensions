@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Net.Mail;
 
 namespace Microsoft.Azure.WebJobs
 {
@@ -10,6 +9,11 @@ namespace Microsoft.Azure.WebJobs
     /// Binds a function parameter to a SendGridMessage that will automatically be
     /// sent when the function completes.
     /// </summary>
+    /// <remarks>
+    /// The method parameter can be of type <see cref="SendGrid.SendGridMessage"/> or a reference
+    /// to one ('ref' parameter). When using a reference parameter, you can indicate that the message
+    /// should not be sent by setting it to <see langword="null"/> before your job function returns.
+    /// </remarks>
     [AttributeUsage(AttributeTargets.Parameter)]
     public sealed class SendGridAttribute : Attribute
     {

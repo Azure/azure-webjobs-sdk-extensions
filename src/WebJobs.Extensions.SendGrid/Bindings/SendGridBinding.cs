@@ -194,6 +194,13 @@ namespace Microsoft.Azure.WebJobs.Extensions
 
             public async Task SetValueAsync(object value, CancellationToken cancellationToken)
             {
+                if (value == null)
+                {
+                    // if this is a 'ref' binding and the user set the parameter to null, that
+                    // signals that they don't want us to send the message
+                    return;
+                }
+
                 if (_message.To == null || _message.To.Length == 0)
                 {
                     throw new InvalidOperationException("A 'To' address must be specified for the message.");

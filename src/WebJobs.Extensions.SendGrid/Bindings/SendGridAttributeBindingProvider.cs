@@ -34,7 +34,8 @@ namespace Microsoft.Azure.WebJobs.Extensions
                 return Task.FromResult<IBinding>(null);
             }
 
-            if (context.Parameter.ParameterType != typeof(SendGrid.SendGridMessage))
+            if (context.Parameter.ParameterType != typeof(SendGrid.SendGridMessage) &&
+                context.Parameter.ParameterType != typeof(SendGrid.SendGridMessage).MakeByRefType())
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 
                     "Can't bind SendGridAttribute to type '{0}'.", parameter.ParameterType));
