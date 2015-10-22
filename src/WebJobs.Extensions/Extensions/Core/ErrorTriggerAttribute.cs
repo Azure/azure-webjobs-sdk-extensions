@@ -19,7 +19,7 @@ namespace Microsoft.Azure.WebJobs
     /// <item><description><see cref="TraceEvent"/></description></item>
     /// </list>
     /// </remarks>
-    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Class)]
     public sealed class ErrorTriggerAttribute : Attribute
     {
         private string _throttle;

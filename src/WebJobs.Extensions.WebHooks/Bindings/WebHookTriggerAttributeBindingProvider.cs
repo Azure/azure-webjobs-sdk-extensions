@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
@@ -37,8 +38,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
                 return Task.FromResult<ITriggerBinding>(null);
             }
 
-            // Can bind to user types, HttpRequestMessage, WebHookContext, and all the types supported by StreamValueBinder
-            IEnumerable<Type> supportedTypes = StreamValueBinder.SupportedTypes.Union(new Type[] { typeof(HttpRequestMessage), typeof(WebHookContext) });
+            // Can bind to user types, HttpRequestMessage, WebHookContext, and all the Read
+            // Types supported by StreamValueBinder
+            IEnumerable<Type> supportedTypes = StreamValueBinder.GetSupportedTypes(FileAccess.Read)
+                .Union(new Type[] { typeof(HttpRequestMessage), typeof(WebHookContext) });
             bool isSupportedTypeBinding = ValueBinder.MatchParameterType(parameter, supportedTypes);
             bool isUserTypeBinding = !isSupportedTypeBinding && WebHookTriggerBinding.IsValidUserType(parameter.ParameterType);
             if (!isSupportedTypeBinding && !isUserTypeBinding)

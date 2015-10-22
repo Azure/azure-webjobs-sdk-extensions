@@ -22,8 +22,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
         /// <summary>
         /// Constructs a new instance
         /// </summary>
-        /// <param name="type"></param>
-        /// <param name="bindStepOrder"></param>
+        /// <param name="type">The <see cref="Type"/> of the value.</param>
+        /// <param name="bindStepOrder">The <see cref="BindStepOrder"/>.</param>
         protected ValueBinder(Type type, BindStepOrder bindStepOrder = BindStepOrder.Default)
         {
             _type = type;
@@ -61,11 +61,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
         /// <param name="parameter">The parameter to check.</param>
         /// <param name="types">The set of types to check against.</param>
         /// <returns>True if a match is found, false otherwise.</returns>
-        public static bool MatchParameterType(ParameterInfo parameter, params Type[] types)
+        public static bool MatchParameterType(ParameterInfo parameter, IEnumerable<Type> types)
         {
             if (parameter == null)
             {
                 throw new ArgumentNullException("parameter");
+            }
+            if (types == null)
+            {
+                throw new ArgumentNullException("types");
             }
 
             if (parameter.IsOut)
@@ -76,23 +80,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
             {
                 return types.Contains(parameter.ParameterType);
             }
-        }
-
-        /// <summary>
-        /// Determines whether the Type of the specified parameter matches one of the specified
-        /// types.
-        /// </summary>
-        /// <param name="parameter">The parameter to check.</param>
-        /// <param name="types">The set of types to check against.</param>
-        /// <returns>True if a match is found, false otherwise.</returns>
-        public static bool MatchParameterType(ParameterInfo parameter, IEnumerable<Type> types)
-        {
-            if (types == null)
-            {
-                throw new ArgumentNullException("types");
-            }
-
-            return MatchParameterType(parameter, types.ToArray());
         }
     }
 }

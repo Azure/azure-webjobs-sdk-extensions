@@ -50,7 +50,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             }
 
             // next, verify that the type is one of the types we support
-            IEnumerable<Type> types = StreamValueBinder.SupportedTypes.Union(new Type[] { typeof(FileStream), typeof(FileSystemEventArgs), typeof(FileInfo) });
+            IEnumerable<Type> types = StreamValueBinder.GetSupportedTypes(FileAccess.Read)
+                .Union(new Type[] { typeof(FileStream), typeof(FileSystemEventArgs), typeof(FileInfo) });
             if (!ValueBinder.MatchParameterType(context.Parameter, types))
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 

@@ -60,25 +60,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             BindingTemplate bindingTemplate = BindingTemplate.FromString(path);
             bindingTemplate.ValidateContractCompatibility(context.BindingDataContract);
 
-            if (!CanBind(context))
+            IEnumerable<Type> types = StreamValueBinder.GetSupportedTypes(attribute.Access)
+                .Union(new Type[] { typeof(FileStream), typeof(FileInfo) });
+            if (!ValueBinder.MatchParameterType(context.Parameter, types))
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 
                     "Can't bind FileAttribute to type '{0}'.", parameter.ParameterType));
             }
 
             return Task.FromResult<IBinding>(new FileBinding(_config, parameter, bindingTemplate));
-        }
-
-        private static bool CanBind(BindingProviderContext context)
-        {
-            if (context == null)
-            {
-                throw new ArgumentNullException("context");
-            }
-
-            // next, verify that the type is one of the types we support
-            IEnumerable<Type> types = StreamValueBinder.SupportedTypes.Union(new Type[] { typeof(FileStream), typeof(FileInfo) });
-            return ValueBinder.MatchParameterType(context.Parameter, types);
         }
     }
 }

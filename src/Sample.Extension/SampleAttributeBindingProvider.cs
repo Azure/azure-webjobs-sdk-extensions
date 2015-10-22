@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
@@ -31,7 +32,8 @@ namespace Sample.Extension
             }
 
             // TODO: Include any other parameter types this binding supports in this check
-            if (!ValueBinder.MatchParameterType(context.Parameter, StreamValueBinder.SupportedTypes))
+            IEnumerable<Type> supportedTypes = StreamValueBinder.GetSupportedTypes(FileAccess.ReadWrite);
+            if (!ValueBinder.MatchParameterType(context.Parameter, supportedTypes))
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 
                     "Can't bind SampleAttribute to type '{0}'.", parameter.ParameterType));

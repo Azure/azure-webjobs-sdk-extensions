@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -17,6 +18,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
     /// </summary>
     public abstract class StreamValueBinder : ValueBinder
     {
+        // collection of Types that this binder supports binding
+        // input parameters to
+        private static readonly Type[] ReadAccessTypes = new Type[]
+        {
+            typeof(Stream),
+            typeof(TextReader),
+            typeof(StreamReader),
+            typeof(string),
+            typeof(byte[])
+        };
+
+        // collection of Types that this binder supports binding
+        // output parameters to
+        private static readonly Type[] WriteAccessTypes = new Type[]
+        {
+            typeof(Stream),
+            typeof(TextWriter),
+            typeof(StreamWriter),
+            typeof(string),
+            typeof(byte[])
+        };
         private readonly ParameterInfo _parameter;
 
         /// <summary>
@@ -31,24 +53,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
         }
 
         /// <summary>
-        /// Gets the set of Types this binder supports. I.e., from the base stream, this binder
-        /// will handle conversions to the other types.
+        /// Gets the set of Types this binder supports based on the specified <see cref="FileAccess"/>. 
+        /// From the base stream, this binder will handle conversions to the other types.
         /// </summary>
-        public static IEnumerable<Type> SupportedTypes
+        public static IEnumerable<Type> GetSupportedTypes(FileAccess access)
         {
-            get
+            IEnumerable<Type> supportedTypes = Enumerable.Empty<Type>();
+
+            if (access.HasFlag(FileAccess.Read))
             {
-                return new Type[] 
-                { 
-                    typeof(Stream), 
-                    typeof(TextWriter), 
-                    typeof(StreamWriter), 
-                    typeof(TextReader), 
-                    typeof(StreamReader), 
-                    typeof(string), 
-                    typeof(byte[]) 
-                };
+                supportedTypes = supportedTypes.Union(ReadAccessTypes);
             }
+
+            if (access.HasFlag(FileAccess.Write))
+            {
+                supportedTypes = supportedTypes.Union(WriteAccessTypes);
+            }
+
+            return supportedTypes.Distinct();
         }
 
         /// <summary>
