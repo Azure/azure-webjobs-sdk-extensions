@@ -7,9 +7,9 @@ using System.Net.Mail;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs.Extensions.Framework;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
+using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using SendGrid;
 
@@ -22,10 +22,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
         private readonly SendGridConfiguration _config;
         private readonly INameResolver _nameResolver;
         private readonly Web _sendGrid;
-        private readonly BindablePath _toFieldBinding;
-        private readonly BindablePath _fromFieldBinding;
-        private readonly BindablePath _subjectFieldBinding;
-        private readonly BindablePath _textFieldBinding;
+        private readonly BindingTemplate _toFieldBindingTemplate;
+        private readonly BindingTemplate _fromFieldBindingTemplate;
+        private readonly BindingTemplate _subjectFieldBindingTemplate;
+        private readonly BindingTemplate _textFieldBindingTemplate;
 
         public SendGridBinding(ParameterInfo parameter, SendGridAttribute attribute, SendGridConfiguration config, INameResolver nameResolver, BindingProviderContext context)
         {
@@ -38,22 +38,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
 
             if (!string.IsNullOrEmpty(_attribute.To))
             {
-                _toFieldBinding = CreateBindablePath(_attribute.To, context.BindingDataContract);
+                _toFieldBindingTemplate = CreateBindingTemplate(_attribute.To, context.BindingDataContract);
             }
 
             if (!string.IsNullOrEmpty(_attribute.From))
             {
-                _fromFieldBinding = CreateBindablePath(_attribute.From, context.BindingDataContract);
+                _fromFieldBindingTemplate = CreateBindingTemplate(_attribute.From, context.BindingDataContract);
             }
 
             if (!string.IsNullOrEmpty(_attribute.Subject))
             {
-                _subjectFieldBinding = CreateBindablePath(_attribute.Subject, context.BindingDataContract);
+                _subjectFieldBindingTemplate = CreateBindingTemplate(_attribute.Subject, context.BindingDataContract);
             }
 
             if (!string.IsNullOrEmpty(_attribute.Text))
             {
-                _textFieldBinding = CreateBindablePath(_attribute.Text, context.BindingDataContract);
+                _textFieldBindingTemplate = CreateBindingTemplate(_attribute.Text, context.BindingDataContract);
             }
         }
 
@@ -88,10 +88,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
         {
             SendGridMessage message = new SendGridMessage();
 
-            if (_fromFieldBinding != null)
+            if (_fromFieldBindingTemplate != null)
             {
                 MailAddress fromAddress = null;
-                string boundFromAddress = _fromFieldBinding.Bind(bindingData);
+                string boundFromAddress = _fromFieldBindingTemplate.Bind(bindingData);
                 if (!ParseFromAddress(boundFromAddress, out fromAddress))
                 {
                     throw new ArgumentException("Invalid 'From' address specified");
@@ -106,9 +106,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
                 }
             }
 
-            if (_toFieldBinding != null)
+            if (_toFieldBindingTemplate != null)
             {
-                message.AddTo(_toFieldBinding.Bind(bindingData));
+                message.AddTo(_toFieldBindingTemplate.Bind(bindingData));
             }
             else
             {
@@ -118,29 +118,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
                 }
             }
 
-            if (_subjectFieldBinding != null)
+            if (_subjectFieldBindingTemplate != null)
             {
-                message.Subject = _subjectFieldBinding.Bind(bindingData);
+                message.Subject = _subjectFieldBindingTemplate.Bind(bindingData);
             }
 
-            if (_textFieldBinding != null)
+            if (_textFieldBindingTemplate != null)
             {
-                message.Text = _textFieldBinding.Bind(bindingData);
+                message.Text = _textFieldBindingTemplate.Bind(bindingData);
             }
 
             return message;
         }
 
-        private BindablePath CreateBindablePath(string pattern, IReadOnlyDictionary<string, Type> bindingDataContract)
+        private BindingTemplate CreateBindingTemplate(string pattern, IReadOnlyDictionary<string, Type> bindingDataContract)
         {
             if (_nameResolver != null)
             {
                 pattern = _nameResolver.ResolveWholeString(pattern);
             }
-            BindablePath bindablePath = new BindablePath(pattern);
-            bindablePath.ValidateContractCompatibility(bindingDataContract);
+            BindingTemplate bindingTemplate = BindingTemplate.FromString(pattern);
+            bindingTemplate.ValidateContractCompatibility(bindingDataContract);
 
-            return bindablePath;
+            return bindingTemplate;
         }
 
         internal static bool ParseFromAddress(string from, out MailAddress fromAddress)

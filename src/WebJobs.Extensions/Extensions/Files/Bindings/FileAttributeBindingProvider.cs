@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Framework;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
+using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
@@ -56,8 +57,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             {
                 path = _nameResolver.ResolveWholeString(path);
             }
-            BindablePath bindablePath = new BindablePath(path);
-            bindablePath.ValidateContractCompatibility(context.BindingDataContract);
+            BindingTemplate bindingTemplate = BindingTemplate.FromString(path);
+            bindingTemplate.ValidateContractCompatibility(context.BindingDataContract);
 
             if (!CanBind(context))
             {
@@ -65,7 +66,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                     "Can't bind FileAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            return Task.FromResult<IBinding>(new FileBinding(_config, parameter, bindablePath));
+            return Task.FromResult<IBinding>(new FileBinding(_config, parameter, bindingTemplate));
         }
 
         private static bool CanBind(BindingProviderContext context)

@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Framework;
 using Microsoft.Azure.WebJobs.Host.Bindings;
+using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
@@ -15,14 +16,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
     {
         private readonly FilesConfiguration _config;
         private readonly ParameterInfo _parameter;
-        private readonly BindablePath _bindablePath;
+        private readonly BindingTemplate _bindingTemplate;
         private readonly FileAttribute _attribute;
 
-        public FileBinding(FilesConfiguration config, ParameterInfo parameter, BindablePath bindablePath)
+        public FileBinding(FilesConfiguration config, ParameterInfo parameter, BindingTemplate bindingTemplate)
         {
             _config = config;
             _parameter = parameter;
-            _bindablePath = bindablePath;
+            _bindingTemplate = bindingTemplate;
             _attribute = _parameter.GetCustomAttribute<FileAttribute>(inherit: false);
         }
 
@@ -38,7 +39,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 throw new ArgumentNullException("context");
             }
 
-            string boundFileName = _bindablePath.Bind(context.BindingData);
+            string boundFileName = _bindingTemplate.Bind(context.BindingData);
             string filePath = Path.Combine(_config.RootPath, boundFileName);
             FileInfo fileInfo = new FileInfo(filePath);
 
