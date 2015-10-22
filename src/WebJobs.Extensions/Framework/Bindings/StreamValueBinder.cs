@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Framework
+namespace Microsoft.Azure.WebJobs.Extensions.Bindings
 {
     /// <summary>
     /// Flexible binder that can handle automatic mappings from <see cref="Stream"/> to various other types.

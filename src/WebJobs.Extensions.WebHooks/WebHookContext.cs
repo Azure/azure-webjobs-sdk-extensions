@@ -4,7 +4,7 @@
 using System;
 using System.Net.Http;
 
-namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
+namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
     /// A class providing execution context for a WebHook function invocations.

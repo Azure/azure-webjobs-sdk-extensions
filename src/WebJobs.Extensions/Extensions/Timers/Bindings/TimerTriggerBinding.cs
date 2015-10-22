@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs.Extensions.Timers.Config;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Listeners;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -54,7 +53,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             }
 
             IValueProvider valueProvider = new ValueProvider(timerInfo);
-            IReadOnlyDictionary<string, object> bindingData = CreateBindingData(timerInfo);
+            IReadOnlyDictionary<string, object> bindingData = CreateBindingData();
 
             return Task.FromResult<ITriggerData>(new TriggerData(valueProvider, bindingData));
         }
@@ -89,7 +88,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             return contract;
         }
 
-        private IReadOnlyDictionary<string, object> CreateBindingData(TimerInfo timerInfo)
+        private IReadOnlyDictionary<string, object> CreateBindingData()
         {
             Dictionary<string, object> bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
             bindingData.Add("TimerTrigger", DateTime.UtcNow.ToString());

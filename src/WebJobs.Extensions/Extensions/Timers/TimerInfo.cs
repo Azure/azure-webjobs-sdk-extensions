@@ -4,8 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Microsoft.Azure.WebJobs.Extensions.Timers;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Timers
+namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
     /// Provides access to timer information for jobs triggered by <see cref="TimerTriggerAttribute"/>

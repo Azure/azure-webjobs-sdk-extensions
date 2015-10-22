@@ -4,7 +4,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Timers.Scheduling
+namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
     /// <summary>
     /// This class is used to monitor and record schedule occurrences. It stores

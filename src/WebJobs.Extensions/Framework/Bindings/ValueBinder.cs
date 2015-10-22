@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Framework
+namespace Microsoft.Azure.WebJobs.Extensions.Bindings
 {
     /// <summary>
     /// Base class for value binders.

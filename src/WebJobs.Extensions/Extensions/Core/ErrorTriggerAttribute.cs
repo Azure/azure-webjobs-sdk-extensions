@@ -3,9 +3,10 @@
 
 using System;
 using System.Collections.Generic;
+using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Host;
 
-namespace Microsoft.Azure.WebJobs.Extensions
+namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
     /// Trigger for invoking jobs based on error events.

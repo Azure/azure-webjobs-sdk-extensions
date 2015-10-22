@@ -13,7 +13,7 @@ namespace Microsoft.Azure.WebJobs
     /// The method parameter type can be one of the following:
     /// <list type="bullet">
     /// <item><description><see cref="System.Net.Http.HttpRequestMessage"/></description></item>
-    /// <item><description><see cref="Microsoft.Azure.WebJobs.Extensions.WebHooks.WebHookContext"/></description></item>
+    /// <item><description><see cref="WebHookContext"/></description></item>
     /// <item><description><see cref="string"/></description></item>
     /// <item><description><see cref="T:byte[]"/></description></item>
     /// <item><description><see cref="System.IO.Stream"/></description></item>

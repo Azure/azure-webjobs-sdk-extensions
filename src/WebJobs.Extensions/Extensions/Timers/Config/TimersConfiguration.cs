@@ -2,9 +2,8 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.Azure.WebJobs.Extensions.Timers.Scheduling;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Timers.Config
+namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
     /// <summary>
     /// Configuration object for <see cref="TimerTriggerAttribute"/> decorated job functions.

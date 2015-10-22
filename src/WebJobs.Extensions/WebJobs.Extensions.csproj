@@ -118,8 +118,8 @@
     <Compile Include="Extensions\Files\Listener\StatusFileEntry.cs" />
     <Compile Include="Extensions\Files\Bindings\FileTriggerAttributeBindingProvider.cs" />
     <Compile Include="Framework\JobHostConfigurationExtensions.cs" />
-    <Compile Include="Framework\StreamValueBinder.cs" />
-    <Compile Include="Framework\ValueBinder.cs" />
+    <Compile Include="Framework\Bindings\StreamValueBinder.cs" />
+    <Compile Include="Framework\Bindings\ValueBinder.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Extensions\Timers\Bindings\TimerTriggerBinding.cs" />
