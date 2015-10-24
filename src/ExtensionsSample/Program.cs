@@ -60,6 +60,13 @@ namespace ExtensionsSample
             host.Call(typeof(SampleSamples).GetMethod("Sample_BindToString"));
             host.Call(typeof(TableSamples).GetMethod("CustomBinding"));
 
+            // When running in Azure Web Apps, a JobHost will gracefully shut itself
+            // down, ensuring that all listeners are stopped, etc. For this sample,
+            // we want to ensure that same behavior when the console app window is
+            // closed. This ensures that Singleton locks that are taken are released
+            // immediately, etc.
+            ShutdownHandler.Register(() => { host.Stop(); });
+
             host.RunAndBlock();
         }
 
