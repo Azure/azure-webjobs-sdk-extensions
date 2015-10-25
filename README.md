@@ -1,6 +1,6 @@
 ﻿Azure WebJobs SDK Extensions
 ===
-This repo contains binding extensions for the **Azure WebJobs SDK**. See the [Azure WebJobs SDK repo](https://github.com/Azure/azure-webjobs-sdk) for more information. The binding extensions in this repo are available as the **Microsoft.Azure.WebJobs.Extensions** [nuget package](http://www.nuget.org/packages/Microsoft.Azure.WebJobs.Extensions). Note: some of the extensions in this repo (like SendGrid, WebHooks, etc.) live in their own separate nuget packages following a standard naming scheme (e.g. Microsoft.Azure.WebJobs.Extensions.SendGrid).
+This repo contains binding extensions for the **Azure WebJobs SDK**. See the [Azure WebJobs SDK repo](https://github.com/Azure/azure-webjobs-sdk) for more information. The binding extensions in this repo are available as the **Microsoft.Azure.WebJobs.Extensions** [nuget package](http://www.nuget.org/packages/Microsoft.Azure.WebJobs.Extensions). **Note**: some of the extensions in this repo (like SendGrid, WebHooks, etc.) live in their own separate nuget packages following a standard naming scheme (e.g. Microsoft.Azure.WebJobs.Extensions.SendGrid).
 
 The [wiki](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki) contains information on how to **author your own binding extensions**. See the [Binding Extensions Overview](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Binding-Extensions-Overview) for more details. A [sample project](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Program.cs) is also provided that demonstrates the bindings in action.
 
@@ -82,7 +82,7 @@ To register the File extensions, call `config.UseFiles()` in your startup code. 
 
 ###SendGrid###
 
-A [SendGrid](https://sendgrid.com) binding that allows you to easily send emails after your job functions complete. Simply add your SendGrid ApiKey as an app setting or environment variable (use setting name `AzureWebJobsSendGridApiKey`), and you can write functions like the below which demonstrates full route binding for message fields. In this scenario, an email is sent each time a new order is successfully placed. The message fields are automatically bound to the `CustomerEmail/CustomerName/OrderId` properties of the Order object that triggered the function.
+A [SendGrid](https://sendgrid.com) binding that allows you to easily send emails after your job functions complete. This extension lives in the **Microsoft.Azure.WebJobs.Extensions.SendGrid** package. Simply add your SendGrid ApiKey as an app setting or environment variable (use setting name `AzureWebJobsSendGridApiKey`), and you can write functions like the below which demonstrates full route binding for message fields. In this scenario, an email is sent each time a new order is successfully placed. The message fields are automatically bound to the `CustomerEmail/CustomerName/OrderId` properties of the Order object that triggered the function.
 
 ```csharp
 public static void ProcessOrder(
@@ -160,7 +160,7 @@ To register the Error extensions, call `config.UseCore()` in your startup code. 
 
 ###WebHooks###
 
-A WebHook trigger that allows you to write job functions that can be invoked by HTTP requests. Here's an example job function that will be invoked whenever an issue in a source GitHub repo is created or modified:
+A WebHook trigger that allows you to write job functions that can be invoked by HTTP requests. This extension lives in the **Microsoft.Azure.WebJobs.Extensions.WebHooks** package. Here's an example job function that will be invoked whenever an issue in a source GitHub repo is created or modified:
 
 ```csharp
 public static void GitHub([WebHookTrigger] string body, TraceWriter trace)
@@ -172,7 +172,7 @@ public static void GitHub([WebHookTrigger] string body, TraceWriter trace)
 }
 ```
 
-The web hook URL used to invoke the function is configured in the source repo ([more on GitHub web hooks here](https://developer.github.com/webhooks/)). Details on how to construct this URL can be found below. You can also find a **complete step-by-step walkthrough** for setting up WebJob WebHooks [here](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/WebHooks-Walkthrough). Note that the WebHooks extensions live in their own separate nuget package **Microsoft.Azure.WebJobs.Extensions.WebHooks**.
+The web hook URL used to invoke the function is configured in the source repo ([more on GitHub web hooks here](https://developer.github.com/webhooks/)). Details on how to construct this URL can be found below. You can also find a **complete step-by-step walkthrough** for setting up WebJob WebHooks [here](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/WebHooks-Walkthrough).
 
 GitHub is just one example. Any event source supporting WebHooks can be used. Another popular source is [IFTTT](https://ifttt.com/). Using IFTTT ("If This, Then That"), you can configure your webjob to be invoked when stock prices change, on events coming from Facebook, Instagram, YouTube, EBay etc., or even when someone alters your Nest thermostat setting! WebHooks opens the WebJobs SDK up to a huge new set of triggers, complimenting the existing first class SDK triggers (and extension triggers). Here's an IFTTT triggered function that will get invoked whenever a new article is added to [Pocket](https://getpocket.com/) in the browser for later reading. The function demonstrates model binding to a custom type, and pushes the articles to blob storage:
 
