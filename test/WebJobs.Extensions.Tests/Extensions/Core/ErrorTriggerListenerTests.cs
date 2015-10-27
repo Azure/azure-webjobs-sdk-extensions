@@ -59,7 +59,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             TraceMonitor traceMonitor = ErrorTriggerListener.CreateTraceMonitor(parameter, _mockExecutor.Object);
 
             TraceFilter.AnonymousTraceFilter traceFilter = (TraceFilter.AnonymousTraceFilter)traceMonitor.Filters.Single();
-            Assert.Equal("WebJob failure detected.", traceFilter.Message);
+            Assert.Equal("One or more WebJob errors have occurred.", traceFilter.Message);
 
             int notification = 0;
             traceMonitor.Subscribe(p => notification++);

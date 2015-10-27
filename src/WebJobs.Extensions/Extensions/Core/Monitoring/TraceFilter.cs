@@ -84,7 +84,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
             public AnonymousTraceFilter(Func<TraceEvent, bool> predicate, string message = null)
             {
                 _predicate = predicate;
-                _message = message ?? "WebJob failure detected.";
+                _message = message ?? "One or more WebJob errors have occurred.";
             }
 
             public override string Message

@@ -64,7 +64,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             CallSafe(host, method);
             Assert.NotNull(instance.TraceFilter);
 
-            Assert.Equal("WebJob failure detected.", instance.TraceFilter.Message);
+            Assert.Equal("One or more WebJob errors have occurred.", instance.TraceFilter.Message);
             Assert.Equal(1, instance.TraceFilter.Traces.Count);
         }
 

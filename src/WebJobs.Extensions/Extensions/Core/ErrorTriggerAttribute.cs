@@ -25,19 +25,21 @@ namespace Microsoft.Azure.WebJobs
         private string _throttle;
 
         /// <summary>
-        /// Indicates that the error handler should be called on every error.
+        /// Constructs a new instance. The error handler will be called on every error.
         /// </summary>
         public ErrorTriggerAttribute()
         {
         }
 
         /// <summary>
-        /// Indicates that the error handler should be called when the specified
+        /// Constructs a new instance. The error handler will be called when the specified
         /// sliding window threshold is reached. See <see cref="SlidingWindowTraceFilter"/>
         /// for details.
         /// </summary>
-        /// <param name="window"></param>
-        /// <param name="threshold"></param>
+        /// <param name="window">The sliding window duration. Should be expressed as a
+        /// <see cref="TimeSpan"/> value (e.g. "00:30:00").</param>
+        /// <param name="threshold">The error count threshold that must be reached before
+        /// the error function is invoked.</param>
         public ErrorTriggerAttribute(string window, int threshold)
         {
             TimeSpan timeSpan;
@@ -54,10 +56,10 @@ namespace Microsoft.Azure.WebJobs
         }
 
         /// <summary>
-        /// Indicates that the error handler should be called based on the specified
+        /// Constructs a new instance. The error handler will be called based on the specified
         /// custom <see cref="TraceFilter"/>.
         /// </summary>
-        /// <param name="filterType"></param>
+        /// <param name="filterType">The <see cref="Type"/> of the custom <see cref="TraceFilter"/>.</param>
         public ErrorTriggerAttribute(Type filterType)
         {
             if (filterType == null)
@@ -68,7 +70,7 @@ namespace Microsoft.Azure.WebJobs
         }
 
         /// <summary>
-        /// Gets the custom <see cref="TraceFilter"/> type that will be used.
+        /// Gets the <see cref="Type"/> of the custom <see cref="TraceFilter"/> type that will be used.
         /// </summary>
         public Type FilterType { get; private set; }
 
@@ -86,7 +88,7 @@ namespace Microsoft.Azure.WebJobs
 
         /// <summary>
         /// Gets the notification throttle window. The function will be triggered at most once
-       /// within this window. Should be expressed as a <see cref="TimeSpan"/> value (e.g. "00:30:00").
+        /// within this window. Should be expressed as a <see cref="TimeSpan"/> value (e.g. "00:30:00").
         /// </summary>
         public string Throttle
         {

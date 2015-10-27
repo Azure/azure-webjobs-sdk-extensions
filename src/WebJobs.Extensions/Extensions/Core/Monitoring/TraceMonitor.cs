@@ -10,9 +10,9 @@ using Microsoft.Azure.WebJobs.Host;
 namespace Microsoft.Azure.WebJobs.Extensions
 {
     /// <summary>
-    /// <see cref="TraceWriter"/> that can be used to monitor the trace stream
-    /// and notify subscribers when certain filter thresholds are reached, based
-    /// on the collection of <see cref="TraceFilter"/>s and subscriptions configured.
+    /// <see cref="TraceWriter"/> that can be used to monitor the stream of trace events
+    /// and notify subscribers when certain filter thresholds are reached, based on the
+    /// collection of <see cref="TraceFilter"/>s and subscriptions configured.
     /// </summary>
     public class TraceMonitor : TraceWriter
     {
@@ -59,15 +59,23 @@ namespace Microsoft.Azure.WebJobs.Extensions
 
             try
             {
-                foreach (TraceFilter filter in Filters)
+                if (Filters.Count > 0)
                 {
-                    // trace must be passed to all filters (even if no notifications will be
-                    // performed due to throttling) to allow them to continue to accumulate their results
-                    if (filter.Filter(traceEvent))
+                    foreach (TraceFilter filter in Filters)
                     {
-                        // Notify all subscribers
-                        Notify(filter);
+                        // trace must be passed to all filters (even if no notifications will be
+                        // performed due to throttling) to allow them to continue to accumulate their results
+                        if (filter.Filter(traceEvent))
+                        {
+                            // Notify all subscribers
+                            Notify(filter);
+                        }
                     }
+                }
+                else
+                {
+                    // no filters have been configured so notify always
+                    Notify(null);
                 }
             }
             catch
@@ -79,8 +87,8 @@ namespace Microsoft.Azure.WebJobs.Extensions
         }
 
         /// <summary>
-        /// Notify all subscribers that the threshold for the
-        /// specified filter has been reached.
+        /// Notify all subscribers that the specified filter has has triggered
+        /// a notification.
         /// </summary>
         protected virtual void Notify(TraceFilter filter)
         {

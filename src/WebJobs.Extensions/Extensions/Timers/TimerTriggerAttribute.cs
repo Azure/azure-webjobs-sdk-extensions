@@ -76,7 +76,8 @@ namespace Microsoft.Azure.WebJobs
 
         /// <summary>
         /// Gets or sets a value indicating whether the function should be invoked
-        /// immediately on startup. The configured schedule will dictate all future
+        /// immediately on startup. After the initial startup run, the function will
+        /// be run on schedule thereafter.
         /// invocations.
         /// </summary>
         public bool RunOnStartup { get; set; }
