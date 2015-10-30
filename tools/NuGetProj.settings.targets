@@ -11,7 +11,7 @@
     <When Condition=" '$(IncludeBuildNumberInVersion)' == '1'">
       <PropertyGroup>
         <WebJobsPackageVersion>$(Version)$(PrereleaseTag)-$(BUILD_NUMBER)</WebJobsPackageVersion>
-        <WebHooksPackageVersion>$(Version)-beta1$(BUILD_NUMBER)</WebHooksPackageVersion>
+        <WebHooksPackageVersion>$(Version)-beta1-$(BUILD_NUMBER)</WebHooksPackageVersion>
       </PropertyGroup>
     </When>
     <Otherwise>
