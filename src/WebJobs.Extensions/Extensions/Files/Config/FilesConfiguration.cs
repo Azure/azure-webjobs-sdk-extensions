@@ -8,12 +8,13 @@ using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
 namespace Microsoft.Azure.WebJobs.Extensions.Files
 {
     /// <summary>
-    /// Configuration object for <see cref="FileTriggerAttribute"/> decorated job functions.
+    /// Configuration object for the Files extension. Governs the behavior of functions attributed
+    /// with <see cref="FileTriggerAttribute"/> and <see cref="FileAttribute"/>.
     /// </summary>
     public class FilesConfiguration
     {
         /// <summary>
-        /// Constructs a new instance
+        /// Constructs a new instance.
         /// </summary>
         public FilesConfiguration()
         {
@@ -28,7 +29,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files
         }
 
         /// <summary>
-        /// Gets or sets the root path where file monitoring will occur.
+        /// Gets or sets the root path where files will monitoring
+        /// and created.
         /// </summary>
         public string RootPath { get; set; }
 

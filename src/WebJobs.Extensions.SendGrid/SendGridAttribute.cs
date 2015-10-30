@@ -6,7 +6,7 @@ using System;
 namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
-    /// Binds a function parameter to a SendGridMessage that will automatically be
+    /// Attribute used to binds a parameter to a SendGridMessage that will automatically be
     /// sent when the function completes.
     /// </summary>
     /// <remarks>

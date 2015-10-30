@@ -4,7 +4,7 @@
   <PropertyGroup>
     <NuSpecFile>$(MSBuildProjectName).nuspec</NuSpecFile>
     <NuGetPackageId>Microsoft.Azure.WebJobs.Extensions.WebHooks</NuGetPackageId>
-    <NuGetPackageVersion>$(WebJobsPackageVersion)</NuGetPackageVersion>
+    <NuGetPackageVersion>$(WebHooksPackageVersion)</NuGetPackageVersion>
     <NuGetPackSymbols>false</NuGetPackSymbols>
   </PropertyGroup>
   <ItemGroup>

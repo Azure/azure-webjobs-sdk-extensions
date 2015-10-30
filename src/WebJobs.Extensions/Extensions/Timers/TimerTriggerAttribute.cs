@@ -8,17 +8,18 @@ using Microsoft.Azure.WebJobs.Extensions.Timers;
 namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
-    /// Trigger attribute used to declare that a job function should be invoked periodically
-    /// based on a timer schedule. The parameter type must be <see cref="TimerInfo"/>.
+    /// Attribute used to mark a job function should be invoked periodically based on
+    /// a timer schedule. The parameter type must be <see cref="TimerInfo"/>.
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter)]
     public sealed class TimerTriggerAttribute : Attribute
     {
         /// <summary>
-        /// Constructs a new instance based on the schedule expression passed in./>
+        /// Constructs a new instance based on the schedule expression passed in.
         /// </summary>
-        /// <param name="expression">A schedule expression. This can either be a crontab expression 
-        /// <a href="http://en.wikipedia.org/wiki/Cron#CRON_expression"/> or a <see cref="TimeSpan"/> string.</param>
+        /// <param name="expression">A schedule expression. This can either be a 6 field crontab expression
+        /// <a href="http://en.wikipedia.org/wiki/Cron#CRON_expression"/> or a <see cref="TimeSpan"/>
+        /// string (e.g. "00:30:00").</param>
         public TimerTriggerAttribute(string expression)
         {
             CronSchedule cronSchedule = null;

@@ -15,7 +15,7 @@ using Newtonsoft.Json;
 namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
 {
     /// <summary>
-    /// Default file processor.
+    /// Default file processor used by <see cref="FileTriggerAttribute"/>.
     /// </summary>
     public class FileProcessor
     {
@@ -28,9 +28,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         private string _instanceId;
  
         /// <summary>
-        /// Constructs a new instance
+        /// Constructs a new instance.
         /// </summary>
-        /// <param name="context">The <see cref="FileProcessorFactoryContext"/></param>
+        /// <param name="context">The <see cref="FileProcessorFactoryContext"/> to use.</param>
         public FileProcessor(FileProcessorFactoryContext context)
         {
             if (context == null)
@@ -66,7 +66,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         }
 
         /// <summary>
-        /// Gets or sets the maximum degree of parallelism that will be used
+        /// Gets the maximum degree of parallelism that will be used
         /// when processing files concurrently.
         /// </summary>
         /// <remarks>
@@ -82,9 +82,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         }
 
         /// <summary>
-        /// Gets or sets the bounds on the maximum number of files that
-        /// can be queued up for processing at one time. When set to -1,
-        /// the work queue is unbounded.
+        /// Gets the bounds on the maximum number of files that can be queued
+        /// up for processing at one time. When set to -1, the work queue is
+        /// unbounded.
         /// </summary>
         public virtual int MaxQueueSize 
         { 
@@ -185,8 +185,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         }
 
         /// <summary>
-        /// Perform any required cleanup. This includes deleting processed files (when AutoDelete is
-        /// True), as well as discovering and reprocessing any failed files.
+        /// Perform any required cleanup. This includes deleting processed files
+        /// (when <see cref="FileTriggerAttribute.AutoDelete"/> is True), as well
+        /// as discovering and reprocessing any failed files.
         /// </summary>
         public virtual void Cleanup()
         {

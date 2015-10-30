@@ -37,8 +37,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             Assert.NotNull(instance.TraceFilter);
 
             Assert.Equal("3 events at level 'Error' or lower have occurred within time window 00:05:00.", instance.TraceFilter.Message);
-            Assert.Equal(3, instance.TraceFilter.Traces.Count);
-            foreach (TraceEvent traceEvent in instance.TraceFilter.Traces)
+            Assert.Equal(3, instance.TraceFilter.Events.Count);
+            foreach (TraceEvent traceEvent in instance.TraceFilter.Events)
             {
                 FunctionInvocationException functionException = (FunctionInvocationException)traceEvent.Exception;
                 Assert.Equal("Kaboom!", functionException.InnerException.Message);
@@ -65,7 +65,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             Assert.NotNull(instance.TraceFilter);
 
             Assert.Equal("One or more WebJob errors have occurred.", instance.TraceFilter.Message);
-            Assert.Equal(1, instance.TraceFilter.Traces.Count);
+            Assert.Equal(1, instance.TraceFilter.Events.Count);
         }
 
         [Fact]
@@ -91,7 +91,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             CallSafe(host, method);
 
             Assert.Equal("Function 'ErrorTriggerProgram_FunctionLevelHandler.ThrowB' failed.", instance.TraceFilter.Message);
-            Assert.Equal(1, instance.TraceFilter.Traces.Count);
+            Assert.Equal(1, instance.TraceFilter.Events.Count);
         }
 
         [Fact]
@@ -115,9 +115,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
 
             CallSafe(host, method);
 
-            Assert.Equal(3, instance.TraceFilter.Traces.Count);
+            Assert.Equal(3, instance.TraceFilter.Events.Count);
             Assert.Equal("3 events at level 'Error' or lower have occurred within time window 00:10:00.", instance.TraceFilter.Message);
-            Assert.True(instance.TraceFilter.Traces.All(p => p.Message == "Exception while executing function: ErrorTriggerProgram_FunctionLevelHandler_SlidingWindow.Throw"));
+            Assert.True(instance.TraceFilter.Events.All(p => p.Message == "Exception while executing function: ErrorTriggerProgram_FunctionLevelHandler_SlidingWindow.Throw"));
         }
 
         [Fact]
@@ -145,17 +145,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             Assert.Equal("Exception while executing function: ErrorTriggerProgram_GlobalCatchAllHandler.Throw", error.Message);
 
             // make sure the error handler failure is still logged
-            var traces = traceWriter.Traces;
-            Assert.Equal(8, traces.Count);
-            Assert.True(traces[0].Message.StartsWith("Executing: 'ErrorTriggerProgram_GlobalCatchAllHandler.Throw'"));
-            Assert.True(traces[1].Message.StartsWith("Executing: 'ErrorTriggerProgram_GlobalCatchAllHandler.ErrorHandler'"));
-            Assert.True(traces[2].Message.StartsWith("Exception while executing function: ErrorTriggerProgram_GlobalCatchAllHandler.ErrorHandler"));
-            Assert.Equal("Kaboom!", traces[3].Exception.InnerException.Message);
-            Assert.True(traces[3].Message.StartsWith("Executed: 'ErrorTriggerProgram_GlobalCatchAllHandler.ErrorHandler' (Failed)"));
-            Assert.True(traces[4].Message.StartsWith("  Function had errors. See Azure WebJobs SDK dashboard for details."));
-            Assert.True(traces[5].Message.StartsWith("Exception while executing function: ErrorTriggerProgram_GlobalCatchAllHandler.Throw"));
-            Assert.True(traces[6].Message.StartsWith("Executed: 'ErrorTriggerProgram_GlobalCatchAllHandler.Throw' (Failed)"));
-            Assert.True(traces[7].Message.StartsWith("  Function had errors. See Azure WebJobs SDK dashboard for details."));
+            var events = traceWriter.Events;
+            Assert.Equal(8, events.Count);
+            Assert.True(events[0].Message.StartsWith("Executing: 'ErrorTriggerProgram_GlobalCatchAllHandler.Throw'"));
+            Assert.True(events[1].Message.StartsWith("Executing: 'ErrorTriggerProgram_GlobalCatchAllHandler.ErrorHandler'"));
+            Assert.True(events[2].Message.StartsWith("Exception while executing function: ErrorTriggerProgram_GlobalCatchAllHandler.ErrorHandler"));
+            Assert.Equal("Kaboom!", events[3].Exception.InnerException.Message);
+            Assert.True(events[3].Message.StartsWith("Executed: 'ErrorTriggerProgram_GlobalCatchAllHandler.ErrorHandler' (Failed)"));
+            Assert.True(events[4].Message.StartsWith("  Function had errors. See Azure WebJobs SDK dashboard for details."));
+            Assert.True(events[5].Message.StartsWith("Exception while executing function: ErrorTriggerProgram_GlobalCatchAllHandler.Throw"));
+            Assert.True(events[6].Message.StartsWith("Executed: 'ErrorTriggerProgram_GlobalCatchAllHandler.Throw' (Failed)"));
+            Assert.True(events[7].Message.StartsWith("  Function had errors. See Azure WebJobs SDK dashboard for details."));
         }
 
         [Fact]
@@ -188,12 +188,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
 
             Assert.Equal(1, notificationCount);
 
-            var traces = traceWriter.Traces;
-            Assert.Equal(4, traces.Count);
-            Assert.True(traces[0].Message.StartsWith("Executing: 'ErrorProgram.Throw'"));
-            Assert.True(traces[1].Message.StartsWith("Exception while executing function: ErrorProgram.Throw"));
-            Assert.True(traces[2].Message.StartsWith("Executed: 'ErrorProgram.Throw' (Failed)"));
-            Assert.True(traces[3].Message.StartsWith("  Function had errors. See Azure WebJobs SDK dashboard for details."));
+            var events = traceWriter.Events;
+            Assert.Equal(4, events.Count);
+            Assert.True(events[0].Message.StartsWith("Executing: 'ErrorProgram.Throw'"));
+            Assert.True(events[1].Message.StartsWith("Exception while executing function: ErrorProgram.Throw"));
+            Assert.True(events[2].Message.StartsWith("Executed: 'ErrorProgram.Throw' (Failed)"));
+            Assert.True(events[3].Message.StartsWith("  Function had errors. See Azure WebJobs SDK dashboard for details."));
         }
 
         private void CallSafe(JobHost host, MethodInfo method)
@@ -256,7 +256,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             {
                 TraceFilter = traceFilter;
 
-                foreach (TraceEvent error in traceFilter.Traces)
+                foreach (TraceEvent error in traceFilter.Events)
                 {
                     Errors.Add(error);
                 }

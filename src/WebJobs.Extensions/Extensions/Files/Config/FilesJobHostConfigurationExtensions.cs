@@ -9,7 +9,7 @@ using Microsoft.Azure.WebJobs.Host.Config;
 namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
-    /// Extension methods for File System integration
+    /// Extension methods for registering the Files extension.
     /// </summary>
     public static class FilesJobHostConfigurationExtensions
     {

@@ -34,8 +34,8 @@ namespace ExtensionsSample
                 filesConfig.RootPath = @"c:\temp\files";
             }
             EnsureSampleDirectoriesExist(filesConfig.RootPath);
-            config.UseFiles(filesConfig);
 
+            config.UseFiles(filesConfig);
             config.UseTimers();
             config.UseSample();
             config.UseCore();

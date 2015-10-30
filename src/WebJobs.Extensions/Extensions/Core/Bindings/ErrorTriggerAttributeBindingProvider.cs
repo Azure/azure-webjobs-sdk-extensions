@@ -151,11 +151,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core
                 {
                     if (_parameter.ParameterType == typeof(TraceEvent))
                     {
-                        return _value.Traces.Last();
+                        return _value.Events.Last();
                     }
                     else if (_parameter.ParameterType == typeof(IEnumerable<TraceEvent>))
                     {
-                        return _value.Traces.AsEnumerable();
+                        return _value.Events.AsEnumerable();
                     }
                     return _value;
                 }

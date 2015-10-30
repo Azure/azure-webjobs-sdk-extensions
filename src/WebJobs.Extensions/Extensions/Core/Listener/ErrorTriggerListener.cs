@@ -158,11 +158,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core.Listener
                 }
             }
 
-            public override Collection<TraceEvent> Traces
+            public override Collection<TraceEvent> Events
             {
                 get
                 {
-                    return InnerTraceFilter.Traces;
+                    return InnerTraceFilter.Events;
                 }
             }
 

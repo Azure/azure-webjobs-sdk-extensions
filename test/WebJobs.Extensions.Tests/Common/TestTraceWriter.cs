@@ -15,14 +15,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
 
         public TestTraceWriter(TraceLevel level) : base(level)
         {
-            Traces = new Collection<TraceEvent>();
+            Events = new Collection<TraceEvent>();
         }
 
-        public Collection<TraceEvent> Traces { get; private set; }
+        public Collection<TraceEvent> Events { get; private set; }
 
         public override void Trace(TraceEvent traceEvent)
         {
-            Traces.Add(traceEvent);
+            Events.Add(traceEvent);
         }
     }
 }

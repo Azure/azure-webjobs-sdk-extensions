@@ -20,7 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
         private readonly Func<TraceEvent, bool> _filter;
         private readonly object _syncLock = new object();
         private readonly string _notificationMessage;
-        private Collection<TraceEvent> _traces = new Collection<TraceEvent>();
+        private Collection<TraceEvent> _events = new Collection<TraceEvent>();
 
         /// <summary>
         /// Constructs a new instance.
@@ -56,11 +56,11 @@ namespace Microsoft.Azure.WebJobs.Extensions
         public int Threshold { get; private set; }
 
         /// <inheritdoc/>
-        public override Collection<TraceEvent> Traces
+        public override Collection<TraceEvent> Events
         {
             get
             {
-                return _traces;
+                return _events;
             }
         }
 
@@ -75,9 +75,9 @@ namespace Microsoft.Azure.WebJobs.Extensions
                 {
                     RemoveOldEvents(DateTime.UtcNow);
 
-                    _traces.Add(traceEvent);
+                    _events.Add(traceEvent);
 
-                    if (_traces.Count >= Threshold)
+                    if (_events.Count >= Threshold)
                     {
                         return true;
                     }
@@ -114,13 +114,13 @@ namespace Microsoft.Azure.WebJobs.Extensions
         {
             // remove any events outside of the window
             DateTime cutoff = now - _window;
-            while (_traces.Count > 0)
+            while (_events.Count > 0)
             {
-                if (_traces[0].Timestamp > cutoff)
+                if (_events[0].Timestamp > cutoff)
                 {
                     break;
                 }
-                _traces.RemoveAt(0);
+                _events.RemoveAt(0);
             }
         }
     }

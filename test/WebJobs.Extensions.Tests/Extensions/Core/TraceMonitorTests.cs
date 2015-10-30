@@ -129,8 +129,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Core
             monitor.Trace(traceEvent);
 
             Assert.Equal("Custom Message", filter.Message);
-            Assert.Equal(1, filter.Traces.Count);
-            Assert.Same(traceEvent, filter.Traces.Single());
+            Assert.Equal(1, filter.Events.Count);
+            Assert.Same(traceEvent, filter.Events.Single());
         }
 
         [Fact]

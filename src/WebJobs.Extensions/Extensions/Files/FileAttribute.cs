@@ -7,7 +7,7 @@ using System.IO;
 namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
-    /// Binds a parameter to a file.
+    /// Attribute used to bind a parameter to a file.
     /// </summary>
     /// <remarks>
     /// The method parameter type can be one of the following:

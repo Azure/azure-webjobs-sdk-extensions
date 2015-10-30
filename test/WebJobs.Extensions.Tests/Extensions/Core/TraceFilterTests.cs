@@ -39,7 +39,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             Assert.Equal(11, messageLines.Length);
 
             // test with no events
-            filter.Traces.Clear();
+            filter.Events.Clear();
             message = filter.GetDetailedMessage(3);
             messageLines = message.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
             Assert.Equal(2, messageLines.Length);
@@ -50,7 +50,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
         internal class TestTraceFilter : TraceFilter
         {
             private readonly string _message;
-            private Collection<TraceEvent> _traces = new Collection<TraceEvent>();
+            private Collection<TraceEvent> _events = new Collection<TraceEvent>();
 
             public TestTraceFilter(string message)
             {
@@ -65,17 +65,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
                 }
             }
 
-            public override Collection<TraceEvent> Traces
+            public override Collection<TraceEvent> Events
             {
                 get
                 {
-                    return _traces;
+                    return _events;
                 }
             }
 
             public override bool Filter(TraceEvent traceEvent)
             {
-                _traces.Add(traceEvent);
+                _events.Add(traceEvent);
                 return true;
             }
         }

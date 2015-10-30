@@ -9,7 +9,8 @@ using Microsoft.Azure.WebJobs.Host;
 namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
-    /// Trigger for invoking jobs based on error events.
+    /// Attribute used to mark a job function that should be triggered based
+    /// on error events.
     /// </summary>
     /// <remarks>
     /// The method parameter type can be one of the following:

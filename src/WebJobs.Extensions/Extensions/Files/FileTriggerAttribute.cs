@@ -7,7 +7,8 @@ using System.IO;
 namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
-    /// Trigger for invoking jobs based on file events.
+    /// Attribute used to mark a job function that should be invoked based
+    /// on file events.
     /// </summary>
     /// <remarks>
     /// The method parameter type can be one of the following:
@@ -57,8 +58,9 @@ namespace Microsoft.Azure.WebJobs
         public WatcherChangeTypes ChangeTypes { get; private set; }
 
         /// <summary>
-        /// Gets the auto delete setting. When set to true, all files including any companion files
-        /// starting with the target file name will be deleted when the file is fully processed.
+        /// Gets a value indicating whether files should be automatically deleted after they
+        /// are successfully processed. When set to true, all files including any companion files
+        /// starting with the target file name will be deleted when the file is successfully processed.
         /// </summary>
         public bool AutoDelete { get; private set; }
 

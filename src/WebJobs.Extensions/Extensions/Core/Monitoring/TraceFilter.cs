@@ -24,7 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
         /// Gets the current accumulated collection of <see cref="TraceEvent"/>s that have
         /// passed the filter.
         /// </summary>
-        public abstract Collection<TraceEvent> Traces { get; }
+        public abstract Collection<TraceEvent> Events { get; }
 
         /// <summary>
         /// Inspects the specified <see cref="TraceEvent"/> and accumulates it
@@ -63,9 +63,9 @@ namespace Microsoft.Azure.WebJobs.Extensions
             StringBuilder builder = new StringBuilder();
             builder.AppendLine(Message);
 
-            if (Traces.Count > 0)
+            if (Events.Count > 0)
             {
-                foreach (TraceEvent traceEvent in Traces.Reverse().Take(count))
+                foreach (TraceEvent traceEvent in Events.Reverse().Take(count))
                 {
                     builder.AppendLine();
                     builder.AppendLine(traceEvent.ToString()); 
@@ -79,7 +79,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
         {
             private readonly string _message;
             private readonly Func<TraceEvent, bool> _predicate;
-            private Collection<TraceEvent> _traces = new Collection<TraceEvent>();
+            private Collection<TraceEvent> _events = new Collection<TraceEvent>();
             
             public AnonymousTraceFilter(Func<TraceEvent, bool> predicate, string message = null)
             {
@@ -95,11 +95,11 @@ namespace Microsoft.Azure.WebJobs.Extensions
                 }
             }
 
-            public override Collection<TraceEvent> Traces
+            public override Collection<TraceEvent> Events
             {
                 get
                 {
-                    return _traces;
+                    return _events;
                 }
             }
 
@@ -109,8 +109,8 @@ namespace Microsoft.Azure.WebJobs.Extensions
                 {
                     // this filter does not accumulate - it only keeps track
                     // of the last event, so we reset the collection each time.
-                    _traces.Clear();
-                    _traces.Add(traceEvent);
+                    _events.Clear();
+                    _events.Add(traceEvent);
 
                     return true;
                 }

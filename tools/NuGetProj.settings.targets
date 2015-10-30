@@ -5,17 +5,19 @@
     <WebJobsToolsPath>$(MSBuildThisFileDirectory)</WebJobsToolsPath>
     <WebJobsPackageEULA>http://www.microsoft.com/web/webpi/eula/aspnetcomponent_rtw_enu.htm</WebJobsPackageEULA>
     <Version>1.0.0</Version>
-    <PrereleaseTag>-beta1</PrereleaseTag>
+    <PrereleaseTag>-rc1</PrereleaseTag>
   </PropertyGroup>
   <Choose>
     <When Condition=" '$(IncludeBuildNumberInVersion)' == '1'">
       <PropertyGroup>
         <WebJobsPackageVersion>$(Version)$(PrereleaseTag)-$(BUILD_NUMBER)</WebJobsPackageVersion>
+        <WebHooksPackageVersion>$(Version)-beta1$(BUILD_NUMBER)</WebHooksPackageVersion>
       </PropertyGroup>
     </When>
     <Otherwise>
       <PropertyGroup>
         <WebJobsPackageVersion>$(Version)$(PrereleaseTag)</WebJobsPackageVersion>
+        <WebHooksPackageVersion>$(Version)-beta1</WebHooksPackageVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>
