@@ -217,7 +217,7 @@ To register the WebHook extensions, call `config.UseWebHooks()` in your startup 
 
 ###Core Extensions###
 
-There are a set of triggers/bindings that can be registered by calling `config.UseCore()`. The Core extensions contain a set of general purpose bindings. For example, the **ErrorTrigger** binding discussed in its own section above is part of the Core extension. There is also a binding for `ExecutionContext` which allows you to access invocation specific system information in your function. For example:
+There are a set of triggers/bindings that can be registered by calling `config.UseCore()`. The Core extensions contain a set of general purpose bindings. For example, the **ErrorTrigger** binding discussed in its own section above is part of the Core extension. There is also a binding for `ExecutionContext` which allows you to access invocation specific system information in your function. Here's an example showing how to access the function **Invocation ID** for the function:
 
 ```csharp
 public static void ProcessOrder(
@@ -229,4 +229,4 @@ public static void ProcessOrder(
 }
 ```
 
-To register the WebHook extensions, call `config.Core()` in your startup code.
+The invocation ID is used in the Dashboard logs, so having access to this programatically allows you to correlate an invocation to those logs programatically. This might be useful if you're also logging to your own external system. To register the WebHook extensions, call `config.Core()` in your startup code.
