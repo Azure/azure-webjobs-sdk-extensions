@@ -128,6 +128,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\CultureFixture.cs" />
     <Compile Include="Common\ExplicitTypeLocator.cs" />
     <Compile Include="Common\TestHelpers.cs" />
     <Compile Include="Common\TestNameResolver.cs" />

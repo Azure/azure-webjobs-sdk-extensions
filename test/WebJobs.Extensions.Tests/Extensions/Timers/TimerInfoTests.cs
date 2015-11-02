@@ -2,12 +2,13 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 {
-    public class TimerInfoTests
+    public class TimerInfoTests : IClassFixture<CultureFixture.EnUs>
     {
         [Fact]
         public void FormatNextOccurrences_ReturnsExpectedString()
