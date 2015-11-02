@@ -229,4 +229,4 @@ public static void ProcessOrder(
 }
 ```
 
-The invocation ID is used in the Dashboard logs, so having access to this programatically allows you to correlate an invocation to those logs programatically. This might be useful if you're also logging to your own external system. To register the WebHook extensions, call `config.Core()` in your startup code.
+The invocation ID is used in the Dashboard logs, so having access to this programatically allows you to correlate an invocation to those logs. This might be useful if you're also logging to your own external system. To register the WebHook extensions, call `config.Core()` in your startup code.
