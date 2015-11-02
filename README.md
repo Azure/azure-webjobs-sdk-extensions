@@ -214,3 +214,19 @@ Support for the [ASP.NET WebHooks SDK](http://blogs.msdn.com/b/webdev/archive/20
 That's it - whenever a request comes in for your WebHook, the WebHook reveiver will perform all the authentication checks and your job function will *only* be invoked if the request is authenticated. For more information on the various ASP.NET WebHooks SDK reveivers supported, see their documentation.
 
 To register the WebHook extensions, call `config.UseWebHooks()` in your startup code. For more information, see the [WebHook samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/WebHookSamples.cs).
+
+###Core Extensions###
+
+There are a set of triggers/bindings that can be registered by calling `config.UseCore()`. The Core extensions contain a set of general purpose bindings. For example, the **ErrorTrigger** binding discussed in its own section above is part of the Core extension. There is also a binding for `ExecutionContext` which allows you to access invocation specific system information in your function. For example:
+
+```csharp
+public static void ProcessOrder(
+    [QueueTrigger("orders")] Order order,
+    TextWriter log,
+    ExecutionContext context)
+{
+    log.WriteLine("InvocationId: {0}", context.InvocationId);
+}
+```
+
+To register the WebHook extensions, call `config.Core()` in your startup code.
