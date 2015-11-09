@@ -18,7 +18,7 @@
       <dependency id="SuaveServerWrapper" version="0.0.2" />
       <dependency id="Microsoft.AspNet.WebApi.Client" version="5.2.3" />
       <dependency id="Microsoft.AspNet.WebApi.Core" version="5.2.3" />
-      <dependency id="Microsoft.AspNet.WebHooks.Receivers" version="1.2.0-beta3a" />
+      <dependency id="Microsoft.AspNet.WebHooks.Receivers" version="1.2.0-beta4" />
       <dependency id="Autofac.WebApi2" version="3.4.0" />
     </dependencies>
   </metadata>
