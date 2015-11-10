@@ -98,12 +98,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             for (int i = 0; i < processor.MaxProcessCount; i++)
             {
                 // verify the processing entry
-                Assert.Equal(ProcessingState.Processing, entries[i*2].State);
-                Assert.Equal(i + 1, entries[i*2].ProcessCount);
+                Assert.Equal(ProcessingState.Processing, entries[i * 2].State);
+                Assert.Equal(i + 1, entries[i * 2].ProcessCount);
 
                 // verify the failure entry
-                Assert.Equal(ProcessingState.Failed, entries[i*2 + 1].State);
-                Assert.Equal(i + 1, entries[i*2 + 1].ProcessCount);
+                Assert.Equal(ProcessingState.Failed, entries[(i * 2) + 1].State);
+                Assert.Equal(i + 1, entries[(i * 2) + 1].ProcessCount);
             }
         }
 
