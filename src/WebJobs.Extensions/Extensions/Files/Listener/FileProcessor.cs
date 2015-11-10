@@ -26,7 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         private readonly string _filePath;
         private readonly JsonSerializer _serializer;
         private string _instanceId;
- 
+
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
@@ -95,6 +95,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         }
 
         /// <summary>
+        /// Gets the maximum number of times file processing will
+        /// be attempted for a file.
+        /// </summary>
+        public virtual int MaxProcessCount
+        {
+            get
+            {
+                return 3;
+            }
+        }
+
+        /// <summary>
         /// Gets the current role instance ID. In Azure WebApps, this will be the
         /// WEBSITE_INSTANCE_ID. In non Azure scenarios, this will default to the
         /// Process ID.
@@ -131,51 +143,66 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         {
             try
             {
+                StatusFileEntry status = null;
                 string filePath = eventArgs.FullPath;
-                using (StreamWriter statusWriter = AquireStatusFileLock(filePath, eventArgs.ChangeType))
+                using (StreamWriter statusWriter = AcquireStatusFileLock(filePath, eventArgs.ChangeType, out status))
                 {
                     if (statusWriter == null)
                     {
                         return false;
                     }
 
-                    // write an entry indicating the file is being processed
-                    StatusFileEntry status = new StatusFileEntry
+                    // We've acquired the lock. The current status might be either Failed
+                    // or Processing (if processing failed before we were unable to update
+                    // the file status to Failed)
+                    int processCount = 0;
+                    if (status != null)
                     {
-                        State = ProcessingState.Processing,
-                        Timestamp = DateTime.UtcNow,
-                        LastWrite = File.GetLastWriteTimeUtc(filePath),
-                        ChangeType = eventArgs.ChangeType,
-                        InstanceId = InstanceId
-                    };
-                    _serializer.Serialize(statusWriter, status);
-                    statusWriter.WriteLine();
+                        processCount = status.ProcessCount;
+                    }
 
-                    // invoke the job function
-                    TriggeredFunctionData input = new TriggeredFunctionData
+                    while (processCount++ < MaxProcessCount)
                     {
-                        TriggerValue = eventArgs
-                    };
-                    FunctionResult result = await _executor.TryExecuteAsync(input, cancellationToken);
+                        FunctionResult result = null;
+                        if (result != null)
+                        {
+                            TimeSpan delay = GetRetryInterval(result, processCount);
+                            await Task.Delay(delay);
+                        }
 
-                    if (result.Succeeded)
-                    {
-                        // write a status entry indicating processing is complete
-                        status.State = ProcessingState.Processed;
+                        // write an entry indicating the file is being processed
+                        status = new StatusFileEntry
+                        {
+                            State = ProcessingState.Processing,
+                            Timestamp = DateTime.UtcNow,
+                            LastWrite = File.GetLastWriteTimeUtc(filePath),
+                            ChangeType = eventArgs.ChangeType,
+                            InstanceId = InstanceId,
+                            ProcessCount = processCount
+                        };
+                        _serializer.Serialize(statusWriter, status);
+                        statusWriter.WriteLine();
+
+                        // invoke the job function
+                        TriggeredFunctionData input = new TriggeredFunctionData
+                        {
+                            TriggerValue = eventArgs
+                        };
+                        result = await _executor.TryExecuteAsync(input, cancellationToken);
+
+                        // write a status entry indicating the state of processing
+                        status.State = result.Succeeded ? ProcessingState.Processed : ProcessingState.Failed;
                         status.Timestamp = DateTime.UtcNow;
                         _serializer.Serialize(statusWriter, status);
                         statusWriter.WriteLine();
-                        return true;
+
+                        if (result.Succeeded)
+                        {
+                            return true;
+                        }
                     }
-                    else
-                    {         
-                        // If the function failed, we leave the in progress status
-                        // file as is (it will show "Processing"). The file will be
-                        // reprocessed later on a clean-up pass.
-                        statusWriter.Close();
-                        cancellationToken.ThrowIfCancellationRequested();
-                        return false;
-                    }
+
+                    return false;
                 }             
             }
             catch
@@ -185,9 +212,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         }
 
         /// <summary>
+        /// Gets the next retry interval to use.
+        /// </summary>
+        /// <param name="result">The <see cref="FunctionResult"/> for the last failure.</param>
+        /// <param name="count">The current execution count (the number of times the function has
+        /// been invoked).</param>
+        /// <returns>A <see cref="TimeSpan"/> representing the delay interval that should be used.</returns>
+        protected virtual TimeSpan GetRetryInterval(FunctionResult result, int count)
+        {
+            if (result == null)
+            {
+                throw new ArgumentNullException("result");
+            }
+
+            return TimeSpan.FromSeconds(3);
+        }
+
+        /// <summary>
         /// Perform any required cleanup. This includes deleting processed files
-        /// (when <see cref="FileTriggerAttribute.AutoDelete"/> is True), as well
-        /// as discovering and reprocessing any failed files.
+        /// (when <see cref="FileTriggerAttribute.AutoDelete"/> is True).
         /// </summary>
         public virtual void Cleanup()
         {
@@ -210,13 +253,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
                 return true;
             }
 
-            StatusFileEntry statusEntry = GetLastStatus(statusFilePath);
-            return statusEntry == null || statusEntry.State != ProcessingState.Processed;
+            StatusFileEntry statusEntry = null;
+            try
+            {
+                GetLastStatus(statusFilePath, out statusEntry);
+            }
+            catch (IOException)
+            {
+                // if we get an exception reading the status file, it's
+                // likely because someone started processing and has it locked
+                return false;
+            }
+
+            return statusEntry == null || (statusEntry.State != ProcessingState.Processed && 
+                statusEntry.ProcessCount < MaxProcessCount);
         }
 
-        internal StreamWriter AquireStatusFileLock(string filePath, WatcherChangeTypes changeType)
+        internal StreamWriter AcquireStatusFileLock(string filePath, WatcherChangeTypes changeType, out StatusFileEntry statusEntry)
         {
             Stream stream = null;
+            statusEntry = null;
             try
             {
                 // Attempt to create (or update) the companion status file and lock it. The status
@@ -226,8 +282,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
 
                 // Once we've established the lock, we need to check to ensure that another instance
                 // hasn't already processed the file in the time between our getting the event and
-                // aquiring the lock.
-                StatusFileEntry statusEntry = GetLastStatus(stream);
+                // acquiring the lock.
+                statusEntry = GetLastStatus(stream);
                 if (statusEntry != null && statusEntry.State == ProcessingState.Processed)
                 {
                     // For file Create, we have no additional checks to perform. However for
@@ -264,12 +320,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
             }
         }
 
-        internal StatusFileEntry GetLastStatus(string statusFilePath)
+        internal bool GetLastStatus(string statusFilePath, out StatusFileEntry statusEntry)
         {
+            statusEntry = null;
+
+            if (!File.Exists(statusFilePath))
+            {
+                return false;
+            }
+
             using (Stream stream = File.OpenRead(statusFilePath))
             {
-                return GetLastStatus(stream);
+                statusEntry = GetLastStatus(stream);
             }
+
+            return statusEntry != null;
         }
 
         internal StatusFileEntry GetLastStatus(Stream statusFileStream)
@@ -312,8 +377,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
                 try
                 {
                     // verify that the file has been fully processed
-                    StatusFileEntry statusEntry = GetLastStatus(statusFilePath);
-                    if (statusEntry.State != ProcessingState.Processed)
+                    // if we're unable to get the last status or the file
+                    // is not Processed, skip it
+                    StatusFileEntry statusEntry = null;
+                    if (!GetLastStatus(statusFilePath, out statusEntry) ||
+                        statusEntry.State != ProcessingState.Processed)
                     {
                         continue;
                     }

@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Files;
@@ -58,7 +59,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             string testFile = WriteTestFile("dat");
 
             // first take a lock on the status file
-            using (StreamWriter statusFile = processor.AquireStatusFileLock(testFile, WatcherChangeTypes.Created))
+            StatusFileEntry status = null;
+            using (StreamWriter statusFile = processor.AcquireStatusFileLock(testFile, WatcherChangeTypes.Created, out status))
             {
                 // now attempt to process the file
                 FileSystemEventArgs eventArgs = new FileSystemEventArgs(WatcherChangeTypes.Created, Path.GetDirectoryName(testFile), Path.GetFileName(testFile));
@@ -74,7 +76,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
         }
 
         [Fact]
-        public async Task ProcessFileAsync_Failure_LeavesInProgressStatusFile()
+        public async Task ProcessFileAsync_Failure_RetriesAndLeavesFailureStatusFile()
         {
             string testFile = WriteTestFile("dat");
 
@@ -87,8 +89,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             Assert.False(fileProcessedSuccessfully);
             Assert.True(File.Exists(testFile));
             string statusFilePath = processor.GetStatusFile(testFile);
-            StatusFileEntry entry = processor.GetLastStatus(statusFilePath);
-            Assert.Equal(ProcessingState.Processing, entry.State);
+
+            StatusFileEntry[] entries = File.ReadAllLines(statusFilePath).Select(p => JsonConvert.DeserializeObject<StatusFileEntry>(p)).ToArray();
+
+            Assert.Equal(6, entries.Length);
+
+            // verify each of the retries
+            for (int i = 0; i < processor.MaxProcessCount; i++)
+            {
+                // verify the processing entry
+                Assert.Equal(ProcessingState.Processing, entries[i*2].State);
+                Assert.Equal(i + 1, entries[i*2].ProcessCount);
+
+                // verify the failure entry
+                Assert.Equal(ProcessingState.Failed, entries[i*2 + 1].State);
+                Assert.Equal(i + 1, entries[i*2 + 1].ProcessCount);
+            }
         }
 
         [Fact]

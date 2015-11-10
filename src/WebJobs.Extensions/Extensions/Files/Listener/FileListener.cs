@@ -84,7 +84,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
             // Create a timer to cleanup processed files.
             // The timer doesn't auto-reset. It will reset itself
-            // when it receives file events
+            // when we receive more file events
             _cleanupTimer = new System.Timers.Timer()
             {
                 AutoReset = false,
@@ -224,27 +224,34 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
         {
             // scan for any files that require processing (either new unprocessed files,
             // or files that have failed previous processing)
-            string[] unprocessedFiles = Directory.GetFiles(_watchPath, _attribute.Filter)
+            string[] filesToProcess = Directory.GetFiles(_watchPath, _attribute.Filter)
                 .Where(p => _processor.ShouldProcessFile(p)).ToArray();
 
-            if (unprocessedFiles.Length > 0)
+            if (filesToProcess.Length > 0)
             {
-                _trace.Verbose(string.Format("Found {0} file(s) at path '{1}' for ready processing", unprocessedFiles.Length, _watchPath));
+                _trace.Verbose(string.Format("Found {0} file(s) at path '{1}' for ready processing", filesToProcess.Length, _watchPath));
             }
 
-            foreach (string fileToProcess in unprocessedFiles)
+            foreach (string fileToProcess in filesToProcess)
             {
                 WatcherChangeTypes changeType = WatcherChangeTypes.Created;
                 string statusFilePath = _processor.GetStatusFile(fileToProcess);
-                if (File.Exists(statusFilePath))
+
+                try
                 {
-                    // if an in progress status file exists, we determine the ChangeType
-                    // from the last entry (incomplete) in the file
-                    StatusFileEntry statusEntry = _processor.GetLastStatus(statusFilePath);
-                    if (statusEntry != null)
+                    StatusFileEntry statusEntry = null;
+                    if (_processor.GetLastStatus(statusFilePath, out statusEntry))
                     {
+                        // if an in progress status file exists, we determine the ChangeType
+                        // from the last entry (incomplete) in the file
                         changeType = statusEntry.ChangeType;
                     }
+                }
+                catch (IOException)
+                {
+                    // if we get an exception reading the status file, it's
+                    // likely because someone started processing and has it locked
+                    continue;
                 }
 
                 string fileName = Path.GetFileName(fileToProcess);

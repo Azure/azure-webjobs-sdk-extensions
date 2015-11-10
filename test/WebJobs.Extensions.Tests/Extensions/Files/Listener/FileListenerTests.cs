@@ -157,7 +157,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
                 Assert.Equal(WatcherChangeTypes.Changed, statusEntry.ChangeType);
             }
 
-            // Now call purge to clean up all processed files
+            // Now clean up all processed files
             processor.CleanupProcessedFiles();
             Assert.Equal(0, Directory.GetFiles(testFileDir).Length);
 

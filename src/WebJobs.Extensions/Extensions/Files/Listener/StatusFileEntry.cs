@@ -40,5 +40,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// Gets or sets the ID of the instance that created this entry.
         /// </summary>
         public string InstanceId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of times processing for the the file
+        /// for this entry has been attempted.
+        /// </summary>
+        public int ProcessCount { get; set; }
     }
 }

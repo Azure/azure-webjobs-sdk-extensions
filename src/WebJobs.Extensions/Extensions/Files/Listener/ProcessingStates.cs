@@ -17,6 +17,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// <summary>
         /// Processing is complete for the file.
         /// </summary>
-        Processed
+        Processed,
+
+        /// <summary>
+        /// Processing has failed for the file.
+        /// </summary>
+        Failed
     }
 }
