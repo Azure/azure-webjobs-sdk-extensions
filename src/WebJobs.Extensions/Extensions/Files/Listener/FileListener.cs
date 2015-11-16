@@ -41,7 +41,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
             _triggerExecutor = triggerExecutor;
             _trace = trace;
             _cancellationTokenSource = new CancellationTokenSource();
-            _watchPath = Path.Combine(_config.RootPath, _attribute.GetNormalizedPath());
+            _watchPath = Path.Combine(_config.RootPath, _attribute.GetRootPath());
         }
 
         // for testing

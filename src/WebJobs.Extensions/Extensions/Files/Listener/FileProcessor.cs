@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
             _executor = context.Executor;
             _trace = context.Trace;
 
-            string attributePath = _attribute.GetNormalizedPath();
+            string attributePath = _attribute.GetRootPath();
             _filePath = Path.Combine(_config.RootPath, attributePath);
 
             JsonSerializerSettings settings = new JsonSerializerSettings

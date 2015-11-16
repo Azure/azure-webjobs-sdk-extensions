@@ -230,7 +230,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
             public static List<string> Processed { get; private set; }
 
             public static void ImportTestJob(
-                [FileTrigger(ImportTestPath + @"\{name}", filter: "*.dat")] FileStream file,
+                [FileTrigger(ImportTestPath + @"/{name}", filter: "*.dat")] FileStream file,
                 string name)
             {
                 Processed.Add(name);

@@ -36,6 +36,12 @@ namespace Microsoft.Azure.WebJobs
         /// <param name="autoDelete">True if processed files should be deleted automatically, false otherwise. The default is False.</param>
         public FileTriggerAttribute(string path, string filter, WatcherChangeTypes changeTypes = WatcherChangeTypes.Created, bool autoDelete = false)
         {
+            if (!string.IsNullOrEmpty(path))
+            {
+                // normalize the path (allowing the user to use either
+                // "/" or "\" as a separator)
+                path = path.Replace("/", "\\");
+            }
             this.Path = path;
             this.Filter = filter;
             this.ChangeTypes = changeTypes;
@@ -68,7 +74,7 @@ namespace Microsoft.Azure.WebJobs
         /// Returns the trigger path, minus any trailing template pattern for file name
         /// </summary>
         /// <returns></returns>
-        internal string GetNormalizedPath()
+        internal string GetRootPath()
         {
             string path = Path.TrimEnd(System.IO.Path.DirectorySeparatorChar);
             int idx = path.LastIndexOf(System.IO.Path.DirectorySeparatorChar);

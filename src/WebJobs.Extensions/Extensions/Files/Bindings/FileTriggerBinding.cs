@@ -88,7 +88,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 DisplayHints = new ParameterDisplayHints
                 {
                     Prompt = "Enter a file path",
-                    Description = string.Format("File event occurred on path '{0}'", _attribute.GetNormalizedPath()),
+                    Description = string.Format("File event occurred on path '{0}'", _attribute.GetRootPath()),
                     DefaultValue = Path.Combine(_config.RootPath, _attribute.Path)
                 }
             };

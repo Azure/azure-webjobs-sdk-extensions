@@ -16,7 +16,7 @@ namespace ExtensionsSample
         // When new files arrive in the "import" directory, they are uploaded to a blob
         // container then deleted.
         public static void ImportFile(
-            [FileTrigger(@"import\{name}", "*.dat", autoDelete: true)] Stream file,
+            [FileTrigger(@"import/{name}", "*.dat", autoDelete: true)] Stream file,
             [Blob(@"processed/{name}")] CloudBlockBlob output,
             string name,
             TextWriter log)

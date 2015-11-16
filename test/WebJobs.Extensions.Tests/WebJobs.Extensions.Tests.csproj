@@ -139,6 +139,7 @@
     <Compile Include="Extensions\Core\TraceFilterTests.cs" />
     <Compile Include="Extensions\Core\TraceMonitorTests.cs" />
     <Compile Include="Extensions\Files\Config\FilesConfigurationTests.cs" />
+    <Compile Include="Extensions\Files\FileAttributeTests.cs" />
     <Compile Include="Extensions\Files\Listener\FileListenerTests.cs" />
     <Compile Include="Extensions\Files\Listener\FileProcessorTests.cs" />
     <Compile Include="GlobalSuppressions.cs" />
