@@ -10,7 +10,7 @@ Extensions all follow the same "using" pattern for registration - after referenc
 JobHostConfiguration config = new JobHostConfiguration();
 config.Tracing.ConsoleLevel = TraceLevel.Verbose;
 
-config.UseFiles
+config.UseFiles();
 config.UseTimers();
 config.UseSendGrid(new SendGridConfiguration()
 {
