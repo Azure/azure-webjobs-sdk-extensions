@@ -109,7 +109,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ShutdownHandler.cs" />
     <Compile Include="Samples\ErrorMonitoringSamples.cs" />
     <Compile Include="Samples\FileSamples.cs" />
     <Compile Include="GlobalSuppressions.cs" />
