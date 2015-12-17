@@ -22,9 +22,10 @@ namespace ExtensionsSample
             JobHostConfiguration config = new JobHostConfiguration();
             FilesConfiguration filesConfig = new FilesConfiguration();
 
-            // If we're running locally, configure certain options.
-            ConfigureLocal(config, filesConfig);
-            EnsureSampleDirectoriesExist(filesConfig.RootPath);
+            if (config.IsDevelopment)
+            {
+                config.UseDevelopmentSettings();
+            }
 
             config.UseFiles(filesConfig);
             config.UseTimers();
@@ -38,6 +39,12 @@ namespace ExtensionsSample
             config.UseSendGrid(sendGridConfiguration);
 
             ConfigureTraceMonitor(config, sendGridConfiguration);
+            if (string.IsNullOrEmpty(filesConfig.RootPath))
+            {
+                // when running locally, set this to a valid directory
+                filesConfig.RootPath = @"c:\temp\files";
+            }
+            EnsureSampleDirectoriesExist(filesConfig.RootPath);
 
             WebHooksConfiguration webHooksConfig = new WebHooksConfiguration();
             webHooksConfig.UseReceiver<GitHubWebHookReceiver>();
@@ -52,32 +59,6 @@ namespace ExtensionsSample
             host.Call(typeof(TableSamples).GetMethod("CustomBinding"));
 
             host.RunAndBlock();
-        }
-
-        private static void ConfigureLocal(JobHostConfiguration config, FilesConfiguration filesConfig)
-        {
-            // Determine whether we're running locally based on the presence of
-            // an environment variable. Set this to "1" on your local dev box.
-            if (Environment.GetEnvironmentVariable("AzureWebJobsIsLocal") == "1")
-            {
-                // We want "Verbose" output when running locally, but in the cloud
-                // we want the default of "Info", to avoid flooding the production logs.
-                config.Tracing.ConsoleLevel = TraceLevel.Verbose;
-
-                // Reduce the lock period to the minimum to facilitate local
-                // debugging.
-                config.Singleton.ListenerLockPeriod = TimeSpan.FromSeconds(15);
-
-                // Set to a short polling interval to facilitate local
-                // debugging. You wouldn't want to run production this way.
-                config.Queues.MaxPollingInterval = TimeSpan.FromSeconds(2);
-            }
-
-            if (string.IsNullOrEmpty(filesConfig.RootPath))
-            {
-                // when running locally, set this to a valid directory
-                filesConfig.RootPath = @"c:\temp\files";
-            }
         }
 
         /// <summary>
