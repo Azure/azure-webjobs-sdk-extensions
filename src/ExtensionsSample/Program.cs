@@ -25,6 +25,7 @@ namespace ExtensionsSample
             if (config.IsDevelopment)
             {
                 config.UseDevelopmentSettings();
+                filesConfig.RootPath = @"c:\temp\files";
             }
 
             config.UseFiles(filesConfig);
@@ -39,11 +40,7 @@ namespace ExtensionsSample
             config.UseSendGrid(sendGridConfiguration);
 
             ConfigureTraceMonitor(config, sendGridConfiguration);
-            if (string.IsNullOrEmpty(filesConfig.RootPath))
-            {
-                // when running locally, set this to a valid directory
-                filesConfig.RootPath = @"c:\temp\files";
-            }
+            
             EnsureSampleDirectoriesExist(filesConfig.RootPath);
 
             WebHooksConfiguration webHooksConfig = new WebHooksConfiguration();
