@@ -59,7 +59,7 @@ The TimerTrigger also handles multi-instance scale out automatically - only a si
 
 The first example above uses a [cron expression](http://en.wikipedia.org/wiki/Cron#CRON_expression) to declare the schedule. Using these **6 fields** `{second} {minute} {hour} {day} {month} {day of the week}` you can express arbitrarily complex schedules very concisely. **Note**: the 6 field format including seconds is less common, so in the various cron expression docs you find online you'll have to adjust for the extra field.
 
-To register the Timer extensions, call `config.UseTimers()` in your startup code. For more information, see the [Timer samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/TimerSamples.cs).
+To register the Timer extensions, call `config.UseTimers()` in your startup code. For more information, see the TimerTrigger [wiki page](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/TimerTrigger), and also the [Timer samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/TimerSamples.cs).
 
 ###FileTrigger / File###
 
