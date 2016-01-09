@@ -179,10 +179,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             {
                 TriggerValue = timerInfo
             };
-            FunctionResult result = await _executor.TryExecuteAsync(input, token);
-            if (!result.Succeeded)
+
+            try
             {
-                token.ThrowIfCancellationRequested();
+                FunctionResult result = await _executor.TryExecuteAsync(input, token);
+                if (!result.Succeeded)
+                {
+                    token.ThrowIfCancellationRequested();
+                }
+            }
+            catch
+            {
+                // We don't want any function errors to stop the execution
+                // schedule. Errors will be logged to Dashboard already.
             }
 
             if (_attribute.UseMonitor)

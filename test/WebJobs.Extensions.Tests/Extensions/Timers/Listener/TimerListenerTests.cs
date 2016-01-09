@@ -52,6 +52,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         }
 
         [Fact]
+        public async Task InvokeJobFunction_HandlesExceptions()
+        {
+            _attribute.UseMonitor = false;
+            _mockTriggerExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>())).Throws(new Exception("Kaboom!"));
+
+            await _listener.InvokeJobFunction(DateTime.UtcNow, false);
+
+            _listener.Dispose();
+        }
+
+        [Fact]
         public async Task StartAsync_SchedulePastDue_InvokesJobFunctionImmediately()
         {
             // Set this to true to ensure that the function is only executed once
