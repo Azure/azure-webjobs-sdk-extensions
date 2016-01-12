@@ -29,7 +29,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
         {
             SlidingWindowTraceFilter filter = new SlidingWindowTraceFilter(TimeSpan.FromMinutes(10), 5);
 
-            DateTime now = DateTime.UtcNow - TimeSpan.FromMinutes(10);
+            DateTime now = DateTime.Now - TimeSpan.FromMinutes(10);
 
             Assert.Equal(0, filter.Events.Count);
             filter.RemoveOldEvents(now);

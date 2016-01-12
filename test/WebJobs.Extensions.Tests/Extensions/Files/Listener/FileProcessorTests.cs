@@ -232,7 +232,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             StatusFileEntry status = new StatusFileEntry
             {
                 State = ProcessingState.Processing,
-                Timestamp = DateTime.UtcNow,
+                Timestamp = DateTime.Now,
                 ChangeType = WatcherChangeTypes.Created,
                 InstanceId = "1"
             };
@@ -260,7 +260,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             status = new StatusFileEntry
             {
                 State = ProcessingState.Processing,
-                Timestamp = DateTime.UtcNow,
+                Timestamp = DateTime.Now,
                 ChangeType = WatcherChangeTypes.Created,
                 InstanceId = "1"
             };

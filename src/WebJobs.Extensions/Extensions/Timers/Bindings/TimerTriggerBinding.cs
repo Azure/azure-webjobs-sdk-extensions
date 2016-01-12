@@ -91,7 +91,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
         private IReadOnlyDictionary<string, object> CreateBindingData()
         {
             Dictionary<string, object> bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            bindingData.Add("TimerTrigger", DateTime.UtcNow.ToString());
+            bindingData.Add("TimerTrigger", DateTime.Now.ToString());
 
             return bindingData;
         }
@@ -117,7 +117,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 
             public string ToInvokeString()
             {
-                return DateTime.UtcNow.ToString("o");
+                return DateTime.Now.ToString("o");
             }
         }
 
@@ -125,7 +125,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
         {
             public override string GetTriggerReason(IDictionary<string, string> arguments)
             {
-                return string.Format("Timer fired at {0}", DateTime.UtcNow.ToString("o"));
+                return string.Format("Timer fired at {0}", DateTime.Now.ToString("o"));
             }
         }
     }

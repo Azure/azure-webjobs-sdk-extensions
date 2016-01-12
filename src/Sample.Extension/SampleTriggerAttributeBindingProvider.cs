@@ -120,7 +120,7 @@ namespace Sample.Extension
                 public override string GetTriggerReason(IDictionary<string, string> arguments)
                 {
                     // TODO: Customize your Dashboard display string
-                    return string.Format("Sample trigger fired at {0}", DateTime.UtcNow.ToString("o"));
+                    return string.Format("Sample trigger fired at {0}", DateTime.Now.ToString("o"));
                 }
             }
 

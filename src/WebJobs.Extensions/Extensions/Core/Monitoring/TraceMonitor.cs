@@ -94,7 +94,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
         {
             // Throttle notifications if requested
             bool shouldNotify = NotificationThrottle == null ||
-                (DateTime.UtcNow - _lastNotification) > NotificationThrottle;
+                (DateTime.Now - _lastNotification) > NotificationThrottle;
 
             if (shouldNotify)
             {
@@ -102,7 +102,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
                 {
                     subscription(filter);
                 }
-                _lastNotification = DateTime.UtcNow;
+                _lastNotification = DateTime.Now;
             }
         }
 

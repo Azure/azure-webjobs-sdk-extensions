@@ -72,7 +72,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             // See if we need to invoke the function immediately now, and if
             // so invoke it.
-            DateTime now = DateTime.UtcNow;
+            DateTime now = DateTime.Now;
             if (_attribute.UseMonitor &&
                 await _scheduleMonitor.IsPastDueAsync(_timerName, now, _schedule))
             {
@@ -93,7 +93,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             _trace.Verbose(nextOccurrences);
 
             // start the timer
-            now = DateTime.UtcNow;
+            now = DateTime.Now;
             DateTime nextOccurrence = _schedule.GetNextOccurrence(now);
             TimeSpan nextInterval = nextOccurrence - now;
             StartTimer(nextInterval);
@@ -158,11 +158,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 return;
             }
 
-            DateTime now = DateTime.UtcNow;
+            DateTime now = DateTime.Now;
             await InvokeJobFunction(now, false);
 
             // restart the timer with the next schedule occurrence
-            now = DateTime.UtcNow;
+            now = DateTime.Now;
             DateTime nextOccurrence = _schedule.GetNextOccurrence(now);
             TimeSpan nextInterval = nextOccurrence - now;
             StartTimer(nextInterval);

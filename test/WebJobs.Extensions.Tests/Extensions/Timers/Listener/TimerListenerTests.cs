@@ -31,7 +31,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public async Task InvokeJobFunction_UpdatesScheduleMonitor()
         {
-            DateTime lastOccurrence = DateTime.UtcNow;
+            DateTime lastOccurrence = DateTime.Now;
             DateTime nextOccurrence = _attribute.Schedule.GetNextOccurrence(lastOccurrence);
 
             _mockScheduleMonitor.Setup(p => p.UpdateAsync(_testTimerName, lastOccurrence, nextOccurrence)).Returns(Task.FromResult(true));
@@ -46,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         {
             _attribute.UseMonitor = false;
 
-            await _listener.InvokeJobFunction(DateTime.UtcNow, false);
+            await _listener.InvokeJobFunction(DateTime.Now, false);
 
             _listener.Dispose();
         }
@@ -57,7 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _attribute.UseMonitor = false;
             _mockTriggerExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>())).Throws(new Exception("Kaboom!"));
 
-            await _listener.InvokeJobFunction(DateTime.UtcNow, false);
+            await _listener.InvokeJobFunction(DateTime.Now, false);
 
             _listener.Dispose();
         }

@@ -84,7 +84,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         public async Task UpdateAsync_WritesStatusToFile()
         {
             DateTime now = DateTime.Now;
-            DateTime expectedNext = DateTime.UtcNow + TimeSpan.FromMinutes(1);
+            DateTime expectedNext = DateTime.Now + TimeSpan.FromMinutes(1);
 
             File.Delete(_statusFile);
             Assert.False(File.Exists(_statusFile));
@@ -105,7 +105,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         {
             File.Delete(_statusFile);
             Assert.False(File.Exists(_statusFile));
-            DateTime now = DateTime.UtcNow;
+            DateTime now = DateTime.Now;
             DateTime next = now + TimeSpan.FromDays(5);
 
             Mock<TimerSchedule> mockSchedule = new Mock<TimerSchedule>(MockBehavior.Strict);
@@ -121,7 +121,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         public async Task IsPastDue_ReturnsExpectedResult()
         {
             Mock<TimerSchedule> mockSchedule = new Mock<TimerSchedule>(MockBehavior.Strict);
-            DateTime now = DateTime.UtcNow;
+            DateTime now = DateTime.Now;
             DateTime next = now + TimeSpan.FromDays(1);
             await _monitor.UpdateAsync(_testTimerName, now, next);
 
@@ -146,7 +146,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         public async Task IsPastDue_ScheduleUpdate_UpdatesStatusFile()
         {
             Mock<TimerSchedule> mockSchedule = new Mock<TimerSchedule>(MockBehavior.Strict);
-            DateTime now = DateTime.UtcNow;
+            DateTime now = DateTime.Now;
             DateTime next = now + TimeSpan.FromDays(2);
             await _monitor.UpdateAsync(_testTimerName, now, next);
 

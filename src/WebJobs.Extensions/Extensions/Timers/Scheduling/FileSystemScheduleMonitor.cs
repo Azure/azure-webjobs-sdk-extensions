@@ -156,7 +156,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             {
                 // ensure that the schedule hasn't been updated since the last
                 // time we checked, and if it has, update the status file
-                DateTime expectedNextOccurrence = schedule.GetNextOccurrence(status.Last);
+                DateTime expectedNextOccurrence;
+                if (status.Last == default(DateTime))
+                {
+                    // there have been no executions of the function yet, so compute
+                    // from now
+                    expectedNextOccurrence = schedule.GetNextOccurrence(now);
+                }
+                else
+                {
+                    // compute the next occurrence from the last
+                    expectedNextOccurrence = schedule.GetNextOccurrence(status.Last);
+                }
+
                 if (status.Next != expectedNextOccurrence)
                 {
                     await UpdateAsync(timerName, status.Last, expectedNextOccurrence);

@@ -73,7 +73,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
                 // fire on errors/warnings, and those events will be rare in normal processing.
                 lock (_syncLock)
                 {
-                    RemoveOldEvents(DateTime.UtcNow);
+                    RemoveOldEvents(DateTime.Now);
 
                     _events.Add(traceEvent);
 

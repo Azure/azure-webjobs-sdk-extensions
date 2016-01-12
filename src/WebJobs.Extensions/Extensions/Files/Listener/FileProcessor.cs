@@ -174,7 +174,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
                         status = new StatusFileEntry
                         {
                             State = ProcessingState.Processing,
-                            Timestamp = DateTime.UtcNow,
+                            Timestamp = DateTime.Now,
                             LastWrite = File.GetLastWriteTimeUtc(filePath),
                             ChangeType = eventArgs.ChangeType,
                             InstanceId = InstanceId,
@@ -192,7 +192,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
 
                         // write a status entry indicating the state of processing
                         status.State = result.Succeeded ? ProcessingState.Processed : ProcessingState.Failed;
-                        status.Timestamp = DateTime.UtcNow;
+                        status.Timestamp = DateTime.Now;
                         _serializer.Serialize(statusWriter, status);
                         statusWriter.WriteLine();
 
