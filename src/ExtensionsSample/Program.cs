@@ -22,6 +22,8 @@ namespace ExtensionsSample
             JobHostConfiguration config = new JobHostConfiguration();
             FilesConfiguration filesConfig = new FilesConfiguration();
 
+            // See https://github.com/Azure/azure-webjobs-sdk/wiki/Running-Locally for details
+            // on how to set up your local environment
             if (config.IsDevelopment)
             {
                 config.UseDevelopmentSettings();
