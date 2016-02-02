@@ -7,6 +7,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNet.WebHooks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
@@ -269,6 +270,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.WebHooks
             HttpRequestMessage request = (HttpRequestMessage)WebHookTestFunctions.InvokeData;
             string body = await request.Content.ReadAsStringAsync();
             Assert.Equal(testData, body);
+        }
+
+        [Fact]
+        public async Task DirectInvoke_Succeeds()
+        {
+            string testData = Guid.NewGuid().ToString();
+            HttpRequestMessage request = new HttpRequestMessage
+            {
+                RequestUri = new Uri(string.Format("{0}{1}", _fixture.BaseUrl, "WebHookTestFunctions/CustomResponse_Success")),
+                Method = HttpMethod.Get,
+                Content = new StringContent(testData)
+            };
+            WebHookContext webHookContext = new WebHookContext(request);
+
+            MethodInfo method = typeof(WebHookTestFunctions).GetMethod("CustomResponse_Success");
+            await _fixture.Host.CallAsync(method, new { context = webHookContext });
+
+            HttpResponseMessage response = webHookContext.Response;
+            Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+
+            string body = await response.Content.ReadAsStringAsync();
+            Assert.Equal("Custom Response Data", body);
         }
 
         public static class WebHookTestFunctions

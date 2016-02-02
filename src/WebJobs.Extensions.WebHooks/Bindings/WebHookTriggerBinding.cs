@@ -67,11 +67,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
         public async Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
         {
             HttpRequestMessage request = value as HttpRequestMessage;
+            WebHookContext webHookContext = value as WebHookContext;
+
+            if (request == null && webHookContext != null)
+            {
+                request = webHookContext.Request;
+            }
+
             if (request == null && value != null && value.GetType() == typeof(string))
             {
                 // We've received an invoke string (e.g. from a Dashboard replay/invoke
                 // so convert to a request
                 request = FromInvokeString((string)value);
+            }
+
+            if (webHookContext == null)
+            {
+                webHookContext = new WebHookContext(request);
             }
 
             IValueProvider valueProvider = null;
@@ -89,7 +101,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             }
             else
             {
-                valueProvider = new WebHookRequestValueBinder(_parameter, request, invokeString);
+                valueProvider = new WebHookRequestValueBinder(_parameter, webHookContext, invokeString);
             }
 
             return new TriggerData(valueProvider, bindingData);
@@ -213,14 +225,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
         private class WebHookRequestValueBinder : StreamValueBinder
         {
             private readonly ParameterInfo _parameter;
-            private readonly HttpRequestMessage _request;
+            private readonly WebHookContext _context;
             private readonly string _invokeString;
 
-            public WebHookRequestValueBinder(ParameterInfo parameter, HttpRequestMessage request, string invokeString)
+            public WebHookRequestValueBinder(ParameterInfo parameter, WebHookContext context, string invokeString)
                 : base(parameter)
             {
                 _parameter = parameter;
-                _request = request;
+                _context = context;
                 _invokeString = invokeString;
             }
 
@@ -228,24 +240,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.WebHooks
             {
                 if (_parameter.ParameterType == typeof(HttpRequestMessage))
                 {
-                    return _request;
+                    return _context.Request;
                 }
                 else if (_parameter.ParameterType == typeof(WebHookContext))
                 {
                     // when binding to WebHookContext, we add the context to the request
                     // property bag so we can pull it out later in the WebHookDispatcher to access
                     // the response value, etc.
-                    WebHookContext context = new WebHookContext(_request);
-                    _request.Properties.Add(WebHookContextRequestKey, context);
+                    _context.Request.Properties.Add(WebHookContextRequestKey, _context);
 
-                    return context;
+                    return _context;
                 }
                 return base.GetValue();
             }
 
             protected override Stream GetStream()
             {
-                Task<Stream> task = _request.Content.ReadAsStreamAsync();
+                Task<Stream> task = _context.Request.Content.ReadAsStreamAsync();
                 task.Wait();
                 Stream stream = task.Result;
 
