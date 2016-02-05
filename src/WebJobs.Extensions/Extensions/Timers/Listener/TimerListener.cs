@@ -39,7 +39,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             _executor = executor;
             _trace = trace;
             _cancellationTokenSource = new CancellationTokenSource();
-
             _schedule = _attribute.Schedule;
             _scheduleMonitor = _config.ScheduleMonitor;
         }
@@ -197,7 +196,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             if (_attribute.UseMonitor)
             {
                 DateTime nextOccurrence = _schedule.GetNextOccurrence(lastOccurrence);
-                await _scheduleMonitor.UpdateAsync(_timerName, lastOccurrence, nextOccurrence);
+                ScheduleStatus status = new ScheduleStatus
+                {
+                    Last = lastOccurrence,
+                    Next = nextOccurrence
+                };
+                await _scheduleMonitor.UpdateStatusAsync(_timerName, status);
             }
         }
 

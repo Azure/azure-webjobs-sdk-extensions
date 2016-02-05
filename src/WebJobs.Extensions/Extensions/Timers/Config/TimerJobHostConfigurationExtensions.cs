@@ -33,6 +33,15 @@ namespace Microsoft.Azure.WebJobs
             {
                 throw new ArgumentNullException("config");
             }
+            if (timersConfig == null)
+            {
+                throw new ArgumentNullException("timersConfig");
+            }
+
+            if (timersConfig.ScheduleMonitor == null)
+            {
+                timersConfig.ScheduleMonitor = new StorageScheduleMonitor(config);
+            }
 
             config.RegisterExtensionConfigProvider(new TimersExtensionConfig(timersConfig));
         }

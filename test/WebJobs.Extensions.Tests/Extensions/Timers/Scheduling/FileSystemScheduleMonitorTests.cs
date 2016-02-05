@@ -89,14 +89,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             File.Delete(_statusFile);
             Assert.False(File.Exists(_statusFile));
 
-            await _monitor.UpdateAsync(_testTimerName, now, expectedNext);
+            ScheduleStatus status = new ScheduleStatus
+            {
+                Last = now,
+                Next = expectedNext
+            };
+            await _monitor.UpdateStatusAsync(_testTimerName, status);
 
             Assert.True(File.Exists(_statusFile));
             VerifyScheduleStatus(now, expectedNext);
             
             now = expectedNext;
             expectedNext = now + TimeSpan.FromMinutes(1);
-            await _monitor.UpdateAsync(_testTimerName, now, expectedNext);
+            status = new ScheduleStatus
+            {
+                Last = now,
+                Next = expectedNext
+            };
+            await _monitor.UpdateStatusAsync(_testTimerName, status);
             VerifyScheduleStatus(now, expectedNext);
         }
 
@@ -123,7 +133,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             Mock<TimerSchedule> mockSchedule = new Mock<TimerSchedule>(MockBehavior.Strict);
             DateTime now = DateTime.Now;
             DateTime next = now + TimeSpan.FromDays(1);
-            await _monitor.UpdateAsync(_testTimerName, now, next);
+            ScheduleStatus status = new ScheduleStatus
+            {
+                Last = now,
+                Next = next
+            };
+            await _monitor.UpdateStatusAsync(_testTimerName, status);
 
             mockSchedule.Setup(p => p.GetNextOccurrence(It.IsAny<DateTime>())).Returns(next);
             bool isPastDue = await _monitor.IsPastDueAsync(_testTimerName, now, mockSchedule.Object);
@@ -148,7 +163,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             Mock<TimerSchedule> mockSchedule = new Mock<TimerSchedule>(MockBehavior.Strict);
             DateTime now = DateTime.Now;
             DateTime next = now + TimeSpan.FromDays(2);
-            await _monitor.UpdateAsync(_testTimerName, now, next);
+            ScheduleStatus status = new ScheduleStatus
+            {
+                Last = now,
+                Next = next
+            };
+            await _monitor.UpdateStatusAsync(_testTimerName, status);
 
             mockSchedule.Setup(p => p.GetNextOccurrence(It.IsAny<DateTime>())).Returns(next);
             bool isPastDue = await _monitor.IsPastDueAsync(_testTimerName, now, mockSchedule.Object);

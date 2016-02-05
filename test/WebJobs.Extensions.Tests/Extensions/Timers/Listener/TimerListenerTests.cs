@@ -34,7 +34,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             DateTime lastOccurrence = DateTime.Now;
             DateTime nextOccurrence = _attribute.Schedule.GetNextOccurrence(lastOccurrence);
 
-            _mockScheduleMonitor.Setup(p => p.UpdateAsync(_testTimerName, lastOccurrence, nextOccurrence)).Returns(Task.FromResult(true));
+            ScheduleStatus status = new ScheduleStatus
+            {
+                Last = lastOccurrence,
+                Next = nextOccurrence
+            };
+            _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName, 
+                It.Is<ScheduleStatus>(q => q.Last == lastOccurrence && q.Next == nextOccurrence)))
+                .Returns(Task.FromResult(true));
 
             await _listener.InvokeJobFunction(lastOccurrence, false);
 
@@ -79,12 +86,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                     })
                 .Returns(Task.FromResult(true));
 
-            _mockScheduleMonitor.Setup(p => p.UpdateAsync(_testTimerName, It.IsAny<DateTime>(), It.IsAny<DateTime>()))
-                .Callback<string, DateTime, DateTime>((mockTimerName, mockLastOccurrence, mockNextOccurrence) =>
+            _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName, It.IsAny<ScheduleStatus>()))
+                .Callback<string, ScheduleStatus>((mockTimerName, mockStatus) =>
                     {
-                        Assert.Equal(lastOccurrence, mockLastOccurrence);
+                        Assert.Equal(lastOccurrence, mockStatus.Last);
                         DateTime expectedNextOccurrence = _attribute.Schedule.GetNextOccurrence(lastOccurrence);
-                        Assert.Equal(expectedNextOccurrence, mockNextOccurrence);
+                        Assert.Equal(expectedNextOccurrence, mockStatus.Next);
                     })
                 .Returns(Task.FromResult(true));
 
@@ -199,6 +206,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                     _triggeredFunctionData = mockFunctionData;
                 })
                 .Returns(Task.FromResult(result));
+            JobHostConfiguration hostConfig = new JobHostConfiguration();
+            hostConfig.HostId = "testhostid";
             _listener = new TimerListener(_attribute, _testTimerName, _config, _mockTriggerExecutor.Object, new TestTraceWriter());
         }
     }

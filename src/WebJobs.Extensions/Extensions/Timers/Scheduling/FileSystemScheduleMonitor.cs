@@ -96,21 +96,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         }
 
         /// <inheritdoc/>
-        public override async Task<bool> IsPastDueAsync(string timerName, DateTime now, TimerSchedule schedule)
+        public override Task<ScheduleStatus> GetStatusAsync(string timerName)
         {
-            TimeSpan pastDueDuration = await GetPastDueDuration(timerName, now, schedule);
-            return pastDueDuration != TimeSpan.Zero;
+            string statusFilePath = GetStatusFileName(timerName);
+            if (!File.Exists(statusFilePath))
+            {
+                return Task.FromResult<ScheduleStatus>(null);
+            }
+
+            ScheduleStatus status;
+            string statusLine = File.ReadAllText(statusFilePath);
+            using (StringReader stringReader = new StringReader(statusLine))
+            {
+                status = (ScheduleStatus)_serializer.Deserialize(stringReader, typeof(ScheduleStatus));
+            }
+
+            return Task.FromResult<ScheduleStatus>(status);
         }
 
         /// <inheritdoc/>
-        public override Task UpdateAsync(string timerName, DateTime lastOccurrence, DateTime nextOccurrence)
+        public override Task UpdateStatusAsync(string timerName, ScheduleStatus status)
         {
-            StatusEntry status = new StatusEntry
-            {
-                Last = lastOccurrence,
-                Next = nextOccurrence
-            };
-
             string statusLine;
             using (StringWriter stringWriter = new StringWriter())
             {
@@ -132,87 +138,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         }
 
         /// <summary>
-        /// Returns the <see cref="TimeSpan"/> duration that the specified timer is past due.
-        /// </summary>
-        /// <param name="timerName">The name of the timer.</param>
-        /// <param name="now">The current time.</param>
-        /// <param name="schedule">The <see cref="TimerSchedule"/>.</param>
-        /// <returns>The duration the timer is past due.</returns>
-        protected async Task<TimeSpan> GetPastDueDuration(string timerName, DateTime now, TimerSchedule schedule)
-        {
-            StatusEntry status = GetStatus(timerName);
-            DateTime recordedNextOccurrence;
-            if (status == null)
-            {
-                // If we've never recorded a status for this timer, write an initial
-                // status entry. This ensures that for a new timer, we've captured a
-                // status log for the next occurrence even though no occurrence has happened yet
-                // (ensuring we don't miss an occurrence)
-                DateTime nextOccurrence = schedule.GetNextOccurrence(now);
-                await UpdateAsync(timerName, default(DateTime), nextOccurrence);
-                recordedNextOccurrence = nextOccurrence;
-            }
-            else
-            {
-                // ensure that the schedule hasn't been updated since the last
-                // time we checked, and if it has, update the status file
-                DateTime expectedNextOccurrence;
-                if (status.Last == default(DateTime))
-                {
-                    // there have been no executions of the function yet, so compute
-                    // from now
-                    expectedNextOccurrence = schedule.GetNextOccurrence(now);
-                }
-                else
-                {
-                    // compute the next occurrence from the last
-                    expectedNextOccurrence = schedule.GetNextOccurrence(status.Last);
-                }
-
-                if (status.Next != expectedNextOccurrence)
-                {
-                    await UpdateAsync(timerName, status.Last, expectedNextOccurrence);
-                }
-                recordedNextOccurrence = status.Next;
-            }
-
-            if (now > recordedNextOccurrence)
-            {
-                // if now is after the last next occurrence we recorded, we know we've missed
-                // at least one schedule instance and we are past due
-                return now - recordedNextOccurrence;
-            }
-            else
-            {
-                // not past due
-                return TimeSpan.Zero;
-            }   
-        }
-
-        /// <summary>
-        /// Reads the persisted next occurrence from storage.
-        /// </summary>
-        /// <param name="timerName">The name of the timer.</param>
-        /// <returns></returns>
-        protected StatusEntry GetStatus(string timerName)
-        {
-            string statusFilePath = GetStatusFileName(timerName);
-            if (!File.Exists(statusFilePath))
-            {
-                return null;
-            }
-
-            StatusEntry status;
-            string statusLine = File.ReadAllText(statusFilePath);
-            using (StringReader stringReader = new StringReader(statusLine))
-            {
-                status = (StatusEntry)_serializer.Deserialize(stringReader, typeof(StatusEntry));
-            }
-
-            return status;
-        }
-
-        /// <summary>
         /// Returns the schedule status file name for the specified timer
         /// </summary>
         /// <param name="timerName">The timer name</param>
@@ -220,22 +145,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         protected internal string GetStatusFileName(string timerName)
         {
             return Path.Combine(StatusFilePath, timerName + ".status");
-        }
-
-        /// <summary>
-        /// Represents a timer schedule status file entry
-        /// </summary>
-        protected class StatusEntry
-        {
-            /// <summary>
-            /// The last recorded schedule occurrence
-            /// </summary>
-            public DateTime Last { get; set; }
-
-            /// <summary>
-            /// The expected next schedule occurrence
-            /// </summary>
-            public DateTime Next { get; set; }
         }
     }
 }
