@@ -51,7 +51,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public async Task InvokeJobFunction_UseMonitorFalse_DoesNotUpdateScheduleMonitor()
         {
-            _attribute.UseMonitor = false;
+            _listener.ScheduleMonitor = null;
 
             await _listener.InvokeJobFunction(DateTime.Now, false);
 
@@ -61,7 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public async Task InvokeJobFunction_HandlesExceptions()
         {
-            _attribute.UseMonitor = false;
+            _listener.ScheduleMonitor = null;
             _mockTriggerExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>())).Throws(new Exception("Kaboom!"));
 
             await _listener.InvokeJobFunction(DateTime.Now, false);
@@ -77,14 +77,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             // it shouldn't be run twice.
             _attribute.RunOnStartup = true;
 
-            DateTime lastOccurrence = default(DateTime);
+            ScheduleStatus status = new ScheduleStatus();
+            _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_testTimerName)).ReturnsAsync(status);
 
-            _mockScheduleMonitor.Setup(p => p.IsPastDueAsync(_testTimerName, It.IsAny<DateTime>(), It.IsAny<TimerSchedule>()))
-                .Callback<string, DateTime, TimerSchedule>((mockTimerName, mockNow, mockNext) =>
+            DateTime lastOccurrence = default(DateTime);
+            TimeSpan pastDueAmount = TimeSpan.FromMinutes(3);
+            _mockScheduleMonitor.Setup(p => p.CheckPastDueAsync(_testTimerName, It.IsAny<DateTime>(), It.IsAny<TimerSchedule>(), status))
+                .Callback<string, DateTime, TimerSchedule, ScheduleStatus>((mockTimerName, mockNow, mockNext, mockStatus) =>
                     {
                         lastOccurrence = mockNow;
                     })
-                .Returns(Task.FromResult(true));
+                .ReturnsAsync(pastDueAmount);
 
             _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName, It.IsAny<ScheduleStatus>()))
                 .Callback<string, ScheduleStatus>((mockTimerName, mockStatus) =>
@@ -99,6 +102,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await _listener.StartAsync(cancellationToken);
 
             TimerInfo timerInfo = (TimerInfo)_triggeredFunctionData.TriggerValue;
+            Assert.Same(status, timerInfo.ScheduleStatus);
             Assert.True(timerInfo.IsPastDue);
 
             _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Once());
@@ -109,8 +113,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public async Task StartAsync_ScheduleNotPastDue_DoesNotInvokeJobFunctionImmediately()
         {
-            _mockScheduleMonitor.Setup(p => p.IsPastDueAsync(_testTimerName, It.IsAny<DateTime>(), It.IsAny<TimerSchedule>()))
-                .Returns(Task.FromResult(false));
+            ScheduleStatus status = new ScheduleStatus();
+            _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_testTimerName)).ReturnsAsync(status);
+
+            TimeSpan pastDueAmount = TimeSpan.Zero;
+            _mockScheduleMonitor.Setup(p => p.CheckPastDueAsync(_testTimerName, It.IsAny<DateTime>(), It.IsAny<TimerSchedule>(), status))
+                .ReturnsAsync(pastDueAmount);
 
             CancellationToken cancellationToken = new CancellationToken();
             await _listener.StartAsync(cancellationToken);
@@ -123,7 +131,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public async Task StartAsync_RunOnStartup_InvokesJobFunctionImmediately()
         {
-            _attribute.UseMonitor = false;
+            _listener.ScheduleMonitor = null;
             _attribute.RunOnStartup = true;
 
             CancellationToken cancellationToken = new CancellationToken();
@@ -137,7 +145,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public async Task StartAsync_UseMonitorFalse_DoesNotCheckForPastDueSchedule()
         {
-            _attribute.UseMonitor = false;
+            _listener.ScheduleMonitor = null;
 
             CancellationToken cancellationToken = new CancellationToken();
             await _listener.StartAsync(cancellationToken);

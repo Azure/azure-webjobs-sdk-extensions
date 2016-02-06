@@ -9,17 +9,22 @@ using Microsoft.Azure.WebJobs.Extensions.Timers;
 namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
-    /// Provides access to timer information for jobs triggered by <see cref="TimerTriggerAttribute"/>
+    /// Provides access to timer schedule information for jobs triggered 
+    /// by <see cref="TimerTriggerAttribute"/>
     /// </summary>
     public class TimerInfo
     {
         /// <summary>
-        /// Constructs a new instances
+        /// Constructs a new instance
         /// </summary>
         /// <param name="schedule">The timer trigger schedule.</param>
-        public TimerInfo(TimerSchedule schedule)
+        /// <param name="status">The current schedule status.</param>
+        /// <param name="isPastDue">True if the schedule is past due, false otherwise.</param>
+        public TimerInfo(TimerSchedule schedule, ScheduleStatus status, bool isPastDue = false)
         {
             Schedule = schedule;
+            ScheduleStatus = status;
+            IsPastDue = isPastDue;
         }
 
         /// <summary>
@@ -28,10 +33,17 @@ namespace Microsoft.Azure.WebJobs
         public TimerSchedule Schedule { get; private set; }
 
         /// <summary>
+        /// Gets or sets the current schedule status for this timer.
+        /// If schedule monitoring is not enabled for this timer (see <see cref="TimerTriggerAttribute.UseMonitor"/>)
+        /// this property will return null.
+        /// </summary>
+        public ScheduleStatus ScheduleStatus { get; private set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether this timer invocation
         /// is due to a missed schedule occurrence.
         /// </summary>
-        public bool IsPastDue { get; set; }
+        public bool IsPastDue { get; private set; }
 
         /// <summary>
         /// Formats the next 'count' occurrences of the schedule into an

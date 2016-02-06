@@ -2,8 +2,8 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Xunit;
@@ -61,12 +61,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
         private async Task RunTimerJobTest(Type jobClassType, Func<bool> condition)
         {
+            TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Error);
             ExplicitTypeLocator locator = new ExplicitTypeLocator(jobClassType);
             JobHostConfiguration config = new JobHostConfiguration
             {
                 TypeLocator = locator
             };
             config.UseTimers();
+            config.Tracing.Tracers.Add(testTrace);
             JobHost host = new JobHost(config);
 
             host.Start();
@@ -77,6 +79,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             });
 
             host.Stop();
+
+            // ensure there were no errors
+            Assert.Equal(0, testTrace.Events.Count);
         }
 
         public static class CronScheduleTestJobs
@@ -91,6 +96,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             public static void EveryTwoSeconds(
                 [TimerTrigger("*/2 * * * * *")] TimerInfo timer)
             {
+                Assert.NotNull(timer.Schedule);
+                Assert.Null(timer.ScheduleStatus);
+                InvocationCount++;
+            }
+
+            public static void EveryTwoHours(
+                [TimerTrigger("0 0 */2 * * *", RunOnStartup = true)] TimerInfo timer)
+            {
+                Assert.NotNull(timer.Schedule);
+
+                Assert.NotNull(timer.ScheduleStatus);
+                DateTime expectedNext = timer.Schedule.GetNextOccurrence(timer.ScheduleStatus.Last);
+                Assert.Equal(expectedNext, timer.ScheduleStatus.Next);
+
                 InvocationCount++;
             }
         }

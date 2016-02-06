@@ -24,6 +24,10 @@ namespace WebJobsSandbox
         public static void StartupJob([TimerTrigger("0 0 */2 * * *", RunOnStartup = true)] TimerInfo timerInfo)
         {
             Console.WriteLine("Timer job fired!");
+
+            string scheduleStatus = string.Format("Status: Last='{0}', Next='{1}', IsPastDue={2}", 
+                timerInfo.ScheduleStatus.Last, timerInfo.ScheduleStatus.Next, timerInfo.IsPastDue);
+            Console.WriteLine(scheduleStatus);
         }
 
         /// <summary>

@@ -30,7 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         public abstract Task UpdateStatusAsync(string timerName, ScheduleStatus status);
 
         /// <summary>
-        /// Determines whether the schedule is currently past due.
+        /// Checks whether the schedule is currently past due.
         /// </summary>
         /// <remarks>
         /// On startup, all schedules are checked to see if they are past due. Any
@@ -41,45 +41,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// <param name="timerName">The name of the timer to check.</param>
         /// <param name="now">The time to check.</param>
         /// <param name="schedule">The <see cref="TimerSchedule"/></param>
-        /// <returns>True if the schedule is past due, false otherwise.</returns>
-        public virtual async Task<bool> IsPastDueAsync(string timerName, DateTime now, TimerSchedule schedule)
+        /// <param name="lastStatus">The last recorded status, or null if the status has never been recorded.</param>
+        /// <returns>A non-zero <see cref="TimeSpan"/> if the schedule is past due, otherwise <see cref="TimeSpan.Zero"/>.</returns>
+        public virtual async Task<TimeSpan> CheckPastDueAsync(string timerName, DateTime now, TimerSchedule schedule, ScheduleStatus lastStatus)
         {
-            TimeSpan pastDueDuration = await GetPastDueDurationAsync(timerName, now, schedule);
-            return pastDueDuration != TimeSpan.Zero;
-        }
-
-        /// <summary>
-        /// Returns the <see cref="TimeSpan"/> duration that the specified timer is past due.
-        /// </summary>
-        /// <param name="timerName">The name of the timer.</param>
-        /// <param name="now">The current time.</param>
-        /// <param name="schedule">The <see cref="TimerSchedule"/>.</param>
-        /// <returns>The duration the timer is past due.</returns>
-        protected async Task<TimeSpan> GetPastDueDurationAsync(string timerName, DateTime now, TimerSchedule schedule)
-        {
-            ScheduleStatus status = await GetStatusAsync(timerName);
             DateTime recordedNextOccurrence;
-            if (status == null)
+            if (lastStatus == null)
             {
                 // If we've never recorded a status for this timer, write an initial
                 // status entry. This ensures that for a new timer, we've captured a
                 // status log for the next occurrence even though no occurrence has happened yet
                 // (ensuring we don't miss an occurrence)
                 DateTime nextOccurrence = schedule.GetNextOccurrence(now);
-                status = new ScheduleStatus
+                lastStatus = new ScheduleStatus
                 {
                     Last = default(DateTime),
                     Next = nextOccurrence
                 };
-                await UpdateStatusAsync(timerName, status);
+                await UpdateStatusAsync(timerName, lastStatus);
                 recordedNextOccurrence = nextOccurrence;
             }
             else
             {
                 // ensure that the schedule hasn't been updated since the last
-                // time we checked, and if it has, update the status file
+                // time we checked, and if it has, update the status
                 DateTime expectedNextOccurrence;
-                if (status.Last == default(DateTime))
+                if (lastStatus.Last == default(DateTime))
                 {
                     // there have been no executions of the function yet, so compute
                     // from now
@@ -88,15 +75,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 else
                 {
                     // compute the next occurrence from the last
-                    expectedNextOccurrence = schedule.GetNextOccurrence(status.Last);
+                    expectedNextOccurrence = schedule.GetNextOccurrence(lastStatus.Last);
                 }
 
-                if (status.Next != expectedNextOccurrence)
+                if (lastStatus.Next != expectedNextOccurrence)
                 {
-                    status.Next = expectedNextOccurrence;
-                    await UpdateStatusAsync(timerName, status);
+                    lastStatus.Next = expectedNextOccurrence;
+                    await UpdateStatusAsync(timerName, lastStatus);
                 }
-                recordedNextOccurrence = status.Next;
+                recordedNextOccurrence = lastStatus.Next;
             }
 
             if (now > recordedNextOccurrence)

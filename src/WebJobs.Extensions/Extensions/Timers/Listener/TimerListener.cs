@@ -26,10 +26,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
         private System.Timers.Timer _timer;
         private TimerSchedule _schedule;
-        private ScheduleMonitor _scheduleMonitor;
         private string _timerName;
         private bool _disposed;
         private TimeSpan _remainingInterval;
+        private ScheduleStatus _scheduleStatus;
 
         public TimerListener(TimerTriggerAttribute attribute, string timerName, TimersConfiguration config, ITriggeredFunctionExecutor executor, TraceWriter trace)
         {
@@ -40,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             _trace = trace;
             _cancellationTokenSource = new CancellationTokenSource();
             _schedule = _attribute.Schedule;
-            _scheduleMonitor = _config.ScheduleMonitor;
+            ScheduleMonitor = _attribute.UseMonitor ? _config.ScheduleMonitor : null;
         }
 
         internal static TimeSpan MaxTimerInterval 
@@ -60,6 +60,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             }
         }
 
+        internal ScheduleMonitor ScheduleMonitor { get; set; }
+
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             ThrowIfDisposed();
@@ -69,14 +71,31 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 throw new InvalidOperationException("The listener has already been started.");
             }
 
-            // See if we need to invoke the function immediately now, and if
-            // so invoke it.
+            // if schedule monitoring is enabled, record (or initialize)
+            // the current schedule status
+            bool isPastDue = false;
             DateTime now = DateTime.Now;
-            if (_attribute.UseMonitor &&
-                await _scheduleMonitor.IsPastDueAsync(_timerName, now, _schedule))
+            if (ScheduleMonitor != null)
             {
-                // If schedule monitoring is enabled for this timer job, check to see if we've
-                // missed an occurrence since we last started. If we have, invoke it immediately.
+                // check to see if we've missed an occurrence since we last started.
+                // If we have, invoke it immediately.
+                _scheduleStatus = await ScheduleMonitor.GetStatusAsync(_timerName);
+                TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerName, now, _schedule, _scheduleStatus);
+                isPastDue = pastDueDuration != TimeSpan.Zero;
+
+                if (_scheduleStatus == null)
+                {
+                    // no schedule status has been stored yet, so initialize
+                    _scheduleStatus = new ScheduleStatus
+                    {
+                        Last = default(DateTime),
+                        Next = _schedule.GetNextOccurrence(now)
+                    };
+                }
+            }
+
+            if (isPastDue)
+            {
                 _trace.Verbose(string.Format("Function '{0}' is past due on startup. Executing now.", _timerName));
                 await InvokeJobFunction(now, true);
             }
@@ -170,10 +189,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         internal async Task InvokeJobFunction(DateTime lastOccurrence, bool isPastDue = false)
         {
             CancellationToken token = _cancellationTokenSource.Token;
-
-            TimerInfo timerInfo = new TimerInfo(_attribute.Schedule);
-            timerInfo.IsPastDue = isPastDue;
-
+            TimerInfo timerInfo = new TimerInfo(_attribute.Schedule, _scheduleStatus, isPastDue);
             TriggeredFunctionData input = new TriggeredFunctionData
             {
                 TriggerValue = timerInfo
@@ -193,15 +209,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // schedule. Errors will be logged to Dashboard already.
             }
 
-            if (_attribute.UseMonitor)
+            if (ScheduleMonitor != null)
             {
-                DateTime nextOccurrence = _schedule.GetNextOccurrence(lastOccurrence);
-                ScheduleStatus status = new ScheduleStatus
+                _scheduleStatus = new ScheduleStatus
                 {
                     Last = lastOccurrence,
-                    Next = nextOccurrence
+                    Next = _schedule.GetNextOccurrence(lastOccurrence)
                 };
-                await _scheduleMonitor.UpdateStatusAsync(_timerName, status);
+                await ScheduleMonitor.UpdateStatusAsync(_timerName, _scheduleStatus);
             }
         }
 

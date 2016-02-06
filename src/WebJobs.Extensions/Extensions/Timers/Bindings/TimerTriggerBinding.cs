@@ -21,6 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
         private readonly TimersConfiguration _config;
         private readonly TraceWriter _trace;
         private IReadOnlyDictionary<string, Type> _bindingContract;
+        private string _timerName;
 
         public TimerTriggerBinding(ParameterInfo parameter, TimerTriggerAttribute attribute, TimersConfiguration config, TraceWriter trace)
         {
@@ -29,6 +30,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             _config = config;
             _trace = trace;
             _bindingContract = CreateBindingDataContract();
+
+            MethodInfo methodInfo = (MethodInfo)parameter.Member;
+            _timerName = string.Format("{0}.{1}", methodInfo.DeclaringType.FullName, methodInfo.Name);
         }
 
         public Type TriggerValueType
@@ -44,18 +48,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             get { return _bindingContract; }
         }
 
-        public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
+        public async Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
         {
             TimerInfo timerInfo = value as TimerInfo;
             if (timerInfo == null)
             {
-                timerInfo = new TimerInfo(_attribute.Schedule);
+                ScheduleStatus status = null;
+                if (_attribute.UseMonitor && _config.ScheduleMonitor != null)
+                {
+                    status = await _config.ScheduleMonitor.GetStatusAsync(_timerName);
+                }
+                timerInfo = new TimerInfo(_attribute.Schedule, status);
             }
 
             IValueProvider valueProvider = new ValueProvider(timerInfo);
             IReadOnlyDictionary<string, object> bindingData = CreateBindingData();
 
-            return Task.FromResult<ITriggerData>(new TriggerData(valueProvider, bindingData));
+            return new TriggerData(valueProvider, bindingData);
         }
 
         public Task<IListener> CreateListenerAsync(ListenerFactoryContext context)
@@ -64,7 +73,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             {
                 throw new ArgumentNullException("context");
             }
-            return Task.FromResult<IListener>(new TimerListener(_attribute, context.Descriptor.Id, _config, context.Executor, _trace));
+            return Task.FromResult<IListener>(new TimerListener(_attribute, _timerName, _config, context.Executor, _trace));
         }
 
         public ParameterDescriptor ToParameterDescriptor()

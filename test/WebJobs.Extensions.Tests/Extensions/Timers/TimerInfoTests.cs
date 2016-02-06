@@ -11,10 +11,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
     public class TimerInfoTests : IClassFixture<CultureFixture.EnUs>
     {
         [Fact]
+        public void ScheduleStatus_ReturnsExpectedValue()
+        {
+            TimerSchedule schedule = new ConstantSchedule(TimeSpan.FromDays(1));
+            TimerInfo timerInfo = new TimerInfo(schedule, null);
+            Assert.Null(timerInfo.ScheduleStatus);
+
+            ScheduleStatus scheduleStatus = new ScheduleStatus();
+            timerInfo = new TimerInfo(schedule, scheduleStatus);
+            Assert.Same(scheduleStatus, timerInfo.ScheduleStatus);
+        }
+
+        [Fact]
         public void FormatNextOccurrences_ReturnsExpectedString()
         {
             DateTime now = new DateTime(2015, 9, 16, 10, 30, 00);
-            TimerInfo timerInfo = new TimerInfo(new CronSchedule("0 0 * * * *"));
+            TimerInfo timerInfo = new TimerInfo(new CronSchedule("0 0 * * * *"), null);
             string result = timerInfo.FormatNextOccurrences(10, now);
 
             string expected =
@@ -31,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 "9/16/2015 8:00:00 PM\r\n";
             Assert.Equal(expected, result);
 
-            timerInfo = new TimerInfo(new DailySchedule("2:00:00"));
+            timerInfo = new TimerInfo(new DailySchedule("2:00:00"), null);
             result = timerInfo.FormatNextOccurrences(5, now);
 
             expected =
@@ -49,7 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             weeklySchedule.Add(DayOfWeek.Wednesday, new TimeSpan(21, 30, 0));
             weeklySchedule.Add(DayOfWeek.Friday, new TimeSpan(10, 0, 0));
 
-            timerInfo = new TimerInfo(weeklySchedule);
+            timerInfo = new TimerInfo(weeklySchedule, null);
             
             result = timerInfo.FormatNextOccurrences(5, now);
 
