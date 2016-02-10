@@ -148,6 +148,7 @@
     <Compile Include="Extensions\Files\Listener\FileProcessorTests.cs" />
     <Compile Include="Extensions\Timers\Bindings\TimerTriggerBindingTests.cs" />
     <Compile Include="Extensions\Timers\Scheduling\StorageScheduleMonitorTests.cs" />
+    <Compile Include="Extensions\Timers\Scheduling\TimerScheduleTests.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Extensions\Core\ErrorTriggerEndToEndTests.cs" />
     <Compile Include="Extensions\Core\ErrorTriggerListenerTests.cs" />

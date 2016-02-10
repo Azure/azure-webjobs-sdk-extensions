@@ -31,7 +31,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private TimeSpan _remainingInterval;
         private ScheduleStatus _scheduleStatus;
 
-        public TimerListener(TimerTriggerAttribute attribute, string timerName, TimersConfiguration config, ITriggeredFunctionExecutor executor, TraceWriter trace)
+        public TimerListener(TimerTriggerAttribute attribute, TimerSchedule schedule, string timerName, TimersConfiguration config, ITriggeredFunctionExecutor executor, TraceWriter trace)
         {
             _attribute = attribute;
             _timerName = timerName;
@@ -39,8 +39,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             _executor = executor;
             _trace = trace;
             _cancellationTokenSource = new CancellationTokenSource();
-            _schedule = _attribute.Schedule;
-            ScheduleMonitor = _attribute.UseMonitor ? _config.ScheduleMonitor : null;
+            _schedule = schedule;
+            ScheduleMonitor = _attribute.UseMonitor.GetValueOrDefault() ? _config.ScheduleMonitor : null;
         }
 
         internal static TimeSpan MaxTimerInterval 
@@ -189,7 +189,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         internal async Task InvokeJobFunction(DateTime lastOccurrence, bool isPastDue = false)
         {
             CancellationToken token = _cancellationTokenSource.Token;
-            TimerInfo timerInfo = new TimerInfo(_attribute.Schedule, _scheduleStatus, isPastDue);
+            TimerInfo timerInfo = new TimerInfo(_schedule, _scheduleStatus, isPastDue);
             TriggeredFunctionData input = new TriggeredFunctionData
             {
                 TriggerValue = timerInfo

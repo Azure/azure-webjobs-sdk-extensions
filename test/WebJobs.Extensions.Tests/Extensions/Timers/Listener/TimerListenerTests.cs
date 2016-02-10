@@ -20,6 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         private Mock<ScheduleMonitor> _mockScheduleMonitor;
         private TimersConfiguration _config;
         private TimerTriggerAttribute _attribute;
+        private TimerSchedule _schedule;
         private Mock<ITriggeredFunctionExecutor> _mockTriggerExecutor;
         private TriggeredFunctionData _triggeredFunctionData;
 
@@ -32,7 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         public async Task InvokeJobFunction_UpdatesScheduleMonitor()
         {
             DateTime lastOccurrence = DateTime.Now;
-            DateTime nextOccurrence = _attribute.Schedule.GetNextOccurrence(lastOccurrence);
+            DateTime nextOccurrence = _schedule.GetNextOccurrence(lastOccurrence);
 
             ScheduleStatus status = new ScheduleStatus
             {
@@ -93,7 +94,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 .Callback<string, ScheduleStatus>((mockTimerName, mockStatus) =>
                     {
                         Assert.Equal(lastOccurrence, mockStatus.Last);
-                        DateTime expectedNextOccurrence = _attribute.Schedule.GetNextOccurrence(lastOccurrence);
+                        DateTime expectedNextOccurrence = _schedule.GetNextOccurrence(lastOccurrence);
                         Assert.Equal(expectedNextOccurrence, mockStatus.Next);
                     })
                 .Returns(Task.FromResult(true));
@@ -202,6 +203,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         private void CreateTestListener(string expression, bool useMonitor = true)
         {
             _attribute = new TimerTriggerAttribute(expression);
+            _schedule = TimerSchedule.Create(_attribute, new TestNameResolver());
             _attribute.UseMonitor = useMonitor;
             _config = new TimersConfiguration();
             _mockScheduleMonitor = new Mock<ScheduleMonitor>(MockBehavior.Strict);
@@ -216,7 +218,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 .Returns(Task.FromResult(result));
             JobHostConfiguration hostConfig = new JobHostConfiguration();
             hostConfig.HostId = "testhostid";
-            _listener = new TimerListener(_attribute, _testTimerName, _config, _mockTriggerExecutor.Object, new TestTraceWriter());
+            _listener = new TimerListener(_attribute, _schedule, _testTimerName, _config, _mockTriggerExecutor.Object, new TestTraceWriter());
         }
     }
 }

@@ -3,6 +3,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Azure.WebJobs.Host;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
@@ -47,6 +49,66 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             }
 
             return occurrences;
+        }
+
+        internal static TimerSchedule Create(TimerTriggerAttribute attribute, INameResolver nameResolver)
+        {
+            TimerSchedule schedule = null;
+
+            if (!string.IsNullOrEmpty(attribute.ScheduleExpression))
+            {
+                string resolvedExpression = nameResolver.ResolveWholeString(attribute.ScheduleExpression);
+
+                CronSchedule cronSchedule = null;
+                if (CronSchedule.TryCreate(resolvedExpression, out cronSchedule))
+                {
+                    schedule = cronSchedule;
+
+                    DateTime[] nextOccurrences = cronSchedule.InnerSchedule.GetNextOccurrences(DateTime.Now, DateTime.Now + TimeSpan.FromMinutes(1)).ToArray();
+                    if (nextOccurrences.Length > 1)
+                    {
+                        // if there is more than one occurrence due in the next minute,
+                        // assume that this is a sub-minute constant schedule and disable
+                        // persistence
+                        attribute.UseMonitor = false;
+                    }
+                    else if (!attribute.UseMonitor.HasValue)
+                    {
+                        // if the user hasn't specified a value
+                        // set to true
+                        attribute.UseMonitor = true;
+                    }
+                }
+                else
+                {
+                    TimeSpan periodTimespan = TimeSpan.Parse(resolvedExpression);
+                    schedule = new ConstantSchedule(periodTimespan);
+
+                    if (periodTimespan.TotalMinutes < 1)
+                    {
+                        // for very frequent constant schedules, we want to disable persistence
+                        attribute.UseMonitor = false;
+                    }
+                    else if (!attribute.UseMonitor.HasValue)
+                    {
+                        // if the user hasn't specified a value
+                        // set to true
+                        attribute.UseMonitor = true;
+                    }
+                }
+            }
+            else
+            {
+                schedule = (TimerSchedule)Activator.CreateInstance(attribute.ScheduleType);
+                if (!attribute.UseMonitor.HasValue)
+                {
+                    // if the user hasn't specified a value
+                    // set to true
+                    attribute.UseMonitor = true;
+                }
+            }
+
+            return schedule;
         }
     }
 }

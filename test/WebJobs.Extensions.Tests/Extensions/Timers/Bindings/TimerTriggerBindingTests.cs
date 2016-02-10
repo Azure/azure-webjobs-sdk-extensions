@@ -29,10 +29,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Bindings
             mockScheduleMonitor.Setup(p => p.GetStatusAsync(timerName)).ReturnsAsync(status);
 
             TimerTriggerAttribute attribute = parameter.GetCustomAttribute<TimerTriggerAttribute>();
+            INameResolver nameResolver = new TestNameResolver();
+            TimerSchedule schedule = TimerSchedule.Create(attribute, nameResolver);
             TimersConfiguration config = new TimersConfiguration();
             config.ScheduleMonitor = mockScheduleMonitor.Object;
             TestTraceWriter trace = new TestTraceWriter();
-            TimerTriggerBinding binding = new TimerTriggerBinding(parameter, attribute, config, trace);
+            TimerTriggerBinding binding = new TimerTriggerBinding(parameter, attribute, schedule, config, trace);
 
             // when we bind to a non-TimerInfo (e.g. in a Dashboard invocation) a new
             // TimerInfo is created, with the ScheduleStatus populated
@@ -43,7 +45,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Bindings
             Assert.Same(status, timerInfo.ScheduleStatus);
 
             // when we pass in a TimerInfo that is used
-            TimerInfo expected = new TimerInfo(attribute.Schedule, status);
+            TimerInfo expected = new TimerInfo(schedule, status);
             triggerData = (TriggerData)(await binding.BindAsync(expected, context));
             timerInfo = (TimerInfo)triggerData.ValueProvider.GetValue();
             Assert.Same(expected, timerInfo);

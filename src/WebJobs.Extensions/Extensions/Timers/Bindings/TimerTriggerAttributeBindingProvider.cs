@@ -12,11 +12,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
     internal class TimerTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
         private readonly TimersConfiguration _config;
+        private readonly INameResolver _nameResolver;
         private readonly TraceWriter _trace;
 
-        public TimerTriggerAttributeBindingProvider(TimersConfiguration config, TraceWriter trace)
+        public TimerTriggerAttributeBindingProvider(TimersConfiguration config, INameResolver nameResolver, TraceWriter trace)
         {
             _config = config;
+            _nameResolver = nameResolver;
             _trace = trace;
         }
 
@@ -40,7 +42,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
                 throw new InvalidOperationException(string.Format("Can't bind TimerTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            return Task.FromResult<ITriggerBinding>(new TimerTriggerBinding(parameter, timerTriggerAttribute, _config, _trace));
+            TimerSchedule schedule = TimerSchedule.Create(timerTriggerAttribute, _nameResolver);
+
+            return Task.FromResult<ITriggerBinding>(new TimerTriggerBinding(parameter, timerTriggerAttribute, schedule, _config, _trace));
         }
     }
 }

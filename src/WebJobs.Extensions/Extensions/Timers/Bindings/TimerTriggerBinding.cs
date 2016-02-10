@@ -18,14 +18,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
     {
         private readonly ParameterInfo _parameter;
         private readonly TimerTriggerAttribute _attribute;
+        private readonly TimerSchedule _schedule;
         private readonly TimersConfiguration _config;
         private readonly TraceWriter _trace;
         private IReadOnlyDictionary<string, Type> _bindingContract;
         private string _timerName;
 
-        public TimerTriggerBinding(ParameterInfo parameter, TimerTriggerAttribute attribute, TimersConfiguration config, TraceWriter trace)
+        public TimerTriggerBinding(ParameterInfo parameter, TimerTriggerAttribute attribute, TimerSchedule schedule, TimersConfiguration config, TraceWriter trace)
         {
             _attribute = attribute;
+            _schedule = schedule;
             _parameter = parameter;
             _config = config;
             _trace = trace;
@@ -54,11 +56,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             if (timerInfo == null)
             {
                 ScheduleStatus status = null;
-                if (_attribute.UseMonitor && _config.ScheduleMonitor != null)
+                if (_attribute.UseMonitor.GetValueOrDefault() && _config.ScheduleMonitor != null)
                 {
                     status = await _config.ScheduleMonitor.GetStatusAsync(_timerName);
                 }
-                timerInfo = new TimerInfo(_attribute.Schedule, status);
+                timerInfo = new TimerInfo(_schedule, status);
             }
 
             IValueProvider valueProvider = new ValueProvider(timerInfo);
@@ -73,7 +75,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             {
                 throw new ArgumentNullException("context");
             }
-            return Task.FromResult<IListener>(new TimerListener(_attribute, _timerName, _config, context.Executor, _trace));
+            return Task.FromResult<IListener>(new TimerListener(_attribute, _schedule, _timerName, _config, context.Executor, _trace));
         }
 
         public ParameterDescriptor ToParameterDescriptor()
@@ -83,7 +85,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
                 Name = _parameter.Name,
                 DisplayHints = new ParameterDisplayHints
                 {
-                    Description = string.Format("Timer executed on schedule ({0})", _attribute.Schedule.ToString())
+                    Description = string.Format("Timer executed on schedule ({0})", _schedule.ToString())
                 }
             };
             return descriptor;

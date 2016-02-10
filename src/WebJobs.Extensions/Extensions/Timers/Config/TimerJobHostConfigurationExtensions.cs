@@ -62,7 +62,7 @@ namespace Microsoft.Azure.WebJobs
                     throw new ArgumentNullException("context");
                 }
 
-                context.Config.RegisterBindingExtension(new TimerTriggerAttributeBindingProvider(_config, context.Trace));
+                context.Config.RegisterBindingExtension(new TimerTriggerAttributeBindingProvider(_config, context.Config.NameResolver, context.Trace));
             }
         }
     }

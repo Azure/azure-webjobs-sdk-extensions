@@ -63,8 +63,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             }
             else
             {
-                // ensure that the schedule hasn't been updated since the last
-                // time we checked, and if it has, update the status
                 DateTime expectedNextOccurrence;
                 if (lastStatus.Last == default(DateTime))
                 {
@@ -78,8 +76,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                     expectedNextOccurrence = schedule.GetNextOccurrence(lastStatus.Last);
                 }
 
+                // ensure that the schedule hasn't been updated since the last
+                // time we checked, and if it has, update the status to use the new schedule
                 if (lastStatus.Next != expectedNextOccurrence)
                 {
+                    lastStatus.Last = default(DateTime);
                     lastStatus.Next = expectedNextOccurrence;
                     await UpdateStatusAsync(timerName, lastStatus);
                 }
