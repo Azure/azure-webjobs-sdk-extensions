@@ -179,6 +179,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             pastDueAmount = await _monitor.CheckPastDueAsync(_testTimerName, now, mockSchedule.Object, status);
             Assert.Equal(TimeSpan.Zero, pastDueAmount);
             ScheduleStatus updatedStatus = await _monitor.GetStatusAsync(_testTimerName);
+            Assert.Equal(default(DateTime), updatedStatus.Last);
             Assert.Equal(adjustedNext, updatedStatus.Next);
 
             now = now + TimeSpan.FromHours(23);
