@@ -40,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Bindings
             // TimerInfo is created, with the ScheduleStatus populated
             FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, trace);
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
-            TriggerData triggerData = (TriggerData)(await binding.BindAsync("", context));
+            TriggerData triggerData = (TriggerData)(await binding.BindAsync(string.Empty, context));
             TimerInfo timerInfo = (TimerInfo)triggerData.ValueProvider.GetValue();
             Assert.Same(status, timerInfo.ScheduleStatus);
 
