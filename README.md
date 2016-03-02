@@ -52,7 +52,7 @@ public static void TimerJob([TimerTrigger("00:00:30")] TimerInfo timer)
 // return the next occurrence time as needed
 public static void CustomJob([TimerTrigger(typeof(MySchedule))] TimerInfo timer)
 {
-    Console.WriteLine("Customm job fired!");
+    Console.WriteLine("Custom job fired!");
 }
 ```
 The TimerTrigger also handles multi-instance scale out automatically - only a single instance of a particular timer function will be running across all instances (you don't want multiple instances to process the same timer event).
