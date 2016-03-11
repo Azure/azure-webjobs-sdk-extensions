@@ -3,21 +3,24 @@
 
 using System;
 using Microsoft.Azure.WebJobs.Extensions.EasyTables;
-using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.EasyTables
 {
     public class EasyTableConfigurationTests
     {
+        private const string AppSettingKey = EasyTablesConfiguration.AzureWebJobsMobileAppUriName;
+        private const string EnvironmentKey = AppSettingKey + "_environment";
+        private const string NeitherKey = AppSettingKey + "_neither";
+
         [Fact]
         public void Resolve_UsesAppSettings_First()
         {
             // Arrange
-            SetEnvironment();
+            SetEnvironment(AppSettingKey);
 
             // Act
-            var mobileAppUri = EasyTablesConfiguration.Resolve(EasyTablesConfiguration.AzureWebJobsMobileAppUriName);
+            var mobileAppUri = EasyTablesConfiguration.Resolve(AppSettingKey);
 
             // Assert            
             Assert.Equal("https://fromappsettings/", mobileAppUri.ToString());
@@ -25,43 +28,44 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.EasyTables
             ClearEnvironment();
         }
 
-        [Fact(Skip = "No good way to mock ConfigurationManager. Manually verified.")]
+        [Fact]
         public void Resolve_UsesEnvironment_Second()
         {
             // Arrange
-            SetEnvironment();
+            SetEnvironment(EnvironmentKey);
 
             // Act
-            var mobileAppUri = EasyTablesConfiguration.Resolve(EasyTablesConfiguration.AzureWebJobsMobileAppUriName);
+            var mobileAppUri = EasyTablesConfiguration.Resolve(EnvironmentKey);
 
             // Assert
-            // The conversion to URI adds a trailing slash
             Assert.Equal("https://fromenvironment/", mobileAppUri.ToString());
 
             ClearEnvironment();
         }
 
-        [Fact(Skip = "No good way to mock ConfigurationManager. Manually verified.")]
+        [Fact]
         public void Resolve_FallsBackToNull()
         {
             // Arrange
             ClearEnvironment();
 
             // Act
-            var mobileAppUri = EasyTablesConfiguration.Resolve(EasyTablesConfiguration.AzureWebJobsMobileAppUriName);
+            var mobileAppUri = EasyTablesConfiguration.Resolve(NeitherKey);
 
             // Assert            
             Assert.Null(mobileAppUri);
         }
 
-        private static void SetEnvironment()
+        private static void SetEnvironment(string key)
         {
-            Environment.SetEnvironmentVariable(EasyTablesConfiguration.AzureWebJobsMobileAppUriName, "https://fromEnvironment/");
+            Environment.SetEnvironmentVariable(key, "https://fromenvironment/");
         }
 
         private static void ClearEnvironment()
         {
-            Environment.SetEnvironmentVariable(EasyTablesConfiguration.AzureWebJobsMobileAppUriName, null);
+            Environment.SetEnvironmentVariable(AppSettingKey, null);
+            Environment.SetEnvironmentVariable(EnvironmentKey, null);
+            Environment.SetEnvironmentVariable(NeitherKey, null);
         }
     }
 }

@@ -22,7 +22,10 @@
     </NuGetContent>
   </ItemGroup>
   <Import Project="$(WebJobsToolsPath)NuGetProj.targets"/>
+  
+  <!-- This is required to properly resolve dependencies during the Nuget package build -->
   <Import Project="..\..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />
+  
   <Target Name="BeforeBuild">
     <PropertyGroup>
       <!-- Define properties you want to use inside your nuspec file. -->
