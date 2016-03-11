@@ -11,8 +11,6 @@
     <ProjectReference Include="..\WebJobs.Extensions.EasyTables\WebJobs.Extensions.EasyTables.csproj">
       <Project>{C4D2E330-8FB9-4D2B-9DB5-274FBFB69D69}</Project>
       <Name>WebJobs.Extensions.EasyTables</Name>
-      <!--This prevents a warning about this project not referencing Bcl.Build-->
-      <Properties>SkipValidatePackageReferences=true</Properties>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -24,10 +22,11 @@
     </NuGetContent>
   </ItemGroup>
   <Import Project="$(WebJobsToolsPath)NuGetProj.targets"/>
+  <Import Project="..\..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />
   <Target Name="BeforeBuild">
     <PropertyGroup>
       <!-- Define properties you want to use inside your nuspec file. -->
       <NuSpecProperties>NuGetPackageId=$(NuGetPackageId);NuGetPackageVersion=$(NuGetPackageVersion);PackageEULA=$(WebJobsPackageEULA);WebJobsPackageVersion=$(WebJobsPackageVersion)</NuSpecProperties>
     </PropertyGroup>
-  </Target>
+  </Target>  
 </Project>
