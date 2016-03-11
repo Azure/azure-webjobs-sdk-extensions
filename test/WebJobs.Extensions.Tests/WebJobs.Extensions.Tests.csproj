@@ -73,6 +73,14 @@
       <HintPath>..\..\packages\Microsoft.WindowsAzure.ConfigurationManager.2.0.3\lib\net40\Microsoft.WindowsAzure.Configuration.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Microsoft.WindowsAzure.Mobile, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Azure.Mobile.Client.2.0.1\lib\net45\Microsoft.WindowsAzure.Mobile.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAzure.Mobile.Ext, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Azure.Mobile.Client.2.0.1\lib\net45\Microsoft.WindowsAzure.Mobile.Ext.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.WindowsAzure.Storage, Version=4.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\WindowsAzure.Storage.4.3.0\lib\net40\Microsoft.WindowsAzure.Storage.dll</HintPath>
       <Private>True</Private>
@@ -102,12 +110,22 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Net.Http" />
+    <Reference Include="System.Net.Http.Extensions, Version=2.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Extensions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Net.Http.Formatting, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.AspNet.WebApi.Client.5.2.3\lib\net45\System.Net.Http.Formatting.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Net.Http.Primitives, Version=4.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Primitives.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Net.Http.WebRequest" />
     <Reference Include="System.Spatial, Version=5.6.4.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\System.Spatial.5.6.4\lib\net40\System.Spatial.dll</HintPath>
       <Private>True</Private>
@@ -142,6 +160,23 @@
     <Compile Include="Extensions\Core\SlidingWindowTraceFilterTests.cs" />
     <Compile Include="Extensions\Core\TraceFilterTests.cs" />
     <Compile Include="Extensions\Core\TraceMonitorTests.cs" />
+    <Compile Include="Extensions\EasyTables\EasyTableAsyncCollectorTests.cs" />
+    <Compile Include="Extensions\EasyTables\EasyTableAttributeBindingProviderTests.cs" />
+    <Compile Include="Extensions\EasyTables\EasyTableConfigurationTests.cs" />
+    <Compile Include="Extensions\EasyTables\EasyTableItemBindingTests.cs" />
+    <Compile Include="Extensions\EasyTables\EasyTableItemValueBinderTests.cs" />
+    <Compile Include="Extensions\EasyTables\EasyTableOutputBindingProviderTests.cs" />
+    <Compile Include="Extensions\EasyTables\EasyTableQueryBindingTests.cs" />
+    <Compile Include="Extensions\EasyTables\EasyTableQueryValueProviderTests.cs" />
+    <Compile Include="Extensions\EasyTables\EasyTableTableBindingTests.cs" />
+    <Compile Include="Extensions\EasyTables\EasyTableTableValueProviderTests.cs" />
+    <Compile Include="Extensions\EasyTables\EasyTableTestHelper.cs" />
+    <Compile Include="Extensions\EasyTables\EasyTableUtilityTests.cs" />
+    <Compile Include="Extensions\EasyTables\MobileServiceApiKeyHandlerTests.cs" />
+    <Compile Include="Extensions\EasyTables\Models\NoId.cs" />
+    <Compile Include="Extensions\EasyTables\Models\TodoItem.cs" />
+    <Compile Include="Extensions\EasyTables\TestHandler.cs" />
+    <Compile Include="Extensions\EasyTables\TestMobileServiceClientFactory.cs" />
     <Compile Include="Extensions\Files\Config\FilesConfigurationTests.cs" />
     <Compile Include="Extensions\Files\FileAttributeTests.cs" />
     <Compile Include="Extensions\Files\Listener\FileListenerTests.cs" />
@@ -172,6 +207,10 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.EasyTables\WebJobs.Extensions.EasyTables.csproj">
+      <Project>{c4d2e330-8fb9-4d2b-9db5-274fbfb69d69}</Project>
+      <Name>WebJobs.Extensions.EasyTables</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\WebJobs.Extensions.WebHooks\WebJobs.Extensions.WebHooks.csproj">
       <Project>{0c4675e2-3cea-4e86-988b-f180325b48e7}</Project>
       <Name>WebJobs.Extensions.WebHooks</Name>
@@ -208,7 +247,9 @@
     <Error Condition="!Exists('..\..\packages\StyleCop.MSBuild.4.7.49.1\build\StyleCop.MSBuild.Targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\StyleCop.MSBuild.4.7.49.1\build\StyleCop.MSBuild.Targets'))" />
     <Error Condition="!Exists('..\..\packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props'))" />
     <Error Condition="!Exists('..\..\packages\xunit.runner.visualstudio.2.0.1\build\net20\xunit.runner.visualstudio.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\xunit.runner.visualstudio.2.0.1\build\net20\xunit.runner.visualstudio.props'))" />
+    <Error Condition="!Exists('..\..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets'))" />
   </Target>
+  <Import Project="..\..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

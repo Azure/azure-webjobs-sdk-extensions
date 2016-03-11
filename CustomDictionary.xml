@@ -4,7 +4,8 @@
     <Unrecognized>
     </Unrecognized>
     <Recognized>
-      <Word>e</Word>  <!-- to get eTag variants working -->
+      <Word>e</Word>
+      <!-- to get eTag variants working -->
       <Word>autofac</Word>
       <Word>api</Word>
       <Word>apis</Word>
@@ -30,20 +31,23 @@
       <Word>rev</Word>
       <Word>rfc</Word>
       <Word>src</Word>
-	  <Word>Cron</Word>
-	  <Word>FileTriggerAttribute</Word>
-	  <Word>TimerTriggerAttribute</Word>
+      <Word>Cron</Word>
+      <Word>FileTriggerAttribute</Word>
+      <Word>TimerTriggerAttribute</Word>
       <Word>FileSystemEventArgs</Word>
       <Word>TimerInfo</Word>
       <Word>SendGridAttribute</Word>
-	  <Word>SendGridAttribute</Word>
-	  <Word>SendGridConfiguration</Word>
-	  <Word>AzureWebJobsSendGridApiKey</Word>
-	  <Word>SendGrid</Word>
-	  <Word>ApiKey</Word>
+      <Word>SendGridAttribute</Word>
+      <Word>SendGridConfiguration</Word>
+      <Word>AzureWebJobsSendGridApiKey</Word>
+      <Word>SendGrid</Word>
+      <Word>ApiKey</Word>
       <Word>Api</Word>
       <Word>WebHookTriggerAttribute</Word>
       <Word>Notifier</Word>
+      <Word>AzureWebJobsMobileAppUri</Word>
+      <Word>EasyTableConfiguration</Word>
+      <Word>MobileAppUri</Word>
     </Recognized>
     <Deprecated/>
     <Compound>
@@ -53,17 +57,17 @@
       <Term CompoundAlternate="ETag">eTag</Term>
     </Compound>
     <DiscreteExceptions>
-	<Term>WebJobs</Term>
-	<Term>TimerInfo</Term>
-	<Term>Api</Term>
-	<Term>ApiKey</Term>
-	<Term>SendGrid</Term>
-	<Term>TimerTriggerAttribute</Term>
+      <Term>WebJobs</Term>
+      <Term>TimerInfo</Term>
+      <Term>Api</Term>
+      <Term>ApiKey</Term>
+      <Term>SendGrid</Term>
+      <Term>TimerTriggerAttribute</Term>
     </DiscreteExceptions>
   </Words>
   <Acronyms>
     <CasingExceptions>
-	<Acronym>ETag</Acronym>
+      <Acronym>ETag</Acronym>
     </CasingExceptions>
   </Acronyms>
 </Dictionary>

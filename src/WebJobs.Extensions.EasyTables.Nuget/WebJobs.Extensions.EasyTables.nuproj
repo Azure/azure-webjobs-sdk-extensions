@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), WebJobs.Extensions.sln))\tools\NuGetProj.settings.targets"/>
+  <PropertyGroup>
+    <NuSpecFile>$(MSBuildProjectName).nuspec</NuSpecFile>
+    <NuGetPackageId>Microsoft.Azure.WebJobs.Extensions.EasyTables</NuGetPackageId>
+    <NuGetPackageVersion>$(WebJobsPackageVersion)</NuGetPackageVersion>
+    <NuGetPackSymbols>false</NuGetPackSymbols>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WebJobs.Extensions.EasyTables\WebJobs.Extensions.EasyTables.csproj">
+      <Project>{C4D2E330-8FB9-4D2B-9DB5-274FBFB69D69}</Project>
+      <Name>WebJobs.Extensions.EasyTables</Name>
+      <!--This prevents a warning about this project not referencing Bcl.Build-->
+      <Properties>SkipValidatePackageReferences=true</Properties>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <NuGetContent Include="$(WebJobsRootPath)\src\WebJobs.Extensions.EasyTables\bin\$(Configuration)\Microsoft.Azure.WebJobs.Extensions.EasyTables.dll">
+      <Destination>lib\net45\Microsoft.Azure.WebJobs.Extensions.EasyTables.dll</Destination>
+    </NuGetContent>
+    <NuGetContent Include="$(WebJobsRootPath)\src\WebJobs.Extensions.EasyTables\bin\$(Configuration)\Microsoft.Azure.WebJobs.Extensions.EasyTables.xml">
+      <Destination>lib\net45\Microsoft.Azure.WebJobs.Extensions.EasyTables.xml</Destination>
+    </NuGetContent>
+  </ItemGroup>
+  <Import Project="$(WebJobsToolsPath)NuGetProj.targets"/>
+  <Target Name="BeforeBuild">
+    <PropertyGroup>
+      <!-- Define properties you want to use inside your nuspec file. -->
+      <NuSpecProperties>NuGetPackageId=$(NuGetPackageId);NuGetPackageVersion=$(NuGetPackageVersion);PackageEULA=$(WebJobsPackageEULA);WebJobsPackageVersion=$(WebJobsPackageVersion)</NuSpecProperties>
+    </PropertyGroup>
+  </Target>
+</Project>

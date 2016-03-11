@@ -39,14 +39,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
             if (context.Parameter.ParameterType != typeof(SendGridMessage) &&
                 context.Parameter.ParameterType != typeof(SendGridMessage).MakeByRefType())
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 
+                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture,
                     "Can't bind SendGridAttribute to type '{0}'.", parameter.ParameterType));
             }
 
             if (string.IsNullOrEmpty(_config.ApiKey))
             {
                 throw new InvalidOperationException(
-                    string.Format("The SendGrid ApiKey must be set either via a '{0}' app setting, via a '{0}' environment variable, or directly in code via SendGridConfiguration.ApiKey.", 
+                    string.Format("The SendGrid ApiKey must be set either via a '{0}' app setting, via a '{0}' environment variable, or directly in code via SendGridConfiguration.ApiKey.",
                     SendGridConfiguration.AzureWebJobsSendGridApiKeyName));
             }
 

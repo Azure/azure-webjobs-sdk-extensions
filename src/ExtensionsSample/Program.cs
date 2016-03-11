@@ -5,6 +5,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Mail;
+using ExtensionsSample.Samples;
 using Microsoft.AspNet.WebHooks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions;
@@ -12,6 +13,7 @@ using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 using Microsoft.Azure.WebJobs.Extensions.WebHooks;
 using Microsoft.Azure.WebJobs.Host;
+using WebJobsSandbox;
 
 namespace ExtensionsSample
 {
@@ -33,6 +35,7 @@ namespace ExtensionsSample
             config.UseFiles(filesConfig);
             config.UseTimers();
             config.UseSample();
+            config.UseEasyTables();
             config.UseCore();
             var sendGridConfiguration = new SendGridConfiguration()
             {
@@ -42,7 +45,7 @@ namespace ExtensionsSample
             config.UseSendGrid(sendGridConfiguration);
 
             ConfigureTraceMonitor(config, sendGridConfiguration);
-            
+
             EnsureSampleDirectoriesExist(filesConfig.RootPath);
 
             WebHooksConfiguration webHooksConfig = new WebHooksConfiguration();
@@ -50,6 +53,18 @@ namespace ExtensionsSample
             config.UseWebHooks(webHooksConfig);
 
             JobHost host = new JobHost(config);
+
+            // Add or remove types from this list to choose which functions will 
+            // be indexed by the JobHost.
+            config.TypeLocator = new SamplesTypeLocator(
+                typeof(ErrorMonitoringSamples),
+                typeof(FileSamples),
+                typeof(MiscellaneousSamples),
+                typeof(SampleSamples),
+                typeof(SendGridSamples),
+                typeof(TableSamples),
+                typeof(TimerSamples),
+                typeof(WebHookSamples));
 
             host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
             host.Call(typeof(FileSamples).GetMethod("ReadWrite"));

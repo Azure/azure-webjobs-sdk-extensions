@@ -291,6 +291,7 @@
           <Value>ui</Value>
           <Value>iv</Value>
           <Value>e</Value>
+          <Value>j</Value>
         </CollectionProperty>
       </AnalyzerSettings>
       <Rules>
