@@ -18,6 +18,7 @@
     <RunCodeAnalysis>true</RunCodeAnalysis>
     <CodeAnalysisRuleSet>..\test.ruleset</CodeAnalysisRuleSet>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -47,6 +48,10 @@
     </Reference>
     <Reference Include="Microsoft.AspNet.WebHooks.Receivers.GitHub, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.AspNet.WebHooks.Receivers.GitHub.1.2.0-rc1\lib\net45\Microsoft.AspNet.WebHooks.Receivers.GitHub.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Azure.Documents.Client, Version=1.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Azure.DocumentDB.1.5.3\lib\net40\Microsoft.Azure.Documents.Client.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.WebJobs, Version=1.1.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -155,11 +160,15 @@
     <Compile Include="Common\TestHelpers.cs" />
     <Compile Include="Common\TestNameResolver.cs" />
     <Compile Include="Common\TestTraceWriter.cs" />
+    <Compile Include="Common\TypeUtilityTests.cs" />
+    <Compile Include="Extensions\DocumentDB\DocumentDBAttributeBindingProviderTests.cs" />
     <Compile Include="Extensions\Core\CoreBindingEndToEndTests.cs" />
     <Compile Include="Extensions\Core\ErrorTriggerAttributeTests.cs" />
     <Compile Include="Extensions\Core\SlidingWindowTraceFilterTests.cs" />
     <Compile Include="Extensions\Core\TraceFilterTests.cs" />
     <Compile Include="Extensions\Core\TraceMonitorTests.cs" />
+    <Compile Include="Extensions\DocumentDB\DocumentDBConnectionStringTests.cs" />
+    <Compile Include="Extensions\DocumentDB\TestDocumentDBServiceFactory.cs" />
     <Compile Include="Extensions\EasyTables\EasyTableAsyncCollectorTests.cs" />
     <Compile Include="Extensions\EasyTables\EasyTableAttributeBindingProviderTests.cs" />
     <Compile Include="Extensions\EasyTables\EasyTableConfigurationTests.cs" />
@@ -177,6 +186,11 @@
     <Compile Include="Extensions\EasyTables\Models\TodoItem.cs" />
     <Compile Include="Extensions\EasyTables\TestHandler.cs" />
     <Compile Include="Extensions\EasyTables\TestMobileServiceClientFactory.cs" />
+    <Compile Include="Extensions\DocumentDB\DocumentDBAsyncCollectorTests.cs" />
+    <Compile Include="Extensions\DocumentDB\DocumentDBConfigurationTests.cs" />
+    <Compile Include="Extensions\DocumentDB\DocumentDBTestUtility.cs" />
+    <Compile Include="Extensions\DocumentDB\DocumentDBUtilityTests.cs" />
+    <Compile Include="Extensions\DocumentDB\Models\Item.cs" />
     <Compile Include="Extensions\Files\Config\FilesConfigurationTests.cs" />
     <Compile Include="Extensions\Files\FileAttributeTests.cs" />
     <Compile Include="Extensions\Files\Listener\FileListenerTests.cs" />
@@ -210,6 +224,11 @@
     <ProjectReference Include="..\..\src\WebJobs.Extensions.EasyTables\WebJobs.Extensions.EasyTables.csproj">
       <Project>{c4d2e330-8fb9-4d2b-9db5-274fbfb69d69}</Project>
       <Name>WebJobs.Extensions.EasyTables</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.DocumentDB\WebJobs.Extensions.DocumentDB.csproj">
+      <Project>{38372e3c-70c9-4678-892d-7295a4615561}</Project>
+      <Name>WebJobs.Extensions.DocumentDB</Name>
+      <Aliases>DocumentDB</Aliases>
     </ProjectReference>
     <ProjectReference Include="..\..\src\WebJobs.Extensions.WebHooks\WebJobs.Extensions.WebHooks.csproj">
       <Project>{0c4675e2-3cea-4e86-988b-f180325b48e7}</Project>

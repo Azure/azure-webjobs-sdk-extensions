@@ -109,6 +109,9 @@
       <Link>CustomDictionary.xml</Link>
       <SubType>Designer</SubType>
     </CodeAnalysisDictionary>
+    <Compile Include="..\Common\TypeUtility.cs">
+      <Link>Common\TypeUtility.cs</Link>
+    </Compile>
     <Compile Include="Bindings\CompositeBindingProvider.cs" />
     <Compile Include="Bindings\EasyTableAsyncCollector.cs" />
     <Compile Include="Config\DefaultMobileServiceClientFactory.cs" />

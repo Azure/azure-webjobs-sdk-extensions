@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), WebJobs.Extensions.sln))\tools\NuGetProj.settings.targets"/>
+  <PropertyGroup>
+    <NuSpecFile>$(MSBuildProjectName).nuspec</NuSpecFile>
+    <NuGetPackageId>Microsoft.Azure.WebJobs.Extensions.DocumentDB</NuGetPackageId>
+    <NuGetPackageVersion>$(DocDBPackageVersion)</NuGetPackageVersion>
+    <NuGetPackSymbols>false</NuGetPackSymbols>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WebJobs.Extensions.DocumentDB\WebJobs.Extensions.DocumentDB.csproj">
+      <Project>{38372E3C-70C9-4678-892D-7295A4615561}</Project>
+      <Name>WebJobs.Extensions.DocumentDB</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <NuGetContent Include="$(WebJobsRootPath)\src\WebJobs.Extensions.DocumentDB\bin\$(Configuration)\Microsoft.Azure.WebJobs.Extensions.DocumentDB.dll">
+      <Destination>lib\net45\Microsoft.Azure.WebJobs.Extensions.DocumentDB.dll</Destination>
+    </NuGetContent>
+    <NuGetContent Include="$(WebJobsRootPath)\src\WebJobs.Extensions.DocumentDB\bin\$(Configuration)\Microsoft.Azure.WebJobs.Extensions.DocumentDB.xml">
+      <Destination>lib\net45\Microsoft.Azure.WebJobs.Extensions.DocumentDB.xml</Destination>
+    </NuGetContent>
+  </ItemGroup>
+  <Import Project="$(WebJobsToolsPath)NuGetProj.targets"/>
+  <Target Name="BeforeBuild">
+    <PropertyGroup>
+      <!-- Define properties you want to use inside your nuspec file. -->
+      <NuSpecProperties>NuGetPackageId=$(NuGetPackageId);NuGetPackageVersion=$(NuGetPackageVersion);PackageEULA=$(WebJobsPackageEULA);WebJobsPackageVersion=$(WebJobsPackageVersion)</NuSpecProperties>
+    </PropertyGroup>
+  </Target>
+</Project>

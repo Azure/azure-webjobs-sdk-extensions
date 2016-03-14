@@ -28,6 +28,10 @@
       <PublishType>Assembly</PublishType>
       <PublishPath>$(PublishPath)\Binaries</PublishPath>
     </Build>
+    <Build Include="src\WebJobs.Extensions.DocumentDB\WebJobs.Extensions.DocumentDB.csproj">
+      <PublishType>Assembly</PublishType>
+      <PublishPath>$(PublishPath)\Binaries</PublishPath>
+    </Build>
     <Build Include="src\WebJobs.Extensions.NuGet\WebJobs.Extensions.nuproj">
       <PublishType>File</PublishType>
       <PublishPath>$(PublishPath)\Packages</PublishPath>
@@ -41,6 +45,10 @@
       <PublishPath>$(PublishPath)\Packages</PublishPath>
     </Build>
     <Build Include="src\WebJobs.Extensions.EasyTables.Nuget\WebJobs.Extensions.EasyTables.nuproj">
+      <PublishType>File</PublishType>
+      <PublishPath>$(PublishPath)\Packages</PublishPath>
+    </Build>
+    <Build Include="src\WebJobs.Extensions.DocumentDB.Nuget\WebJobs.Extensions.DocumentDB.nuproj">
       <PublishType>File</PublishType>
       <PublishPath>$(PublishPath)\Packages</PublishPath>
     </Build>

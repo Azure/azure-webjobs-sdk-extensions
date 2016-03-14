@@ -55,7 +55,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
 
         internal Task<IBinding> CreateBinding(ParameterInfo parameter)
         {
-            Type coreType = EasyTableUtility.GetCoreType(parameter.ParameterType);
+            Type coreType = TypeUtility.GetCoreType(parameter.ParameterType);
 
             IBinding genericBinding = BindingFactory.BindGenericCollector(parameter, typeof(EasyTableAsyncCollector<>), coreType,
                 _jobHostConfig.GetService<IConverterManager>(), (s) => _easyTableContext);

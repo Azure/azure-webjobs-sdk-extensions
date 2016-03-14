@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.WebHooks
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.EasyTables", "src\WebJobs.Extensions.EasyTables\WebJobs.Extensions.EasyTables.csproj", "{C4D2E330-8FB9-4D2B-9DB5-274FBFB69D69}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.DocumentDB", "src\WebJobs.Extensions.DocumentDB\WebJobs.Extensions.DocumentDB.csproj", "{38372E3C-70C9-4678-892D-7295A4615561}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -67,6 +69,10 @@ Global
 		{C4D2E330-8FB9-4D2B-9DB5-274FBFB69D69}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4D2E330-8FB9-4D2B-9DB5-274FBFB69D69}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C4D2E330-8FB9-4D2B-9DB5-274FBFB69D69}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38372E3C-70C9-4678-892D-7295A4615561}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38372E3C-70C9-4678-892D-7295A4615561}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38372E3C-70C9-4678-892D-7295A4615561}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38372E3C-70C9-4678-892D-7295A4615561}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -80,5 +86,6 @@ Global
 		{6EAB68D8-EBF7-4BC2-89F9-30E6E3BB4423} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{0C4675E2-3CEA-4E86-988B-F180325B48E7} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{C4D2E330-8FB9-4D2B-9DB5-274FBFB69D69} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
+		{38372E3C-70C9-4678-892D-7295A4615561} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 	EndGlobalSection
 EndGlobal
