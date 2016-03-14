@@ -38,6 +38,7 @@ namespace ExtensionsSample
             config.UseEasyTables();
             config.UseCore();
             config.UseDocumentDB();
+            config.UseNotificationHubs();
             var sendGridConfiguration = new SendGridConfiguration()
             {
                 ToAddress = "admin@webjobssamples.com",

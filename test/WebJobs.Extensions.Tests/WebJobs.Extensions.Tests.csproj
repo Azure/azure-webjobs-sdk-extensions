@@ -54,6 +54,10 @@
       <HintPath>..\..\packages\Microsoft.Azure.DocumentDB.1.5.3\lib\net40\Microsoft.Azure.Documents.Client.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Microsoft.Azure.NotificationHubs, Version=2.16.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Azure.NotificationHubs.1.0.3\lib\net45-full\Microsoft.Azure.NotificationHubs.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.Azure.WebJobs, Version=1.1.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.Azure.WebJobs.Core.1.1.2-alpha-10271\lib\net45\Microsoft.Azure.WebJobs.dll</HintPath>
       <Private>True</Private>
@@ -130,6 +134,8 @@
       <HintPath>..\..\packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Primitives.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Net.Http.WebRequest" />
     <Reference Include="System.Spatial, Version=5.6.4.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\System.Spatial.5.6.4\lib\net40\System.Spatial.dll</HintPath>
@@ -195,6 +201,9 @@
     <Compile Include="Extensions\Files\FileAttributeTests.cs" />
     <Compile Include="Extensions\Files\Listener\FileListenerTests.cs" />
     <Compile Include="Extensions\Files\Listener\FileProcessorTests.cs" />
+    <Compile Include="Extensions\NotificationHub\ConverterTests.cs" />
+    <Compile Include="Extensions\NotificationHub\NotificationHubAsyncCollectorTests.cs" />
+    <Compile Include="Extensions\NotificationHub\NotificationHubAttributeBindingProviderTests.cs" />
     <Compile Include="Extensions\Timers\Bindings\TimerTriggerBindingTests.cs" />
     <Compile Include="Extensions\Timers\Scheduling\StorageScheduleMonitorTests.cs" />
     <Compile Include="Extensions\Timers\Scheduling\TimerScheduleTests.cs" />
@@ -219,7 +228,6 @@
     <Compile Include="Extensions\Timers\TimerTriggerAttributeTests.cs" />
     <Compile Include="Extensions\WebHooks\WebHookEndToEndTests.cs" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\..\src\WebJobs.Extensions.EasyTables\WebJobs.Extensions.EasyTables.csproj">
       <Project>{c4d2e330-8fb9-4d2b-9db5-274fbfb69d69}</Project>
@@ -229,6 +237,10 @@
       <Project>{38372e3c-70c9-4678-892d-7295a4615561}</Project>
       <Name>WebJobs.Extensions.DocumentDB</Name>
       <Aliases>DocumentDB</Aliases>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.NotificationHub\WebJobs.Extensions.NotificationHub.csproj">
+      <Project>{0b6093f8-5b69-4432-b64c-539e19b2e03a}</Project>
+      <Name>WebJobs.Extensions.NotificationHubs</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\src\WebJobs.Extensions.WebHooks\WebJobs.Extensions.WebHooks.csproj">
       <Project>{0c4675e2-3cea-4e86-988b-f180325b48e7}</Project>

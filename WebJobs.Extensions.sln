@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.EasyTabl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.DocumentDB", "src\WebJobs.Extensions.DocumentDB\WebJobs.Extensions.DocumentDB.csproj", "{38372E3C-70C9-4678-892D-7295A4615561}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.NotificationHub", "src\WebJobs.Extensions.NotificationHub\WebJobs.Extensions.NotificationHub.csproj", "{0B6093F8-5B69-4432-B64C-539E19B2E03A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -73,6 +75,10 @@ Global
 		{38372E3C-70C9-4678-892D-7295A4615561}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{38372E3C-70C9-4678-892D-7295A4615561}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{38372E3C-70C9-4678-892D-7295A4615561}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0B6093F8-5B69-4432-B64C-539E19B2E03A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B6093F8-5B69-4432-B64C-539E19B2E03A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B6093F8-5B69-4432-B64C-539E19B2E03A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0B6093F8-5B69-4432-B64C-539E19B2E03A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -87,5 +93,6 @@ Global
 		{0C4675E2-3CEA-4E86-988B-F180325B48E7} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{C4D2E330-8FB9-4D2B-9DB5-274FBFB69D69} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{38372E3C-70C9-4678-892D-7295A4615561} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
+		{0B6093F8-5B69-4432-B64C-539E19B2E03A} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 	EndGlobalSection
 EndGlobal
