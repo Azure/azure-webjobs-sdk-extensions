@@ -12,12 +12,16 @@
       <PropertyGroup>
         <WebJobsPackageVersion>$(Version)$(PrereleaseTag)-$(BUILD_NUMBER)</WebJobsPackageVersion>
         <WebHooksPackageVersion>1.0.0-beta4-$(BUILD_NUMBER)</WebHooksPackageVersion>
+        <EasyTablesPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</EasyTablesPackageVersion>
+        <NotificationHubsPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</NotificationHubsPackageVersion>
       </PropertyGroup>
     </When>
     <Otherwise>
       <PropertyGroup>
         <WebJobsPackageVersion>$(Version)$(PrereleaseTag)</WebJobsPackageVersion>
         <WebHooksPackageVersion>1.0.0-beta4</WebHooksPackageVersion>
+        <EasyTablesPackageVersion>1.0.0$(PrereleaseTag)</EasyTablesPackageVersion>
+        <NotificationHubsPackageVersion>1.0.0$(PrereleaseTag)</NotificationHubsPackageVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>

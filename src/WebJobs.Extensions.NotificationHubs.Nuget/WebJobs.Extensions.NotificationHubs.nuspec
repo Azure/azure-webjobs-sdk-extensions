@@ -2,20 +2,20 @@
 <package>
   <metadata>
     <id>$NuGetPackageId$</id>
-    <title>Microsoft.Azure.WebJobs.Extensions.SendGrid</title>
+    <title>Microsoft.Azure.WebJobs.Extensions.NotificationHubs</title>
     <version>$NuGetPackageVersion$</version>
     <authors>Microsoft</authors>
     <copyright>&#169; Microsoft Corporation. All rights reserved.</copyright>
-    <summary>Microsoft.Azure.WebJobs.Extensions.SendGrid adds SendGrid binders to the WebJobs SDK.</summary>
-    <description>This package contains the runtime assemblies for Microsoft.Azure.WebJobs.Extensions.SendGrid. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources</description>
+    <summary>Microsoft.Azure.WebJobs.Extensions.NotificationHubs adds NotificationHubs binders to the WebJobs SDK.</summary>
+    <description>This package contains the runtime assemblies for Microsoft.Azure.WebJobs.Extensions.NotificationHubs. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources</description>
     <language>en-US</language>
     <projectUrl>https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources</projectUrl>
     <licenseUrl>$PackageEULA$</licenseUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
-    <tags>Microsoft Azure WebJobs Jobs Extensions SendGrid Email windowsazureofficial Web</tags>
+    <tags>Microsoft Azure WebJobs Jobs Extensions NotificationHubs windowsazureofficial Push</tags>
     <dependencies>
       <dependency id="Microsoft.Azure.WebJobs.Extensions" version="$WebJobsPackageVersion$" />
-      <dependency id="Sendgrid" version="6.3.4" />
+      <dependency id="Microsoft.Azure.NotificationHubs" version="1.0.3" />
     </dependencies>
   </metadata>
 </package>

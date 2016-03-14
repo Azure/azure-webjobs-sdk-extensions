@@ -10,6 +10,7 @@ using Microsoft.AspNet.WebHooks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Extensions.Files;
+using Microsoft.Azure.WebJobs.Extensions.NotificationHubs;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 using Microsoft.Azure.WebJobs.Extensions.WebHooks;
 using Microsoft.Azure.WebJobs.Host;
@@ -37,6 +38,7 @@ namespace ExtensionsSample
             config.UseSample();
             config.UseEasyTables();
             config.UseCore();
+            config.UseNotificationHubs();
             var sendGridConfiguration = new SendGridConfiguration()
             {
                 ToAddress = "admin@webjobssamples.com",
@@ -64,7 +66,8 @@ namespace ExtensionsSample
                 typeof(SendGridSamples),
                 typeof(TableSamples),
                 typeof(TimerSamples),
-                typeof(WebHookSamples));
+                typeof(WebHookSamples),
+                typeof(NotificationHubsSamples));
 
             host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
             host.Call(typeof(FileSamples).GetMethod("ReadWrite"));
