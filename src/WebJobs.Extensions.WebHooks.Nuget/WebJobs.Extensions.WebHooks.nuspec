@@ -14,7 +14,7 @@
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <tags>Microsoft Azure WebJobs Jobs Extensions WebHooks WebHook windowsazureofficial Web</tags>
     <dependencies>
-      <dependency id="Microsoft.Azure.WebJobs.Extensions" version="[$WebJobsPackageVersion$]" />
+      <dependency id="Microsoft.Azure.WebJobs.Extensions" version="$WebJobsPackageVersion$" />
       <dependency id="SuaveServerWrapper" version="0.0.2" />
       <dependency id="Microsoft.AspNet.WebApi.Client" version="5.2.3" />
       <dependency id="Microsoft.AspNet.WebApi.Core" version="5.2.3" />

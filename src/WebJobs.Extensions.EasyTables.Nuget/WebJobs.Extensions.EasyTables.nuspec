@@ -14,7 +14,7 @@
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <tags>Microsoft Azure WebJobs Jobs Extensions EasyTables Easy Tables Mobile Apps windowsazureofficial Web</tags>
     <dependencies>
-      <dependency id="Microsoft.Azure.WebJobs.Extensions" version="[$WebJobsPackageVersion$]" />
+      <dependency id="Microsoft.Azure.WebJobs.Extensions" version="$WebJobsPackageVersion$" />
       <dependency id="Microsoft.Azure.Mobile.Client" version="2.0.1" />
     </dependencies>
   </metadata>

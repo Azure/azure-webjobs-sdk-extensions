@@ -4,7 +4,7 @@
   <PropertyGroup>
     <NuSpecFile>$(MSBuildProjectName).nuspec</NuSpecFile>
     <NuGetPackageId>Microsoft.Azure.WebJobs.Extensions.EasyTables</NuGetPackageId>
-    <NuGetPackageVersion>$(WebJobsPackageVersion)</NuGetPackageVersion>
+    <NuGetPackageVersion>$(EasyTablesPackageVersion)</NuGetPackageVersion>
     <NuGetPackSymbols>false</NuGetPackSymbols>
   </PropertyGroup>
   <ItemGroup>
