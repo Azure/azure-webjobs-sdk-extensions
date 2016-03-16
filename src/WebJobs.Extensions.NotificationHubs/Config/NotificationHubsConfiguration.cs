@@ -5,6 +5,9 @@ using System;
 using System.Configuration;
 using Microsoft.Azure.NotificationHubs;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 
 namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 {
@@ -57,9 +60,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 
             var converterManager = context.Config.GetService<IConverterManager>();
             converterManager.AddConverter<TemplateNotification, Notification>(templateNotification => templateNotification);
+            converterManager.AddConverter<string, Notification>(messageProperties => BuildTemplateNotificationFromJson(messageProperties));
 
             var provider = new NotificationHubsAttributeBindingProvider(context.Config.NameResolver, converterManager, this);
             context.Config.RegisterBindingExtension(provider);
+        }
+
+        private TemplateNotification BuildTemplateNotificationFromJson(string messageProperties)
+        {
+            JObject message=JsonConvert.DeserializeObject<JObject>(messageProperties);
+            Dictionary<string, string> templateProperties = new Dictionary<string, string>();
+
+            foreach (JProperty property in message.Properties())
+            {
+                templateProperties.Add(property.Name.ToString(), property.Value.ToString());
+            }
+            return new TemplateNotification(templateProperties);
         }
     }
 }

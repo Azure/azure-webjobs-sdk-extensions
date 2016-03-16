@@ -9,18 +9,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 {
     internal class NotificationHubsAsyncCollector : IAsyncCollector<Notification>
     {
-        INotificationHubClientService _nhClient;
+        INotificationHubClientService _nhClientService;
         string _tagExpression;
 
-        public NotificationHubsAsyncCollector(INotificationHubClientService nhClient, string tagExpression)
+        public NotificationHubsAsyncCollector(INotificationHubClientService nhClientService, string tagExpression)
         {
-            _nhClient = nhClient;
+            _nhClientService = nhClientService;
             _tagExpression = tagExpression;
         }
 
         public async Task AddAsync(Notification item, CancellationToken cancellationToken = default(CancellationToken))
         {
-            await _nhClient.SendNotificationAsync(item, _tagExpression);
+            await _nhClientService.SendNotificationAsync(item, _tagExpression);
         }
 
         public Task FlushAsync(CancellationToken cancellationToken = default(CancellationToken))
