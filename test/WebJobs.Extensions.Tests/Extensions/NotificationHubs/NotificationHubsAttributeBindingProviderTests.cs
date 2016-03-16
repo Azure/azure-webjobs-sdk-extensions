@@ -52,11 +52,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             // Arrange
             Type expectedExceptionType = typeof(InvalidOperationException);
 
-            if (parameter.ParameterType == typeof(IAsyncCollector<Notification>).MakeByRefType())
-            {
-                expectedExceptionType = typeof(NotImplementedException);
-            }
-
             // Act
             var exception = await Assert.ThrowsAnyAsync<Exception>(() => CreateProviderAndTryCreateAsync(parameter));
 
@@ -106,10 +101,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
 
         private void InvalidOutputParameters(
             [NotificationHubs] Notification notification,
-            [NotificationHubs] TemplateNotification tempalteNotification,
-            [NotificationHubs] out JObject jObjectNotification)
+            [NotificationHubs] TemplateNotification templateNotification)
         {
-            jObjectNotification = null;
         }
     }
 }
