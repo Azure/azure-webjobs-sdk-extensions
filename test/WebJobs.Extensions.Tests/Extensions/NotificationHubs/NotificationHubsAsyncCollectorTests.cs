@@ -15,15 +15,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.NotificationHubs
         [Fact]
         public async Task AddAsync_SendNotification_TagExpression_Null()
         {
+            var notification = GetTemplateNotification();
+
             // Arrange
             var mockNhClientService = new Mock<INotificationHubClientService>(MockBehavior.Strict);
-            mockNhClientService.Setup(x => x.SendNotificationAsync(GetTemplateNotification(), null))
+            mockNhClientService.Setup(x => x.SendNotificationAsync(notification, null))
                   .Returns(Task.FromResult(new NotificationOutcome()));
 
             IAsyncCollector<Notification> collector = new NotificationHubsAsyncCollector(mockNhClientService.Object, null);
 
             // Act
-            await collector.AddAsync(GetTemplateNotification());
+            await collector.AddAsync(notification);
 
             // Assert
             mockNhClientService.VerifyAll();
@@ -32,20 +34,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.NotificationHubs
         [Fact]
         public async Task AddAsync_SendNotification_TagExpression_Valid()
         {
+            var notification = GetTemplateNotification();
             // Arrange
             var mockNhClientService = new Mock<INotificationHubClientService>(MockBehavior.Strict);
-            mockNhClientService.Setup(x => x.SendNotificationAsync(GetTemplateNotification(), "foo||bar"))
+
+            mockNhClientService.Setup(x => x.SendNotificationAsync(notification, "foo||bar"))
                     .Returns(Task.FromResult(new NotificationOutcome()));
 
             IAsyncCollector<Notification> collector = new NotificationHubsAsyncCollector(mockNhClientService.Object, "foo||bar");
 
             // Act
-            await collector.AddAsync(GetTemplateNotification());
+            await collector.AddAsync(notification);
 
             // Assert
             mockNhClientService.VerifyAll();
         }
-        private static TemplateNotification GetTemplateNotification()
+        private static Notification GetTemplateNotification()
         {
             Dictionary<string, string> templateProperties = new Dictionary<string, string>();
             templateProperties["message"] = "bar";
