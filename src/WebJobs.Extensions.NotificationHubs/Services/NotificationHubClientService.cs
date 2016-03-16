@@ -8,15 +8,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 {
     internal class NotificationHubClientService : INotificationHubClientService
     {
+        private NotificationHubsConfiguration _nhClientConfig;
         private NotificationHubClient _nhClient;
         public NotificationHubClientService(NotificationHubsConfiguration nhConfig)
         {
-            _nhClient = NotificationHubClient.CreateClientFromConnectionString(nhConfig.ConnectionString, nhConfig.HubName);
+            _nhClientConfig = nhConfig;
         }
         public async Task<NotificationOutcome> SendNotificationAsync(Notification notification, string tagExpression)
         {
             var notificationOutcome = await _nhClient.SendNotificationAsync(notification, tagExpression);
             return notificationOutcome;
+        }
+
+        private NotificationHubClient GetNotificationHubClient()
+        {
+            if(_nhClient==null)
+            {
+                _nhClient = NotificationHubClient.CreateClientFromConnectionString(_nhClientConfig.ConnectionString, _nhClientConfig.HubName);
+            }
+            return _nhClient;
         }
     }
 }

@@ -45,12 +45,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.NotificationHubs
             // Assert
             mockNhClientService.VerifyAll();
         }
-        private static Notification GetTemplateNotification()
+        private static TemplateNotification GetTemplateNotification()
         {
             Dictionary<string, string> templateProperties = new Dictionary<string, string>();
             templateProperties["message"] = "bar";
-            Notification testTemplateNotification = new TemplateNotification(templateProperties);
-            return testTemplateNotification;
+            return new TemplateNotification(templateProperties);
         }
     }
 }
