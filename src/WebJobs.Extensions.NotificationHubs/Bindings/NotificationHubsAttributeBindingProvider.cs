@@ -12,15 +12,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
     {
         private readonly INameResolver _nameResolver;
         private readonly IConverterManager _converterManager;
-        private NotificationHubsConfiguration _nhClientConfig;
-        private NotificationHubClientService _nhClientService;
+        private NotificationHubClientService _clientService;
 
         public NotificationHubsAttributeBindingProvider(INameResolver nameResolver, IConverterManager converterManager, NotificationHubsConfiguration config)
         {
             _nameResolver = nameResolver;
             _converterManager = converterManager;
-            _nhClientConfig = config;
-            _nhClientService = new NotificationHubClientService(config);
+            _clientService = new NotificationHubClientService(config);
         }
 
         public Task<IBinding> TryCreateAsync(BindingProviderContext context)
@@ -36,11 +34,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
             {
                 return Task.FromResult<IBinding>(null);
             }
-            Func<string, NotificationHubClientService> invokeStringBinder = (invokeString) => _nhClientService;
+            Func<string, NotificationHubClientService> invokeStringBinder = (invokeString) => _clientService;
             IBinding binding = BindingFactory.BindCollector(
                 parameter,
                 _converterManager,
-                (nhClientService, valueBindingContext) => new NotificationHubsAsyncCollector(_nhClientService, attribute.TagExpression),
+                (nhClientService, valueBindingContext) => new NotificationHubsAsyncCollector(_clientService, attribute.TagExpression),
                 "NotificationHubs",
                 invokeStringBinder);
             return Task.FromResult(binding);

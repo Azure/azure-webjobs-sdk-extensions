@@ -36,6 +36,7 @@
   <ItemGroup>
     <Compile Include="Bindings\NotificationHubsAsyncCollector.cs" />
     <Compile Include="Bindings\NotificationHubsAttributeBindingProvider.cs" />
+    <Compile Include="Config\Converter.cs" />
     <Compile Include="Config\NotificationHubsConfiguration.cs" />
     <Compile Include="Config\NotificationHubsJobHostConfigurationExtensions.cs" />
     <Compile Include="NotificationHubsAttribute.cs" />

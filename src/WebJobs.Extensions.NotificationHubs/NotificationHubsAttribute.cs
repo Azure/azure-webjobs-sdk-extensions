@@ -4,10 +4,10 @@
 using Microsoft.Azure.NotificationHubs;
 using System;
 
-namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
+namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
-    /// Attribute used to binds a parameter to an NotificationHubs type.
+    /// Attribute used to bind a parameter to an Azure NotificationHub
     /// </summary>
     /// <remarks>
     /// The method parameter type can be one of the following:

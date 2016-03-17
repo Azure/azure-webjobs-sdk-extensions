@@ -9,7 +9,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
     /// <summary>
     ///   Defines an interface for NotificationHubClient sendNotification
     /// </summary>
-    public interface INotificationHubClientService
+    internal interface INotificationHubClientService
     {
         /// <summary>
         /// Asynchronously sends a notification to a tag expression

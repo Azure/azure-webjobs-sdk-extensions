@@ -11,7 +11,7 @@ using Microsoft.Azure.NotificationHubs;
 using Microsoft.Azure.WebJobs.Extensions.NotificationHubs;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host.Bindings;
-using Newtonsoft.Json.Linq;
+using Microsoft.Azure.WebJobs.Host.Config;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
@@ -67,11 +67,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
                 ConnectionString = "sb://testconnetionstring",
                 HubName = "testHub"
             };
+            var context = new BindingProviderContext(parameter, null, CancellationToken.None);
+            ExtensionConfigContext extensionsConfigContext = new ExtensionConfigContext();
+            extensionsConfigContext.Config = jobConfig;
+            config.Initialize(extensionsConfigContext);
             var nameResolver = new TestNameResolver();
             var converterManager = jobConfig.GetService<IConverterManager>();
             var provider = new NotificationHubsAttributeBindingProvider(nameResolver, converterManager, config);
-            var context = new BindingProviderContext(parameter, null, CancellationToken.None);
-
+            
             return provider.TryCreateAsync(context);
         }
 
@@ -90,12 +93,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
         private void OutputParameters(
             [NotificationHubs] out Notification notification,
             [NotificationHubs] out TemplateNotification templateNotification,
+            [NotificationHubs] out string templateProperties,
             [NotificationHubs] out Notification[] notificationsArray,
             [NotificationHubs] IAsyncCollector<TemplateNotification> asyncCollector,
             [NotificationHubs] ICollector<Notification> collector)
         {
             notification = null;
             templateNotification = null;
+            templateProperties = null;
             notificationsArray = null;
         }
 

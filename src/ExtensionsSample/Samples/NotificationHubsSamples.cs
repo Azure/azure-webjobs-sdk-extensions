@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Microsoft.Azure.NotificationHubs;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.NotificationHubs;
+using Newtonsoft.Json.Linq;
 
 namespace ExtensionsSample
 {
@@ -16,25 +17,39 @@ namespace ExtensionsSample
     // 5. Use MobileApps client SDK to register template with NotificationHubs
     public static class NotificationHubsSamples
     {
+        //NotificationHub binding out Notification type
         // The binding sends push notification to any clients registered with the template
-        //   method successfully exits.
-        public static void SendNotificationOnTimerTrigger(
+        // method successfully exits.
+        public static void SendNotification_Out_Notification(
             [TimerTrigger("*/15 * * * * *")] TimerInfo timerInfo,
             [NotificationHubs] out Notification notification)
         {
-            notification = GetTemplateNotification("bar");
+            notification = GetTemplateNotification("Hello");
+        }
+
+        // NotificationHub binding out String
+        // The binding sends push notification to any clients registered with the template
+        // method successfully exits.
+        public static void SendNotification_Out_String(
+            [TimerTrigger("*/15 * * * * *")] TimerInfo timerInfo,
+            [NotificationHubs] out string messageProperties)
+        {
+            JObject message = new JObject();
+            message["message"] = "Hello World";
+            message["location"] = "Redmond";
+            messageProperties = message.ToString();
         }
 
         // The binding sends multiple push notification to any clients registered with the template
-        //   method successfully exits.
+        // method successfully exits.
         public static void SendNotificationsOnTimerTrigger(
             [TimerTrigger("*/30 * * * * *")] TimerInfo timerInfo,
             [NotificationHubs] out Notification[] notifications)
         {
             notifications = new TemplateNotification[]
                 {
-                    GetTemplateNotification("bar1"),
-                    GetTemplateNotification("bar2")
+                    GetTemplateNotification("Message1"),
+                    GetTemplateNotification("Message2")
                 };
         }
 
@@ -42,10 +57,10 @@ namespace ExtensionsSample
         //   The binding does not do anything with the results when the function exits.  
         public static async void SendNotifications_AsyncCollector(
             [TimerTrigger("00:01")] TimerInfo timer,
-            [NotificationHubs] IAsyncCollector<Notification> asyncCollector)
+            [NotificationHubs] IAsyncCollector<Notification> notifications)
         {
-            await asyncCollector.AddAsync(GetTemplateNotification("foo1"));
-            await asyncCollector.AddAsync(GetTemplateNotification("foo2"));
+            await notifications.AddAsync(GetTemplateNotification("Message1"));
+            await notifications.AddAsync(GetTemplateNotification("Message2"));
         }
         private static TemplateNotification GetTemplateNotification(string message)
         {

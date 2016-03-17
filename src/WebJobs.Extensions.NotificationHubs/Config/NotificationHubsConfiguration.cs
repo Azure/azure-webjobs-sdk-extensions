@@ -16,7 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
     /// </summary>
     public class NotificationHubsConfiguration : IExtensionConfigProvider
     {
-        internal const string NotificationHubConnectionStringName = "AzureWebJobsNotificationHubConnectionString";
+        internal const string NotificationHubConnectionStringName = "AzureWebJobsNotificationHubsConnectionString";
         internal const string NotificationHubSettingName = "AzureWebJobsNotificationHubName";
 
         /// <summary>
@@ -57,25 +57,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
             {
                 throw new ArgumentNullException("context");
             }
-
+            Converter converter = new Converter();
             var converterManager = context.Config.GetService<IConverterManager>();
-            converterManager.AddConverter<TemplateNotification, Notification>(templateNotification => templateNotification);
-            converterManager.AddConverter<string, Notification>(messageProperties => BuildTemplateNotificationFromJson(messageProperties));
-
+            converter.AddConverters(ref converterManager);
             var provider = new NotificationHubsAttributeBindingProvider(context.Config.NameResolver, converterManager, this);
             context.Config.RegisterBindingExtension(provider);
-        }
-
-        private TemplateNotification BuildTemplateNotificationFromJson(string messageProperties)
-        {
-            JObject message=JsonConvert.DeserializeObject<JObject>(messageProperties);
-            Dictionary<string, string> templateProperties = new Dictionary<string, string>();
-
-            foreach (JProperty property in message.Properties())
-            {
-                templateProperties.Add(property.Name.ToString(), property.Value.ToString());
-            }
-            return new TemplateNotification(templateProperties);
         }
     }
 }
