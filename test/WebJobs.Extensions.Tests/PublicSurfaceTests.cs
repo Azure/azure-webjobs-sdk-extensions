@@ -86,7 +86,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
         [Fact]
         public void NotificationHubsPublicSurface_LimitedToSpecificTypes()
         {
-            var assembly = typeof(NotificationHubsAttribute).Assembly;
+            var assembly = typeof(NotificationHubAttribute).Assembly;
 
             var expected = new[]
             {

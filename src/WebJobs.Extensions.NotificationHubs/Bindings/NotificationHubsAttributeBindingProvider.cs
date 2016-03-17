@@ -29,7 +29,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
             }
 
             ParameterInfo parameter = context.Parameter;
-            NotificationHubsAttribute attribute = parameter.GetCustomAttribute<NotificationHubsAttribute>(inherit: false);
+            NotificationHubAttribute attribute = parameter.GetCustomAttribute<NotificationHubAttribute>(inherit: false);
             if (attribute == null)
             {
                 return Task.FromResult<IBinding>(null);

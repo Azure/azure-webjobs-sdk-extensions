@@ -3,11 +3,7 @@
 
 using System;
 using System.Configuration;
-using Microsoft.Azure.NotificationHubs;
 using Microsoft.Azure.WebJobs.Host.Config;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
 
 namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 {

@@ -19,7 +19,7 @@ namespace Microsoft.Azure.WebJobs
     /// </list>
     /// </remarks>
     [AttributeUsage(AttributeTargets.Parameter)]
-    public sealed class NotificationHubsAttribute : Attribute
+    public sealed class NotificationHubAttribute : Attribute
     {
         /// <summary>
         /// A tag expression is any boolean expression constructed using the logical operator

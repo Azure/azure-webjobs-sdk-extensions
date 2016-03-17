@@ -91,12 +91,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
         }
 
         private void OutputParameters(
-            [NotificationHubs] out Notification notification,
-            [NotificationHubs] out TemplateNotification templateNotification,
-            [NotificationHubs] out string templateProperties,
-            [NotificationHubs] out Notification[] notificationsArray,
-            [NotificationHubs] IAsyncCollector<TemplateNotification> asyncCollector,
-            [NotificationHubs] ICollector<Notification> collector)
+            [NotificationHub] out Notification notification,
+            [NotificationHub] out TemplateNotification templateNotification,
+            [NotificationHub] out string templateProperties,
+            [NotificationHub] out Notification[] notificationsArray,
+            [NotificationHub] IAsyncCollector<TemplateNotification> asyncCollector,
+            [NotificationHub] ICollector<Notification> collector)
         {
             notification = null;
             templateNotification = null;
@@ -105,8 +105,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
         }
 
         private void InvalidOutputParameters(
-            [NotificationHubs] Notification notification,
-            [NotificationHubs] TemplateNotification templateNotification)
+            [NotificationHub] Notification notification,
+            [NotificationHub] TemplateNotification templateNotification)
         {
         }
     }

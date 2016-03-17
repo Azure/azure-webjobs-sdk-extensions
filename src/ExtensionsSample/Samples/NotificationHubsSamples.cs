@@ -4,7 +4,6 @@
 using System.Collections.Generic;
 using Microsoft.Azure.NotificationHubs;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.NotificationHubs;
 using Newtonsoft.Json.Linq;
 
 namespace ExtensionsSample
@@ -22,7 +21,7 @@ namespace ExtensionsSample
         // method successfully exits.
         public static void SendNotification_Out_Notification(
             [TimerTrigger("*/15 * * * * *")] TimerInfo timerInfo,
-            [NotificationHubs] out Notification notification)
+            [NotificationHub] out Notification notification)
         {
             notification = GetTemplateNotification("Hello");
         }
@@ -32,7 +31,7 @@ namespace ExtensionsSample
         // method successfully exits.
         public static void SendNotification_Out_String(
             [TimerTrigger("*/15 * * * * *")] TimerInfo timerInfo,
-            [NotificationHubs] out string messageProperties)
+            [NotificationHub] out string messageProperties)
         {
             JObject message = new JObject();
             message["message"] = "Hello World";
@@ -44,7 +43,7 @@ namespace ExtensionsSample
         // method successfully exits.
         public static void SendNotificationsOnTimerTrigger(
             [TimerTrigger("*/30 * * * * *")] TimerInfo timerInfo,
-            [NotificationHubs] out Notification[] notifications)
+            [NotificationHub] out Notification[] notifications)
         {
             notifications = new TemplateNotification[]
                 {
@@ -57,7 +56,7 @@ namespace ExtensionsSample
         //   The binding does not do anything with the results when the function exits.  
         public static async void SendNotifications_AsyncCollector(
             [TimerTrigger("00:01")] TimerInfo timer,
-            [NotificationHubs] IAsyncCollector<Notification> notifications)
+            [NotificationHub] IAsyncCollector<Notification> notifications)
         {
             await notifications.AddAsync(GetTemplateNotification("Message1"));
             await notifications.AddAsync(GetTemplateNotification("Message2"));
