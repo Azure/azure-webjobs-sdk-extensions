@@ -143,7 +143,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\Item.cs" />
-    <Compile Include="Samples\FileSamples.cs" />
     <Compile Include="SamplesTypeLocator.cs" />
     <Compile Include="Samples\EasyTableSamples.cs" />
     <Compile Include="Samples\DocumentDBSamples.cs" />
