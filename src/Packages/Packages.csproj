@@ -46,6 +46,12 @@
     </NuGetSpec>
   </ItemGroup>
   <ItemGroup>
+    <NuGetProject Include="..\WebJobs.Extensions.DocumentDB.Nuget\WebJobs.Extensions.DocumentDB.nuproj">
+      <Link>WebJobs.Extensions.DocumentDB\WebJobs.Extensions.DocumentDB.nuproj</Link>
+    </NuGetProject>
+    <NuGetSpec Include="..\WebJobs.Extensions.DocumentDB.Nuget\WebJobs.Extensions.DocumentDB.nuspec">
+      <Link>WebJobs.Extensions.DocumentDB\WebJobs.Extensions.DocumentDB.nuspec</Link>
+    </NuGetSpec>
     <None Include="..\..\tools\NuGetProj.settings.targets">
       <Link>NuGetProj.settings.targets</Link>
     </None>

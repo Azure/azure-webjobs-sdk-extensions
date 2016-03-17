@@ -48,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
         public Task<IValueProvider> BindAsync(object value, ValueBindingContext context)
         {
             Type genericArgType = null;
-            if (EasyTableUtility.TryGetSingleGenericArgument(_parameter.ParameterType, out genericArgType))
+            if (TypeUtility.TryGetSingleGenericArgument(_parameter.ParameterType, out genericArgType))
             {
                 return Task.FromResult(CreateQueryValueProvider(genericArgType));
             }
@@ -91,7 +91,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
                paramType.GetGenericTypeDefinition() == typeof(IMobileServiceTableQuery<>))
             {
                 // IMobileServiceTableQuery<JObject> is not supported.
-                Type coreType = EasyTableUtility.GetCoreType(paramType);
+                Type coreType = TypeUtility.GetCoreType(paramType);
                 if (coreType != typeof(JObject) &&
                     EasyTableUtility.IsCoreTypeValidItemType(paramType))
                 {

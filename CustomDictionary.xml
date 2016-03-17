@@ -68,6 +68,7 @@
   <Acronyms>
     <CasingExceptions>
       <Acronym>ETag</Acronym>
+      <Acronym>Db</Acronym>
     </CasingExceptions>
   </Acronyms>
 </Dictionary>

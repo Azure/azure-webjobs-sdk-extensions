@@ -38,6 +38,7 @@ namespace ExtensionsSample
             config.UseSample();
             config.UseEasyTables();
             config.UseCore();
+            config.UseDocumentDB();
             config.UseNotificationHubs();
             var sendGridConfiguration = new SendGridConfiguration()
             {

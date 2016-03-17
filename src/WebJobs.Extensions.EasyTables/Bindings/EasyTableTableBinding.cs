@@ -51,7 +51,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
         public Task<IValueProvider> BindAsync(object value, ValueBindingContext context)
         {
             Type paramType = _parameter.ParameterType;
-            Type coreType = EasyTableUtility.GetCoreType(paramType);
+            Type coreType = TypeUtility.GetCoreType(paramType);
             if (coreType == typeof(IMobileServiceTable))
             {
                 coreType = typeof(JObject);

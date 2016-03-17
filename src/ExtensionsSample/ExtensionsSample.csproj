@@ -49,6 +49,10 @@
       <HintPath>..\..\packages\Microsoft.AspNet.WebHooks.Receivers.GitHub.1.2.0-rc1\lib\net45\Microsoft.AspNet.WebHooks.Receivers.GitHub.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Microsoft.Azure.Documents.Client, Version=1.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Azure.DocumentDB.1.5.3\lib\net40\Microsoft.Azure.Documents.Client.dll</HintPath>
+    <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.Azure.NotificationHubs, Version=2.16.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.Azure.NotificationHubs.1.0.3\lib\net45-full\Microsoft.Azure.NotificationHubs.dll</HintPath>
       <Private>True</Private>
@@ -139,8 +143,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\Item.cs" />
+    <Compile Include="Samples\FileSamples.cs" />
     <Compile Include="SamplesTypeLocator.cs" />
     <Compile Include="Samples\EasyTableSamples.cs" />
+    <Compile Include="Samples\DocumentDBSamples.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Models\Order.cs" />
     <Compile Include="Models\Person.cs" />
@@ -173,6 +179,10 @@
     <ProjectReference Include="..\WebJobs.Extensions.EasyTables\WebJobs.Extensions.EasyTables.csproj">
       <Project>{c4d2e330-8fb9-4d2b-9db5-274fbfb69d69}</Project>
       <Name>WebJobs.Extensions.EasyTables</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WebJobs.Extensions.DocumentDB\WebJobs.Extensions.DocumentDB.csproj">
+      <Project>{38372e3c-70c9-4678-892d-7295a4615561}</Project>
+      <Name>WebJobs.Extensions.DocumentDB</Name>
     </ProjectReference>
     <ProjectReference Include="..\WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.csproj">
       <Project>{0b6093f8-5b69-4432-b64c-539e19b2e03a}</Project>

@@ -3,6 +3,7 @@
     <StringProperty Name="MergeSettingsFiles">NoMerge</StringProperty>
     <CollectionProperty Name="RecognizedWords">
       <Value>Autofac</Value>
+      <Value>Db</Value>
       <Value>etag</Value>
       <Value>Fx</Value>
       <Value>FxCop</Value>
