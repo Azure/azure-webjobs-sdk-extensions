@@ -16,7 +16,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
 {
-    public class NotificationHubsAttributeBindingProviderTests
+    public class NotificationHubAttributeBindingProviderTests
     {
         public static IEnumerable<object[]> ValidParameters
         {
@@ -62,7 +62,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
         private static Task<IBinding> CreateProviderAndTryCreateAsync(ParameterInfo parameter)
         {
             var jobConfig = new JobHostConfiguration();
-            var config = new NotificationHubsConfiguration()
+            var config = new NotificationHubConfiguration()
             {
                 ConnectionString = "sb://testconnetionstring",
                 HubName = "testHub"
@@ -73,20 +73,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             config.Initialize(extensionsConfigContext);
             var nameResolver = new TestNameResolver();
             var converterManager = jobConfig.GetService<IConverterManager>();
-            var provider = new NotificationHubsAttributeBindingProvider(nameResolver, converterManager, config);
+            var provider = new NotificationHubAttributeBindingProvider(nameResolver, converterManager, config);
             
             return provider.TryCreateAsync(context);
         }
 
         private static IEnumerable<ParameterInfo> GetValidOutputParameters()
         {
-            return typeof(NotificationHubsAttributeBindingProviderTests)
+            return typeof(NotificationHubAttributeBindingProviderTests)
                 .GetMethod("OutputParameters", BindingFlags.Instance | BindingFlags.NonPublic).GetParameters();
         }
 
         private static IEnumerable<ParameterInfo> GetInvalidOutputParameters()
         {
-            return typeof(NotificationHubsAttributeBindingProviderTests)
+            return typeof(NotificationHubAttributeBindingProviderTests)
                 .GetMethod("InvalidOutputParameters", BindingFlags.Instance | BindingFlags.NonPublic).GetParameters();
         }
 

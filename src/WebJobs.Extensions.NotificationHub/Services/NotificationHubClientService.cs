@@ -8,9 +8,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 {
     internal class NotificationHubClientService : INotificationHubClientService
     {
-        private NotificationHubsConfiguration _nhClientConfig;
+        private NotificationHubConfiguration _nhClientConfig;
         private NotificationHubClient _nhClient;
-        public NotificationHubClientService(NotificationHubsConfiguration nhConfig)
+        public NotificationHubClientService(NotificationHubConfiguration nhConfig)
         {
             _nhClientConfig = nhConfig;
         }

@@ -90,9 +90,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
 
             var expected = new[]
             {
-                "NotificationHubsAttribute",
-                "NotificationHubsConfiguration",
-                "NotificationHubsJobHostConfigurationExtensions",
+                "NotificationHubAttribute",
+                "NotificationHubConfiguration",
+                "NotificationHubJobHostConfigurationExtensions",
             };
 
             AssertPublicTypes(expected, assembly);

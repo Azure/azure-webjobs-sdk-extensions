@@ -51,7 +51,7 @@
     </Reference>
     <Reference Include="Microsoft.Azure.Documents.Client, Version=1.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.Azure.DocumentDB.1.5.3\lib\net40\Microsoft.Azure.Documents.Client.dll</HintPath>
-    <Private>True</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.NotificationHubs, Version=2.16.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.Azure.NotificationHubs.1.0.3\lib\net45-full\Microsoft.Azure.NotificationHubs.dll</HintPath>
@@ -183,9 +183,9 @@
       <Project>{38372e3c-70c9-4678-892d-7295a4615561}</Project>
       <Name>WebJobs.Extensions.DocumentDB</Name>
     </ProjectReference>
-    <ProjectReference Include="..\WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.csproj">
+    <ProjectReference Include="..\WebJobs.Extensions.NotificationHub\WebJobs.Extensions.NotificationHub.csproj">
       <Project>{0b6093f8-5b69-4432-b64c-539e19b2e03a}</Project>
-      <Name>WebJobs.Extensions.NotificationHubs</Name>
+      <Name>WebJobs.Extensions.NotificationHub</Name>
     </ProjectReference>
     <ProjectReference Include="..\WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.csproj">
       <Project>{6eab68d8-ebf7-4bc2-89f9-30e6e3bb4423}</Project>

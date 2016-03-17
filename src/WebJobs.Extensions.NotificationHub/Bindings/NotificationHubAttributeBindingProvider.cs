@@ -8,13 +8,13 @@ using Microsoft.Azure.WebJobs.Host.Bindings;
 
 namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 {
-    internal class NotificationHubsAttributeBindingProvider : IBindingProvider
+    internal class NotificationHubAttributeBindingProvider : IBindingProvider
     {
         private readonly INameResolver _nameResolver;
         private readonly IConverterManager _converterManager;
         private NotificationHubClientService _clientService;
 
-        public NotificationHubsAttributeBindingProvider(INameResolver nameResolver, IConverterManager converterManager, NotificationHubsConfiguration config)
+        public NotificationHubAttributeBindingProvider(INameResolver nameResolver, IConverterManager converterManager, NotificationHubConfiguration config)
         {
             _nameResolver = nameResolver;
             _converterManager = converterManager;
@@ -38,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
             IBinding binding = BindingFactory.BindCollector(
                 parameter,
                 _converterManager,
-                (nhClientService, valueBindingContext) => new NotificationHubsAsyncCollector(_clientService, attribute.TagExpression),
+                (nhClientService, valueBindingContext) => new NotificationHubAsyncCollector(_clientService, attribute.TagExpression),
                 "NotificationHubs",
                 invokeStringBinder);
             return Task.FromResult(binding);

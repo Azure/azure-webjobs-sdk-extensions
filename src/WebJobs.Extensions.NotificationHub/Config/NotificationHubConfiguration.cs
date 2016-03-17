@@ -10,7 +10,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
     /// <summary>
     /// Defines the configuration options for the NotificationHubs binding.
     /// </summary>
-    public class NotificationHubsConfiguration : IExtensionConfigProvider
+    public class NotificationHubConfiguration : IExtensionConfigProvider
     {
         internal const string NotificationHubConnectionStringName = "AzureWebJobsNotificationHubsConnectionString";
         internal const string NotificationHubSettingName = "AzureWebJobsNotificationHubName";
@@ -18,7 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
-        public NotificationHubsConfiguration()
+        public NotificationHubConfiguration()
         {
             if (ConfigurationManager.ConnectionStrings[NotificationHubConnectionStringName] != null)
             {
@@ -56,7 +56,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
             Converter converter = new Converter();
             var converterManager = context.Config.GetService<IConverterManager>();
             converter.AddConverters(ref converterManager);
-            var provider = new NotificationHubsAttributeBindingProvider(context.Config.NameResolver, converterManager, this);
+            var provider = new NotificationHubAttributeBindingProvider(context.Config.NameResolver, converterManager, this);
             context.Config.RegisterBindingExtension(provider);
         }
     }

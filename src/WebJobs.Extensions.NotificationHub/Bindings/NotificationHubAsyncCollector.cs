@@ -7,12 +7,12 @@ using Microsoft.Azure.NotificationHubs;
 
 namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 {
-    internal class NotificationHubsAsyncCollector : IAsyncCollector<Notification>
+    internal class NotificationHubAsyncCollector : IAsyncCollector<Notification>
     {
         INotificationHubClientService _clientService;
         string _tagExpression;
 
-        public NotificationHubsAsyncCollector(INotificationHubClientService clientService, string tagExpression)
+        public NotificationHubAsyncCollector(INotificationHubClientService clientService, string tagExpression)
         {
             _clientService = clientService;
             _tagExpression = tagExpression;

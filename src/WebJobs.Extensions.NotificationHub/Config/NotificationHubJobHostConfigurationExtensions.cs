@@ -9,14 +9,14 @@ namespace Microsoft.Azure.WebJobs
     /// <summary>
     /// Extension methods for NotificationHubs integration.
     /// </summary>
-    public static class NotificationHubsJobHostConfigurationExtensions
+    public static class NotificationHubJobHostConfigurationExtensions
     {
         /// <summary>
         /// Enables use of NotificationHubs extenstion
         /// </summary>
         /// <param name="config">The <see cref="JobHostConfiguration"/> to configure.</param>
-        /// <param name="notificationHubsConfig">The <see cref="NotificationHubsConfiguration"/>to use</param>
-        public static void UseNotificationHubs(this JobHostConfiguration config, NotificationHubsConfiguration notificationHubsConfig = null)
+        /// <param name="notificationHubsConfig">The <see cref="NotificationHubConfiguration"/>to use</param>
+        public static void UseNotificationHubs(this JobHostConfiguration config, NotificationHubConfiguration notificationHubsConfig = null)
         {
             if (config == null)
             {
@@ -25,7 +25,7 @@ namespace Microsoft.Azure.WebJobs
 
             if (notificationHubsConfig == null)
             {
-                notificationHubsConfig = new NotificationHubsConfiguration();
+                notificationHubsConfig = new NotificationHubConfiguration();
             }
             config.RegisterExtensionConfigProvider(notificationHubsConfig);
         }

@@ -4,21 +4,21 @@
   <PropertyGroup>
     <NuSpecFile>$(MSBuildProjectName).nuspec</NuSpecFile>
     <NuGetPackageId>Microsoft.Azure.WebJobs.Extensions.NotificationHubs</NuGetPackageId>
-    <NuGetPackageVersion>$(NotificationHubsPackageVersion)</NuGetPackageVersion>
+    <NuGetPackageVersion>$(NotificationHubPackageVersion)</NuGetPackageVersion>
     <NuGetPackSymbols>false</NuGetPackSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.csproj">
+    <ProjectReference Include="..\WebJobs.Extensions.NotificationHub\WebJobs.Extensions.NotificationHub.csproj">
       <Project>{E6F59990-F3A1-469F-A9D8-6D529121D385}</Project>
       <Name>WebJobs.Extensions.NotificationHubs</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <NuGetContent Include="$(WebJobsRootPath)\src\WebJobs.Extensions.NotificationHubs\bin\$(Configuration)\Microsoft.Azure.WebJobs.Extensions.NotificationHubs.dll">
-      <Destination>lib\net45\Microsoft.Azure.WebJobs.Extensions.NotificationHubs.dll</Destination>
+    <NuGetContent Include="$(WebJobsRootPath)\src\WebJobs.Extensions.NotificationHub\bin\$(Configuration)\Microsoft.Azure.WebJobs.Extensions.NotificationHub.dll">
+      <Destination>lib\net45\Microsoft.Azure.WebJobs.Extensions.NotificationHub.dll</Destination>
     </NuGetContent>
-    <NuGetContent Include="$(WebJobsRootPath)\src\WebJobs.Extensions.NotificationHubs\bin\$(Configuration)\Microsoft.Azure.WebJobs.Extensions.NotificationHubs.xml">
-      <Destination>lib\net45\Microsoft.Azure.WebJobs.Extensions.NotificationHubs.xml</Destination>
+    <NuGetContent Include="$(WebJobsRootPath)\src\WebJobs.Extensions.NotificationHub\bin\$(Configuration)\Microsoft.Azure.WebJobs.Extensions.NotificationHub.xml">
+      <Destination>lib\net45\Microsoft.Azure.WebJobs.Extensions.NotificationHub.xml</Destination>
     </NuGetContent>
   </ItemGroup>
   <Import Project="$(WebJobsToolsPath)NuGetProj.targets"/>

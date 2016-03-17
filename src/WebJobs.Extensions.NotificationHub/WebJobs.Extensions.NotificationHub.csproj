@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions</RootNamespace>
-    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.NotificationHubs</AssemblyName>
+    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.NotificationHub</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -21,7 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\Microsoft.Azure.WebJobs.Extensions.NotificationHubs.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\Microsoft.Azure.WebJobs.Extensions.NotificationHub.xml</DocumentationFile>
     <LangVersion>5</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -31,15 +31,15 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release\Microsoft.Azure.WebJobs.Extensions.NotificationHubs.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\Microsoft.Azure.WebJobs.Extensions.NotificationHub.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Bindings\NotificationHubsAsyncCollector.cs" />
-    <Compile Include="Bindings\NotificationHubsAttributeBindingProvider.cs" />
+    <Compile Include="Bindings\NotificationHubAsyncCollector.cs" />
+    <Compile Include="Bindings\NotificationHubAttributeBindingProvider.cs" />
     <Compile Include="Config\Converter.cs" />
-    <Compile Include="Config\NotificationHubsConfiguration.cs" />
-    <Compile Include="Config\NotificationHubsJobHostConfigurationExtensions.cs" />
-    <Compile Include="NotificationHubsAttribute.cs" />
+    <Compile Include="Config\NotificationHubConfiguration.cs" />
+    <Compile Include="Config\NotificationHubJobHostConfigurationExtensions.cs" />
+    <Compile Include="NotificationHubAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\INotificationHubClientService.cs" />
     <Compile Include="Services\NotificationHubClientService.cs" />

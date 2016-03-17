@@ -10,7 +10,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.NotificationHubs
 {
-    public class NotificationHubsAsyncCollectorTests
+    public class NotificationHubAsyncCollectorTests
     {
         [Fact]
         public async Task AddAsync_SendNotification_TagExpression_Null()
@@ -22,7 +22,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.NotificationHubs
             mockNhClientService.Setup(x => x.SendNotificationAsync(notification, null))
                   .Returns(Task.FromResult(new NotificationOutcome()));
 
-            IAsyncCollector<Notification> collector = new NotificationHubsAsyncCollector(mockNhClientService.Object, null);
+            IAsyncCollector<Notification> collector = new NotificationHubAsyncCollector(mockNhClientService.Object, null);
 
             // Act
             await collector.AddAsync(notification);
@@ -41,7 +41,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.NotificationHubs
             mockNhClientService.Setup(x => x.SendNotificationAsync(notification, "foo||bar"))
                     .Returns(Task.FromResult(new NotificationOutcome()));
 
-            IAsyncCollector<Notification> collector = new NotificationHubsAsyncCollector(mockNhClientService.Object, "foo||bar");
+            IAsyncCollector<Notification> collector = new NotificationHubAsyncCollector(mockNhClientService.Object, "foo||bar");
 
             // Act
             await collector.AddAsync(notification);

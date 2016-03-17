@@ -25,8 +25,8 @@
     <NuGetProject Include="..\WebJobs.Extensions.WebHooks.NuGet\WebJobs.Extensions.WebHooks.nuproj">
       <Link>WebJobs.Extensions.WebHooks\WebJobs.Extensions.WebHooks.nuproj</Link>
     </NuGetProject>
-    <NuGetProject Include="..\WebJobs.Extensions.NotificationHubs.NuGet\WebJobs.Extensions.NotificationHubs.nuproj">
-      <Link>WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.nuproj</Link>
+    <NuGetProject Include="..\WebJobs.Extensions.NotificationHub.NuGet\WebJobs.Extensions.NotificationHub.nuproj">
+      <Link>WebJobs.Extensions.NotificationHub\WebJobs.Extensions.NotificationHub.nuproj</Link>
     </NuGetProject>
   </ItemGroup>
   <ItemGroup>
@@ -40,8 +40,8 @@
       <Link>WebJobs.Extensions.WebHooks\WebJobs.Extensions.WebHooks.nuspec</Link>
       <SubType>Designer</SubType>
     </NuGetSpec>
-    <NuGetSpec Include="..\WebJobs.Extensions.NotificationHubs.NuGet\WebJobs.Extensions.NotificationHubs.nuspec">
-      <Link>WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.nuspec</Link>
+    <NuGetSpec Include="..\WebJobs.Extensions.NotificationHub.NuGet\WebJobs.Extensions.NotificationHub.nuspec">
+      <Link>WebJobs.Extensions.NotificationHub\WebJobs.Extensions.NotificationHub.nuspec</Link>
       <SubType>Designer</SubType>
     </NuGetSpec>
   </ItemGroup>
