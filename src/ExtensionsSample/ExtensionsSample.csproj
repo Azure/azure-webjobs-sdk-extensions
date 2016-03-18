@@ -145,6 +145,7 @@
   <ItemGroup>
     <Compile Include="Models\Item.cs" />
     <Compile Include="SamplesTypeLocator.cs" />
+    <Compile Include="Samples\ApiHubSamples.cs" />
     <Compile Include="Samples\EasyTableSamples.cs" />
     <Compile Include="Samples\DocumentDBSamples.cs" />
     <Compile Include="GlobalSuppressions.cs" />
@@ -176,6 +177,10 @@
     </CodeAnalysisDictionary>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\WebJobs.Extensions.ApiHub\WebJobs.Extensions.ApiHub.csproj">
+      <Project>{091041ae-378d-42b0-aa0a-6a1f47c0be2d}</Project>
+      <Name>WebJobs.Extensions.ApiHub</Name>
+    </ProjectReference>
     <ProjectReference Include="..\WebJobs.Extensions.EasyTables\WebJobs.Extensions.EasyTables.csproj">
       <Project>{c4d2e330-8fb9-4d2b-9db5-274fbfb69d69}</Project>
       <Name>WebJobs.Extensions.EasyTables</Name>
