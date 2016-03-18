@@ -66,8 +66,7 @@ namespace ExtensionsSample
                 typeof(SendGridSamples),
                 typeof(TableSamples),
                 typeof(TimerSamples),
-                typeof(WebHookSamples),
-                typeof(NotificationHubSamples));
+                typeof(WebHookSamples));
 
             host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
             host.Call(typeof(FileSamples).GetMethod("ReadWrite"));
