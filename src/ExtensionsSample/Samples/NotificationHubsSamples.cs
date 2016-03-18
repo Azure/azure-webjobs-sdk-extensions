@@ -65,7 +65,7 @@ namespace ExtensionsSample
             [TimerTrigger("*/15 * * * * *")]TimerInfo timer,
             [NotificationHub] out IDictionary<string, string> temlateProperties)
         {
-            temlateProperties = GetTemplateProperties("SendNotification_out_Dictionary");
+            temlateProperties = GetTemplateProperties("Hello");
         }
 
         private static TemplateNotification GetTemplateNotification(string message)

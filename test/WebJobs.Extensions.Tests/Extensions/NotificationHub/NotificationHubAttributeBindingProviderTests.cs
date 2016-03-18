@@ -8,7 +8,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.NotificationHubs;
-using Microsoft.Azure.WebJobs.Extensions.NotificationHubs;
+using Microsoft.Azure.WebJobs.Extensions.NotificationHub;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
@@ -95,6 +95,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHub
             [NotificationHub] out TemplateNotification templateNotification,
             [NotificationHub] out string templateProperties,
             [NotificationHub] out Notification[] notificationsArray,
+            [NotificationHub] out IDictionary<string, string> templatePropertiesDictionary,
             [NotificationHub] IAsyncCollector<TemplateNotification> asyncCollector,
             [NotificationHub] IAsyncCollector<string> asyncCollectorString,
             [NotificationHub] ICollector<Notification> collector,
@@ -103,6 +104,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHub
             notification = null;
             templateNotification = null;
             templateProperties = null;
+            templatePropertiesDictionary = null;
             notificationsArray = null;
         }
 

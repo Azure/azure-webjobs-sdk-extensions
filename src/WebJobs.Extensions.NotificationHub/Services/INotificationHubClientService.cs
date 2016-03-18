@@ -4,7 +4,7 @@
 using System.Threading.Tasks;
 using Microsoft.Azure.NotificationHubs;
 
-namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
+namespace Microsoft.Azure.WebJobs.Extensions.NotificationHub
 {
     /// <summary>
     ///   Defines an interface for NotificationHubClient sendNotification

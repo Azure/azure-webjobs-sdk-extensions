@@ -2,12 +2,12 @@
 <package>
   <metadata>
     <id>$NuGetPackageId$</id>
-    <title>Microsoft.Azure.WebJobs.Extensions.NotificationHubs</title>
+    <title>Microsoft.Azure.WebJobs.Extensions.NotificationHub</title>
     <version>$NuGetPackageVersion$</version>
     <authors>Microsoft</authors>
     <copyright>&#169; Microsoft Corporation. All rights reserved.</copyright>
-    <summary>Microsoft.Azure.WebJobs.Extensions.NotificationHubs adds NotificationHubs binders to the WebJobs SDK.</summary>
-    <description>This package contains the runtime assemblies for Microsoft.Azure.WebJobs.Extensions.NotificationHubs. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources</description>
+    <summary>Microsoft.Azure.WebJobs.Extensions.NotificationHub adds NotificationHub binders to the WebJobs SDK.</summary>
+    <description>This package contains the runtime assemblies for Microsoft.Azure.WebJobs.Extensions.NotificationHub. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources</description>
     <language>en-US</language>
     <projectUrl>https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources</projectUrl>
     <licenseUrl>$PackageEULA$</licenseUrl>

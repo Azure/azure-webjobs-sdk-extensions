@@ -5,7 +5,7 @@ using System;
 using System.Configuration;
 using Microsoft.Azure.WebJobs.Host.Config;
 
-namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
+namespace Microsoft.Azure.WebJobs.Extensions.NotificationHub
 {
     /// <summary>
     /// Defines the configuration options for the NotificationHubs binding.
@@ -53,9 +53,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
             {
                 throw new ArgumentNullException("context");
             }
-            Converter converter = new Converter();
             var converterManager = context.Config.GetService<IConverterManager>();
-            converter.AddConverters(ref converterManager);
+            converterManager = converterManager.AddNotificationHubConverters();
             var provider = new NotificationHubAttributeBindingProvider(context.Config.NameResolver, converterManager, this);
             context.Config.RegisterBindingExtension(provider);
         }

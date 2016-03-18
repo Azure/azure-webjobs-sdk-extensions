@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.NotificationHubs;
-using Microsoft.Azure.WebJobs.Extensions.NotificationHubs;
+using Microsoft.Azure.WebJobs.Extensions.NotificationHub;
 using Moq;
 using Xunit;
 
@@ -53,7 +53,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.NotificationHub
         private static Notification GetTemplateNotification()
         {
             Dictionary<string, string> templateProperties = new Dictionary<string, string>();
-            templateProperties["message"] = "bar";
+            templateProperties["message"] = "Hello";
             return new TemplateNotification(templateProperties);
         }
     }

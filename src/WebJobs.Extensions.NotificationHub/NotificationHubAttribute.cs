@@ -1,8 +1,8 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using Microsoft.Azure.NotificationHubs;
 using System;
+using Microsoft.Azure.NotificationHubs;
 
 namespace Microsoft.Azure.WebJobs
 {
@@ -16,6 +16,8 @@ namespace Microsoft.Azure.WebJobs
     /// <item><description><see cref="IAsyncCollector{T}"/><see cref="TemplateNotification"/> or <see cref="Notification"/>.</description></item>
     /// <item><description>out T, where T is either <see cref="TemplateNotification"/> or <see cref="Notification"/>.</description></item>
     /// <item><description>out T[], where T is either <see cref="TemplateNotification"/> or <see cref="Notification"/>.</description></item>
+    /// <item><description>out string, valid JSON string with template properties to build <see cref="TemplateNotification"/></description></item>
+    /// <item><description>out IDictionary, string key value pairs of templateProperties to build <see cref="TemplateNotification"/></description></item>
     /// </list>
     /// </remarks>
     [AttributeUsage(AttributeTargets.Parameter)]

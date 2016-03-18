@@ -10,7 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\WebJobs.Extensions.NotificationHub\WebJobs.Extensions.NotificationHub.csproj">
       <Project>{E6F59990-F3A1-469F-A9D8-6D529121D385}</Project>
-      <Name>WebJobs.Extensions.NotificationHubs</Name>
+      <Name>WebJobs.Extensions.NotificationHub</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

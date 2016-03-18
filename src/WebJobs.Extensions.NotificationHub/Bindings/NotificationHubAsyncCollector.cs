@@ -5,22 +5,22 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.NotificationHubs;
 
-namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
+namespace Microsoft.Azure.WebJobs.Extensions.NotificationHub
 {
     internal class NotificationHubAsyncCollector : IAsyncCollector<Notification>
     {
-        INotificationHubClientService _clientService;
-        string _tagExpression;
+        private INotificationHubClientService _notificationHubclientService;
+        private string _tagExpression;
 
         public NotificationHubAsyncCollector(INotificationHubClientService clientService, string tagExpression)
         {
-            _clientService = clientService;
+            _notificationHubclientService = clientService;
             _tagExpression = tagExpression;
         }
 
         public async Task AddAsync(Notification item, CancellationToken cancellationToken = default(CancellationToken))
         {
-            await _clientService.SendNotificationAsync(item, _tagExpression);
+            await _notificationHubclientService.SendNotificationAsync(item, _tagExpression);
         }
 
         public Task FlushAsync(CancellationToken cancellationToken = default(CancellationToken))

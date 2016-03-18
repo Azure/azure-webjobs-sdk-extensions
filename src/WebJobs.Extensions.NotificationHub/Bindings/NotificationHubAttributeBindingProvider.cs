@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 
-namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
+namespace Microsoft.Azure.WebJobs.Extensions.NotificationHub
 {
     internal class NotificationHubAttributeBindingProvider : IBindingProvider
     {

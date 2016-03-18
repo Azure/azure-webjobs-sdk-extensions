@@ -4,15 +4,15 @@
 using System.Threading.Tasks;
 using Microsoft.Azure.NotificationHubs;
 
-namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
+namespace Microsoft.Azure.WebJobs.Extensions.NotificationHub
 {
     internal class NotificationHubClientService : INotificationHubClientService
     {
-        private NotificationHubConfiguration _nhClientConfig;
-        private NotificationHubClient _nhClient;
-        public NotificationHubClientService(NotificationHubConfiguration nhConfig)
+        private NotificationHubConfiguration _notificationHubClientConfig;
+        private NotificationHubClient _notificationHubClient;
+        public NotificationHubClientService(NotificationHubConfiguration notificationHubConfig)
         {
-            _nhClientConfig = nhConfig;
+            _notificationHubClientConfig = notificationHubConfig;
         }
         public async Task<NotificationOutcome> SendNotificationAsync(Notification notification, string tagExpression)
         {
@@ -22,11 +22,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 
         private NotificationHubClient GetNotificationHubClient()
         {
-            if (_nhClient == null)
+            if (_notificationHubClient == null)
             {
-                _nhClient = NotificationHubClient.CreateClientFromConnectionString(_nhClientConfig.ConnectionString, _nhClientConfig.HubName);
+                _notificationHubClient = NotificationHubClient.CreateClientFromConnectionString(_notificationHubClientConfig.ConnectionString, _notificationHubClientConfig.HubName);
             }
-            return _nhClient;
+            return _notificationHubClient;
         }
     }
 }
