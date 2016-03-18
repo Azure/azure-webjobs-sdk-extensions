@@ -14,7 +14,7 @@ using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Xunit;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
+namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHub
 {
     public class NotificationHubAttributeBindingProviderTests
     {
@@ -96,7 +96,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             [NotificationHub] out string templateProperties,
             [NotificationHub] out Notification[] notificationsArray,
             [NotificationHub] IAsyncCollector<TemplateNotification> asyncCollector,
-            [NotificationHub] ICollector<Notification> collector)
+            [NotificationHub] IAsyncCollector<string> asyncCollectorString,
+            [NotificationHub] ICollector<Notification> collector,
+            [NotificationHub] ICollector<string> collectorString)
         {
             notification = null;
             templateNotification = null;

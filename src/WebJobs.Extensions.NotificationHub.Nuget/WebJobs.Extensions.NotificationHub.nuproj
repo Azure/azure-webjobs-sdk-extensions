@@ -3,7 +3,7 @@
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), WebJobs.Extensions.sln))\tools\NuGetProj.settings.targets"/>
   <PropertyGroup>
     <NuSpecFile>$(MSBuildProjectName).nuspec</NuSpecFile>
-    <NuGetPackageId>Microsoft.Azure.WebJobs.Extensions.NotificationHubs</NuGetPackageId>
+    <NuGetPackageId>Microsoft.Azure.WebJobs.Extensions.NotificationHub</NuGetPackageId>
     <NuGetPackageVersion>$(NotificationHubPackageVersion)</NuGetPackageVersion>
     <NuGetPackSymbols>false</NuGetPackSymbols>
   </PropertyGroup>

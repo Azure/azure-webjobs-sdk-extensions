@@ -17,8 +17,8 @@ namespace ExtensionsSample
     public static class NotificationHubSamples
     {
         //NotificationHub binding out Notification type
-        // The binding sends push notification to any clients registered with the template
-        // method successfully exits.
+        //The binding sends push notification to any clients registered with the template
+        //method successfully exits.
         public static void SendNotification_Out_Notification(
             [TimerTrigger("*/15 * * * * *")] TimerInfo timerInfo,
             [NotificationHub] out Notification notification)
@@ -33,10 +33,7 @@ namespace ExtensionsSample
             [TimerTrigger("*/15 * * * * *")] TimerInfo timerInfo,
             [NotificationHub] out string messageProperties)
         {
-            JObject message = new JObject();
-            message["message"] = "Hello World";
-            message["location"] = "Redmond";
-            messageProperties = message.ToString();
+            messageProperties = "{\"message\":\"Hello\",\"location\":\"Redmond\"}";
         }
 
         // The binding sends multiple push notification to any clients registered with the template
@@ -55,17 +52,32 @@ namespace ExtensionsSample
         //   The binding creates a strongly-typed AsyncCollector, which is used to send push notifications. 
         //   The binding does not do anything with the results when the function exits.  
         public static async void SendNotifications_AsyncCollector(
-            [TimerTrigger("00:01")] TimerInfo timer,
+            [TimerTrigger("*/15 * * * * *")]TimerInfo timer,
             [NotificationHub] IAsyncCollector<Notification> notifications)
         {
-            await notifications.AddAsync(GetTemplateNotification("Message1"));
-            await notifications.AddAsync(GetTemplateNotification("Message2"));
+            await notifications.AddAsync(GetTemplateNotification("Hello"));
+            await notifications.AddAsync(GetTemplateNotification("World"));
         }
+
+        //   The binding creates a strongly-typed AsyncCollector, which is used to send push notifications. 
+        //   The binding does not do anything with the results when the function exits.  
+        public static void SendNotification_out_Dictionary(
+            [TimerTrigger("*/15 * * * * *")]TimerInfo timer,
+            [NotificationHub] out IDictionary<string, string> temlateProperties)
+        {
+            temlateProperties = GetTemplateProperties("SendNotification_out_Dictionary");
+        }
+
         private static TemplateNotification GetTemplateNotification(string message)
+        {
+            return new TemplateNotification(GetTemplateProperties(message));
+        }
+
+        private static IDictionary<string, string> GetTemplateProperties(string message)
         {
             Dictionary<string, string> templateProperties = new Dictionary<string, string>();
             templateProperties["message"] = message;
-            return new TemplateNotification(templateProperties);
+            return templateProperties;
         }
     }
 }

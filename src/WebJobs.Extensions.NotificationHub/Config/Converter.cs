@@ -13,17 +13,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
         public void AddConverters(ref IConverterManager converterManager)
         {
             converterManager.AddConverter<TemplateNotification, Notification>(templateNotification => templateNotification);
-            converterManager.AddConverter<string, Notification>(messageProperties => BuildTemplateNotificationFromJson(messageProperties));
+            converterManager.AddConverter<string, Notification>(messageProperties => BuildTemplateNotificationFromJsonString(messageProperties));
+            converterManager.AddConverter<IDictionary<string, string>, Notification>(messageProperties => BuildTemplateNotificationFromDictionary(messageProperties));
         }
 
-        private TemplateNotification BuildTemplateNotificationFromJson(string messageProperties)
+        internal TemplateNotification BuildTemplateNotificationFromJsonString(string messageProperties)
         {
-            JObject message = JsonConvert.DeserializeObject<JObject>(messageProperties);
-            Dictionary<string, string> templateProperties = new Dictionary<string, string>();
-            foreach (JProperty property in message.Properties())
-            {
-                templateProperties.Add(property.Name.ToString(), property.Value.ToString());
-            }
+            JObject jobj = JObject.Parse(messageProperties);
+            Dictionary<string, string> templateProperties = jobj.ToObject<Dictionary<string, string>>();
+            return new TemplateNotification(templateProperties);
+        }
+
+        internal TemplateNotification BuildTemplateNotificationFromDictionary(IDictionary<string, string> templateProperties)
+        {
             return new TemplateNotification(templateProperties);
         }
     }

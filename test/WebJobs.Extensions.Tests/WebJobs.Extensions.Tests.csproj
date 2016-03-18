@@ -201,6 +201,7 @@
     <Compile Include="Extensions\Files\FileAttributeTests.cs" />
     <Compile Include="Extensions\Files\Listener\FileListenerTests.cs" />
     <Compile Include="Extensions\Files\Listener\FileProcessorTests.cs" />
+    <Compile Include="Extensions\NotificationHub\ConverterTests.cs" />
     <Compile Include="Extensions\NotificationHub\NotificationHubAsyncCollectorTests.cs" />
     <Compile Include="Extensions\NotificationHub\NotificationHubAttributeBindingProviderTests.cs" />
     <Compile Include="Extensions\Timers\Bindings\TimerTriggerBindingTests.cs" />

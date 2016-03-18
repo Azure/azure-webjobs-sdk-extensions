@@ -8,7 +8,7 @@ using Microsoft.Azure.WebJobs.Extensions.NotificationHubs;
 using Moq;
 using Xunit;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.NotificationHubs
+namespace Microsoft.Azure.WebJobs.Extensions.Tests.NotificationHub
 {
     public class NotificationHubAsyncCollectorTests
     {
@@ -49,6 +49,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.NotificationHubs
             // Assert
             mockNhClientService.VerifyAll();
         }
+
         private static Notification GetTemplateNotification()
         {
             Dictionary<string, string> templateProperties = new Dictionary<string, string>();
