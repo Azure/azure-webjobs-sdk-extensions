@@ -83,6 +83,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
             AssertPublicTypes(expected, assembly);
         }
 
+        [Fact]
+        public void NotificationHubsPublicSurface_LimitedToSpecificTypes()
+        {
+            var assembly = typeof(NotificationHubAttribute).Assembly;
+
+            var expected = new[]
+            {
+                "NotificationHubAttribute",
+                "NotificationHubConfiguration",
+                "NotificationHubJobHostConfigurationExtensions",
+            };
+
+            AssertPublicTypes(expected, assembly);
+        }
+
         private static List<string> GetAssemblyReferences(Assembly assembly)
         {
             var assemblyRefs = assembly.GetReferencedAssemblies();

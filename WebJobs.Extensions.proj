@@ -16,7 +16,7 @@
       <PublishType>Assembly</PublishType>
       <PublishPath>$(PublishPath)\Binaries</PublishPath>
     </Build>
-	  <Build Include="src\WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.csproj">
+    <Build Include="src\WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.csproj">
       <PublishType>Assembly</PublishType>
       <PublishPath>$(PublishPath)\Binaries</PublishPath>
     </Build>
@@ -29,6 +29,10 @@
       <PublishPath>$(PublishPath)\Binaries</PublishPath>
     </Build>
     <Build Include="src\WebJobs.Extensions.DocumentDB\WebJobs.Extensions.DocumentDB.csproj">
+      <PublishType>Assembly</PublishType>
+      <PublishPath>$(PublishPath)\Binaries</PublishPath>
+    </Build>
+    <Build Include="src\WebJobs.Extensions.NotificationHub\WebJobs.Extensions.NotificationHub.csproj">
       <PublishType>Assembly</PublishType>
       <PublishPath>$(PublishPath)\Binaries</PublishPath>
     </Build>
@@ -49,6 +53,10 @@
       <PublishPath>$(PublishPath)\Packages</PublishPath>
     </Build>
     <Build Include="src\WebJobs.Extensions.DocumentDB.Nuget\WebJobs.Extensions.DocumentDB.nuproj">
+      <PublishType>File</PublishType>
+      <PublishPath>$(PublishPath)\Packages</PublishPath>
+    </Build>
+    <Build Include="src\WebJobs.Extensions.NotificationHub.Nuget\WebJobs.Extensions.NotificationHub.nuproj">
       <PublishType>File</PublishType>
       <PublishPath>$(PublishPath)\Packages</PublishPath>
     </Build>
@@ -113,7 +121,7 @@
 
   <Target Name="UnitTest" DependsOnTargets="CheckSkipStrongNames;Build">
     <ItemGroup>
-        <UnitTestProjects Include="test\WebJobs.Extensions.Tests\WebJobs.Extensions.Tests.csproj"/>
+      <UnitTestProjects Include="test\WebJobs.Extensions.Tests\WebJobs.Extensions.Tests.csproj"/>
     </ItemGroup>
 
     <MSBuild Projects="@(UnitTestProjects)"

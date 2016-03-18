@@ -14,7 +14,8 @@
         <WebHooksPackageVersion>1.0.0-beta4-$(BUILD_NUMBER)</WebHooksPackageVersion>
         <EasyTablesPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</EasyTablesPackageVersion>
         <DocDBPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</DocDBPackageVersion>
-      </PropertyGroup>
+        <NotificationHubPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</NotificationHubPackageVersion>
+    </PropertyGroup>
     </When>
     <Otherwise>
       <PropertyGroup>
@@ -22,6 +23,7 @@
         <WebHooksPackageVersion>1.0.0-beta4</WebHooksPackageVersion>
         <EasyTablesPackageVersion>1.0.0$(PrereleaseTag)</EasyTablesPackageVersion>
         <DocDBPackageVersion>1.0.0$(PrereleaseTag)</DocDBPackageVersion>
+        <NotificationHubPackageVersion>1.0.0$(PrereleaseTag)</NotificationHubPackageVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>
