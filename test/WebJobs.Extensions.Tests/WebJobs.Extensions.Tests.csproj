@@ -202,9 +202,9 @@
     <Compile Include="Extensions\Files\FileAttributeTests.cs" />
     <Compile Include="Extensions\Files\Listener\FileListenerTests.cs" />
     <Compile Include="Extensions\Files\Listener\FileProcessorTests.cs" />
-    <Compile Include="Extensions\NotificationHub\ConverterTests.cs" />
-    <Compile Include="Extensions\NotificationHub\NotificationHubAsyncCollectorTests.cs" />
-    <Compile Include="Extensions\NotificationHub\NotificationHubAttributeBindingProviderTests.cs" />
+    <Compile Include="Extensions\NotificationHubs\ConverterTests.cs" />
+    <Compile Include="Extensions\NotificationHubs\NotificationHubAsyncCollectorTests.cs" />
+    <Compile Include="Extensions\NotificationHubs\NotificationHubAttributeBindingProviderTests.cs" />
     <Compile Include="Extensions\Timers\Bindings\TimerTriggerBindingTests.cs" />
     <Compile Include="Extensions\Timers\Scheduling\StorageScheduleMonitorTests.cs" />
     <Compile Include="Extensions\Timers\Scheduling\TimerScheduleTests.cs" />
@@ -239,7 +239,7 @@
       <Name>WebJobs.Extensions.DocumentDB</Name>
       <Aliases>DocumentDB</Aliases>
     </ProjectReference>
-    <ProjectReference Include="..\..\src\WebJobs.Extensions.NotificationHub\WebJobs.Extensions.NotificationHub.csproj">
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.csproj">
       <Project>{0b6093f8-5b69-4432-b64c-539e19b2e03a}</Project>
       <Name>WebJobs.Extensions.NotificationHubs</Name>
     </ProjectReference>

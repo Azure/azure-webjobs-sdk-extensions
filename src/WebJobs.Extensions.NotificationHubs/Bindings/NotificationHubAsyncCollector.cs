@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.NotificationHubs;
 
-namespace Microsoft.Azure.WebJobs.Extensions.NotificationHub
+namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 {
     internal class NotificationHubAsyncCollector : IAsyncCollector<Notification>
     {

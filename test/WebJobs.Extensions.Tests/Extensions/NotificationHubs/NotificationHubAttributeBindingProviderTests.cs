@@ -8,13 +8,13 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.NotificationHubs;
-using Microsoft.Azure.WebJobs.Extensions.NotificationHub;
+using Microsoft.Azure.WebJobs.Extensions.NotificationHubs;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Xunit;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHub
+namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
 {
     public class NotificationHubAttributeBindingProviderTests
     {
@@ -62,7 +62,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHub
         private static Task<IBinding> CreateProviderAndTryCreateAsync(ParameterInfo parameter)
         {
             var jobConfig = new JobHostConfiguration();
-            var config = new NotificationHubConfiguration()
+            var config = new NotificationHubsConfiguration()
             {
                 ConnectionString = "sb://testconnetionstring",
                 HubName = "testHub"

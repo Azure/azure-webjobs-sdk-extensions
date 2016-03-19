@@ -32,7 +32,7 @@
       <PublishType>Assembly</PublishType>
       <PublishPath>$(PublishPath)\Binaries</PublishPath>
     </Build>
-    <Build Include="src\WebJobs.Extensions.NotificationHub\WebJobs.Extensions.NotificationHub.csproj">
+    <Build Include="src\WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.csproj">
       <PublishType>Assembly</PublishType>
       <PublishPath>$(PublishPath)\Binaries</PublishPath>
     </Build>
@@ -56,7 +56,7 @@
       <PublishType>File</PublishType>
       <PublishPath>$(PublishPath)\Packages</PublishPath>
     </Build>
-    <Build Include="src\WebJobs.Extensions.NotificationHub.Nuget\WebJobs.Extensions.NotificationHub.nuproj">
+    <Build Include="src\WebJobs.Extensions.NotificationHubs.Nuget\WebJobs.Extensions.NotificationHubs.nuproj">
       <PublishType>File</PublishType>
       <PublishPath>$(PublishPath)\Packages</PublishPath>
     </Build>

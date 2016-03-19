@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using Microsoft.Azure.NotificationHubs;
 using Newtonsoft.Json.Linq;
 
-namespace Microsoft.Azure.WebJobs.Extensions.NotificationHub
+namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 {
     internal static class Converter
     {

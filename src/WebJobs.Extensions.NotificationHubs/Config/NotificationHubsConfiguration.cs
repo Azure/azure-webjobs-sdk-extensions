@@ -5,12 +5,12 @@ using System;
 using System.Configuration;
 using Microsoft.Azure.WebJobs.Host.Config;
 
-namespace Microsoft.Azure.WebJobs.Extensions.NotificationHub
+namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 {
     /// <summary>
     /// Defines the configuration options for the NotificationHubs binding.
     /// </summary>
-    public class NotificationHubConfiguration : IExtensionConfigProvider
+    public class NotificationHubsConfiguration : IExtensionConfigProvider
     {
         internal const string NotificationHubConnectionStringName = "AzureWebJobsNotificationHubsConnectionString";
         internal const string NotificationHubSettingName = "AzureWebJobsNotificationHubName";
@@ -18,7 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHub
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
-        public NotificationHubConfiguration()
+        public NotificationHubsConfiguration()
         {
             if (ConfigurationManager.ConnectionStrings[NotificationHubConnectionStringName] != null)
             {
