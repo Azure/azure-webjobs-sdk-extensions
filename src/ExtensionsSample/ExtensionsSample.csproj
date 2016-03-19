@@ -183,9 +183,9 @@
       <Project>{38372e3c-70c9-4678-892d-7295a4615561}</Project>
       <Name>WebJobs.Extensions.DocumentDB</Name>
     </ProjectReference>
-    <ProjectReference Include="..\WebJobs.Extensions.NotificationHub\WebJobs.Extensions.NotificationHub.csproj">
+    <ProjectReference Include="..\WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.csproj">
       <Project>{0b6093f8-5b69-4432-b64c-539e19b2e03a}</Project>
-      <Name>WebJobs.Extensions.NotificationHub</Name>
+      <Name>WebJobs.Extensions.NotificationHubs</Name>
     </ProjectReference>
     <ProjectReference Include="..\WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.csproj">
       <Project>{6eab68d8-ebf7-4bc2-89f9-30e6e3bb4423}</Project>

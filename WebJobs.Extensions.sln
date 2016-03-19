@@ -31,7 +31,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.EasyTabl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.DocumentDB", "src\WebJobs.Extensions.DocumentDB\WebJobs.Extensions.DocumentDB.csproj", "{38372E3C-70C9-4678-892D-7295A4615561}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.NotificationHub", "src\WebJobs.Extensions.NotificationHub\WebJobs.Extensions.NotificationHub.csproj", "{0B6093F8-5B69-4432-B64C-539E19B2E03A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.NotificationHubs", "src\WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.csproj", "{0B6093F8-5B69-4432-B64C-539E19B2E03A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

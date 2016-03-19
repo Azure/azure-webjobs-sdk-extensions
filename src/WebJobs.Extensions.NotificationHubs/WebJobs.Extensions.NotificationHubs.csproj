@@ -7,8 +7,8 @@
     <ProjectGuid>{0B6093F8-5B69-4432-B64C-539E19B2E03A}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Microsoft.Azure.WebJobs.Extensions</RootNamespace>
-    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.NotificationHub</AssemblyName>
+    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.NotificationHubs</RootNamespace>
+    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.NotificationHubs</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -23,7 +23,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\Microsoft.Azure.WebJobs.Extensions.NotificationHub.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\Microsoft.Azure.WebJobs.Extensions.NotificationHubs.xml</DocumentationFile>
     <LangVersion>5</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -33,13 +33,13 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release\Microsoft.Azure.WebJobs.Extensions.NotificationHub.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\Microsoft.Azure.WebJobs.Extensions.NotificationHubs.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Bindings\NotificationHubAsyncCollector.cs" />
     <Compile Include="Bindings\NotificationHubAttributeBindingProvider.cs" />
     <Compile Include="Config\Converter.cs" />
-    <Compile Include="Config\NotificationHubConfiguration.cs" />
+    <Compile Include="Config\NotificationHubsConfiguration.cs" />
     <Compile Include="Config\NotificationHubJobHostConfigurationExtensions.cs" />
     <Compile Include="NotificationHubAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

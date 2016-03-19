@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Azure.NotificationHubs;
-using Microsoft.Azure.WebJobs.Extensions.NotificationHub;
+using Microsoft.Azure.WebJobs.Extensions.NotificationHubs;
 using Newtonsoft.Json;
 using Xunit;
 

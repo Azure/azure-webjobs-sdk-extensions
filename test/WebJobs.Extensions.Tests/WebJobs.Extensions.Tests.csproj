@@ -239,7 +239,7 @@
       <Name>WebJobs.Extensions.DocumentDB</Name>
       <Aliases>DocumentDB</Aliases>
     </ProjectReference>
-    <ProjectReference Include="..\..\src\WebJobs.Extensions.NotificationHub\WebJobs.Extensions.NotificationHub.csproj">
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.csproj">
       <Project>{0b6093f8-5b69-4432-b64c-539e19b2e03a}</Project>
       <Name>WebJobs.Extensions.NotificationHubs</Name>
     </ProjectReference>

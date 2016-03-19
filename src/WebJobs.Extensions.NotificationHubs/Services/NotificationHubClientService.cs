@@ -4,13 +4,13 @@
 using System.Threading.Tasks;
 using Microsoft.Azure.NotificationHubs;
 
-namespace Microsoft.Azure.WebJobs.Extensions.NotificationHub
+namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 {
     internal class NotificationHubClientService : INotificationHubClientService
     {
-        private NotificationHubConfiguration _notificationHubClientConfig;
+        private NotificationHubsConfiguration _notificationHubClientConfig;
         private NotificationHubClient _notificationHubClient;
-        public NotificationHubClientService(NotificationHubConfiguration notificationHubConfig)
+        public NotificationHubClientService(NotificationHubsConfiguration notificationHubConfig)
         {
             _notificationHubClientConfig = notificationHubConfig;
         }
