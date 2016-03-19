@@ -24,5 +24,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
 
             Assert.True(typeof(IMobileServiceTableQuery<TodoItem>).IsAssignableFrom(value.GetType()));
         }
+
+        [Fact]
+        public void GetValue_WithTableName_ReturnsCorrectType()
+        {
+            var parameter = EasyTableTestHelper.GetValidInputQueryParameters().Single();
+            var context = new EasyTableContext()
+            {
+                Client = new MobileServiceClient("http://someuri"),
+                ResolvedTableName = "SomeOtherTable"
+            };
+            var provider = new EasyTableQueryValueProvider<TodoItem>(parameter, context);
+
+            var value = provider.GetValue() as IMobileServiceTableQuery<TodoItem>;
+
+            Assert.NotNull(value);
+            Assert.Equal("SomeOtherTable", value.Table.TableName);
+        }
     }
 }

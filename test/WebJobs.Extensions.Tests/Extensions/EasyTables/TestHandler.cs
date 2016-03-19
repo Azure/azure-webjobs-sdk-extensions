@@ -10,16 +10,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.EasyTables
 {
     public class TestHandler : DelegatingHandler
     {
-        public HttpRequestMessage ActualRequest { get; private set; }
-
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        private string _jsonContentToReturn;
+        
+        public TestHandler() : this("[]")
         {
-            this.ActualRequest = request;
+        }
+
+        public TestHandler(string jsonContentToReturn)
+        {
+            _jsonContentToReturn = jsonContentToReturn;
+        }
+
+        public HttpRequestMessage IssuedRequest { get; private set; }
+
+        public string IssuedRequestContent { get; private set; }
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            this.IssuedRequest = request;
+
+            if (request.Content != null)
+            {
+                this.IssuedRequestContent = await request.Content.ReadAsStringAsync();
+            }
 
             var response = new HttpResponseMessage(HttpStatusCode.OK);
-            response.Content = new StringContent("[]");
+            response.Content = new StringContent(_jsonContentToReturn);
 
-            return Task.FromResult(response);
+            return response;
         }
     }
 }

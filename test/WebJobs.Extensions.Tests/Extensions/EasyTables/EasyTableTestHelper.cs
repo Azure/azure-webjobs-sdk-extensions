@@ -33,6 +33,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
                .GetMethod("InputItemParameters", BindingFlags.Instance | BindingFlags.NonPublic).GetParameters();
         }
 
+        public static ParameterInfo GetInputParameter<T>()
+        {
+            return GetValidInputItemParameters().Where(p => p.ParameterType == typeof(T)).Single();
+        }
+
         public static IEnumerable<ParameterInfo> GetValidInputTableParameters()
         {
             return typeof(EasyTableTestHelper)
@@ -46,29 +51,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
         }
 
         private void OutputParameters(
-            [EasyTable] out JObject jobjectOut,
+            [EasyTable(TableName = "Items")] out JObject jobjectOut,
             [EasyTable] out TodoItem pocoOut,
-            [EasyTable] out JObject[] jobjectArrayOut,
+            [EasyTable(TableName = "Items")] out JObject[] jobjectArrayOut,
             [EasyTable] out TodoItem[] pocoArrayOut,
-            [EasyTable] IAsyncCollector<JObject> jobjectAsyncCollector,
+            [EasyTable(TableName = "Items")] IAsyncCollector<JObject> jobjectAsyncCollector,
             [EasyTable] IAsyncCollector<TodoItem> pocoAsyncCollector,
-            [EasyTable] ICollector<JObject> jobjectCollector,
-            [EasyTable] ICollector<TodoItem> pocoCollector)
+            [EasyTable(TableName = "Items")] ICollector<JObject> jobjectCollector,
+            [EasyTable] ICollector<TodoItem> pocoCollector,
+            [EasyTable(TableName = "Item")] out object objectOut,
+            [EasyTable(TableName = "Item")] ICollector<object> objectCollector)
         {
             jobjectOut = null;
             pocoOut = null;
             jobjectArrayOut = null;
             pocoArrayOut = null;
+            objectOut = null;
         }
 
         private void InputItemParameters(
-            [EasyTable] JObject jobject,
+            [EasyTable(TableName = "Items")] JObject jobject,
             [EasyTable] TodoItem poco)
         {
         }
 
         private void InputTableParameters(
-            [EasyTable] IMobileServiceTable jobjectTable,
+            [EasyTable(TableName = "Items")] IMobileServiceTable jobjectTable,
             [EasyTable] IMobileServiceTable<TodoItem> pocoTable)
         {
         }

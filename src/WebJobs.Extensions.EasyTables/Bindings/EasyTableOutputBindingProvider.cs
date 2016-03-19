@@ -44,8 +44,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
 
             ParameterInfo parameter = context.Parameter;
 
-            if (IsValidOutType(parameter.ParameterType) ||
-                IsValidCollectorType(parameter.ParameterType))
+            if (IsValidOutType(parameter.ParameterType, _easyTableContext) ||
+                IsValidCollectorType(parameter.ParameterType, _easyTableContext))
             {
                 return CreateBinding(parameter);
             }
@@ -62,7 +62,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
             return Task.FromResult(genericBinding);
         }
 
-        internal static bool IsValidOutType(Type paramType)
+        internal static bool IsValidOutType(Type paramType, EasyTableContext context)
         {
             if (paramType.IsByRef)
             {
@@ -72,7 +72,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
                     coreType = coreType.GetElementType();
                 }
 
-                if (EasyTableUtility.IsValidItemType(coreType))
+                if (IsValidEasyTableOutputType(coreType, context))
                 {
                     return true;
                 }
@@ -81,14 +81,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
             return false;
         }
 
-        internal static bool IsValidCollectorType(Type paramType)
+        internal static bool IsValidCollectorType(Type paramType, EasyTableContext context)
         {
             if (paramType.IsGenericType)
             {
                 Type genericType = paramType.GetGenericTypeDefinition();
                 if (genericType == typeof(ICollector<>) || genericType == typeof(IAsyncCollector<>))
                 {
-                    if (EasyTableUtility.IsCoreTypeValidItemType(paramType))
+                    Type coreType = TypeUtility.GetCoreType(paramType);
+                    if (IsValidEasyTableOutputType(coreType, context))
                     {
                         return true;
                     }
@@ -96,6 +97,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
             }
 
             return false;
+        }
+
+        internal static bool IsValidEasyTableOutputType(Type paramType, EasyTableContext context)
+        {
+            // Output bindings also support objects as long as ResolvedTableName is valid
+            return EasyTableUtility.IsValidItemType(paramType, context) ||
+                (paramType == typeof(object) && !string.IsNullOrEmpty(context.ResolvedTableName));
         }
     }
 }

@@ -9,9 +9,8 @@ namespace ExtensionsSample.Samples
 {
     // To use the DocumentDB samples:
     // 1. Create a new DocumentDB account
-    // 2. Add the DocumentDB Endpoint Uri to the 'AzureWebJobsDocumentDBUri' App Setting in app.config
-    // 3. Add the DocumentDB Primary Key to the 'AzureWebJobsDocumentDBKey' App Setting in app.config
-    // 4. Add typeof(DocumentDBSamples) to the SamplesTypeLocator in Program.cs
+    // 2. Add the DocumentDB Connection String to the 'AzureWebJobsDocumentDBConnectionString' App Setting in app.config    
+    // 3. Add typeof(DocumentDBSamples) to the SamplesTypeLocator in Program.cs
     public static class DocumentDBSamples
     {
         // POCO Output binding

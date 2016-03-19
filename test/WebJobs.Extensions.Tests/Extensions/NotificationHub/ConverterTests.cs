@@ -59,7 +59,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHub
             return AreTemplatePropertiesEqual(GetTemplateProperties(), actualTemplateProperties);
         }
 
-
         public static bool AreTemplatePropertiesEqual(IDictionary<string, string> expectedProperties, IDictionary<string, string> actualProperties)
         {
             if (expectedProperties.Count == actualProperties.Count)

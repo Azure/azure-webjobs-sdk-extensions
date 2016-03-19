@@ -33,7 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
             }
 
             ParameterInfo parameter = context.Parameter;
-            EasyTableAttribute attribute = parameter.GetCustomAttribute<EasyTableAttribute>(inherit: false);
+            EasyTableAttribute attribute = parameter.GetEasyTableAttribute();
             if (attribute == null)
             {
                 return Task.FromResult<IBinding>(null);

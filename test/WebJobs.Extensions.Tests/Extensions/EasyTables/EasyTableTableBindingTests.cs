@@ -45,14 +45,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
         }
 
         [Theory]
-        [InlineData(typeof(IMobileServiceTable), true)]
-        [InlineData(typeof(IMobileServiceTable<TodoItem>), true)]
-        [InlineData(typeof(IMobileServiceTable<NoId>), false)]
-        [InlineData(typeof(TodoItem), false)]
-        public void IsMobileServiceTableType_CorrectlyValidates(Type tableType, bool expected)
+        [InlineData(typeof(IMobileServiceTable), "Items", true)]
+        [InlineData(typeof(IMobileServiceTable<TodoItem>), null, true)]
+        [InlineData(typeof(IMobileServiceTable<NoId>), null, false)]
+        [InlineData(typeof(TodoItem), null, false)]
+        [InlineData(typeof(IMobileServiceTable<object>), null, false)]
+        [InlineData(typeof(IMobileServiceTable<object>), "Item", false)] // object only works for output binding
+        public void IsMobileServiceTableType_CorrectlyValidates(Type tableType, string tableName, bool expected)
         {
+            // Arrange
+            var context = new EasyTableContext { ResolvedTableName = tableName };
+
             // Act
-            bool result = EasyTableTableBinding.IsMobileServiceTableType(tableType);
+            bool result = EasyTableTableBinding.IsMobileServiceTableType(tableType, context);
 
             // Assert
             Assert.Equal(expected, result);

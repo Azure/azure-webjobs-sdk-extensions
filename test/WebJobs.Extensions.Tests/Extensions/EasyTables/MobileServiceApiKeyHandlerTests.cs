@@ -26,7 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.EasyTables
             var response = await client.GetAsync("https://someuri/");
 
             // Assert
-            var headerValue = testHandler.ActualRequest.Headers.GetValues(MobileServiceApiKeyHandler.ZumoApiKeyHeaderName).Single();
+            var headerValue = testHandler.IssuedRequest.Headers.GetValues(MobileServiceApiKeyHandler.ZumoApiKeyHeaderName).Single();
             Assert.Equal("my_api_key", headerValue);
         }
     }

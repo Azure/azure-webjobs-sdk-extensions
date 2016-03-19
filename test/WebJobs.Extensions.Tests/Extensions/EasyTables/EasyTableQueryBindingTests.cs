@@ -30,14 +30,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
         }
 
         [Theory]
-        [InlineData(typeof(IMobileServiceTableQuery<TodoItem>), true)]
-        [InlineData(typeof(IMobileServiceTableQuery<JObject>), false)]
-        [InlineData(typeof(IMobileServiceTableQuery<NoId>), false)]
-        [InlineData(typeof(TodoItem), false)]
-        public void IsValidQueryType_ValidatesCorrectly(Type parameterType, bool expected)
+        [InlineData(typeof(IMobileServiceTableQuery<TodoItem>), null, true)]
+        [InlineData(typeof(IMobileServiceTableQuery<JObject>), null, false)]
+        [InlineData(typeof(IMobileServiceTableQuery<NoId>), null, false)]
+        [InlineData(typeof(TodoItem), null, false)]
+        [InlineData(typeof(IMobileServiceTable<object>), null, false)]
+        [InlineData(typeof(IMobileServiceTable<object>), "Item", false)] // object only works for output binding
+        public void IsValidQueryType_ValidatesCorrectly(Type parameterType, string tableName, bool expected)
         {
+            // Arrange
+            var context = new EasyTableContext { ResolvedTableName = tableName };
+
             // Act
-            bool result = EasyTableQueryBinding.IsValidQueryType(parameterType);
+            bool result = EasyTableQueryBinding.IsValidQueryType(parameterType, context);
 
             // Assert
             Assert.Equal(expected, result);

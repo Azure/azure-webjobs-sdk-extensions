@@ -31,6 +31,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
             if (paramType.IsGenericType &&
                 paramType.GetGenericTypeDefinition() == typeof(IMobileServiceTableQuery<>))
             {
+                // If TableName is specified, add it to the internal table cache. Now items of this type
+                // will operate on the specified TableName.
+                if (!string.IsNullOrEmpty(_context.ResolvedTableName))
+                {
+                    _context.Client.AddToTableNameCache(typeof(T), _context.ResolvedTableName);
+                }
+
                 IMobileServiceTable<T> table = _context.Client.GetTable<T>();
                 return table.CreateQuery();
             }

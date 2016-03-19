@@ -41,12 +41,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
                 var jobjectCollectorType = hostAssembly.GetType("Microsoft.Azure.WebJobs.Host.Bindings.AsyncCollectorBinding`2")
                     .MakeGenericType(typeof(JObject), typeof(EasyTableContext));
                 var pocoCollectorType = hostAssembly.GetType("Microsoft.Azure.WebJobs.Host.Bindings.AsyncCollectorBinding`2")
-                    .MakeGenericType(typeof(TodoItem), typeof(EasyTableContext)); 
+                    .MakeGenericType(typeof(TodoItem), typeof(EasyTableContext));
+                var objectCollectorType = hostAssembly.GetType("Microsoft.Azure.WebJobs.Host.Bindings.AsyncCollectorBinding`2")
+                   .MakeGenericType(typeof(object), typeof(EasyTableContext));
                 var itemBindingType = typeof(EasyTableItemBinding);
                 var tableBindingType = typeof(EasyTableTableBinding);
                 var queryBindingType = typeof(EasyTableQueryBinding);
 
-                return new[]
+                var returnValue = new[]
                 {
                     new object[] { validParameters[0], jobjectCollectorType },
                     new object[] { validParameters[1], pocoCollectorType },
@@ -56,12 +58,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
                     new object[] { validParameters[5], pocoCollectorType },
                     new object[] { validParameters[6], jobjectCollectorType },
                     new object[] { validParameters[7], pocoCollectorType },
-                    new object[] { validParameters[8], itemBindingType },
-                    new object[] { validParameters[9], itemBindingType },
-                    new object[] { validParameters[10], tableBindingType },
-                    new object[] { validParameters[11], tableBindingType },
-                    new object[] { validParameters[12], queryBindingType }
+                    new object[] { validParameters[8], objectCollectorType },
+                    new object[] { validParameters[9], objectCollectorType },
+                    new object[] { validParameters[10], itemBindingType },
+                    new object[] { validParameters[11], itemBindingType },
+                    new object[] { validParameters[12], tableBindingType },
+                    new object[] { validParameters[13], tableBindingType },
+                    new object[] { validParameters[14], queryBindingType },
                 };
+
+                // Make sure if we add more valid params that this throws until we match them here.
+                Assert.Equal(validParameters.Count(), returnValue.Count());
+
+                return returnValue;
             }
         }
 
@@ -76,7 +85,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
                 Type outArrayValueProviderType = hostAssembly.GetType("Microsoft.Azure.WebJobs.Host.Bindings.OutArrayValueProvider`1");
                 Type asyncCollectorValueProviderType = hostAssembly.GetType("Microsoft.Azure.WebJobs.Host.Bindings.AsyncCollectorValueProvider`2");
 
-                return new[]
+                var returnValue = new[]
                 {
                     new object[] { validParameters[0], outValueProviderType.MakeGenericType(typeof(JObject)) },
                     new object[] { validParameters[1], outValueProviderType.MakeGenericType(typeof(TodoItem)) },
@@ -86,7 +95,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
                     new object[] { validParameters[5], asyncCollectorValueProviderType.MakeGenericType(typeof(IAsyncCollector<TodoItem>), typeof(TodoItem)) },
                     new object[] { validParameters[6], asyncCollectorValueProviderType.MakeGenericType(typeof(ICollector<JObject>), typeof(JObject)) },
                     new object[] { validParameters[7], asyncCollectorValueProviderType.MakeGenericType(typeof(ICollector<TodoItem>), typeof(TodoItem)) },
+                    new object[] { validParameters[8], outValueProviderType.MakeGenericType(typeof(object)) },
+                    new object[] { validParameters[9], asyncCollectorValueProviderType.MakeGenericType(typeof(ICollector<object>), typeof(object)) },
                 };
+
+                // Make sure if we add more valid params that this throws until we match them here.
+                Assert.Equal(validParameters.Count(), returnValue.Count());
+
+                return returnValue;
             }
         }
 
@@ -97,16 +113,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
                 var invalidParameters = typeof(EasyTableAttributeBindingProviderTests)
                     .GetMethod("GetInvalidBindings", BindingFlags.Instance | BindingFlags.NonPublic).GetParameters();
 
-                return new[]
-                {
-                    new object[] { invalidParameters[0] },
-                    new object[] { invalidParameters[1] },
-                    new object[] { invalidParameters[2] },
-                    new object[] { invalidParameters[3] },
-                    new object[] { invalidParameters[4] },
-                    new object[] { invalidParameters[5] },
-                    new object[] { invalidParameters[6] },
-                };
+                return invalidParameters.Select(p => new object[] { p });
             }
         }
 
@@ -203,7 +210,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
 
             // Assert
             IEnumerable<string> values = null;
-            bool foundHeader = handler.ActualRequest.Headers.TryGetValues(MobileServiceApiKeyHandler.ZumoApiKeyHeaderName, out values);
+            bool foundHeader = handler.IssuedRequest.Headers.TryGetValues(MobileServiceApiKeyHandler.ZumoApiKeyHeaderName, out values);
 
             Assert.Equal(expectHeader, foundHeader);
             if (expectHeader)
@@ -219,10 +226,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
             [EasyTable] ICollector<NoId> pocoCollector,
             [EasyTable] NoId poco,
             [EasyTable] IMobileServiceTable<NoId> pocoTable,
-            [EasyTable] IMobileServiceTableQuery<NoId> query)
+            [EasyTable] IMobileServiceTableQuery<NoId> query,
+            [EasyTable] out JObject jObjectNoTable,
+            [EasyTable] out object objectOutNoTable,
+            [EasyTable] object objectNoTable)
         {
             pocoOut = null;
             pocoArrayOut = null;
+            jObjectNoTable = null;
+            objectOutNoTable = null;
         }
     }
 }

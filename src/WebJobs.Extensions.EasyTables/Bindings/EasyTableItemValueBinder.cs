@@ -56,7 +56,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
             }
             else
             {
-                // treat this as POCO
+                // If TableName is specified, add it to the internal table cache. Now items of this type
+                // will operate on the specified TableName.
+                if (!string.IsNullOrEmpty(_context.ResolvedTableName))
+                {
+                    _context.Client.AddToTableNameCache(typeof(T), _context.ResolvedTableName);
+                }
+
                 IMobileServiceTable<T> table = _context.Client.GetTable<T>();
                 IgnoreNotFoundException(() =>
                 {
@@ -102,6 +108,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
                 }
                 else
                 {
+                    // If TableName is specified, add it to the internal table cache. Now items of this type
+                    // will operate on the specified TableName.
+                    if (!string.IsNullOrEmpty(context.ResolvedTableName))
+                    {
+                        context.Client.AddToTableNameCache(newItem.GetType(), context.ResolvedTableName);
+                    }
                     IMobileServiceTable<T> table = context.Client.GetTable<T>();
                     await table.UpdateAsync((T)newItem);
                 }

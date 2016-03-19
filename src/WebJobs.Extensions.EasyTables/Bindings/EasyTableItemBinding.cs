@@ -80,11 +80,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
                 throw new ArgumentNullException("context");
             }
 
-            IBinding result = null;
-
+            IBinding result = null;            
             // This will be the last IBindingProvider checked in the CompositeBindingProvider,
             // so simply verify the type.
-            if (EasyTableUtility.IsCoreTypeValidItemType(context.Parameter.ParameterType))
+            if (EasyTableUtility.IsCoreTypeValidItemType(context.Parameter.ParameterType, _context))
             {
                 result = this;
             }

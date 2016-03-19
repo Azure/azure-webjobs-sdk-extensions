@@ -81,7 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
                 throw new ArgumentNullException("context");
             }
 
-            if (IsMobileServiceTableType(context.Parameter.ParameterType))
+            if (IsMobileServiceTableType(context.Parameter.ParameterType, _context))
             {
                 return Task.FromResult<IBinding>(this);
             }
@@ -89,9 +89,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
             return Task.FromResult<IBinding>(null);
         }
 
-        internal static bool IsMobileServiceTableType(Type paramType)
+        internal static bool IsMobileServiceTableType(Type paramType, EasyTableContext context)
         {
-            if (paramType == typeof(IMobileServiceTable))
+            if (paramType == typeof(IMobileServiceTable) &&
+                !string.IsNullOrEmpty(context.ResolvedTableName))
             {
                 return true;
             }
@@ -99,7 +100,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
             if (paramType.IsGenericType &&
                 paramType.GetGenericTypeDefinition() == typeof(IMobileServiceTable<>))
             {
-                if (EasyTableUtility.IsCoreTypeValidItemType(paramType))
+                if (EasyTableUtility.IsCoreTypeValidItemType(paramType, context))
                 {
                     return true;
                 }

@@ -188,6 +188,7 @@
     <Compile Include="Extensions\EasyTables\EasyTableTestHelper.cs" />
     <Compile Include="Extensions\EasyTables\EasyTableUtilityTests.cs" />
     <Compile Include="Extensions\EasyTables\MobileServiceApiKeyHandlerTests.cs" />
+    <Compile Include="Extensions\EasyTables\IMobileServiceExtensionsTests.cs" />
     <Compile Include="Extensions\EasyTables\Models\NoId.cs" />
     <Compile Include="Extensions\EasyTables\Models\TodoItem.cs" />
     <Compile Include="Extensions\EasyTables\TestHandler.cs" />

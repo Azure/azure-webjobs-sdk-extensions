@@ -130,6 +130,8 @@
     <Compile Include="Bindings\EasyTableTableBinding.cs" />
     <Compile Include="Bindings\EasyTableTableValueProvider.cs" />
     <Compile Include="EasyTableUtility.cs" />
+    <Compile Include="Extensions\IMobileServiceClientExtensions.cs" />
+    <Compile Include="Extensions\ParameterInfoExtensions.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

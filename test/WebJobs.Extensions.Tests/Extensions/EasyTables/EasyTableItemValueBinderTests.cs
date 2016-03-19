@@ -2,12 +2,12 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.EasyTables;
+using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.EasyTables;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.WindowsAzure.MobileServices;
 using Moq;
@@ -23,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
         public void GetValue_JObject_QueriesItem()
         {
             // Arrange
-            var parameter = EasyTableTestHelper.GetValidInputItemParameters().Where(p => p.ParameterType == typeof(JObject)).Single();
+            var parameter = EasyTableTestHelper.GetInputParameter<JObject>();
             Mock<IMobileServiceTable> mockTable;
             Mock<IMobileServiceClient> mockClient;
             IValueBinder binder = CreateJObjectBinder(parameter, out mockClient, out mockTable);
@@ -45,7 +45,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
         public void GetValue_Poco_QueriesItem()
         {
             // Arrange
-            var parameter = EasyTableTestHelper.GetValidInputItemParameters().Where(p => p.ParameterType == typeof(TodoItem)).Single();
+            var parameter = EasyTableTestHelper.GetInputParameter<TodoItem>();
             Mock<IMobileServiceTable<TodoItem>> mockTable;
             Mock<IMobileServiceClient> mockClient;
             IValueBinder binder = CreatePocoBinder(parameter, out mockClient, out mockTable);
@@ -64,10 +64,51 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
         }
 
         [Fact]
+        public void GetValue_Poco_QueriesCorrectTable()
+        {
+            // Arrange                        
+            var handler = new TestHandler("{}");
+            var context = new EasyTableContext
+            {
+                Client = new MobileServiceClient("https://someuri", handler)
+            };
+            var parameter = EasyTableTestHelper.GetInputParameter<TodoItem>();
+            var binder = new EasyTableItemValueBinder<TodoItem>(parameter, context, "abc123");
+
+            // Act
+            var value = binder.GetValue();
+
+            // Assert
+            Assert.NotNull(value);
+            Assert.Equal("https://someuri/tables/TodoItem/abc123", handler.IssuedRequest.RequestUri.ToString());
+        }
+
+        [Fact]
+        public void GetValue_PocoWithTable_QueriesCorrectTable()
+        {
+            // Arrange                        
+            var handler = new TestHandler("{}");
+            var context = new EasyTableContext
+            {
+                ResolvedTableName = "SomeOtherTable",
+                Client = new MobileServiceClient("https://someuri", handler)
+            };
+            var parameter = EasyTableTestHelper.GetInputParameter<TodoItem>();
+            var binder = new EasyTableItemValueBinder<TodoItem>(parameter, context, "abc123");
+
+            // Act
+            var value = binder.GetValue();
+
+            // Assert          
+            Assert.NotNull(value);
+            Assert.Equal("https://someuri/tables/SomeOtherTable/abc123", handler.IssuedRequest.RequestUri.ToString());
+        }
+
+        [Fact]
         public void GetValue_JObject_DoesNotThrow_WhenResponseIsNotFound()
         {
             // Arrange
-            var parameter = EasyTableTestHelper.GetValidInputItemParameters().Where(p => p.ParameterType == typeof(JObject)).Single();
+            var parameter = EasyTableTestHelper.GetInputParameter<JObject>();
             Mock<IMobileServiceTable> mockTable;
             Mock<IMobileServiceClient> mockClient;
             IValueBinder binder = CreateJObjectBinder(parameter, out mockClient, out mockTable);
@@ -88,7 +129,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
         public void GetValue_Poco_DoesNotThrow_WhenResponseIsNotFound()
         {
             // Arrange
-            var parameter = EasyTableTestHelper.GetValidInputItemParameters().Where(p => p.ParameterType == typeof(TodoItem)).Single();
+            var parameter = EasyTableTestHelper.GetInputParameter<TodoItem>();
             Mock<IMobileServiceTable<TodoItem>> mockTable;
             Mock<IMobileServiceClient> mockClient;
             IValueBinder binder = CreatePocoBinder(parameter, out mockClient, out mockTable);
@@ -109,7 +150,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
         public void GetValue_Poco_Throws_WhenErrorResponse()
         {
             // Arrange
-            var parameter = EasyTableTestHelper.GetValidInputItemParameters().Where(p => p.ParameterType == typeof(TodoItem)).Single();
+            var parameter = EasyTableTestHelper.GetInputParameter<TodoItem>();
             Mock<IMobileServiceTable<TodoItem>> mockTable;
             Mock<IMobileServiceClient> mockClient;
             IValueBinder binder = CreatePocoBinder(parameter, out mockClient, out mockTable);
@@ -128,7 +169,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
         public void GetValue_JObject_Throws_WhenErrorResponse()
         {
             // Arrange
-            var parameter = EasyTableTestHelper.GetValidInputItemParameters().Where(p => p.ParameterType == typeof(JObject)).Single();
+            var parameter = EasyTableTestHelper.GetInputParameter<JObject>();
             Mock<IMobileServiceTable> mockTable;
             Mock<IMobileServiceClient> mockClient;
             IValueBinder binder = CreateJObjectBinder(parameter, out mockClient, out mockTable);
@@ -396,6 +437,46 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
             // Assert
             Assert.Equal("Cannot update the 'Id' property.", ex.Message);
             mockClient.Verify();
+        }
+
+        [Fact]
+        public async Task SetValue_Poco_UpdatesCorrectTable()
+        {
+            // Arrange                        
+            var handler = new TestHandler("{}");
+            var context = new EasyTableContext
+            {
+                Client = new MobileServiceClient("https://someuri", handler)
+            };
+            var original = JObject.Parse("{'Id':'abc123'}");
+            var updated = new TodoItem { Id = "abc123", Text = "updated" };
+
+            // Act
+            await EasyTableItemValueBinder<TodoItem>.SetValueInternalAsync(original, updated, context);
+
+            // Assert            
+            Assert.Equal("https://someuri/tables/TodoItem/abc123", handler.IssuedRequest.RequestUri.ToString());
+        }
+
+        [Fact]
+        public async Task SetValue_PocoWithTable_UpdatesCorrectTable()
+        {
+            // Arrange                        
+            var handler = new TestHandler("{}");
+            var context = new EasyTableContext
+            {
+                ResolvedTableName = "SomeOtherTable",
+                Client = new MobileServiceClient("https://someuri", handler)
+            };
+
+            var original = JObject.Parse("{'Id':'abc123'}");
+            var updated = new TodoItem { Id = "abc123", Text = "updated" };
+
+            // Act
+            await EasyTableItemValueBinder<TodoItem>.SetValueInternalAsync(original, updated, context);
+
+            // Assert            
+            Assert.Equal("https://someuri/tables/SomeOtherTable/abc123", handler.IssuedRequest.RequestUri.ToString());
         }
 
         private static IValueBinder CreateJObjectBinder(ParameterInfo parameter, out Mock<IMobileServiceClient> mockClient, out Mock<IMobileServiceTable> mockTable)

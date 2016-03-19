@@ -31,6 +31,20 @@ namespace ExtensionsSample
             };
         }
 
+        // Anonymous output binding 
+        //   The binding inserts the newly created item into the Easy Table when the 
+        //   method successfully exits.
+        public static void InsertItem(
+            [TimerTrigger("00:01")] TimerInfo timer,
+            [EasyTable(TableName = "Item")] out object newItem)
+        {
+            newItem = new
+            {
+                id = Guid.NewGuid().ToString(),
+                text = new Random().Next().ToString()
+            };
+        }
+
         // Query input binding 
         //   The binding creates a strongly-typed query against the Item table. 
         //   The binding does not do anything with the results when the function exits.  
