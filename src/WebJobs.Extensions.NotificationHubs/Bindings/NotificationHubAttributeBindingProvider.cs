@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 
-namespace Microsoft.Azure.WebJobs.Extensions.NotificationHub
+namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 {
     internal class NotificationHubAttributeBindingProvider : IBindingProvider
     {
@@ -14,7 +14,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHub
         private readonly IConverterManager _converterManager;
         private NotificationHubClientService _clientService;
 
-        public NotificationHubAttributeBindingProvider(INameResolver nameResolver, IConverterManager converterManager, NotificationHubConfiguration config)
+        public NotificationHubAttributeBindingProvider(INameResolver nameResolver, IConverterManager converterManager, NotificationHubsConfiguration config)
         {
             _nameResolver = nameResolver;
             _converterManager = converterManager;

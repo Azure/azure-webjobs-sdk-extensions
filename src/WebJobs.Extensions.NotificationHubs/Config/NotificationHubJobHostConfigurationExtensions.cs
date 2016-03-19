@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.Azure.WebJobs.Extensions.NotificationHub;
+using Microsoft.Azure.WebJobs.Extensions.NotificationHubs;
 
 namespace Microsoft.Azure.WebJobs
 {
@@ -15,8 +15,8 @@ namespace Microsoft.Azure.WebJobs
         /// Enables use of NotificationHubs extension
         /// </summary>
         /// <param name="config">The <see cref="JobHostConfiguration"/> to configure.</param>
-        /// <param name="notificationHubsConfig">The <see cref="NotificationHubConfiguration"/>to use</param>
-        public static void UseNotificationHubs(this JobHostConfiguration config, NotificationHubConfiguration notificationHubsConfig = null)
+        /// <param name="notificationHubsConfig">The <see cref="NotificationHubsConfiguration"/>to use</param>
+        public static void UseNotificationHubs(this JobHostConfiguration config, NotificationHubsConfiguration notificationHubsConfig = null)
         {
             if (config == null)
             {
@@ -25,7 +25,7 @@ namespace Microsoft.Azure.WebJobs
 
             if (notificationHubsConfig == null)
             {
-                notificationHubsConfig = new NotificationHubConfiguration();
+                notificationHubsConfig = new NotificationHubsConfiguration();
             }
             config.RegisterExtensionConfigProvider(notificationHubsConfig);
         }

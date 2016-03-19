@@ -91,7 +91,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
             var expected = new[]
             {
                 "NotificationHubAttribute",
-                "NotificationHubConfiguration",
+                "NotificationHubsConfiguration",
                 "NotificationHubJobHostConfigurationExtensions",
             };
 

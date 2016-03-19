@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.NotificationHubs;
-using Microsoft.Azure.WebJobs.Extensions.NotificationHub;
+using Microsoft.Azure.WebJobs.Extensions.NotificationHubs;
 using Moq;
 using Xunit;
 
