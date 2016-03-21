@@ -10,7 +10,7 @@ namespace ExtensionsSample
     // To use the NotificationHubSamples:
     // 1. Create a new Mobile App
     // 2. Create and configure NotificationHub
-    // 3. Add the NotificationHubs connection string to a 'AzureWebJobsNotificationHubConnectionString' App Setting in app.config    
+    // 3. Add the NotificationHubs connection string to a 'AzureWebJobsNotificationHubsConnectionString' App Setting in app.config    
     // 4. Add the NotificationHubs Hub name to a 'AzureWebJobsNotificationHubName' App Setting in app.config    
     // 5. Use MobileApps client SDK to register template with NotificationHubs
     public static class NotificationHubSamples

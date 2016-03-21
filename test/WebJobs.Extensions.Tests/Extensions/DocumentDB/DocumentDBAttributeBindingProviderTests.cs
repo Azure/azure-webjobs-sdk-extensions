@@ -233,11 +233,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             resolver.Values.Add("MyDatabase", "123abc");
             resolver.Values.Add("MyCollection", "abc123");
 
-            var attribute = new DocumentDBAttribute
-            {
-                DatabaseName = "%MyDatabase%",
-                CollectionName = "%MyCollection%"
-            };
+            var attribute = new DocumentDBAttribute("%MyDatabase%", "%MyCollection%");
 
             var config = new DocumentDBConfiguration
             {
@@ -250,6 +246,36 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             // Assert
             Assert.Equal("123abc", context.ResolvedDatabaseName);
             Assert.Equal("abc123", context.ResolvedCollectionName);
+        }
+
+        [Theory]
+        [InlineData("MyDocumentDBConnectionString", "AccountEndpoint=https://fromappsetting;AccountKey=some_key")]
+        [InlineData(null, "AccountEndpoint=https://fromconnstrings;AccountKey=some_key")]
+        [InlineData("", "AccountEndpoint=https://fromconnstrings;AccountKey=some_key")]
+        public void CreateContext_AttributeUri_Wins(string attributeConnection, string expectedConnection)
+        {
+            // Arrange            
+            var attribute = new DocumentDBAttribute
+            {
+                ConnectionString = attributeConnection
+            };
+
+            var mockFactory = new Mock<IDocumentDBServiceFactory>();
+            mockFactory
+                .Setup(f => f.CreateService(expectedConnection))
+                .Returns<IDocumentDBService>(null);
+
+            // Default ConnecitonString will come from app.config
+            var config = new DocumentDBConfiguration
+            {
+                DocumentDBServiceFactory = mockFactory.Object
+            };
+
+            // Act
+            DocumentDBAttributeBindingProvider.CreateContext(config, attribute, null);
+
+            // Assert
+            mockFactory.VerifyAll();
         }
 
         private static IEnumerable<ParameterInfo> GetCreateIfNotExistsParameters()
@@ -271,8 +297,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         }
 
         private void CreateIfNotExistsParameters(
-            [DocumentDB(DatabaseName = "TestDB", CollectionName = "TestCollection", CreateIfNotExists = false)] out Item pocoOut,
-            [DocumentDB(DatabaseName = "TestDB", CollectionName = "TestCollection", CreateIfNotExists = true)] out Item[] pocoArrayOut)
+            [DocumentDB("TestDB", "TestCollection", CreateIfNotExists = false)] out Item pocoOut,
+            [DocumentDB("TestDB", "TestCollection", CreateIfNotExists = true)] out Item[] pocoArrayOut)
         {
             pocoOut = null;
             pocoArrayOut = null;

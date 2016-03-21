@@ -12,6 +12,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
     public class DocumentDBConfigurationTests
     {
         private const string ConnectionStringKey = DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName;
+        private const string AppSettingKey = ConnectionStringKey + "_appsetting";
         private const string EnvironmentKey = ConnectionStringKey + "_environment";
         private const string NeitherKey = ConnectionStringKey + "_neither";
 
@@ -22,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             SetEnvironment(ConnectionStringKey);
 
             // Act
-            var connString = DocumentDBConfiguration.Resolve(ConnectionStringKey);
+            var connString = DocumentDBConfiguration.GetSettingFromConfigOrEnvironment(ConnectionStringKey);
 
             // Assert            
             Assert.Equal("AccountEndpoint=https://fromconnstrings;AccountKey=some_key", connString);
@@ -31,13 +32,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         }
 
         [Fact]
-        public void Resolve_UsesEnvironment_Second()
+        public void Resolve_UsesAppSetting_Second()
+        {
+            // Arrange
+            SetEnvironment(AppSettingKey);
+
+            // Act
+            var connString = DocumentDBConfiguration.GetSettingFromConfigOrEnvironment(AppSettingKey);
+
+            // Assert
+            Assert.Equal("AccountEndpoint=https://fromappsettings2;AccountKey=some_key", connString);
+
+            ClearEnvironment();
+        }
+
+        [Fact]
+        public void Resolve_UsesEnvironment_Third()
         {
             // Arrange
             SetEnvironment(EnvironmentKey);
 
             // Act
-            var connString = DocumentDBConfiguration.Resolve(EnvironmentKey);
+            var connString = DocumentDBConfiguration.GetSettingFromConfigOrEnvironment(EnvironmentKey);
 
             // Assert
             Assert.Equal("https://fromenvironment/", connString);
@@ -52,7 +68,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             ClearEnvironment();
 
             // Act
-            var connString = DocumentDBConfiguration.Resolve(NeitherKey);
+            var connString = DocumentDBConfiguration.GetSettingFromConfigOrEnvironment(NeitherKey);
 
             // Assert            
             Assert.Null(connString);

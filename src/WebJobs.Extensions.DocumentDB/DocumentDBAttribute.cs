@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 
 namespace Microsoft.Azure.WebJobs
 {
@@ -34,25 +35,31 @@ namespace Microsoft.Azure.WebJobs
         /// <param name="collectionName">The DocumentDB collection name.</param>
         public DocumentDBAttribute(string databaseName, string collectionName)
         {
-            this.DatabaseName = databaseName;
-            this.CollectionName = collectionName;
+            DatabaseName = databaseName;
+            CollectionName = collectionName;
         }
 
         /// <summary>
         /// The name of the database to which the parameter applies.        
         /// May include binding parameters.
         /// </summary>
-        public string DatabaseName { get; set; }
+        public string DatabaseName { get; private set; }
 
         /// <summary>
         /// The name of the collection to which the parameter applies. 
         /// May include binding parameters.
         /// </summary>
-        public string CollectionName { get; set; }
+        public string CollectionName { get; private set; }
 
         /// <summary>
         /// If true, the database and collection will be automatically created if they do not exist.
         /// </summary>
         public bool CreateIfNotExists { get; set; }
+
+        /// <summary>
+        /// Optional. A string value indicating the app setting to use as the DocumentDB connection string, if different
+        /// than the one specified in the <see cref="DocumentDBConfiguration"/>.
+        /// </summary>
+        public string ConnectionString { get; set; }
     }
 }

@@ -3,7 +3,6 @@
 
 using System;
 using System.Configuration;
-using Microsoft.Azure.WebJobs.Extensions.DocumentDB.Config;
 using Microsoft.Azure.WebJobs.Host.Config;
 
 namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
@@ -20,7 +19,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         /// </summary>
         public DocumentDBConfiguration()
         {
-            this.ConnectionString = Resolve(AzureWebJobsDocumentDBConnectionStringName);
+            this.ConnectionString = GetSettingFromConfigOrEnvironment(AzureWebJobsDocumentDBConnectionStringName);
             this.DocumentDBServiceFactory = new DefaultDocumentDBServiceFactory();
         }
 
@@ -42,7 +41,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             context.Config.RegisterBindingExtension(new DocumentDBAttributeBindingProvider(context.Config, this));
         }
 
-        internal static string Resolve(string key)
+        internal static string GetSettingFromConfigOrEnvironment(string key)
         {
             string value = null;
 
@@ -52,6 +51,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 if (connectionString != null)
                 {
                     value = connectionString.ConnectionString;
+                }
+
+                if (string.IsNullOrEmpty(value))
+                {
+                    value = ConfigurationManager.AppSettings[key];
                 }
 
                 if (string.IsNullOrEmpty(value))

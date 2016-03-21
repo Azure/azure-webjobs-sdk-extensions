@@ -9,8 +9,9 @@ using Microsoft.Azure.WebJobs.Extensions.DocumentDB.Config;
 
 namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 {
-    internal class DocumentDBService : IDocumentDBService
+    internal sealed class DocumentDBService : IDocumentDBService, IDisposable
     {
+        private bool _isDisposed;
         private DocumentClient _client;
 
         public DocumentDBService(string connectionString)
@@ -35,6 +36,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         {
             ResourceResponse<Document> response = await _client.CreateDocumentAsync(documentCollectionUri, document);
             return response.Resource;
+        }
+
+        public void Dispose()
+        {
+            if (!_isDisposed)
+            {
+                if (_client != null)
+                {
+                    _client.Dispose();
+                    _client = null;
+                }
+
+                _isDisposed = true;
+            }
         }
     }
 }

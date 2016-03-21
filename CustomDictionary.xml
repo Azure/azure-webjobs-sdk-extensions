@@ -47,7 +47,14 @@
       <Word>Notifier</Word>
       <Word>AzureWebJobsMobileAppUri</Word>
       <Word>EasyTableConfiguration</Word>
+      <Word>EasyTableAttribute</Word>
       <Word>MobileAppUri</Word>
+      <Word>NotificationHubAttribute</Word>
+      <Word>AzureWebJobsNotificationHubsConnectionString</Word>
+      <Word>AzureWebJobsNotificationHubName</Word>
+      <Word>NotificationHubsConfiguration</Word>
+      <Word>HubName</Word>
+      <Word>ConnectionString</Word>      
     </Recognized>
     <Deprecated/>
     <Compound>
@@ -63,6 +70,8 @@
       <Term>ApiKey</Term>
       <Term>SendGrid</Term>
       <Term>TimerTriggerAttribute</Term>
+      <Term>HubName</Term>
+      <Term>ConnectionString</Term>
     </DiscreteExceptions>
   </Words>
   <Acronyms>

@@ -12,6 +12,7 @@ using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.EasyTables;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.WindowsAzure.MobileServices;
+using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
@@ -189,20 +190,81 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
         }
 
         [Theory]
+        [InlineData("MyMobileAppUri", "https://configUri", "https://attruri/")]
+        [InlineData(null, "https://configUri", "https://configuri/")]
+        [InlineData("", "https://configUri", "https://configuri/")]
+        public void CreateContext_AttributeUri_Wins(string attributeUriString, string configUriString, string expectedUriString)
+        {
+            // Arrange
+            var attribute = new EasyTableAttribute
+            {
+                MobileAppUri = attributeUriString
+            };
+
+            var mockFactory = new Mock<IMobileServiceClientFactory>();
+            mockFactory
+                .Setup(f => f.CreateClient(new Uri(expectedUriString), null))
+                .Returns<IMobileServiceClient>(null);
+
+            var config = new EasyTablesConfiguration
+            {
+                MobileAppUri = new Uri(configUriString),
+                ClientFactory = mockFactory.Object
+            };
+
+            // Act
+            EasyTableAttributeBindingProvider.CreateContext(config, attribute, null);
+
+            // Assert
+            mockFactory.VerifyAll();
+        }
+
+        [Theory]
+        [InlineData("MyMobileAppKey", "config_key", "attr_key")]
+        [InlineData(null, "config_key", "config_key")]
+        [InlineData("", "config_key", null)]
+        public void CreateContext_AttributeKey_Wins(string attributeKey, string configKey, string expectedKey)
+        {
+            // Arrange
+            var attribute = new EasyTableAttribute
+            {
+                ApiKey = attributeKey
+            };
+
+            var handler = new TestHandler();
+            var config = new EasyTablesConfiguration
+            {
+                MobileAppUri = new Uri("https://someuri"),
+                ApiKey = configKey,
+                ClientFactory = new TestMobileServiceClientFactory(handler)
+            };
+
+            // Act
+            var context = EasyTableAttributeBindingProvider.CreateContext(config, attribute, null);
+
+            // Assert
+            // Issue a request to check the header that's being sent.
+            context.Client.GetTable("Test").LookupAsync("123");
+
+            IEnumerable<string> values = null;
+            string actualKey = null;
+            if (handler.IssuedRequest.Headers.TryGetValues("ZUMO-API-KEY", out values))
+            {
+                actualKey = values.Single();
+            }
+
+            Assert.Equal(expectedKey, actualKey);
+        }
+
+        [Theory]
         [InlineData(null, false)]
         [InlineData("my_api_key", true)]
         public async Task CreateMobileServiceClient_AddsHandler(string apiKey, bool expectHeader)
         {
             // Arrange
             var handler = new TestHandler();
-            var config = new EasyTablesConfiguration
-            {
-                ApiKey = apiKey,
-                MobileAppUri = new Uri("https://someuri/"),
-                ClientFactory = new TestMobileServiceClientFactory(handler)
-            };
-
-            var client = EasyTableAttributeBindingProvider.CreateMobileServiceClient(config);
+            var factory = new TestMobileServiceClientFactory(handler);
+            var client = EasyTableAttributeBindingProvider.CreateMobileServiceClient(factory, new Uri("https://someuri/"), apiKey);
             var table = client.GetTable("FakeTable");
 
             // Act

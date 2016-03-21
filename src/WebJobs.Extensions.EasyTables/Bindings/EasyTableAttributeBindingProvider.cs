@@ -39,11 +39,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
                 return Task.FromResult<IBinding>(null);
             }
 
-            if (_easyTableConfig.MobileAppUri == null)
+            if (_easyTableConfig.MobileAppUri == null &&
+                string.IsNullOrEmpty(attribute.MobileAppUri))
             {
                 throw new InvalidOperationException(
                     string.Format(CultureInfo.CurrentCulture,
-                    "The Easy Tables Uri must be set either via a '{0}' app setting or directly in code via EasyTableConfiguration.MobileAppUri.",
+                    "The Easy Tables Uri must be set either via a '{0}' app setting, via the EasyTableAttribute.MobileAppUri property or via EasyTableConfiguration.MobileAppUri.",
                     EasyTablesConfiguration.AzureWebJobsMobileAppUriName));
             }
 
@@ -60,23 +61,43 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
             return compositeProvider.TryCreateAsync(context);
         }
 
-        internal static IMobileServiceClient CreateMobileServiceClient(EasyTablesConfiguration config)
+        internal static IMobileServiceClient CreateMobileServiceClient(IMobileServiceClientFactory factory, Uri mobileAppUri, string apiKey = null)
         {
             HttpMessageHandler[] handlers = null;
-            if (!string.IsNullOrEmpty(config.ApiKey))
+            if (!string.IsNullOrEmpty(apiKey))
             {
-                handlers = new[] { new MobileServiceApiKeyHandler(config.ApiKey) };
+                handlers = new[] { new MobileServiceApiKeyHandler(apiKey) };
             }
 
-            return config.ClientFactory.CreateClient(config.MobileAppUri, handlers);
+            return factory.CreateClient(mobileAppUri, handlers);
         }
 
         internal static EasyTableContext CreateContext(EasyTablesConfiguration config, EasyTableAttribute attribute, INameResolver resolver)
         {
+            Uri resolvedMobileAppUri = config.MobileAppUri;
+            string resolvedApiKey = config.ApiKey;
+
+            // Override the config Uri with value from the attribute, if present.
+            if (!string.IsNullOrEmpty(attribute.MobileAppUri))
+            {
+                string uriString = EasyTablesConfiguration.GetSettingFromConfigOrEnvironment(attribute.MobileAppUri);
+                resolvedMobileAppUri = new Uri(uriString);
+            }
+
+            // If the attribute specifies an empty string ApiKey, set the ApiKey to null.
+            if (attribute.ApiKey == string.Empty)
+            {
+                resolvedApiKey = null;
+            }
+            else if (attribute.ApiKey != null)
+            {
+                resolvedApiKey = EasyTablesConfiguration.GetSettingFromConfigOrEnvironment(attribute.ApiKey);
+            }
+
             return new EasyTableContext
             {
                 Config = config,
-                Client = CreateMobileServiceClient(config),
+                Client = CreateMobileServiceClient(config.ClientFactory, resolvedMobileAppUri, resolvedApiKey),
                 ResolvedId = Resolve(attribute.Id, resolver),
                 ResolvedTableName = Resolve(attribute.TableName, resolver)
             };

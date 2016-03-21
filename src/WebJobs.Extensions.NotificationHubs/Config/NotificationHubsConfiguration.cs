@@ -20,20 +20,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
         /// </summary>
         public NotificationHubsConfiguration()
         {
-            if (ConfigurationManager.ConnectionStrings[NotificationHubConnectionStringName] != null)
-            {
-                ConnectionString = ConfigurationManager.ConnectionStrings[NotificationHubConnectionStringName].ConnectionString;
-            }
-            if (string.IsNullOrEmpty(ConnectionString))
-            {
-                ConnectionString = Environment.GetEnvironmentVariable(NotificationHubConnectionStringName);
-            }
-
-            HubName = ConfigurationManager.AppSettings[NotificationHubSettingName];
-            if (string.IsNullOrEmpty(HubName))
-            {
-                HubName = Environment.GetEnvironmentVariable(NotificationHubSettingName);
-            }
+            ConnectionString = GetSettingFromConfigOrEnvironment(NotificationHubConnectionStringName);
+            HubName = GetSettingFromConfigOrEnvironment(NotificationHubSettingName);
         }
 
         /// <summary>
@@ -55,8 +43,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
             }
             var converterManager = context.Config.GetService<IConverterManager>();
             converterManager = converterManager.AddNotificationHubConverters();
-            var provider = new NotificationHubAttributeBindingProvider(context.Config.NameResolver, converterManager, this);
+            var provider = new NotificationHubAttributeBindingProvider(converterManager, this);
             context.Config.RegisterBindingExtension(provider);
+        }
+
+        internal static string GetSettingFromConfigOrEnvironment(string key)
+        {
+            string value = null;
+
+            if (string.IsNullOrEmpty(value))
+            {
+                ConnectionStringSettings connectionString = ConfigurationManager.ConnectionStrings[key];
+                if (connectionString != null)
+                {
+                    value = connectionString.ConnectionString;
+                }
+
+                if (string.IsNullOrEmpty(value))
+                {
+                    value = ConfigurationManager.AppSettings[key];
+                }
+
+                if (string.IsNullOrEmpty(value))
+                {
+                    value = Environment.GetEnvironmentVariable(key);
+                }
+            }
+
+            return value;
         }
     }
 }

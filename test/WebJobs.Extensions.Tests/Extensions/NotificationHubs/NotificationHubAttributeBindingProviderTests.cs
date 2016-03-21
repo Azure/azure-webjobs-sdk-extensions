@@ -9,7 +9,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.NotificationHubs;
 using Microsoft.Azure.WebJobs.Extensions.NotificationHubs;
-using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Xunit;
@@ -59,6 +58,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             Assert.Equal(expectedExceptionType, exception.GetType());
         }
 
+        [Theory]
+        [InlineData("Config", "NotificationHubsConnectionString", "ConnectionString_FromAppSettings")]
+        [InlineData("Config", "", "Config")]
+        [InlineData("Config", null, "Config")]
+        public void ResolveConnectionString_AttributeWins(string configConnectionString, string attributeConnectionString, string expected)
+        {
+            var actual = NotificationHubAttributeBindingProvider.ResolveConnectionString(configConnectionString, attributeConnectionString);
+            Assert.Equal(expected, actual);
+        }
+
+        [Theory]
+        [InlineData("Config", "HubName", "HubName")]
+        [InlineData("Config", "", "Config")]
+        [InlineData("Config", null, "Config")]
+        public void ResolveHubName_AttributeWins(string configHubName, string attributeHubName, string expected)
+        {
+            var actual = NotificationHubAttributeBindingProvider.ResolveHubName(configHubName, attributeHubName);
+            Assert.Equal(expected, actual);
+        }
+
         private static Task<IBinding> CreateProviderAndTryCreateAsync(ParameterInfo parameter)
         {
             var jobConfig = new JobHostConfiguration();
@@ -71,10 +90,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             ExtensionConfigContext extensionsConfigContext = new ExtensionConfigContext();
             extensionsConfigContext.Config = jobConfig;
             config.Initialize(extensionsConfigContext);
-            var nameResolver = new TestNameResolver();
             var converterManager = jobConfig.GetService<IConverterManager>();
-            var provider = new NotificationHubAttributeBindingProvider(nameResolver, converterManager, config);
-            
+            var provider = new NotificationHubAttributeBindingProvider(converterManager, config);
+
             return provider.TryCreateAsync(context);
         }
 

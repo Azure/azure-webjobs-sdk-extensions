@@ -20,9 +20,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
         /// </summary>
         public EasyTablesConfiguration()
         {
-            this.ApiKey = Resolve(AzureWebJobsMobileAppApiKeyName);
+            this.ApiKey = GetSettingFromConfigOrEnvironment(AzureWebJobsMobileAppApiKeyName);
 
-            string uriString = Resolve(AzureWebJobsMobileAppUriName);
+            string uriString = GetSettingFromConfigOrEnvironment(AzureWebJobsMobileAppUriName);
 
             // if not found, MobileAppUri must be set explicitly before using the config
             if (!string.IsNullOrEmpty(uriString))
@@ -57,7 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
                 new EasyTableAttributeBindingProvider(context.Config, this, context.Config.NameResolver));
         }
 
-        internal static string Resolve(string key)
+        internal static string GetSettingFromConfigOrEnvironment(string key)
         {
             string value = null;
 

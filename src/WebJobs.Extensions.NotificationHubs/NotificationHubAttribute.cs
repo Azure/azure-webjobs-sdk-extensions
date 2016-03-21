@@ -3,6 +3,7 @@
 
 using System;
 using Microsoft.Azure.NotificationHubs;
+using Microsoft.Azure.WebJobs.Extensions.NotificationHubs;
 
 namespace Microsoft.Azure.WebJobs
 {
@@ -24,8 +25,20 @@ namespace Microsoft.Azure.WebJobs
     public sealed class NotificationHubAttribute : Attribute
     {
         /// <summary>
-        /// A tag expression is any boolean expression constructed using the logical operator
+        /// Optional. A tag expression is any boolean expression constructed using the logical operator
         /// </summary>
         public string TagExpression { get; set; }
+
+        /// <summary>
+        /// Optional. A string value indicating the app setting to use as the Notification Hubs connection
+        /// string, if different than the one specified in the <see cref="NotificationHubsConfiguration"/>.
+        /// </summary>
+        public string ConnectionString { get; set; }
+
+        /// <summary>
+        /// Optional. The Notification Hub Name to use, if different than the one specified in the
+        /// <see cref="NotificationHubsConfiguration"/>.
+        /// </summary>
+        public string HubName { get; set; }
     }
 }

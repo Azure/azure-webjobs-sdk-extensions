@@ -39,11 +39,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 return null;
             }
 
-            if (string.IsNullOrEmpty(_docDBConfig.ConnectionString))
+            if (string.IsNullOrEmpty(_docDBConfig.ConnectionString) &&
+                string.IsNullOrEmpty(attribute.ConnectionString))
             {
                 throw new InvalidOperationException(
                     string.Format(CultureInfo.CurrentCulture,
-                    "The DocumentDB connection string must be set either via a '{0}' app setting or directly in code via DocumentDBConfiguration.ConnectionString.",
+                    "The DocumentDB connection string must be set either via a '{0}' app setting, via the DocumentDBAttribute.ConnectionString property or via DocumentDBConfiguration.ConnectionString.",
                     DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName));
             }
 
@@ -79,9 +80,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
         internal static DocumentDBContext CreateContext(DocumentDBConfiguration config, DocumentDBAttribute attribute, INameResolver resolver)
         {
+            string resolvedConnectionString = config.ConnectionString;
+
+            if (!string.IsNullOrEmpty(attribute.ConnectionString))
+            {
+                resolvedConnectionString = DocumentDBConfiguration.GetSettingFromConfigOrEnvironment(attribute.ConnectionString);
+            }
+
             return new DocumentDBContext
             {
-                Service = config.DocumentDBServiceFactory.CreateService(config.ConnectionString),
+                Service = config.DocumentDBServiceFactory.CreateService(resolvedConnectionString),
                 ResolvedDatabaseName = Resolve(attribute.DatabaseName, resolver),
                 ResolvedCollectionName = Resolve(attribute.CollectionName, resolver)
             };

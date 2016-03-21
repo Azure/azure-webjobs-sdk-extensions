@@ -20,7 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.EasyTables
             SetEnvironment(AppSettingKey);
 
             // Act
-            var mobileAppUri = EasyTablesConfiguration.Resolve(AppSettingKey);
+            var mobileAppUri = EasyTablesConfiguration.GetSettingFromConfigOrEnvironment(AppSettingKey);
 
             // Assert            
             Assert.Equal("https://fromappsettings/", mobileAppUri.ToString());
@@ -35,7 +35,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.EasyTables
             SetEnvironment(EnvironmentKey);
 
             // Act
-            var mobileAppUri = EasyTablesConfiguration.Resolve(EnvironmentKey);
+            var mobileAppUri = EasyTablesConfiguration.GetSettingFromConfigOrEnvironment(EnvironmentKey);
 
             // Assert
             Assert.Equal("https://fromenvironment/", mobileAppUri.ToString());
@@ -50,7 +50,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.EasyTables
             ClearEnvironment();
 
             // Act
-            var mobileAppUri = EasyTablesConfiguration.Resolve(NeitherKey);
+            var mobileAppUri = EasyTablesConfiguration.GetSettingFromConfigOrEnvironment(NeitherKey);
 
             // Assert            
             Assert.Null(mobileAppUri);
