@@ -84,7 +84,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
                 {
                     // $$$ Move this error up to the binder level.
                     // Unknown?
-                    throw new InvalidOperationException("Unspported type:" + targetType.FullName);
+                    throw new InvalidOperationException("Unsupported type:" + targetType.FullName);
                 }
             }
             else

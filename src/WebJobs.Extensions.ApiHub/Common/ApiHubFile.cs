@@ -1,12 +1,11 @@
-﻿using Microsoft.Azure.ApiHub;
-using Microsoft.Azure.WebJobs.Extensions.ApiHub.Common;
-using System;
+﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.Azure.ApiHub;
 
-namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
+namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 {
-    class ApiHubFile : IFileStreamProvider
+    internal class ApiHubFile : IFileStreamProvider
     {
         private readonly IFileItem _fileSource;
 

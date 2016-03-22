@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 {
-    public class GenericFileTriggerBindingProvider<TAttribute, TFile> : ITriggerBindingProvider
+    internal class GenericFileTriggerBindingProvider<TAttribute, TFile> : ITriggerBindingProvider
           where TAttribute : Attribute, IFileAttribute
     {
         private readonly Func<TAttribute, ITriggeredFunctionExecutor, Task<IListener>> _listenerBuilder;

@@ -6,7 +6,7 @@
     <version>$NuGetPackageVersion$</version>
     <authors>Microsoft</authors>
     <copyright>&#169; Microsoft Corporation. All rights reserved.</copyright>
-    <summary>Microsoft.Azure.WebJobs.Extensions.ApiHub adds ApiHub triggers to the WebJobs SDK.</summary>
+    <summary>Microsoft.Azure.WebJobs.Extensions.ApiHub adds ApiHub triggers and bindings to the WebJobs SDK.</summary>
     <description>This package contains the runtime assemblies for Microsoft.Azure.WebJobs.Extensions.ApiHub. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources</description>
     <language>en-US</language>
     <projectUrl>https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources</projectUrl>
@@ -15,11 +15,7 @@
     <tags>Microsoft Azure WebJobs Jobs Extensions ApiHub windowsazureofficial Web</tags>
     <dependencies>
       <dependency id="Microsoft.Azure.WebJobs.Extensions" version="$WebJobsPackageVersion$" />
-      <dependency id="SuaveServerWrapper" version="0.0.2" />
-      <dependency id="Microsoft.AspNet.WebApi.Client" version="5.2.3" />
-      <dependency id="Microsoft.AspNet.WebApi.Core" version="5.2.3" />
-      <dependency id="Microsoft.AspNet.WebHooks.Receivers" version="1.2.0-beta4" />
-      <dependency id="Autofac.WebApi2" version="3.4.0" />
+      <dependency id="Microsoft.Azure.ApiHub.Sdk" version="0.2" />
     </dependencies>
   </metadata>
 </package>

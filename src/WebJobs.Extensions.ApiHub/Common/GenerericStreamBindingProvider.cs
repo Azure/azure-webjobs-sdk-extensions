@@ -12,7 +12,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
     /// </summary>
     /// <typeparam name="TAttribute"></typeparam>
     /// <typeparam name="TFile"></typeparam>
-    public class GenerericStreamBindingProvider<TAttribute, TFile> : 
+    internal class GenerericStreamBindingProvider<TAttribute, TFile> : 
         IBindingProvider, IBindingProvider2
         where TAttribute : Attribute, IFileAttribute
     {

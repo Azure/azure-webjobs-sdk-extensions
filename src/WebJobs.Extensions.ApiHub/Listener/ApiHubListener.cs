@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.ApiHub.Common;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
 {

@@ -8,7 +8,7 @@
     <NuGetPackSymbols>false</NuGetPackSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\WebJobs.Extensions.WebHooks\WebJobs.Extensions.WebHooks.csproj">
+    <ProjectReference Include="..\WebJobs.Extensions.ApiHub\WebJobs.Extensions.ApiHub.csproj">
       <Project>{E6F59990-F3A1-469F-A9D8-6D529121D385}</Project>
       <Name>WebJobs.Extensions.ApiHub</Name>
     </ProjectReference>

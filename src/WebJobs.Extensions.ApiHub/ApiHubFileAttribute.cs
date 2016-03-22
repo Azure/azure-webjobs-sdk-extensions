@@ -1,12 +1,8 @@
-﻿using Microsoft.Azure.WebJobs.Extensions.ApiHub.Common;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.ApiHub.Common;
 
-namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
+namespace Microsoft.Azure.WebJobs
 {
     public class ApiHubFileAttribute : Attribute, IFileAttribute
     {

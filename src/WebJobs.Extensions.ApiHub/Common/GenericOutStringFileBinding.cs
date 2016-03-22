@@ -13,7 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
     // $$$ Support Out TFile,  Out T, using the ConverterManager
     // 1 per ParameterInfo
     // Bind to 'out string' 
-    class GenericOutStringFileBinding<TAttribute, TFile> : IBinding
+    internal class GenericOutStringFileBinding<TAttribute, TFile> : IBinding
         where TAttribute : Attribute, IFileAttribute
     {
         private readonly BindingTemplate _bindingTemplate;
