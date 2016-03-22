@@ -84,7 +84,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ApiHubFile.cs" />
+    <Compile Include="Common\ApiHubFile.cs" />
     <Compile Include="ApiHubFileAttribute.cs" />
     <Compile Include="ApiHubFileTriggerAttribute.cs" />
     <Compile Include="Common\IFileTriggerStrategy.cs" />
