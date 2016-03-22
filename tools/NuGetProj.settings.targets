@@ -16,6 +16,8 @@
         <DocDBPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</DocDBPackageVersion>
         <NotificationHubsPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</NotificationHubsPackageVersion>
     </PropertyGroup>
+        <ApiHubPackageVersion>1.0.0$(PrereleaseTag)</ApiHubPackageVersion>
+      </PropertyGroup>
     </When>
     <Otherwise>
       <PropertyGroup>
@@ -24,6 +26,7 @@
         <EasyTablesPackageVersion>1.0.0$(PrereleaseTag)</EasyTablesPackageVersion>
         <DocDBPackageVersion>1.0.0$(PrereleaseTag)</DocDBPackageVersion>
         <NotificationHubsPackageVersion>1.0.0$(PrereleaseTag)</NotificationHubsPackageVersion>
+        <ApiHubPackageVersion>1.0.0$(PrereleaseTag)</ApiHubPackageVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>

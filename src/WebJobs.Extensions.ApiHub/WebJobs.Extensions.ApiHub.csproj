@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.ApiHub</RootNamespace>
-    <AssemblyName>WebJobs.Extensions.ApiHub</AssemblyName>
+    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.ApiHub</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\Microsoft.Azure.WebJobs.Extensions.ApiHub.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -31,9 +32,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Azure-ApiHub-Sdk, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\azure-apihub-sdk.0.1\tools\Azure-ApiHub-Sdk.dll</HintPath>
+    <Reference Include="Microfoft.Azure.ApiHub.Sdk">
+      <HintPath>..\..\packages\Microsoft.Azure.ApiHub.Sdk.0.2\tools\Microfoft.Azure.ApiHub.Sdk.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Azure.WebJobs, Version=1.1.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

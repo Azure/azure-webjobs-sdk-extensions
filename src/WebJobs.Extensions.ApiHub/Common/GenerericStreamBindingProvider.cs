@@ -7,7 +7,11 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 {
-
+    /// <summary>
+    /// Generic Stream provider
+    /// </summary>
+    /// <typeparam name="TAttribute"></typeparam>
+    /// <typeparam name="TFile"></typeparam>
     public class GenerericStreamBindingProvider<TAttribute, TFile> : 
         IBindingProvider, IBindingProvider2
         where TAttribute : Attribute, IFileAttribute
