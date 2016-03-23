@@ -14,7 +14,6 @@ using Microsoft.Azure.WebJobs.Extensions.ApiHub;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 using Microsoft.Azure.WebJobs.Extensions.WebHooks;
-using Microsoft.Azure.WebJobs.Extensions.ApiHub;
 using Microsoft.Azure.WebJobs.Host;
 using WebJobsSandbox;
 
@@ -29,7 +28,7 @@ namespace ExtensionsSample
 
             // See https://github.com/Azure/azure-webjobs-sdk/wiki/Running-Locally for details
             // on how to set up your local environment
-            //if (config.IsDevelopment)
+            if (config.IsDevelopment)
             {
                 config.UseDevelopmentSettings();
                 filesConfig.RootPath = @"c:\temp\files";
@@ -47,7 +46,7 @@ namespace ExtensionsSample
                 ToAddress = "admin@webjobssamples.com",
                 FromAddress = new MailAddress("samples@webjobssamples.com", "WebJobs Extensions Samples")
             };
-            //config.UseSendGrid(sendGridConfiguration);
+            config.UseSendGrid(sendGridConfiguration);
 
             bool apiHubEnabled = CheckForApiHub(config);
 
@@ -74,7 +73,11 @@ namespace ExtensionsSample
                 typeof(WebHookSamples),
                 typeof(ApiHubSamples));
             
-            host.Call(typeof(ApiHubSamples).GetMethod("Writer"));
+            host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
+            host.Call(typeof(FileSamples).GetMethod("ReadWrite"));
+            host.Call(typeof(SampleSamples).GetMethod("Sample_BindToStream"));
+            host.Call(typeof(SampleSamples).GetMethod("Sample_BindToString"));
+            host.Call(typeof(TableSamples).GetMethod("CustomBinding"));
 
             if (apiHubEnabled)
             {
