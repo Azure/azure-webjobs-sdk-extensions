@@ -7,12 +7,13 @@ using System.IO;
 using System.Net.Mail;
 using ExtensionsSample.Samples;
 using Microsoft.AspNet.WebHooks;
+using Microsoft.Azure.ApiHub;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions;
+using Microsoft.Azure.WebJobs.Extensions.ApiHub;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 using Microsoft.Azure.WebJobs.Extensions.WebHooks;
-using Microsoft.Azure.WebJobs.Extensions.ApiHub;
 using Microsoft.Azure.WebJobs.Host;
 using WebJobsSandbox;
 
@@ -27,7 +28,7 @@ namespace ExtensionsSample
 
             // See https://github.com/Azure/azure-webjobs-sdk/wiki/Running-Locally for details
             // on how to set up your local environment
-            //if (config.IsDevelopment)
+            if (config.IsDevelopment)
             {
                 config.UseDevelopmentSettings();
                 filesConfig.RootPath = @"c:\temp\files";
@@ -45,22 +46,9 @@ namespace ExtensionsSample
                 ToAddress = "admin@webjobssamples.com",
                 FromAddress = new MailAddress("samples@webjobssamples.com", "WebJobs Extensions Samples")
             };
-            //config.UseSendGrid(sendGridConfiguration);
+            config.UseSendGrid(sendGridConfiguration);
 
-            if (File.Exists("dropbox-connectionkey.txt"))
-            {
-                var apiHubConfig = new ApiHubConfiguration();
-                apiHubConfig.AddKeyPath("dropbox", File.ReadAllText("dropbox-connectionkey.txt"));
-                config.UseApiHub(apiHubConfig);
-            }
-            else
-            {
-                // TODO: How to pass these for running samples?
-                string aadToken = args[0];
-                string subscriptionId = "83e6374a-dfa5-428b-82ef-eab6c6bdd383";
-                string location = "brazilsouth";
-                File.WriteAllText("dropbox-connectionkey.txt", ApiHubHelper.GetApiHubProviderConnectionStringAsync("dropbox", subscriptionId, location, aadToken).GetAwaiter().GetResult());
-            }
+            bool apiHubEnabled = CheckForApiHub(config);
 
             ConfigureTraceMonitor(config, sendGridConfiguration);
 
@@ -75,22 +63,26 @@ namespace ExtensionsSample
             // Add or remove types from this list to choose which functions will 
             // be indexed by the JobHost.
             config.TypeLocator = new SamplesTypeLocator(
-                //typeof(ErrorMonitoringSamples),
-                //typeof(FileSamples),
-                //typeof(MiscellaneousSamples),
-                //typeof(SampleSamples),
-                //typeof(SendGridSamples),
-                //typeof(TableSamples),
-                //typeof(TimerSamples),
-                //typeof(WebHookSamples),
+                typeof(ErrorMonitoringSamples),
+                typeof(FileSamples),
+                typeof(MiscellaneousSamples),
+                typeof(SampleSamples),
+                typeof(SendGridSamples),
+                typeof(TableSamples),
+                typeof(TimerSamples),
+                typeof(WebHookSamples),
                 typeof(ApiHubSamples));
+            
+            host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
+            host.Call(typeof(FileSamples).GetMethod("ReadWrite"));
+            host.Call(typeof(SampleSamples).GetMethod("Sample_BindToStream"));
+            host.Call(typeof(SampleSamples).GetMethod("Sample_BindToString"));
+            host.Call(typeof(TableSamples).GetMethod("CustomBinding"));
 
-            //host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
-            //host.Call(typeof(FileSamples).GetMethod("ReadWrite"));
-            //host.Call(typeof(SampleSamples).GetMethod("Sample_BindToStream"));
-            //host.Call(typeof(SampleSamples).GetMethod("Sample_BindToString"));
-            //host.Call(typeof(TableSamples).GetMethod("CustomBinding"));
-            host.Call(typeof(ApiHubSamples).GetMethod("Writer"));
+            if (apiHubEnabled)
+            {
+                host.Call(typeof(ApiHubSamples).GetMethod("Writer"));
+            }
 
             host.RunAndBlock();
         }
@@ -129,6 +121,40 @@ namespace ExtensionsSample
             Directory.CreateDirectory(Path.Combine(rootFilesPath, "converted"));
 
             File.WriteAllText(Path.Combine(rootFilesPath, "input.txt"), "WebJobs SDK Extensions!");
+        }
+
+        private static bool CheckForApiHub(JobHostConfiguration config)
+        {
+            string dropboxKey = null;
+
+            // ApiHub for dropbox is enabled if the dropbox-connectionkey.txt exists in the current folder
+            // or the dropbox environment variable is set.
+            // The format should be: Endpoint={endpoint};Scheme={scheme};AccessToken={accesstoken}
+            if (File.Exists("dropbox-connectionkey.txt"))
+            {
+                dropboxKey = File.ReadAllText("dropbox-connectionkey.txt");
+            }
+            else
+            {
+                dropboxKey = Environment.GetEnvironmentVariable("dropbox");
+            }
+
+            if (!string.IsNullOrEmpty(dropboxKey))
+            {
+                var apiHubConfig = new ApiHubConfiguration();
+                apiHubConfig.AddKeyPath("dropbox", dropboxKey);
+                config.UseApiHub(apiHubConfig);
+
+                // Create some initialization files.
+                var root = ItemFactory.Parse(dropboxKey);
+                var file = root.CreateFileAsync("test/file1.txt", true).GetAwaiter().GetResult();
+                file.WriteAsync(new byte[] { 0, 1, 2, 3 });
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }
