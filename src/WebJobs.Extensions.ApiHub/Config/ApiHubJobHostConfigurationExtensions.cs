@@ -1,19 +1,22 @@
 ﻿using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Config;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
 {
+    /// <summary>
+    /// Helper extensions for ApiHub configuration
+    /// </summary>
     public static class ApiHubJobHostConfigurationExtensions
     {
-        public static void UseApiHub(this JobHostConfiguration config, ApiHubConfiguration saas)
+        /// <summary>
+        /// Add ApiHub ocnfiguration to <see cref="JobHostConfiguration"/>
+        /// </summary>
+        /// <param name="config">curent <see cref="JobHostConfiguration"/></param>
+        /// <param name="saasConfiguration">Instance of <see cref="ApiHubConfiguration"/></param>
+        public static void UseApiHub(this JobHostConfiguration config, ApiHubConfiguration saasConfiguration)
         {
             IExtensionRegistry extensions = config.GetService<IExtensionRegistry>();
-            extensions.RegisterExtension<IExtensionConfigProvider>(saas);
+            extensions.RegisterExtension<IExtensionConfigProvider>(saasConfiguration);
         }
     }
 }

@@ -8,17 +8,19 @@ using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
 {
+    /// <summary>
+    /// Defines the configuration options for the ApiHub binding.
+    /// </summary>
     public class ApiHubConfiguration : IExtensionConfigProvider, IFileTriggerStrategy<ApiHubFile>
     {
         // Map of saas names (ie, "Dropbox") to their underlying root folder. 
         Dictionary<string, IFolderItem> _map = new Dictionary<string, IFolderItem>(StringComparer.OrdinalIgnoreCase);
 
+        /// <inheritdoc />
         public void Initialize(ExtensionConfigContext context)
         {
             var config = context.Config;
@@ -70,6 +72,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
             return _map[key];
         }
 
+        /// <summary>
+        /// Add path to the configuration
+        /// </summary>
+        /// <param name="key">App settings key name that have the connections string</param>
+        /// <param name="connectionString">Connection string to access SAAS via ApiHub. <seealso cref="ApiHubHelper.GetApiHubProviderConnectionStringAsync"/></param>
         public void AddKeyPath(string key, string connectionString)
         {
             var root = ItemFactory.Parse(connectionString);

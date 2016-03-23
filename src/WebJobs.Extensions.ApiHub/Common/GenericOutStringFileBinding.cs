@@ -85,7 +85,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
             return new ParameterDescriptor { }; // $$$
         }
 
-        class GenericOutFileValueProvider : ConstantObj, IValueBinder
+        private class GenericOutFileValueProvider : ConstantObj, IValueBinder
         {
             private readonly Stream _outStream;
             private Func<Task> _completedFunc;
@@ -97,7 +97,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
                 this.Type = typeof(string).MakeByRefType();
             }
 
-            public async Task SetValueAsync(object value, CancellationToken cancellationToken)
+            public new async Task SetValueAsync(object value, CancellationToken cancellationToken)
             {
                 string contents = (string)value;
 

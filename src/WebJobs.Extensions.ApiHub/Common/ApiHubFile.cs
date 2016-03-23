@@ -36,9 +36,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
             return ms;            
         }
 
-        public async Task<Tuple<Stream, Func<Task>>> OpenWriteStreamAsync()
+        public Task<Tuple<Stream, Func<Task>>> OpenWriteStreamAsync()
         {
-            MemoryStream stream = new MemoryStream();
+            var stream = new MemoryStream();
             
             Func<Task> onClose = async () =>
             {
@@ -47,7 +47,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
                 await _fileSource.WriteAsync(bytes);
             };
 
-            return Tuple.Create((Stream)stream, onClose);            
+            return Task.FromResult(Tuple.Create((Stream)stream, onClose));            
         }
     }
 }

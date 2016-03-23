@@ -48,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
         
         // Called for each instance. 
         // Can be called by the Trigger codepath
-        public async Task<IBinding> BindDirect(BindingProviderContext context)
+        public Task<IBinding> BindDirect(BindingProviderContext context)
         {
             ParameterInfo parameter = context.Parameter;
             TAttribute attribute = parameter.GetCustomAttribute<TAttribute>(inherit: false);
@@ -90,7 +90,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
                 throw new InvalidOperationException("Can't bind.");
             }
 
-            return binding;
+            return Task.FromResult(binding);
         }
     }
 
