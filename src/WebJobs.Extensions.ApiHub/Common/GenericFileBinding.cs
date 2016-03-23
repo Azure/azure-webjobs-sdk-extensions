@@ -93,7 +93,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
                 onComplete = () => Task.FromResult(0); // Nop
                 if (targetType == typeof(Stream))
                 {
-                    userObj = targetType;
+                    userObj = readStream;
                 }
                 else if (targetType == typeof(TextReader))
                 {
