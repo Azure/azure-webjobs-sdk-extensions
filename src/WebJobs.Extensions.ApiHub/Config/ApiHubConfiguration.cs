@@ -59,12 +59,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
         }
 
         // Attribute has path resolved
-        private Task<ApiHubFile> BuildFromAttribute(ApiHubFileAttribute attribute)
+        private  async Task<ApiHubFile> BuildFromAttribute(ApiHubFileAttribute attribute)
         {
             var source = GetFileSource(attribute.Key);
-            ApiHubFile file = new ApiHubFile(source, attribute.Path);
-
-            return Task.FromResult(file);
+            ApiHubFile file = await ApiHubFile.New(source, attribute.Path);
+            return file;
         }
 
         private IFolderItem GetFileSource(string key)

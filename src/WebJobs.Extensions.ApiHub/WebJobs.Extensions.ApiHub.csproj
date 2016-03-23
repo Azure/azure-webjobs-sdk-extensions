@@ -23,6 +23,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug\Microsoft.Azure.WebJobs.Extensions.ApiHub.XML</DocumentationFile>
+    <CodeAnalysisRuleSet>..\..\..\azure-webjobs-sdk\src\src.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -82,7 +83,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Common\ApiHubFile.cs" />
+    <Compile Include="ApiHubFile.cs" />
     <Compile Include="ApiHubFileAttribute.cs" />
     <Compile Include="ApiHubFileTriggerAttribute.cs" />
     <Compile Include="Common\IFileTriggerStrategy.cs" />

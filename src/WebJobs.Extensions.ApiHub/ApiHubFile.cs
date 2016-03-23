@@ -17,9 +17,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
             }
         }
 
-        public ApiHubFile(IFolderItem rootFolder, string path)
+        internal static async Task<ApiHubFile> New(IFolderItem rootFolder, string path)
         {
-            _fileSource = rootFolder.CreateFileAsync(path, true).GetAwaiter().GetResult();
+            var fileSource = await rootFolder.CreateFileAsync(path, true);
+            return new ApiHubFile(fileSource);
         }
 
         public ApiHubFile(IFileItem fileSource)
