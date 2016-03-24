@@ -84,6 +84,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
 
         string IFileTriggerStrategy<ApiHubFile>.GetPath(ApiHubFile file)
         {
+            if (file == null)
+            {
+                throw new ArgumentNullException(nameof(file));
+            }
+
             return file.Path;
         }
 

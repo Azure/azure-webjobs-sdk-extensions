@@ -132,7 +132,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
             {
                 if (path == null)
                 {
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException("path");
                 }
 
                 Dictionary<string, object> bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);

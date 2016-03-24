@@ -1,9 +1,12 @@
-﻿namespace Microsoft.Azure.WebJobs
+﻿using System;
+
+namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
     /// Attribute that points to the file on SAAS file trigger
     /// </summary>
-    public class ApiHubFileTriggerAttribute : ApiHubFileAttribute
+    [AttributeUsage(AttributeTargets.Parameter)]
+    public sealed class ApiHubFileTriggerAttribute : ApiHubFileAttribute
     {
         /// <summary>
         ///  Create an instance of an attribute that points to the file on SAAS file trigger

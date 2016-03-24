@@ -7,6 +7,9 @@ namespace Microsoft.Azure.WebJobs
     /// <summary>
     /// Attribute that points to the file on SAAS file provider
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019:DefineAccessorsForAttributeArguments")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1813:AvoidUnsealedAttributes")]
+    [AttributeUsage(AttributeTargets.Parameter)]
     public class ApiHubFileAttribute : Attribute, IFileAttribute
     {
         /// <summary>
@@ -25,12 +28,12 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Gets or sets app settings key name that have the connections string to the SAAS provider
         /// </summary>
-        public string Key { get; set; }
+        public string Key { get; private set; }
 
         /// <summary>
         /// Type of access requests <seealso cref="FileAccess"/>
         /// </summary>
-        public FileAccess Access { get; set; }
+        public FileAccess Access { get; private set; }
 
         /// <summary>
         /// Relative path to the file <example>/folder/subfolder/file.txt</example> 
