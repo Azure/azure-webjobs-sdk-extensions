@@ -20,6 +20,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             _client = new DocumentClient(connection.ServiceEndpoint, connection.AuthKey);
         }
 
+        public DocumentClient GetClient()
+        {
+            return _client;
+        }
+
         public async Task<DocumentCollection> CreateDocumentCollectionAsync(Uri databaseUri, DocumentCollection documentCollection)
         {
             ResourceResponse<DocumentCollection> response = await _client.CreateDocumentCollectionAsync(databaseUri, documentCollection);
@@ -32,10 +37,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             return response.Resource;
         }
 
-        public async Task<Document> CreateDocumentAsync(Uri documentCollectionUri, object document)
+        public async Task<Document> UpsertDocumentAsync(Uri documentCollectionUri, object document)
         {
-            ResourceResponse<Document> response = await _client.CreateDocumentAsync(documentCollectionUri, document);
+            ResourceResponse<Document> response = await _client.UpsertDocumentAsync(documentCollectionUri, document);
             return response.Resource;
+        }
+
+        public async Task<Document> ReplaceDocumentAsync(Uri documentUri, object document)
+        {
+            ResourceResponse<Document> response = await _client.ReplaceDocumentAsync(documentUri, document);
+            return response.Resource;
+        }
+
+        public async Task<T> ReadDocumentAsync<T>(Uri documentUri)
+        {
+            ResourceResponse<Document> response = await _client.ReadDocumentAsync(documentUri);
+            return (T)(dynamic)response.Resource;
         }
 
         public void Dispose()

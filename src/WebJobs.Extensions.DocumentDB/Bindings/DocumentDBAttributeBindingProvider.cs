@@ -5,7 +5,6 @@ using System;
 using System.Globalization;
 using System.Net;
 using System.Reflection;
-using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
@@ -55,27 +54,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 await CreateIfNotExistAsync(documentDBContext.Service, documentDBContext.ResolvedDatabaseName, documentDBContext.ResolvedCollectionName);
             }
 
-            Type coreType = TypeUtility.GetCoreType(parameter.ParameterType);
-
-            IBinding binding = null;
-            try
+            IBindingProvider compositeProvider = new CompositeBindingProvider(new IBindingProvider[]
             {
-                binding = BindingFactory.BindGenericCollector(parameter, typeof(DocumentDBAsyncCollector<>), coreType,
-                _jobHostConfig.GetService<IConverterManager>(), (s) => documentDBContext);
-            }
-            catch (Exception ex)
-            {
-                // BindingFactory uses a couple levels of reflection so we get TargetInvocationExceptions here.
-                // This pulls out the root exception and rethrows it.
-                while (ex.InnerException != null)
-                {
-                    ex = ex.InnerException;
-                }
+                new DocumentDBOutputBindingProvider(documentDBContext, _jobHostConfig.GetService<IConverterManager>()),
+                new DocumentDBClientBinding(parameter, documentDBContext),
+                new DocumentDBItemBinding(parameter, documentDBContext, context)
+            });
 
-                ExceptionDispatchInfo.Capture(ex).Throw();
-            }
-
-            return binding;
+            return await compositeProvider.TryCreateAsync(context);
         }
 
         internal static DocumentDBContext CreateContext(DocumentDBConfiguration config, DocumentDBAttribute attribute, INameResolver resolver)
@@ -91,7 +77,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             {
                 Service = config.DocumentDBServiceFactory.CreateService(resolvedConnectionString),
                 ResolvedDatabaseName = Resolve(attribute.DatabaseName, resolver),
-                ResolvedCollectionName = Resolve(attribute.CollectionName, resolver)
+                ResolvedCollectionName = Resolve(attribute.CollectionName, resolver),
+                ResolvedId = attribute.Id
             };
         }
 

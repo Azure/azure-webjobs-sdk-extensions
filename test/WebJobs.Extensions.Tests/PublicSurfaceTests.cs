@@ -1,10 +1,13 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+extern alias DocumentDB;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using DocumentDB::Microsoft.Azure.WebJobs;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests
@@ -78,6 +81,36 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
                 "WebHooksConfiguration",
                 "WebHooksJobHostConfigurationExtensions",
                 "WebHookContext"
+            };
+
+            AssertPublicTypes(expected, assembly);
+        }
+
+        [Fact]
+        public void EasyTablesPublicSurface_LimitedToSpecificTypes()
+        {
+            var assembly = typeof(EasyTableAttribute).Assembly;
+
+            var expected = new[]
+            {
+                "EasyTableAttribute",
+                "EasyTablesConfiguration",
+                "EasyTablesJobHostConfigurationExtensions",
+            };
+
+            AssertPublicTypes(expected, assembly);
+        }
+
+        [Fact]
+        public void DocumentDBPublicSurface_LimitedToSpecificTypes()
+        {
+            var assembly = typeof(DocumentDBAttribute).Assembly;
+
+            var expected = new[]
+            {
+                "DocumentDBAttribute",
+                "DocumentDBConfiguration",
+                "DocumentDBJobHostConfigurationExtensions",
             };
 
             AssertPublicTypes(expected, assembly);

@@ -4,13 +4,14 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Client;
 
 namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 {
     /// <summary>
     /// An abstraction layer for communicating with a DocumentDB account.
     /// </summary>
-    public interface IDocumentDBService
+    internal interface IDocumentDBService
     {
         /// <summary>
         /// Creates the specified <see cref="Database"/>.
@@ -28,11 +29,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         Task<DocumentCollection> CreateDocumentCollectionAsync(Uri databaseUri, DocumentCollection documentCollection);
 
         /// <summary>
-        /// Creates a document.
+        /// Inserts or replaces a document.
         /// </summary>
         /// <param name="documentCollectionUri">The self-link of the collection to create the document in.</param>
         /// <param name="document">The document object.</param>
         /// <returns>The task object representing the service response for the asynchronous operation.</returns>
-        Task<Document> CreateDocumentAsync(Uri documentCollectionUri, object document);
+        Task<Document> UpsertDocumentAsync(Uri documentCollectionUri, object document);
+
+        /// <summary>
+        /// Reads a document.
+        /// </summary>
+        /// <param name="documentUri">The self-link of the document.</param>
+        /// <returns>The task object representing the service response for the asynchronous operation.</returns>
+        Task<T> ReadDocumentAsync<T>(Uri documentUri);
+
+        /// <summary>
+        /// Replaces a document.
+        /// </summary>
+        /// <param name="documentUri">The self-link of the collection to create the document in.</param>
+        /// <param name="document">The <see cref="Document"/> to replace.</param>
+        /// <returns></returns>
+        Task<Document> ReplaceDocumentAsync(Uri documentUri, object document);
+
+        /// <summary>
+        /// Returns the underlying <see cref="DocumentClient"/>.
+        /// </summary>
+        /// <returns></returns>
+        DocumentClient GetClient();
     }
 }

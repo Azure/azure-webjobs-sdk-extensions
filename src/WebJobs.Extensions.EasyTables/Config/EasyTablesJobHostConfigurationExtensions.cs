@@ -10,7 +10,7 @@ namespace Microsoft.Azure.WebJobs
     /// <summary>
     /// Extension methods for EasyTable integration.
     /// </summary>
-    public static class EasyTablesHostConfigurationExtensions
+    public static class EasyTablesJobHostConfigurationExtensions
     {
         /// <summary>
         /// Enables use of the EasyTable extensions.

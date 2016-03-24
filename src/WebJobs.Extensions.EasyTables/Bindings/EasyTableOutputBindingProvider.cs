@@ -44,13 +44,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
 
             ParameterInfo parameter = context.Parameter;
 
-            if (IsValidOutType(parameter.ParameterType, _easyTableContext) ||
-                IsValidCollectorType(parameter.ParameterType, _easyTableContext))
+            if (IsTypeValid(parameter.ParameterType, _easyTableContext))
             {
                 return CreateBinding(parameter);
             }
 
             return Task.FromResult<IBinding>(null);
+        }
+
+        internal static bool IsTypeValid(Type type, EasyTableContext context)
+        {
+            bool isValidOut = TypeUtility.IsValidOutType(type, (t) => IsValidEasyTableOutputType(t, context));
+            bool isValidCollector = TypeUtility.IsValidCollectorType(type, (t) => IsValidEasyTableOutputType(t, context));
+
+            return isValidOut || isValidCollector;
+        }
+
+        internal static bool IsValidEasyTableOutputType(Type paramType, EasyTableContext context)
+        {
+            // Output bindings also support objects as long as ResolvedTableName is valid
+            return EasyTableUtility.IsValidItemType(paramType, context) ||
+                (paramType == typeof(object) && !string.IsNullOrEmpty(context.ResolvedTableName));
         }
 
         internal Task<IBinding> CreateBinding(ParameterInfo parameter)
@@ -60,50 +74,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.EasyTables
             IBinding genericBinding = BindingFactory.BindGenericCollector(parameter, typeof(EasyTableAsyncCollector<>), coreType,
                 _jobHostConfig.GetService<IConverterManager>(), (s) => _easyTableContext);
             return Task.FromResult(genericBinding);
-        }
-
-        internal static bool IsValidOutType(Type paramType, EasyTableContext context)
-        {
-            if (paramType.IsByRef)
-            {
-                Type coreType = paramType.GetElementType();
-                if (coreType.IsArray)
-                {
-                    coreType = coreType.GetElementType();
-                }
-
-                if (IsValidEasyTableOutputType(coreType, context))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        internal static bool IsValidCollectorType(Type paramType, EasyTableContext context)
-        {
-            if (paramType.IsGenericType)
-            {
-                Type genericType = paramType.GetGenericTypeDefinition();
-                if (genericType == typeof(ICollector<>) || genericType == typeof(IAsyncCollector<>))
-                {
-                    Type coreType = TypeUtility.GetCoreType(paramType);
-                    if (IsValidEasyTableOutputType(coreType, context))
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        internal static bool IsValidEasyTableOutputType(Type paramType, EasyTableContext context)
-        {
-            // Output bindings also support objects as long as ResolvedTableName is valid
-            return EasyTableUtility.IsValidItemType(paramType, context) ||
-                (paramType == typeof(object) && !string.IsNullOrEmpty(context.ResolvedTableName));
         }
     }
 }

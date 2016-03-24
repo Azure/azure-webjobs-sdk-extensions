@@ -27,11 +27,16 @@ namespace Microsoft.Azure.WebJobs
             if (coreType.IsByRef)
             {
                 coreType = coreType.GetElementType();
-            }
 
-            if (coreType.IsArray)
-            {
-                return coreType.GetElementType();
+                // We 'unwrap' Arrays to support 
+                // 'out POCO[]' parameters. All other
+                // out parameters we return as-is.
+                if (coreType.IsArray)
+                {
+                    coreType = coreType.GetElementType();
+                }
+
+                return coreType;
             }
 
             if (coreType.IsGenericType)
@@ -67,6 +72,37 @@ namespace Microsoft.Azure.WebJobs
 
             genericArgumentType = genericArgTypes[0];
             return true;
+        }
+
+        internal static bool IsValidOutType(Type paramType, Func<Type, bool> verifyCoreType)
+        {
+            if (paramType.IsByRef)
+            {
+                Type coreType = paramType.GetElementType();
+                if (coreType.IsArray)
+                {
+                    coreType = coreType.GetElementType();
+                }
+
+                return verifyCoreType(coreType);
+            }
+
+            return false;
+        }
+
+        internal static bool IsValidCollectorType(Type paramType, Func<Type, bool> verifyCoreType)
+        {
+            if (paramType.IsGenericType)
+            {
+                Type genericType = paramType.GetGenericTypeDefinition();
+                if (genericType == typeof(ICollector<>) || genericType == typeof(IAsyncCollector<>))
+                {
+                    Type coreType = GetCoreType(paramType);
+                    return verifyCoreType(coreType);
+                }
+            }
+
+            return false;
         }
     }
 }

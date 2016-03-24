@@ -28,7 +28,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var mockDocDBService = new Mock<IDocumentDBService>(MockBehavior.Strict);
 
             mockDocDBService
-                .Setup(m => m.CreateDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()))
+                .Setup(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()))
                 .ReturnsAsync(new Document());
 
             var context = CreateContext(mockDocDBService.Object);
@@ -48,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var mockDocDBService = new Mock<IDocumentDBService>(MockBehavior.Strict);
 
             mockDocDBService
-                .Setup(m => m.CreateDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()))
+                .Setup(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()))
                 .ThrowsAsync(DocumentDBTestUtility.CreateDocumentClientException(HttpStatusCode.NotFound));
 
             var context = CreateContext(mockDocDBService.Object);
@@ -72,7 +72,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var collector = new DocumentDBAsyncCollector<Item>(context);
 
             mockDocDBService
-                    .SetupSequence(m => m.CreateDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()))
+                    .SetupSequence(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()))
                     .Throws(DocumentDBTestUtility.CreateDocumentClientException((HttpStatusCode)429))
                     .Throws(DocumentDBTestUtility.CreateDocumentClientException((HttpStatusCode)429))
                     .Throws(DocumentDBTestUtility.CreateDocumentClientException((HttpStatusCode)429))

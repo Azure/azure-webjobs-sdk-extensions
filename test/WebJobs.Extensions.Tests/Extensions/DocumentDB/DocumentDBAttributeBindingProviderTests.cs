@@ -15,7 +15,6 @@ using DocumentDB::Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
-using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Models;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Moq;
 using Xunit;
@@ -32,15 +31,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         {
             get
             {
-                return GetValidOutputParameters().Select(p => new object[] { p });
-            }
-        }
+                var validParams = DocumentDBTestUtility.GetValidOutputParameters()
+                    .Concat(DocumentDBTestUtility.GetValidItemInputParameters())
+                    .Concat(DocumentDBTestUtility.GetValidClientInputParameters());
 
-        public static IEnumerable<object[]> InvalidParameters
-        {
-            get
-            {
-                return GetInvalidOutputParameters().Select(p => new object[] { p });
+                return validParams.Select(p => new object[] { p });
             }
         }
 
@@ -53,27 +48,37 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 
             // Assert
             Assert.NotNull(binding);
+            Assert.Equal(GetExpectedBindingType(parameter.ParameterType), binding.GetType());
         }
 
-        [Theory]
-        [MemberData("InvalidParameters")]
-        public async Task TryCreateAsync_ReturnsNull_ForInvalidParameters(ParameterInfo parameter)
+        private Type GetExpectedBindingType(Type parameterType)
         {
-            // Arrange
-            Type expectedExceptionType = typeof(InvalidOperationException);
-
-            // The BindingFactory throws a different exception here. 
-            // Will need investigation to clean it up so it matches other invalid params.
-            if (parameter.ParameterType == typeof(IAsyncCollector<Item>).MakeByRefType())
+            if (parameterType.IsByRef)
             {
-                expectedExceptionType = typeof(NotImplementedException);
+                Type t = parameterType.GetElementType();
+
+                if (t.IsArray)
+                {
+                    t = t.GetElementType();
+                }
+
+                return DocumentDBTestUtility.GetAsyncCollectorType(t);
             }
 
-            // Act
-            var exception = await Assert.ThrowsAnyAsync<Exception>(() => CreateProviderAndTryCreateAsync(parameter));
+            if (parameterType.IsGenericType &&
+                (parameterType.GetGenericTypeDefinition() == typeof(ICollector<>) ||
+                parameterType.GetGenericTypeDefinition() == typeof(IAsyncCollector<>)))
+            {
+                Type t = parameterType.GetGenericArguments()[0];
+                return DocumentDBTestUtility.GetAsyncCollectorType(t);
+            }
 
-            // Assert
-            Assert.Equal(expectedExceptionType, exception.GetType());
+            if (parameterType == typeof(DocumentClient))
+            {
+                return typeof(DocumentDBClientBinding);
+            }
+
+            return typeof(DocumentDBItemBinding);
         }
 
         private static Task<IBinding> CreateProviderAndTryCreateAsync(ParameterInfo parameter)
@@ -104,7 +109,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var provider = new DocumentDBAttributeBindingProvider(new JobHostConfiguration(), config);
 
             // Act
-            await provider.TryCreateAsync(new BindingProviderContext(GetCreateIfNotExistsParameters().First(), null, CancellationToken.None));
+            await provider.TryCreateAsync(new BindingProviderContext(DocumentDBTestUtility.GetCreateIfNotExistsParameters().First(), null, CancellationToken.None));
 
             // Assert
             // Nothing to assert. Since the service was null, it was never called.
@@ -138,7 +143,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var provider = new DocumentDBAttributeBindingProvider(new JobHostConfiguration(), config);
 
             // Act
-            await provider.TryCreateAsync(new BindingProviderContext(GetCreateIfNotExistsParameters().Last(), null, CancellationToken.None));
+            await provider.TryCreateAsync(new BindingProviderContext(DocumentDBTestUtility.GetCreateIfNotExistsParameters().Last(), null, CancellationToken.None));
 
             // Assert
             mockService.VerifyAll();
@@ -276,50 +281,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 
             // Assert
             mockFactory.VerifyAll();
-        }
-
-        private static IEnumerable<ParameterInfo> GetCreateIfNotExistsParameters()
-        {
-            return typeof(DocumentDBAttributeBindingProviderTests)
-                .GetMethod("CreateIfNotExistsParameters", BindingFlags.Instance | BindingFlags.NonPublic).GetParameters();
-        }
-
-        private static IEnumerable<ParameterInfo> GetValidOutputParameters()
-        {
-            return typeof(DocumentDBAttributeBindingProviderTests)
-                .GetMethod("OutputParameters", BindingFlags.Instance | BindingFlags.NonPublic).GetParameters();
-        }
-
-        private static IEnumerable<ParameterInfo> GetInvalidOutputParameters()
-        {
-            return typeof(DocumentDBAttributeBindingProviderTests)
-                .GetMethod("InvalidOutputParameters", BindingFlags.Instance | BindingFlags.NonPublic).GetParameters();
-        }
-
-        private void CreateIfNotExistsParameters(
-            [DocumentDB("TestDB", "TestCollection", CreateIfNotExists = false)] out Item pocoOut,
-            [DocumentDB("TestDB", "TestCollection", CreateIfNotExists = true)] out Item[] pocoArrayOut)
-        {
-            pocoOut = null;
-            pocoArrayOut = null;
-        }
-
-        private void OutputParameters(
-            [DocumentDB] out Item pocoOut,
-            [DocumentDB] out Item[] pocoArrayOut,
-            [DocumentDB] IAsyncCollector<Item> jobjectAsyncCollector,
-            [DocumentDB] ICollector<Item> pocoCollector)
-        {
-            pocoOut = null;
-            pocoArrayOut = null;
-        }
-
-        private void InvalidOutputParameters(
-            [DocumentDB] Item pocoOut,
-            [DocumentDB] out IAsyncCollector<Item> jobjectAsyncCollector,
-            [DocumentDB] IOrderedQueryable<Item> queryable)
-        {
-            jobjectAsyncCollector = null;
         }
     }
 }

@@ -54,7 +54,8 @@
       <Word>AzureWebJobsNotificationHubName</Word>
       <Word>NotificationHubsConfiguration</Word>
       <Word>HubName</Word>
-      <Word>ConnectionString</Word>      
+      <Word>ConnectionString</Word>
+      <Word>Upsert</Word>
     </Recognized>
     <Deprecated/>
     <Compound>

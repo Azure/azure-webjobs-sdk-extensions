@@ -164,6 +164,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\Item.cs" />
+    <Compile Include="Models\ItemDoc.cs" />
     <Compile Include="SamplesTypeLocator.cs" />
     <Compile Include="Samples\ApiHubSamples.cs" />
     <Compile Include="Samples\EasyTableSamples.cs" />

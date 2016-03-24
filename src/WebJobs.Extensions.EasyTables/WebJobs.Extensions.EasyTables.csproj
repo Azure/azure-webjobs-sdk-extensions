@@ -122,7 +122,7 @@
     <Compile Include="Bindings\EasyTableAttributeBindingProvider.cs" />
     <Compile Include="Config\EasyTablesConfiguration.cs" />
     <Compile Include="EasyTableContext.cs" />
-    <Compile Include="Config\EasyTableHostConfigurationExtensions.cs" />
+    <Compile Include="Config\EasyTablesJobHostConfigurationExtensions.cs" />
     <Compile Include="Bindings\EasyTableItemBinding.cs" />
     <Compile Include="Bindings\EasyTableItemValueBinder.cs" />
     <Compile Include="Bindings\EasyTableOutputBindingProvider.cs" />

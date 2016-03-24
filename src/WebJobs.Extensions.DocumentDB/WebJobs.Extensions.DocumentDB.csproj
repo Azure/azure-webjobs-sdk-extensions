@@ -94,12 +94,18 @@
     <Compile Include="..\Common\TypeUtility.cs">
       <Link>Common\TypeUtility.cs</Link>
     </Compile>
+    <Compile Include="Bindings\CompositeBindingProvider.cs" />
     <Compile Include="Bindings\DocumentDBAsyncCollector.cs" />
     <Compile Include="Bindings\DocumentDBAttributeBindingProvider.cs" />
+    <Compile Include="Bindings\DocumentDBClientBinding.cs" />
+    <Compile Include="Bindings\DocumentDBClientValueProvider.cs" />
+    <Compile Include="Bindings\DocumentDBItemBinding.cs" />
+    <Compile Include="Bindings\DocumentDBItemValueBinder.cs" />
+    <Compile Include="Bindings\DocumentDBOutputBindingProvider.cs" />
     <Compile Include="Config\DefaultDocumentDBServiceFactory.cs" />
     <Compile Include="Config\DocumentDBConfiguration.cs" />
     <Compile Include="Config\DocumentDBConnectionString.cs" />
-    <Compile Include="Config\DocumentDBHostConfigurationExtensions.cs" />
+    <Compile Include="Config\DocumentDBJobHostConfigurationExtensions.cs" />
     <Compile Include="Config\IDocumentDBServiceFactory.cs" />
     <Compile Include="DocumentDBAttribute.cs" />
     <Compile Include="DocumentDBContext.cs" />

@@ -23,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
             await DocumentDBUtility.ExecuteWithRetriesAsync(async () =>
             {
-                return await _docDBContext.Service.CreateDocumentAsync(collectionUri, item);
+                return await _docDBContext.Service.UpsertDocumentAsync(collectionUri, item);
             });
         }
 

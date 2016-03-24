@@ -27,8 +27,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
         [InlineData(typeof(IMobileServiceTable<TodoItem>), false, typeof(TodoItem))]
         [InlineData(typeof(IMobileServiceTableQuery<TodoItem>), false, typeof(TodoItem))]
         [InlineData(typeof(IEnumerable<IEnumerable<TodoItem>>), false, typeof(IEnumerable<TodoItem>))]
-        [InlineData(typeof(TodoItem[][]), false, typeof(TodoItem[]))]
-        [InlineData(typeof(IAsyncCollector<TodoItem>), true, typeof(TodoItem))]
+        [InlineData(typeof(TodoItem[][]), false, typeof(TodoItem[][]))]
+        [InlineData(typeof(IAsyncCollector<TodoItem>), true, typeof(IAsyncCollector<TodoItem>))]
         public void GetCoreType_Returns_CorrectType(Type parameterType, bool isOutParameter, Type expectedType)
         {
             // Arrange

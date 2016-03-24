@@ -9,7 +9,7 @@ namespace Microsoft.Azure.WebJobs
     /// <summary>
     /// Extension methods for DocumentDB integration.
     /// </summary>
-    public static class DocumentDBHostConfigurationExtensions
+    public static class DocumentDBJobHostConfigurationExtensions
     {
         /// <summary>
         /// Enables use of the DocumentDB extensions

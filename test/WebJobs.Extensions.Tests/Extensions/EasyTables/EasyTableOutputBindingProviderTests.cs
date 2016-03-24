@@ -23,21 +23,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
         [InlineData(typeof(ICollector<TodoItem>), null, true, false)]
         [InlineData(typeof(object), "Item", true, true)]
         [InlineData(typeof(object), null, true, false)]
-
-        public void IsValidOutType_ValidatesCorrectly(Type parameterType, string tableName, bool isOutParameter, bool expected)
-        {
-            // Arrange
-            Type typeToTest = isOutParameter ? parameterType.MakeByRefType() : parameterType;
-            var context = new EasyTableContext { ResolvedTableName = tableName };
-
-            // Act
-            bool result = EasyTableOutputBindingProvider.IsValidOutType(typeToTest, context);
-
-            // Assert
-            Assert.Equal(expected, result);
-        }
-
-        [Theory]
         [InlineData(typeof(ICollector<TodoItem>), null, false, true)]
         [InlineData(typeof(IAsyncCollector<TodoItem>), null, false, true)]
         [InlineData(typeof(ICollector<JObject>), "Items", false, true)]
@@ -48,14 +33,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables
         [InlineData(typeof(ICollector<object>), "Item", false, true)]
         [InlineData(typeof(ICollector<object>), null, false, false)]
         [InlineData(typeof(ICollector<JObject>), null, false, false)]
-        public void IsValidCollectorType_ValidatesCorrectly(Type parameterType, string tableName, bool isOutParameter, bool expected)
+        public void IsTypeValid_ValidatesCorrectly(Type parameterType, string tableName, bool isOutParameter, bool expected)
         {
             // Arrange
             Type typeToTest = isOutParameter ? parameterType.MakeByRefType() : parameterType;
             var context = new EasyTableContext { ResolvedTableName = tableName };
 
             // Act
-            bool result = EasyTableOutputBindingProvider.IsValidCollectorType(typeToTest, context);
+            bool result = EasyTableOutputBindingProvider.IsTypeValid(typeToTest, context);
 
             // Assert
             Assert.Equal(expected, result);

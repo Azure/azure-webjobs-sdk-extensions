@@ -3,12 +3,14 @@
 
 using Newtonsoft.Json;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Models
+namespace ExtensionsSample.Models
 {
-    public class Item
+    public class ItemDoc
     {
         [JsonProperty("id")]
         public string Id { get; set; }
+
+        [JsonProperty("text")]
         public string Text { get; set; }
     }
 }

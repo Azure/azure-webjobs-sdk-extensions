@@ -61,5 +61,11 @@ namespace Microsoft.Azure.WebJobs
         /// than the one specified in the <see cref="DocumentDBConfiguration"/>.
         /// </summary>
         public string ConnectionString { get; set; }
+
+        /// <summary>
+        /// Optional. The Id of the document to retrieve from the collection.
+        /// May include binding parameters
+        /// </summary>
+        public string Id { get; set; }
     }
 }

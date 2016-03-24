@@ -8,5 +8,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         public IDocumentDBService Service { get; set; }
         public string ResolvedDatabaseName { get; set; }
         public string ResolvedCollectionName { get; set; }
+        public string ResolvedId { get; set; }
     }
 }
