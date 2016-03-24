@@ -18,12 +18,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
         {
             if (config == null)
             {
-                throw new ArgumentNullException(nameof(config));
+                throw new ArgumentNullException("config");
             }
 
             if (apiHubConfiguration == null)
             {
-                throw new ArgumentNullException(nameof(apiHubConfiguration));
+                throw new ArgumentNullException("apiHubConfiguration");
             }
             IExtensionRegistry extensions = config.GetService<IExtensionRegistry>();
             extensions.RegisterExtension<IExtensionConfigProvider>(apiHubConfiguration);

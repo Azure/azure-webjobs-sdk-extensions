@@ -86,7 +86,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
         {
             if (file == null)
             {
-                throw new ArgumentNullException(nameof(file));
+                throw new ArgumentNullException("file");
             }
 
             return file.Path;
