@@ -11,19 +11,24 @@ using Microsoft.Azure.WebJobs.Extensions.ApiHub.Common;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
 {
-    class ApiHubListener : IListener
+    internal class ApiHubListener : IListener
     {
         internal IFolderItem _folderSource;
         internal ITriggeredFunctionExecutor _executor;
 
+        private const int DefaultPollIntervalInSeconds = 30;
+
         private IFileWatcher _poll;
+        private int _pollIntervalInSeconds;
 
         public ApiHubListener(
             IFolderItem folder,
-            ITriggeredFunctionExecutor executor)
+            ITriggeredFunctionExecutor executor,
+            int pollIntervalInSeconds)
         {
             this._folderSource = folder;
             this._executor = executor;
+            this._pollIntervalInSeconds = pollIntervalInSeconds;
         }
 
         public void Cancel()
@@ -41,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _poll = _folderSource.CreateNewFileWatcher(OnNewFile, 5);
+            _poll = _folderSource.CreateNewFileWatcher(OnNewFile, _pollIntervalInSeconds > 0 ? _pollIntervalInSeconds : DefaultPollIntervalInSeconds);
             return Task.FromResult(0);
         }
 

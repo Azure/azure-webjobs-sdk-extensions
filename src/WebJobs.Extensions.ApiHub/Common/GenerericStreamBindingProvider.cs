@@ -58,21 +58,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
             BindingTemplate bindingTemplate = BindingTemplate.FromString(path);
             bindingTemplate.ValidateContractCompatibility(context.BindingDataContract);
 
-            // $$$ Do safety check. 
-               
             IBinding binding = null;
             if (parameter.IsOut)
             {
-                
-                // var func = cm.GetConverter<TUser, TFile>();
-
-                // $$$ Or any conversion?  to TFile?
-
                 if (parameter.ParameterType.GetElementType() == typeof(string))
                 {
                     // Bind to 'out string'
                     binding = new GenericOutStringFileBinding<TAttribute, TFile>(
                         bindingTemplate, attribute,  _strategyBuilder, _converterManager);
+                }
+                else
+                {
+                    binding = new GenericFileBinding<TAttribute, TFile>(parameter, bindingTemplate, attribute, _strategyBuilder, _converterManager);
                 }
             }
             else
@@ -81,13 +78,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
                 // Stream
                 // TextReader | TextWriter
                 // String, byte[]
-
                 binding = new GenericFileBinding<TAttribute, TFile>(parameter, bindingTemplate, attribute, _strategyBuilder, _converterManager);
             }
 
             if (binding == null)
             {
-                throw new InvalidOperationException("Can't bind.");
+                throw new InvalidOperationException("Binding is not supported: " + path);
             }
 
             return Task.FromResult(binding);

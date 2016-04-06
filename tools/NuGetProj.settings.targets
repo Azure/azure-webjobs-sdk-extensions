@@ -15,7 +15,6 @@
         <EasyTablesPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</EasyTablesPackageVersion>
         <DocDBPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</DocDBPackageVersion>
         <NotificationHubsPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</NotificationHubsPackageVersion>
-        <ApiHubPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</ApiHubPackageVersion>
       </PropertyGroup>
     </When>
     <Otherwise>

@@ -7,8 +7,6 @@ namespace Microsoft.Azure.WebJobs
     /// <summary>
     /// Attribute that points to the file on SAAS file provider
     /// </summary>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019:DefineAccessorsForAttributeArguments")]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1813:AvoidUnsealedAttributes")]
     [AttributeUsage(AttributeTargets.Parameter)]
     public class ApiHubFileAttribute : Attribute, IFileAttribute
     {

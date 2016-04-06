@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
@@ -56,41 +57,55 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
             var targetType = _parameter.ParameterType;
 
-            object userObj;
-            Func<Task> onComplete;
+            object userObj = null;
+            Func<object, Task> onComplete;
+            ConstantObj valueProvider = null;
 
-            if ((_source.Access == FileAccess.Write) || (targetType == typeof(TextWriter)))
+            if (_source.Access == FileAccess.Write) 
             {
                 var tuple = await strategy.OpenWriteStreamAsync();
                 var writeStream = tuple.Item1;
                 var saveStreamFunc = tuple.Item2;
 
-                if (targetType == typeof(Stream))
+                if (targetType == typeof(Stream) || (_parameter.IsOut && targetType == typeof(Stream).MakeByRefType()))
                 {
                     userObj = writeStream;
                     onComplete = saveStreamFunc;
                 }
-                else if (targetType == typeof(TextWriter))
+                else if (targetType == typeof(TextWriter) || (_parameter.IsOut && targetType == typeof(TextWriter).MakeByRefType()))
                 {
                     var tw = new StreamWriter(writeStream);
                     userObj = tw;
-                    onComplete = async () =>
+                    onComplete = async obj =>
                     {
                         tw.Flush();
-                        await saveStreamFunc();
+                        await saveStreamFunc(obj);
                     };
+                }
+                else if (targetType == typeof(StreamWriter) || (_parameter.IsOut && targetType == typeof(StreamWriter).MakeByRefType()))
+                {
+                    var tw = new StreamWriter(writeStream);
+                    userObj = tw;
+                    onComplete = async obj =>
+                    {
+                        tw.Flush();
+                        await saveStreamFunc(obj);
+                    };
+                }
+                else if (targetType == typeof(byte[]) || (_parameter.IsOut && targetType == typeof(byte[]).MakeByRefType()))
+                {
+                    userObj = writeStream;
+                    onComplete = saveStreamFunc;
                 }
                 else
                 {
-                    // $$$ Move this error up to the binder level.
-                    // Unknown?
                     throw new InvalidOperationException("Unsupported type:" + targetType.FullName);
                 }
             }
             else
             {
                 var readStream = await strategy.OpenReadStreamAsync();
-                onComplete = () => Task.FromResult(0); // Nop
+                onComplete = obj => Task.FromResult(0); // Nop
                 if (targetType == typeof(Stream))
                 {
                     userObj = readStream;
@@ -99,20 +114,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
                 {
                     userObj = new StreamReader(readStream);
                 }
+                else if (targetType == typeof(StreamReader))
+                {
+                    userObj = new StreamReader(readStream);
+                }
                 else if (targetType == typeof(string))
                 {
                     userObj = new StreamReader(readStream).ReadToEnd();
                 }
-                else 
+                else if (targetType == typeof(byte[]) && readStream is MemoryStream)
+                {
+                    userObj = ((MemoryStream)readStream).ToArray();
+                }
+                else
                 {
                     throw new InvalidOperationException("Unspported type:" + targetType.FullName);
                 }
             }
                         
-            
-            //var text = await Convert(targetType, _strategy, path);
-
-            var valueProvider = new ConstantObj
+            valueProvider = new ConstantObj
             {
                 Type = targetType,
                 _value = userObj,
@@ -120,7 +140,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
             };
             return valueProvider;
         }
-
 
         // Get a stream binder from a resolved path
         private async Task<IFileStreamProvider> GetStreamHelper(string path)
@@ -136,10 +155,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
         public ParameterDescriptor ToParameterDescriptor()
         {
-            return new ParameterDescriptor { };
+            return new ParameterDescriptor
+            {
+                Name = _parameter.Name
+            };
         }
-
-
     }
 
 }

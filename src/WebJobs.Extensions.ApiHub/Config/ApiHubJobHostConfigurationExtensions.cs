@@ -2,12 +2,12 @@
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Config;
 
-namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
+namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
     /// Helper extensions for ApiHub configuration
     /// </summary>
-    public static class ApiHubJobHostConfigurationExtensions
+    public static partial class ApiHubJobHostConfigurationExtensions
     {
         /// <summary>
         /// Add ApiHub ocnfiguration to <see cref="JobHostConfiguration"/>

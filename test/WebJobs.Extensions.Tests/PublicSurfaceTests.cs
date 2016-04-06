@@ -131,6 +131,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
             AssertPublicTypes(expected, assembly);
         }
 
+        [Fact]
+        public void ApiHubPublicSurface_LimitedToSpecificTypes()
+        {
+            var assembly = typeof(ApiHubFileAttribute).Assembly;
+
+            var expected = new[]
+            {
+                "ApiHubFileAttribute",
+                "ApiHubFileTriggerAttribute",
+                "ApiHubConfiguration",
+                "ApiHubJobHostConfigurationExtensions",
+            };
+
+            AssertPublicTypes(expected, assembly);
+        }
+
         private static List<string> GetAssemblyReferences(Assembly assembly)
         {
             var assemblyRefs = assembly.GetReferencedAssemblies();

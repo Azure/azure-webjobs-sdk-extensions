@@ -17,5 +17,13 @@ namespace Microsoft.Azure.WebJobs
             : base(key, path)
         {
         }
+
+        /// <summary>
+        /// Gets or sets the poll interval in seconds.
+        /// </summary>
+        /// <value>
+        /// The poll interval in seconds.
+        /// </value>
+        public int PollIntervalInSeconds { get; set; }
     }
 }
