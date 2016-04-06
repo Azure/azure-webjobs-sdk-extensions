@@ -166,6 +166,7 @@
     <Compile Include="Models\Item.cs" />
     <Compile Include="Models\ItemDoc.cs" />
     <Compile Include="SamplesTypeLocator.cs" />
+    <Compile Include="Samples\OutgoingHttpRequestSamples.cs" />
     <Compile Include="Samples\ApiHubSamples.cs" />
     <Compile Include="Samples\EasyTableSamples.cs" />
     <Compile Include="Samples\DocumentDBSamples.cs" />
@@ -198,6 +199,10 @@
     </CodeAnalysisDictionary>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\WebJobs.Extensions.OutgoingHttpRequests\WebJobs.Extensions.OutgoingHttpRequests.csproj">
+      <Project>{cd3a4ffa-9efe-44d2-b84a-061c89d85b59}</Project>
+      <Name>WebJobs.Extensions.OutgoingHttpRequests</Name>
+    </ProjectReference>
     <ProjectReference Include="..\WebJobs.Extensions.ApiHub\WebJobs.Extensions.ApiHub.csproj">
       <Project>{091041ae-378d-42b0-aa0a-6a1f47c0be2d}</Project>
       <Name>WebJobs.Extensions.ApiHub</Name>
