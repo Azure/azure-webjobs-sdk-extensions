@@ -35,8 +35,8 @@
     <DocumentationFile>bin\Release\Microsoft.Azure.WebJobs.Extensions.ApiHub.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microfoft.Azure.ApiHub.Sdk">
-      <HintPath>..\..\packages\Microsoft.Azure.ApiHub.Sdk.0.2\tools\Microfoft.Azure.ApiHub.Sdk.dll</HintPath>
+    <Reference Include="Microsoft.Azure.ApiHub.Sdk">
+      <HintPath>..\..\packages\Microsoft.Azure.ApiHub.Sdk.0.3\tools\Microsoft.Azure.ApiHub.Sdk.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Azure.WebJobs, Version=1.1.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Azure.ApiHub;
+using Microsoft.Azure.WebJobs.Extensions.ApiHub;
 using Microsoft.Azure.WebJobs.Extensions.ApiHub.Common;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -10,7 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
+namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
     /// Defines the configuration options for the ApiHub binding.
@@ -23,16 +24,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
         /// <inheritdoc />
         public void Initialize(ExtensionConfigContext context)
         {
+            if(context == null)
+            {
+                throw new ArgumentNullException("context");
+            }
+
             var config = context.Config;
             var extensions = config.GetService<IExtensionRegistry>();
             var converterManager = config.GetService<IConverterManager>();
 
-            // converterManager.AddConverter<IFileSource, IFileStreamProvider>(src => new Adapter(src));
-
             var bindingProvider = new GenerericStreamBindingProvider<ApiHubFileAttribute, ApiHubFile>(
                 BuildFromAttribute, converterManager);
             extensions.RegisterExtension<IBindingProvider>(bindingProvider);
-            // automatic conversion from NativeSaasFile  -->  IFileBinderStrategy2
 
             var triggerBindingProvider = new GenericFileTriggerBindingProvider<ApiHubFileTriggerAttribute, ApiHubFile>(
                 BuildListener, bindingProvider, this);
@@ -47,13 +50,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
             int i = path.LastIndexOf('/');
             if (i == -1)
             {
-                throw new InvalidOperationException("Bad path");
+                i = path.LastIndexOf('\\');
+
+                if (i == -1)
+                {
+                    throw new InvalidOperationException("Bad path: " + path);
+                }
             }
             string folderName = path.Substring(0, i);
 
             var folder = await root.CreateFolderAsync(folderName);
 
-            var listener = new ApiHubListener(folder, executor);
+            var listener = new ApiHubListener(folder, executor, attribute.PollIntervalInSeconds);
 
             return listener;
         }
@@ -75,7 +83,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
         /// Add path to the configuration
         /// </summary>
         /// <param name="key">App settings key name that have the connections string</param>
-        /// <param name="connectionString">Connection string to access SAAS via ApiHub. <seealso cref="ApiHubHelper.GetApiHubProviderConnectionStringAsync"/></param>
+        /// <param name="connectionString">Connection string to access SAAS via ApiHub. <seealso cref="ApiHubJobHostConfigurationExtensions.GetApiHubProviderConnectionStringAsync"/></param>
         public void AddKeyPath(string key, string connectionString)
         {
             var root = ItemFactory.Parse(connectionString);

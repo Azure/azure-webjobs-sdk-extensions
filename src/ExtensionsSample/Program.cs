@@ -72,7 +72,7 @@ namespace ExtensionsSample
                 typeof(TimerSamples),
                 typeof(WebHookSamples),
                 typeof(ApiHubSamples));
-            
+
             host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
             host.Call(typeof(FileSamples).GetMethod("ReadWrite"));
             host.Call(typeof(SampleSamples).GetMethod("Sample_BindToStream"));
@@ -125,28 +125,28 @@ namespace ExtensionsSample
 
         private static bool CheckForApiHub(JobHostConfiguration config)
         {
-            string dropboxKey = null;
+            string apiHubConnectionString = null;
 
-            // ApiHub for dropbox is enabled if the dropbox-connectionkey.txt exists in the current folder
-            // or the dropbox environment variable is set.
+            // ApiHub for dropbox is enabled if the AzureWebJobsDropBox environment variable is set.           
             // The format should be: Endpoint={endpoint};Scheme={scheme};AccessToken={accesstoken}
-            if (File.Exists("dropbox-connectionkey.txt"))
+            // otherwise use the local file system
+            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AzureWebJobsDropBox")))
             {
-                dropboxKey = File.ReadAllText("dropbox-connectionkey.txt");
+                apiHubConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsDropBox");
             }
             else
             {
-                dropboxKey = Environment.GetEnvironmentVariable("dropbox");
+                apiHubConnectionString = "UseLocalFileSystem=true;Path=" + Path.GetTempPath() + "ApiHubDropBox";
             }
 
-            if (!string.IsNullOrEmpty(dropboxKey))
+            if (!string.IsNullOrEmpty(apiHubConnectionString))
             {
                 var apiHubConfig = new ApiHubConfiguration();
-                apiHubConfig.AddKeyPath("dropbox", dropboxKey);
+                apiHubConfig.AddKeyPath("dropbox", apiHubConnectionString);
                 config.UseApiHub(apiHubConfig);
 
                 // Create some initialization files.
-                var root = ItemFactory.Parse(dropboxKey);
+                var root = ItemFactory.Parse(apiHubConnectionString);
                 var file = root.CreateFileAsync("test/file1.txt", true).GetAwaiter().GetResult();
                 file.WriteAsync(new byte[] { 0, 1, 2, 3 });
                 return true;

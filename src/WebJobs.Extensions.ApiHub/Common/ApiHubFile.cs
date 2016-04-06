@@ -37,14 +37,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
             return ms;            
         }
 
-        public Task<Tuple<Stream, Func<Task>>> OpenWriteStreamAsync()
+        public Task<Tuple<Stream, Func<object, Task>>> OpenWriteStreamAsync()
         {
             var stream = new MemoryStream();
             
-            Func<Task> onClose = async () =>
+            Func<object, Task > onClose = async obj =>
             {
-                stream.Position = 0;
-                var bytes = stream.ToArray();
+                byte[] bytes = obj as byte[];
+                if (bytes == null)
+                {
+                    stream.Position = 0;
+                    bytes = stream.ToArray();
+                }
+
                 await _fileSource.WriteAsync(bytes);
             };
 

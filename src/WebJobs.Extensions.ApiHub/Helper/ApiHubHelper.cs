@@ -5,12 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
+namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
     /// Helper file to work with APIHub
     /// </summary>
-    public static class ApiHubHelper
+    public static partial class ApiHubJobHostConfigurationExtensions
     {
         /// <summary>
         /// Obtain the connection string from Azure App Service.
