@@ -37,6 +37,7 @@ namespace ExtensionsSample
             config.UseCore();
             config.UseDocumentDB();
             config.UseNotificationHubs();
+            config.UseOutgoingHttpRequests();
             var sendGridConfiguration = new SendGridConfiguration()
             {
                 ToAddress = "admin@webjobssamples.com",
@@ -59,6 +60,7 @@ namespace ExtensionsSample
                 typeof(SampleSamples),
                 typeof(SendGridSamples),
                 typeof(TableSamples),
+                typeof(OutgoingHttpRequestSamples)),
                 typeof(TimerSamples));
 
             host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
