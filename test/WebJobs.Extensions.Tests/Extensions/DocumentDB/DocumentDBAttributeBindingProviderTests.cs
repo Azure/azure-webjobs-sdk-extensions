@@ -88,7 +88,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             {
                 ConnectionString = "AccountEndpoint=https://someuri;AccountKey=my_key"
             };
-            var provider = new DocumentDBAttributeBindingProvider(jobConfig, docDBConfig);
+            var provider = new DocumentDBAttributeBindingProvider(jobConfig, docDBConfig, new TestTraceWriter());
 
             var context = new BindingProviderContext(parameter, null, CancellationToken.None);
 
@@ -106,7 +106,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
                 DocumentDBServiceFactory = new TestDocumentDBServiceFactory(mockService.Object)
             };
             var attribute = new DocumentDBAttribute { CreateIfNotExists = false };
-            var provider = new DocumentDBAttributeBindingProvider(new JobHostConfiguration(), config);
+            var provider = new DocumentDBAttributeBindingProvider(new JobHostConfiguration(), config, new TestTraceWriter());
 
             // Act
             await provider.TryCreateAsync(new BindingProviderContext(DocumentDBTestUtility.GetCreateIfNotExistsParameters().First(), null, CancellationToken.None));
@@ -140,7 +140,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
                 DocumentDBServiceFactory = new TestDocumentDBServiceFactory(mockService.Object)
             };
 
-            var provider = new DocumentDBAttributeBindingProvider(new JobHostConfiguration(), config);
+            var provider = new DocumentDBAttributeBindingProvider(new JobHostConfiguration(), config, new TestTraceWriter());
 
             // Act
             await provider.TryCreateAsync(new BindingProviderContext(DocumentDBTestUtility.GetCreateIfNotExistsParameters().Last(), null, CancellationToken.None));
@@ -246,7 +246,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             };
 
             // Act
-            var context = DocumentDBAttributeBindingProvider.CreateContext(config, attribute, resolver);
+            var context = DocumentDBAttributeBindingProvider.CreateContext(config, attribute, resolver, new TestTraceWriter());
 
             // Assert
             Assert.Equal("123abc", context.ResolvedDatabaseName);
@@ -277,10 +277,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             };
 
             // Act
-            DocumentDBAttributeBindingProvider.CreateContext(config, attribute, null);
+            DocumentDBAttributeBindingProvider.CreateContext(config, attribute, null, new TestTraceWriter());
 
             // Assert
             mockFactory.VerifyAll();
+        }
+
+        [Fact]
+        public void CreateContext_UsesDefaultRetryValue()
+        {
+            // Arrange            
+            var attribute = new DocumentDBAttribute();
+            var config = new DocumentDBConfiguration();
+
+            // Act
+            var context = DocumentDBAttributeBindingProvider.CreateContext(config, attribute, null, new TestTraceWriter());
+
+            // Assert
+            Assert.Equal(10, context.MaxThrottleRetries);
         }
     }
 }

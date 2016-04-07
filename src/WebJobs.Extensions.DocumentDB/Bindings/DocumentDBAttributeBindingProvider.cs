@@ -17,11 +17,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
     {
         private JobHostConfiguration _jobHostConfig;
         private DocumentDBConfiguration _docDBConfig;
+        private TraceWriter _trace;
 
-        public DocumentDBAttributeBindingProvider(JobHostConfiguration config, DocumentDBConfiguration documentDBConfig)
+        public DocumentDBAttributeBindingProvider(JobHostConfiguration config, DocumentDBConfiguration documentDBConfig, TraceWriter trace)
         {
             _jobHostConfig = config;
             _docDBConfig = documentDBConfig;
+            _trace = trace;
         }
 
         public async Task<IBinding> TryCreateAsync(BindingProviderContext context)
@@ -47,7 +49,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                     DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName));
             }
 
-            DocumentDBContext documentDBContext = CreateContext(_docDBConfig, attribute, _jobHostConfig.NameResolver);
+            DocumentDBContext documentDBContext = CreateContext(_docDBConfig, attribute, _jobHostConfig.NameResolver, _trace);
 
             if (attribute.CreateIfNotExists)
             {
@@ -64,7 +66,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             return await compositeProvider.TryCreateAsync(context);
         }
 
-        internal static DocumentDBContext CreateContext(DocumentDBConfiguration config, DocumentDBAttribute attribute, INameResolver resolver)
+        internal static DocumentDBContext CreateContext(DocumentDBConfiguration config, DocumentDBAttribute attribute, INameResolver resolver, TraceWriter trace)
         {
             string resolvedConnectionString = config.ConnectionString;
 
@@ -78,7 +80,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 Service = config.DocumentDBServiceFactory.CreateService(resolvedConnectionString),
                 ResolvedDatabaseName = Resolve(attribute.DatabaseName, resolver),
                 ResolvedCollectionName = Resolve(attribute.CollectionName, resolver),
-                ResolvedId = attribute.Id
+                ResolvedId = attribute.Id,
+                Trace = trace
             };
         }
 

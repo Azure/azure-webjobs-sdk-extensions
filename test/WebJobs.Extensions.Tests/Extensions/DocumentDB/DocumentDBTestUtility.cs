@@ -2,8 +2,10 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 extern alias DocumentDB;
+
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
 using System.Reflection;
@@ -19,9 +21,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 {
     internal static class DocumentDBTestUtility
     {
-        public static DocumentClientException CreateDocumentClientException(HttpStatusCode status)
+        public static DocumentClientException CreateDocumentClientException(HttpStatusCode status, int retryAfter = 0)
         {
-            var parameters = new object[] { null, null, status, null };
+            var headers = new NameValueCollection();
+            headers.Add("x-ms-retry-after-ms", retryAfter.ToString());
+
+            var parameters = new object[] { null, null, headers, status, null };
             return Activator.CreateInstance(typeof(DocumentClientException), BindingFlags.NonPublic | BindingFlags.Instance, null, parameters, null) as DocumentClientException;
         }
 

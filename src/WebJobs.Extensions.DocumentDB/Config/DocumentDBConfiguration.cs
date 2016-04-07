@@ -38,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 throw new ArgumentNullException("context");
             }
 
-            context.Config.RegisterBindingExtension(new DocumentDBAttributeBindingProvider(context.Config, this));
+            context.Config.RegisterBindingExtension(new DocumentDBAttributeBindingProvider(context.Config, this, context.Trace));
         }
 
         internal static string GetSettingFromConfigOrEnvironment(string key)

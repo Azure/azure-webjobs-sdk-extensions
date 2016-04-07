@@ -31,11 +31,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         /// <typeparam name="T">The type of return value from the execution.</typeparam>
         /// <param name="function">The function to execute.</param>
         /// <param name="ignoreNotFound">If true, NotFound status codes will be ignored.</param>
+        /// <param name="maxRetries">The maximum number of times to retry if the request is throttled.</param>
         /// <returns>The response from the execution.</returns>
         // Taken from: https://github.com/ryancrawcour/azure-documentdb-dotnet/blob/e7dd2f685554b0a9def63c8925f8e3ef2ad3bff8/samples/code-samples/Shared/Util/DocumentClientHelper.cs
-        public static async Task<T> ExecuteWithRetriesAsync<T>(Func<Task<T>> function, bool ignoreNotFound = false)
+        public static async Task<T> ExecuteWithRetriesAsync<T>(Func<Task<T>> function, int maxRetries, bool ignoreNotFound = false)
         {
             TimeSpan sleepTime = TimeSpan.Zero;
+            int retriesRemaining = maxRetries;
 
             while (true)
             {
@@ -52,10 +54,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                         if (de.StatusCode == HttpStatusCode.NotFound &&
                             ignoreNotFound)
                         {
+                            // exit the while loop and return the default value
                             break;
                         }
 
-                        if ((int)de.StatusCode != 429)
+                        if ((int)de.StatusCode != 429 ||
+                            retriesRemaining-- <= 0)
                         {
                             throw;
                         }
@@ -67,6 +71,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                         throw;
                     }
                 }
+
+                await Task.Delay(sleepTime);
             }
 
             return default(T);
