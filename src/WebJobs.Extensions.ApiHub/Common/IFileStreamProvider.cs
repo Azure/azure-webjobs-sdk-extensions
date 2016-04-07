@@ -22,6 +22,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
         /// hard for callers to implement.
         /// </summary>
         /// <returns></returns>
-        Task<Tuple<Stream, Func<Task>>> OpenWriteStreamAsync();
+        Task<Tuple<Stream, Func<object, Task>>> OpenWriteStreamAsync();
     }
 }

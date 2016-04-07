@@ -13,6 +13,7 @@ namespace ExtensionsSample
     // 3. Add the NotificationHubs connection string to a 'AzureWebJobsNotificationHubsConnectionString' App Setting in app.config    
     // 4. Add the NotificationHubs Hub name to a 'AzureWebJobsNotificationHubName' App Setting in app.config    
     // 5. Use MobileApps client SDK to register template with NotificationHubs
+    // 6. Add typeof(NotificationHubSamples) to the SamplesTypeLocator in Program.cs
     public static class NotificationHubSamples
     {
         //NotificationHub binding out Notification type

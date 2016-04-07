@@ -40,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
             string path = attribute.Path;
 
-            var binding = new GenericTriggerbinding(attribute, this);
+            var binding = new GenericTriggerbinding(parameter, attribute, this);
 
             var bindingContract = binding.BindingDataContract;
             BindingProviderContext bindingContext2 = new BindingProviderContext(parameter, bindingContract, context.CancellationToken);
@@ -59,11 +59,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
             internal  IBinding _binding;
             private readonly IReadOnlyDictionary<string, Type> _bindingContract;
             private readonly BindingDataProvider _bindingDataProvider;
+            private readonly ParameterInfo _parameter;
 
             public GenericTriggerbinding(
+                ParameterInfo parameter,
                 TAttribute attribute, 
                 GenericFileTriggerBindingProvider<TAttribute, TFile> parent)
             {
+                this._parameter = parameter;
                 this._attribute = attribute;
                 this._parent = parent;
 
@@ -137,8 +140,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
                 Dictionary<string, object> bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
-                // $$$ built in binding data ?
-
                 // binding data from the path template
                 IReadOnlyDictionary<string, object> bindingDataFromPath = _bindingDataProvider.GetBindingData(path);
                 if (bindingDataFromPath != null)
@@ -162,7 +163,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
             public ParameterDescriptor ToParameterDescriptor()
             {
-                return new ParameterDescriptor { };
+                return new ParameterDescriptor
+                {
+                    Name = _parameter.Name
+                };
             }
         }
     }

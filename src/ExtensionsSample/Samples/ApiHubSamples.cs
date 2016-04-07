@@ -8,23 +8,46 @@ using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace ExtensionsSample.Samples
 {
+    // To use the NotificationHubSamples:
+    // 1. Add an AzureWebJobsDropBox app setting for your ApiHub DropBox connection
+    // 2. Add typeof(ApiHubSamples) to the SamplesTypeLocator in Program.cs
     public static class ApiHubSamples
     {
         // When new files arrive in dropbox's test folder, they are uploaded to dropbox's testout folder.
         public static void Trigger(
-            [ApiHubFileTrigger("dropbox", "test/{name}")] TextReader tr,
-            [ApiHubFile("dropbox", "testout/{name}")] out string output)
+            [ApiHubFileTrigger("dropbox", @"test/{name}", PollIntervalInSeconds = 5)] Stream input,
+            [ApiHubFile("dropbox", @"testout/{name}", FileAccess.Write)] StreamWriter output)
         {
-            string input = tr.ReadToEnd();
-            output = "Via Webjobs:" + input;
+            using (StreamReader reader = new StreamReader(input))
+            {
+                string text = reader.ReadToEnd();
+                output.Write(text);
+            }
         }
 
-        public static void Writer(
-            [ApiHubFile("dropbox", "test/file1.txt")] TextReader tr,
-            [ApiHubFile("dropbox", "test/file1-out.txt")] out string output)
+        public static void BindToStreamOutput(
+            [ApiHubFile("dropbox", "import/file1.txt")] string input,
+            [ApiHubFile("dropbox", "import/file1-out.txt", FileAccess.Write)] Stream output)
         {
-            string input = tr.ReadToEnd();
-            output = "Via Webjobs:" + input;
+            StreamWriter sw = new StreamWriter(output);
+            
+            sw.Write(input);
+            sw.Flush();
+        }
+
+        public static void BindToStreamOutputString(
+            [ApiHubFile("dropbox", "import/file1.txt")] string input,
+            [ApiHubFile("dropbox", "import/file1-out.txt", FileAccess.Write)] out string output)
+        {
+            input = input + "123456";
+            output = input;
+        }
+
+        public static void BindToStreamOutputByteArray(
+            [ApiHubFile("dropbox", "import/file1.txt")] byte[] input,
+            [ApiHubFile("dropbox", "import/file1-out.txt", FileAccess.Write)] out byte[] output)
+        {
+            output = input;
         }
 
         // Every time the timer fires, the file in dropbox will be updated with the current time.

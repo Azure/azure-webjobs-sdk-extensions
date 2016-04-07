@@ -10,9 +10,6 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 {
-    // $$$ Support Out TFile,  Out T, using the ConverterManager
-    // 1 per ParameterInfo
-    // Bind to 'out string' 
     internal class GenericOutStringFileBinding<TAttribute, TFile> : IBinding
         where TAttribute : Attribute, IFileAttribute
     {
@@ -55,7 +52,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
             var outTuple = await strategy.OpenWriteStreamAsync();
             Stream outStream = outTuple.Item1;
-            Func<Task> completedFunc = outTuple.Item2;
+            Func<object, Task> completedFunc = outTuple.Item2;
 
             // Bind to 'out string'
             var valueProvider = new GenericOutFileValueProvider(outStream, completedFunc);
@@ -82,15 +79,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
         public ParameterDescriptor ToParameterDescriptor()
         {
-            return new ParameterDescriptor { }; // $$$
+            return new ParameterDescriptor { }; 
         }
 
         private class GenericOutFileValueProvider : ConstantObj, IValueBinder
         {
             private readonly Stream _outStream;
-            private Func<Task> _completedFunc;
+            private Func<object, Task> _completedFunc;
 
-            public GenericOutFileValueProvider(Stream outStream, Func<Task> completedFunc)
+            public GenericOutFileValueProvider(Stream outStream, Func<object, Task> completedFunc)
             {
                 this._outStream = outStream;
                 this._completedFunc = completedFunc;
@@ -104,7 +101,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
                 var tw = new StreamWriter(_outStream);
                 tw.Write(contents);
                 tw.Flush();
-                await _completedFunc();
+                await _completedFunc(value);
             }
         }
     }
