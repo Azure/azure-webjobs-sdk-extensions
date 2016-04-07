@@ -8,12 +8,11 @@ namespace Microsoft.Azure.WebJobs
     [AttributeUsage(AttributeTargets.Parameter)]
     public sealed class OutgoingHttpRequestAttribute : Attribute
     {
-        public OutgoingHttpRequestAttribute(string path)
+        public OutgoingHttpRequestAttribute(string uri)
         {
-            Path = path;
+            Uri = new Uri(uri);
         }
 
-        // TODO: Define your domain specific values here
-        public string Path { get; private set; }
+        public Uri Uri { get; private set; }
     }
 }
