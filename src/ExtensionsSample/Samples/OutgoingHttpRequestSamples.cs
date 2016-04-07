@@ -12,9 +12,9 @@ namespace ExtensionsSample.Samples
     {
         public static void Foo(
             [TimerTrigger("00:01")] TimerInfo timer,
-            [OutgoingHttpRequest("qqq")] out string s)
+            [OutgoingHttpRequest(@"http://requestb.in/1mxonf61")] TextWriter writer)
         {
-            s = "qwerty";
+            writer.Write("Hello from writer!");
         }
     }
 }
