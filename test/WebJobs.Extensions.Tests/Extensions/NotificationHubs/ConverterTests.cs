@@ -49,6 +49,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             Notification notification = Converter.BuildNotificationFromString(stringPayload);
             Assert.NotNull(notification);
             Assert.Equal(stringPayload, notification.Body);
+            Converter.NotificationPlatform = string.Empty;
         }
 
         [Fact]
@@ -59,6 +60,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             Type expectedExceptionType = typeof(ArgumentException);
             var exception = Assert.ThrowsAny<Exception>(() => Converter.BuildNotificationFromString(payload));
             Assert.Equal(expectedExceptionType, exception.GetType());
+            Converter.NotificationPlatform = string.Empty;
         }
 
         [Fact]

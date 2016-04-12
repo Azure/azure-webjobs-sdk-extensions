@@ -52,7 +52,7 @@ namespace ExtensionsSample
         // method successfully exits.
         public static void SendAppleNotification_Out_String(
             [TimerTrigger("*/45 * * * * *")] TimerInfo timerInfo,
-            [NotificationHub(Platform = "Aps")] out string stringPayload)
+            [NotificationHub(Platform = "Apns")] out string stringPayload)
         {
             stringPayload = "{ \"aps\":{ \"alert\":\"Notification Hub test notification\"} }";
         }
