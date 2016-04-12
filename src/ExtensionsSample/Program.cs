@@ -7,6 +7,7 @@ using System.IO;
 using System.Net.Mail;
 using ExtensionsSample.Samples;
 using Microsoft.AspNet.WebHooks;
+using Microsoft.Azure.ApiHub;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Extensions.Files;
@@ -49,6 +50,8 @@ namespace ExtensionsSample
             ConfigureTraceMonitor(config, sendGridConfiguration);
 
             EnsureSampleDirectoriesExist(filesConfig.RootPath);
+
+            CheckForApiHub(config);
 
             WebHooksConfiguration webHooksConfig = new WebHooksConfiguration();
             webHooksConfig.UseReceiver<GitHubWebHookReceiver>();
@@ -138,7 +141,7 @@ namespace ExtensionsSample
 
                 // Create some initialization files.
                 var root = ItemFactory.Parse(apiHubConnectionString);
-                var file = root.CreateFileAsync("test/file1.txt", true).GetAwaiter().GetResult();
+                var file = root.GetFileReferenceAsync("test/file1.txt", true).GetAwaiter().GetResult();
                 file.WriteAsync(new byte[] { 0, 1, 2, 3 });
                 return true;
             }

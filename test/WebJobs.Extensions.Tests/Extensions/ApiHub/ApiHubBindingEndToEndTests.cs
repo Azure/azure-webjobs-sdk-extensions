@@ -36,7 +36,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
             _rootFolder = ItemFactory.Parse(_apiHubConnectionString);
 
-            var folder = _rootFolder.CreateFolderAsync(ImportTestPath).GetAwaiter().GetResult();
+            var folder = _rootFolder.GetFolderReferenceAsync(ImportTestPath).GetAwaiter().GetResult();
             foreach (var item in folder.ListAsync(true).GetAwaiter().GetResult())
             {
                 var i = item as IFileItem;
@@ -46,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
                 }
             }
 
-            folder = _rootFolder.CreateFolderAsync(OutputTestPath).GetAwaiter().GetResult();
+            folder = _rootFolder.GetFolderReferenceAsync(OutputTestPath).GetAwaiter().GetResult();
             foreach (var item in folder.ListAsync(true).GetAwaiter().GetResult())
             {
                 var i = item as IFileItem;
@@ -123,13 +123,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             string data = Guid.NewGuid().ToString();
             string inputFileName = ImportTestPath + "/" + string.Format("{0}.txt", method.Name);
 
-            var inputFile = await _rootFolder.CreateFileAsync(inputFileName, true);
+            var inputFile = await _rootFolder.GetFileReferenceAsync(inputFileName, true);
             await inputFile.WriteAsync(Encoding.UTF8.GetBytes(data));
 
             host.Call(method);
 
             string outputFileName = OutputTestPath + "/" + string.Format("{0}.txt", method.Name);
-            var outputFile = await _rootFolder.CreateFileAsync(outputFileName, true);
+            var outputFile = await _rootFolder.GetFileReferenceAsync(outputFileName, true);
 
             await TestHelpers.Await(() =>
             {
@@ -153,11 +153,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             string data = Guid.NewGuid().ToString();
             string inputFileName = ImportTestPath + "/" + string.Format("{0}.txt", method.Name);
 
-            var inputFile = await _rootFolder.CreateFileAsync(inputFileName, true);
+            var inputFile = await _rootFolder.GetFileReferenceAsync(inputFileName, true);
             await inputFile.WriteAsync(Encoding.UTF8.GetBytes(data));
 
             string outputFileName = OutputTestPath + "/" + string.Format("{0}.txt", method.Name);
-            var outputFile = await _rootFolder.CreateFileAsync(outputFileName, true);
+            var outputFile = await _rootFolder.GetFileReferenceAsync(outputFileName, true);
 
             await TestHelpers.Await(() =>
             {
@@ -206,7 +206,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             string testFileName = string.Format("{0}.{1}", Guid.NewGuid(), extension);
             string testFilePath = ImportTestPath + "/" + testFileName;
 
-            var file = await _rootFolder.CreateFileAsync(testFilePath, true);
+            var file = await _rootFolder.GetFileReferenceAsync(testFilePath, true);
             await file.WriteAsync(new byte[] { 0, 1, 2, 3 });
 
             Assert.True(_rootFolder.FileExists(file.Path));
