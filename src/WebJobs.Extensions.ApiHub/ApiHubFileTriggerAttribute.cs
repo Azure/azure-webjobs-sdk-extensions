@@ -9,13 +9,15 @@ namespace Microsoft.Azure.WebJobs
     public sealed class ApiHubFileTriggerAttribute : ApiHubFileAttribute
     {
         /// <summary>
-        ///  Create an instance of an attribute that points to the file on SAAS file trigger
+        /// Create an instance of an attribute that points to the file on SAAS file trigger
         /// </summary>
         /// <param name="key">App settings key name that have the connections string</param>
-        /// <param name="path">Relative path to the file <example>/folder/subfolder/file.txt</example> </param>
-        public ApiHubFileTriggerAttribute(string key, string path)
+        /// <param name="path">Relative path to the file <example>/folder/subfolder/file.txt</example></param>
+        /// <param name="pollIntervalInSeconds">The poll interval in seconds.</param>
+        public ApiHubFileTriggerAttribute(string key, string path, int pollIntervalInSeconds = 0)
             : base(key, path)
         {
+            this.PollIntervalInSeconds = pollIntervalInSeconds;
         }
 
         /// <summary>

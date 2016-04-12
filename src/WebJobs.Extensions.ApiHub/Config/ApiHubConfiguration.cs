@@ -59,7 +59,7 @@ namespace Microsoft.Azure.WebJobs
             }
             string folderName = path.Substring(0, i);
 
-            var folder = await root.CreateFolderAsync(folderName);
+            var folder = await root.GetFolderReferenceAsync(folderName);
 
             var listener = new ApiHubListener(folder, executor, attribute.PollIntervalInSeconds);
 

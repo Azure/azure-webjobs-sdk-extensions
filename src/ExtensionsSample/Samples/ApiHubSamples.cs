@@ -8,9 +8,8 @@ using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace ExtensionsSample.Samples
 {
-    // To use the NotificationHubSamples:
-    // 1. Add an AzureWebJobsDropBox app setting for your ApiHub DropBox connection
-    // 2. Add typeof(ApiHubSamples) to the SamplesTypeLocator in Program.cs
+    // To use the ApiHubSamples:
+    // Add an AzureWebJobsDropBox app setting for your ApiHub DropBox connection
     public static class ApiHubSamples
     {
         // When new files arrive in dropbox's test folder, they are uploaded to dropbox's testout folder.
@@ -48,6 +47,17 @@ namespace ExtensionsSample.Samples
             [ApiHubFile("dropbox", "import/file1-out.txt", FileAccess.Write)] out byte[] output)
         {
             output = input;
+        }
+
+        public static void Writer(
+            [ApiHubFile("dropbox", "test/file1.txt")] Stream input,
+            [ApiHubFile("dropbox", "test/file1-out.txt", FileAccess.Write)] StreamWriter output)
+        {
+            using (StreamReader reader = new StreamReader(input))
+            {
+                string text = reader.ReadToEnd();
+                output.Write(text);
+            }
         }
 
         // Every time the timer fires, the file in dropbox will be updated with the current time.
