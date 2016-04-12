@@ -8,6 +8,9 @@ using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace ExtensionsSample.Samples
 {
+    // To use the NotificationHubSamples:
+    // 1. Add an AzureWebJobsDropBox app setting for your ApiHub DropBox connection
+    // 2. Add typeof(ApiHubSamples) to the SamplesTypeLocator in Program.cs
     public static class ApiHubSamples
     {
         // When new files arrive in dropbox's test folder, they are uploaded to dropbox's testout folder.

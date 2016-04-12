@@ -7,10 +7,8 @@ using System.IO;
 using System.Net.Mail;
 using ExtensionsSample.Samples;
 using Microsoft.AspNet.WebHooks;
-using Microsoft.Azure.ApiHub;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions;
-using Microsoft.Azure.WebJobs.Extensions.ApiHub;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 using Microsoft.Azure.WebJobs.Extensions.WebHooks;
@@ -48,8 +46,6 @@ namespace ExtensionsSample
             };
             config.UseSendGrid(sendGridConfiguration);
 
-            bool apiHubEnabled = CheckForApiHub(config);
-
             ConfigureTraceMonitor(config, sendGridConfiguration);
 
             EnsureSampleDirectoriesExist(filesConfig.RootPath);
@@ -78,11 +74,6 @@ namespace ExtensionsSample
             host.Call(typeof(SampleSamples).GetMethod("Sample_BindToStream"));
             host.Call(typeof(SampleSamples).GetMethod("Sample_BindToString"));
             host.Call(typeof(TableSamples).GetMethod("CustomBinding"));
-
-            if (apiHubEnabled)
-            {
-                host.Call(typeof(ApiHubSamples).GetMethod("Writer"));
-            }
 
             host.RunAndBlock();
         }

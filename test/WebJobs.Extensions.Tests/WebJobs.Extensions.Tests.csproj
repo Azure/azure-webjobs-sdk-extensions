@@ -181,6 +181,7 @@
     <Compile Include="Extensions\Core\TraceMonitorTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBClientValueProviderTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBConnectionStringTests.cs" />
+    <Compile Include="Extensions\DocumentDB\DocumentDBContextTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBItemBindingTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBOutputBindingProviderTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBItemValueBinderTests.cs" />

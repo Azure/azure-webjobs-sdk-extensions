@@ -24,7 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             await DocumentDBUtility.ExecuteWithRetriesAsync(async () =>
             {
                 return await _docDBContext.Service.UpsertDocumentAsync(collectionUri, item);
-            });
+            }, _docDBContext.MaxThrottleRetries);
         }
 
         public Task FlushAsync(CancellationToken cancellationToken = default(CancellationToken))

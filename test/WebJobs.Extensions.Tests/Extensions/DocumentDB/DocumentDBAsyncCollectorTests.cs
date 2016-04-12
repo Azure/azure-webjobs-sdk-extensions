@@ -82,7 +82,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             await collector.AddAsync(new Item { Text = "hello!" });
 
             // Assert
-            mockDocDBService.VerifyAll();
+            mockDocDBService.Verify(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()), Times.Exactly(4));
         }
 
         private static DocumentDBContext CreateContext(IDocumentDBService service)

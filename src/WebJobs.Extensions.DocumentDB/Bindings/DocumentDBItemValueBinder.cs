@@ -46,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             Uri documentUri = UriFactory.CreateDocumentUri(_context.ResolvedDatabaseName, _context.ResolvedCollectionName, _id);
 
             T document = DocumentDBUtility.ExecuteWithRetriesAsync(() => _context.Service.ReadDocumentAsync<T>(documentUri),
-                ignoreNotFound: true).Result;
+                _context.MaxThrottleRetries, ignoreNotFound: true).Result;
 
             if (document != null)
             {
@@ -87,7 +87,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 }
 
                 Uri documentUri = UriFactory.CreateDocumentUri(context.ResolvedDatabaseName, context.ResolvedCollectionName, originalId);
-                await DocumentDBUtility.ExecuteWithRetriesAsync(() => context.Service.ReplaceDocumentAsync(documentUri, newItem));
+                await DocumentDBUtility.ExecuteWithRetriesAsync(() => context.Service.ReplaceDocumentAsync(documentUri, newItem),
+                    context.MaxThrottleRetries);
             }
         }
 
