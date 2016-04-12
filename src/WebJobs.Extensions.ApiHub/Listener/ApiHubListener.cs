@@ -16,7 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
         internal IFolderItem _folderSource;
         internal ITriggeredFunctionExecutor _executor;
 
-        private const int DefaultPollIntervalInSeconds = 30;
+        private const int DefaultPollIntervalInSeconds = 90;
 
         private IFileWatcher _poll;
         private int _pollIntervalInSeconds;
