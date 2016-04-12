@@ -34,6 +34,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
                 return Task.FromResult<IBinding>(null);
             }
 
+            Converter.NotificationPlatform = attribute.Platform;
+
             if (string.IsNullOrEmpty(_config.ConnectionString) &&
                 string.IsNullOrEmpty(attribute.ConnectionString))
             {

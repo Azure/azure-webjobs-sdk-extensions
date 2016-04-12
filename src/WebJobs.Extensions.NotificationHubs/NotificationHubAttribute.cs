@@ -30,6 +30,11 @@ namespace Microsoft.Azure.WebJobs
         public string TagExpression { get; set; }
 
         /// <summary>
+        /// Optional. Specify platform for sending native notifications.<see cref="NotificationPlatform"/>.
+        /// </summary>
+        public string Platform { get; set; }
+
+        /// <summary>
         /// Optional. A string value indicating the app setting to use as the Notification Hubs connection
         /// string, if different than the one specified in the <see cref="NotificationHubsConfiguration"/>.
         /// </summary>
