@@ -7,7 +7,6 @@ using System.IO;
 using System.Net.Mail;
 using ExtensionsSample.Samples;
 using Microsoft.AspNet.WebHooks;
-using Microsoft.Azure.ApiHub;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Extensions.Files;
@@ -51,8 +50,6 @@ namespace ExtensionsSample
 
             EnsureSampleDirectoriesExist(filesConfig.RootPath);
 
-            CheckForApiHub(config);
-
             WebHooksConfiguration webHooksConfig = new WebHooksConfiguration();
             webHooksConfig.UseReceiver<GitHubWebHookReceiver>();
             config.UseWebHooks(webHooksConfig);
@@ -69,8 +66,7 @@ namespace ExtensionsSample
                 typeof(SendGridSamples),
                 typeof(TableSamples),
                 typeof(TimerSamples),
-                typeof(WebHookSamples),
-                typeof(ApiHubSamples));
+                typeof(WebHookSamples));
 
             host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
             host.Call(typeof(FileSamples).GetMethod("ReadWrite"));
@@ -115,40 +111,6 @@ namespace ExtensionsSample
             Directory.CreateDirectory(Path.Combine(rootFilesPath, "converted"));
 
             File.WriteAllText(Path.Combine(rootFilesPath, "input.txt"), "WebJobs SDK Extensions!");
-        }
-
-        private static bool CheckForApiHub(JobHostConfiguration config)
-        {
-            string apiHubConnectionString = null;
-
-            // ApiHub for dropbox is enabled if the AzureWebJobsDropBox environment variable is set.           
-            // The format should be: Endpoint={endpoint};Scheme={scheme};AccessToken={accesstoken}
-            // otherwise use the local file system
-            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AzureWebJobsDropBox")))
-            {
-                apiHubConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsDropBox");
-            }
-            else
-            {
-                apiHubConnectionString = "UseLocalFileSystem=true;Path=" + Path.GetTempPath() + "ApiHubDropBox";
-            }
-
-            if (!string.IsNullOrEmpty(apiHubConnectionString))
-            {
-                var apiHubConfig = new ApiHubConfiguration();
-                apiHubConfig.AddKeyPath("dropbox", apiHubConnectionString);
-                config.UseApiHub(apiHubConfig);
-
-                // Create some initialization files.
-                var root = ItemFactory.Parse(apiHubConnectionString);
-                var file = root.GetFileReferenceAsync("test/file1.txt", true).GetAwaiter().GetResult();
-                file.WriteAsync(new byte[] { 0, 1, 2, 3 });
-                return true;
-            }
-            else
-            {
-                return false;
-            }
         }
     }
 }
