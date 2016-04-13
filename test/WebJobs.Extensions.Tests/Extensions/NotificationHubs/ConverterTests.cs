@@ -26,7 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
         [Fact]
         public void Converter_JsonString_Valid()
         {
-            TemplateNotification templateNotification = (TemplateNotification)Converter.BuildNotificationFromString(GetTemplatePropertiesJsonString());
+            TemplateNotification templateNotification = (TemplateNotification)Converter.BuildNotificationFromString(GetTemplatePropertiesJsonString(), 0);
             Assert.NotNull(templateNotification);
             Assert.True(VerifyTemplate(templateNotification));
         }
@@ -36,31 +36,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
         {
             string messageProperties = "{\"message\":\"location\":\"Redmond\"}";
             Type expectedExceptionType = typeof(JsonReaderException);
-            var exception = Assert.ThrowsAny<Exception>(() => Converter.BuildNotificationFromString(messageProperties));
+            var exception = Assert.ThrowsAny<Exception>(() => Converter.BuildNotificationFromString(messageProperties, 0));
             Assert.Equal(expectedExceptionType, exception.GetType());
         }
 
         [Theory]
         [MemberData("ValidNotificationPlatforms")]
-        public void Converter_String_NotificationPlatform_Valid(string platform)
+        public void Converter_String_NotificationPlatform_Valid(NotificationPlatform platform)
         {
-            Converter.NotificationPlatform = platform;
             string stringPayload = "native notification payload";
-            Notification notification = Converter.BuildNotificationFromString(stringPayload);
+            Notification notification = Converter.BuildNotificationFromString(stringPayload, platform);
             Assert.NotNull(notification);
             Assert.Equal(stringPayload, notification.Body);
-            Converter.NotificationPlatform = string.Empty;
-        }
-
-        [Fact]
-        public void Converter_String_NotificationPlatform_InValid()
-        {
-            Converter.NotificationPlatform = "invalidPlatform";
-            string payload = "testPayload";
-            Type expectedExceptionType = typeof(ArgumentException);
-            var exception = Assert.ThrowsAny<Exception>(() => Converter.BuildNotificationFromString(payload));
-            Assert.Equal(expectedExceptionType, exception.GetType());
-            Converter.NotificationPlatform = string.Empty;
         }
 
         [Fact]

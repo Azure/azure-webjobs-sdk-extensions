@@ -11,12 +11,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 {
     internal class NotificationHubAttributeBindingProvider : IBindingProvider
     {
-        private readonly IConverterManager _converterManager;
+        private readonly JobHostConfiguration _jobHostConfig;
         private NotificationHubsConfiguration _config;
 
-        public NotificationHubAttributeBindingProvider(IConverterManager converterManager, NotificationHubsConfiguration config)
+        public NotificationHubAttributeBindingProvider(JobHostConfiguration jobHostConfig, NotificationHubsConfiguration config)
         {
-            _converterManager = converterManager;
+            _jobHostConfig = jobHostConfig;
             _config = config;
         }
 
@@ -33,8 +33,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
             {
                 return Task.FromResult<IBinding>(null);
             }
-
-            Converter.NotificationPlatform = attribute.Platform;
 
             if (string.IsNullOrEmpty(_config.ConnectionString) &&
                 string.IsNullOrEmpty(attribute.ConnectionString))
@@ -61,9 +59,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 
             Func<string, INotificationHubClientService> invokeStringBinder = (invokeString) => service;
 
+            var converterManager = _jobHostConfig.GetService<IConverterManager>();
+            converterManager = converterManager.AddNotificationHubConverters(attribute.Platform);
+
             IBinding binding = BindingFactory.BindCollector(
                 parameter,
-                _converterManager,
+                converterManager,
                 (nhClientService, valueBindingContext) => new NotificationHubAsyncCollector(service, attribute.TagExpression),
                 "NotificationHubs",
                 invokeStringBinder);

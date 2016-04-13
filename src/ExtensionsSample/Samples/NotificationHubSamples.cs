@@ -31,7 +31,7 @@ namespace ExtensionsSample
         // when method successfully exits. 
         public static void SendWindowsNotification_Out_Notification(
             [TimerTrigger("*/30 * * * * *")] TimerInfo timerInfo,
-            [NotificationHub(Platform = "Wns")] out Notification notification)
+            [NotificationHub] out Notification notification)
         {
             string toastPayload = "<toast><visual><binding template=\"ToastText01\"><text id=\"1\">Test message</text></binding></visual></toast>";
             notification = new WindowsNotification(toastPayload);
@@ -52,7 +52,7 @@ namespace ExtensionsSample
         // method successfully exits.
         public static void SendAppleNotification_Out_String(
             [TimerTrigger("*/45 * * * * *")] TimerInfo timerInfo,
-            [NotificationHub(Platform = "Apns")] out string stringPayload)
+            [NotificationHub(Platform = NotificationPlatform.Apns)] out string stringPayload)
         {
             stringPayload = "{ \"aps\":{ \"alert\":\"Notification Hub test notification\"} }";
         }
