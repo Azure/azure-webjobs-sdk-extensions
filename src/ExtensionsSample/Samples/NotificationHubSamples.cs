@@ -17,7 +17,7 @@ namespace ExtensionsSample
     public static class NotificationHubSamples
     {
         // NotificationHub binding out Notification type
-        // This binding sends push notification to any clients registered with the template when
+        // This binding sends push notification to any clients registered with the template
         // method successfully exits.
         public static void SendNotification_Out_Notification(
             [TimerTrigger("*/15 * * * * *")] TimerInfo timerInfo,
@@ -39,7 +39,7 @@ namespace ExtensionsSample
 
         // NotificationHub binding out String
         // This binding sends push notification to any clients registered with the template
-        // method successfully exits.
+        // when method successfully exits.
         public static void SendNotification_Out_String(
             [TimerTrigger("*/15 * * * * *")] TimerInfo timerInfo,
             [NotificationHub] out string messageProperties)
@@ -49,7 +49,7 @@ namespace ExtensionsSample
 
         // NotificationHub binding out Notification type
         // This binding broadcasts native apple push notification to all the registered iOS clients
-        // method successfully exits.
+        // when method successfully exits.
         public static void SendAppleNotification_Out_String(
             [TimerTrigger("*/45 * * * * *")] TimerInfo timerInfo,
             [NotificationHub(Platform = NotificationPlatform.Apns)] out string stringPayload)
@@ -58,7 +58,7 @@ namespace ExtensionsSample
         }
 
         // This binding sends multiple push notification to any clients registered with the template
-        // method successfully exits.
+        // when method successfully exits.
         public static void SendNotificationsOnTimerTrigger(
             [TimerTrigger("*/30 * * * * *")] TimerInfo timerInfo,
             [NotificationHub] out Notification[] notifications)
@@ -80,8 +80,8 @@ namespace ExtensionsSample
             await notifications.AddAsync(GetTemplateNotification("World"));
         }
 
-        // This binding creates a strongly-typed AsyncCollector, which is used to send push notifications. 
-        // The binding does not do anything with the results when the function exits.  
+        // This binding sends push notification to any clients registered with the template
+        // when method successfully exits. 
         public static void SendNotification_out_Dictionary(
             [TimerTrigger("*/15 * * * * *")]TimerInfo timer,
             [NotificationHub] out IDictionary<string, string> temlateProperties)
