@@ -90,8 +90,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             ExtensionConfigContext extensionsConfigContext = new ExtensionConfigContext();
             extensionsConfigContext.Config = jobConfig;
             config.Initialize(extensionsConfigContext);
-            var converterManager = jobConfig.GetService<IConverterManager>();
-            var provider = new NotificationHubAttributeBindingProvider(converterManager, config);
+            var provider = new NotificationHubAttributeBindingProvider(jobConfig, config);
 
             return provider.TryCreateAsync(context);
         }

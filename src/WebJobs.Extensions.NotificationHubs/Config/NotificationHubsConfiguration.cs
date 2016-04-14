@@ -41,9 +41,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
             {
                 throw new ArgumentNullException("context");
             }
-            var converterManager = context.Config.GetService<IConverterManager>();
-            converterManager = converterManager.AddNotificationHubConverters();
-            var provider = new NotificationHubAttributeBindingProvider(converterManager, this);
+            var provider = new NotificationHubAttributeBindingProvider(context.Config, this);
             context.Config.RegisterBindingExtension(provider);
         }
 
