@@ -186,24 +186,24 @@
     <Compile Include="Extensions\DocumentDB\DocumentDBOutputBindingProviderTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBItemValueBinderTests.cs" />
     <Compile Include="Extensions\DocumentDB\TestDocumentDBServiceFactory.cs" />
-    <Compile Include="Extensions\EasyTables\EasyTableAsyncCollectorTests.cs" />
-    <Compile Include="Extensions\EasyTables\EasyTableAttributeBindingProviderTests.cs" />
-    <Compile Include="Extensions\EasyTables\EasyTableConfigurationTests.cs" />
-    <Compile Include="Extensions\EasyTables\EasyTableItemBindingTests.cs" />
-    <Compile Include="Extensions\EasyTables\EasyTableItemValueBinderTests.cs" />
-    <Compile Include="Extensions\EasyTables\EasyTableOutputBindingProviderTests.cs" />
-    <Compile Include="Extensions\EasyTables\EasyTableQueryBindingTests.cs" />
-    <Compile Include="Extensions\EasyTables\EasyTableQueryValueProviderTests.cs" />
-    <Compile Include="Extensions\EasyTables\EasyTableTableBindingTests.cs" />
-    <Compile Include="Extensions\EasyTables\EasyTableTableValueProviderTests.cs" />
-    <Compile Include="Extensions\EasyTables\EasyTableTestHelper.cs" />
-    <Compile Include="Extensions\EasyTables\EasyTableUtilityTests.cs" />
-    <Compile Include="Extensions\EasyTables\MobileServiceApiKeyHandlerTests.cs" />
-    <Compile Include="Extensions\EasyTables\IMobileServiceExtensionsTests.cs" />
-    <Compile Include="Extensions\EasyTables\Models\NoId.cs" />
-    <Compile Include="Extensions\EasyTables\Models\TodoItem.cs" />
-    <Compile Include="Extensions\EasyTables\TestHandler.cs" />
-    <Compile Include="Extensions\EasyTables\TestMobileServiceClientFactory.cs" />
+    <Compile Include="Extensions\MobileApps\MobileTableAsyncCollectorTests.cs" />
+    <Compile Include="Extensions\MobileApps\MobileTableAttributeBindingProviderTests.cs" />
+    <Compile Include="Extensions\MobileApps\MobileAppsConfigurationTests.cs" />
+    <Compile Include="Extensions\MobileApps\MobileTableItemBindingTests.cs" />
+    <Compile Include="Extensions\MobileApps\MobileTableItemValueBinderTests.cs" />
+    <Compile Include="Extensions\MobileApps\MobileTableOutputBindingProviderTests.cs" />
+    <Compile Include="Extensions\MobileApps\MobileTableQueryBindingTests.cs" />
+    <Compile Include="Extensions\MobileApps\MobileTableQueryValueProviderTests.cs" />
+    <Compile Include="Extensions\MobileApps\MobileTableTableBindingTests.cs" />
+    <Compile Include="Extensions\MobileApps\MobileTableTableValueProviderTests.cs" />
+    <Compile Include="Extensions\MobileApps\MobileTableTestHelper.cs" />
+    <Compile Include="Extensions\MobileApps\MobileTableUtilityTests.cs" />
+    <Compile Include="Extensions\MobileApps\MobileServiceApiKeyHandlerTests.cs" />
+    <Compile Include="Extensions\MobileApps\IMobileServiceExtensionsTests.cs" />
+    <Compile Include="Extensions\MobileApps\Models\NoId.cs" />
+    <Compile Include="Extensions\MobileApps\Models\TodoItem.cs" />
+    <Compile Include="Extensions\MobileApps\TestHandler.cs" />
+    <Compile Include="Extensions\MobileApps\TestMobileServiceClientFactory.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBAsyncCollectorTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBConfigurationTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBTestUtility.cs" />
@@ -245,14 +245,14 @@
       <Project>{091041ae-378d-42b0-aa0a-6a1f47c0be2d}</Project>
       <Name>WebJobs.Extensions.ApiHub</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\src\WebJobs.Extensions.EasyTables\WebJobs.Extensions.EasyTables.csproj">
-      <Project>{c4d2e330-8fb9-4d2b-9db5-274fbfb69d69}</Project>
-      <Name>WebJobs.Extensions.EasyTables</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\src\WebJobs.Extensions.DocumentDB\WebJobs.Extensions.DocumentDB.csproj">
       <Project>{38372e3c-70c9-4678-892d-7295a4615561}</Project>
       <Name>WebJobs.Extensions.DocumentDB</Name>
       <Aliases>DocumentDB</Aliases>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj">
+      <Project>{c4d2e330-8fb9-4d2b-9db5-274fbfb69d69}</Project>
+      <Name>WebJobs.Extensions.MobileApps</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\src\WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.csproj">
       <Project>{0b6093f8-5b69-4432-b64c-539e19b2e03a}</Project>

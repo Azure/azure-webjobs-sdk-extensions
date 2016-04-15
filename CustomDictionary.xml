@@ -46,8 +46,8 @@
       <Word>WebHookTriggerAttribute</Word>
       <Word>Notifier</Word>
       <Word>AzureWebJobsMobileAppUri</Word>
-      <Word>EasyTableConfiguration</Word>
-      <Word>EasyTableAttribute</Word>
+      <Word>MobileAppsConfiguration</Word>
+      <Word>MobileTableAttribute</Word>
       <Word>MobileAppUri</Word>
       <Word>NotificationHubAttribute</Word>
       <Word>AzureWebJobsNotificationHubsConnectionString</Word>

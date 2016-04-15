@@ -1,40 +1,32 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-extern alias DocumentDB;
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using DocumentDB::Microsoft.Azure.WebJobs.Extensions.DocumentDB;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Models;
+using Microsoft.Azure.WebJobs.Extensions.MobileApps;
 using Microsoft.Azure.WebJobs.Host.Bindings;
+using Newtonsoft.Json.Linq;
 using Xunit;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
+namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
 {
-    public class DocumentDBItemBindingTests
+    public class MobileTableItemBindingTests
     {
         public static IEnumerable<object[]> ValidParameters
         {
             get
             {
-                var itemParams = DocumentDBTestUtility.GetValidItemInputParameters().ToArray();
+                var itemParams = MobileAppTestHelper.GetValidInputItemParameters().ToArray();
 
-                var result = new[]
+                return new[]
                 {
-                    new object[] { itemParams[0], typeof(DocumentDBItemValueBinder<Document>) },
-                    new object[] { itemParams[1], typeof(DocumentDBItemValueBinder<Item>) },
-                    new object[] { itemParams[2], typeof(DocumentDBItemValueBinder<object>) }
+                    new object[] { itemParams[0], typeof(MobileTableItemValueBinder<JObject>) },
+                    new object[] { itemParams[1], typeof(MobileTableItemValueBinder<TodoItem>) }
                 };
-
-                Assert.Equal(result.Count(), itemParams.Count());
-
-                return result;
             }
         }
 
@@ -43,9 +35,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         public async Task BindAsync_Returns_CorrectValueProvider(ParameterInfo parameter, Type expectedType)
         {
             // Arrange
-            var docDbContext = new DocumentDBContext();
+            var mobileTableContext = new MobileTableContext();
             var bindingProviderContext = new BindingProviderContext(parameter, null, CancellationToken.None);
-            var binding = new DocumentDBItemBinding(parameter, docDbContext, bindingProviderContext);
+            var binding = new MobileTableItemBinding(parameter, mobileTableContext, bindingProviderContext);
 
             // Act
             var valueProvider = await binding.BindAsync("abc123", null);
@@ -60,9 +52,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         public void ResolveId_CreatesExpectedString(string token, string expected)
         {
             // Arrange
-            ParameterInfo parameter = DocumentDBTestUtility.GetValidItemInputParameters().First();
+            ParameterInfo parameter = MobileAppTestHelper.GetValidInputItemParameters().First();
 
-            var docDbContext = new DocumentDBContext()
+            var mobileTableContext = new MobileTableContext()
             {
                 ResolvedId = token
             };
@@ -72,7 +64,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 
             var bindingProviderContext = new BindingProviderContext(parameter, bindingContract, CancellationToken.None);
 
-            var binding = new DocumentDBItemBinding(parameter, docDbContext, bindingProviderContext);
+            var binding = new MobileTableItemBinding(parameter, mobileTableContext, bindingProviderContext);
 
             var bindingData = new Dictionary<string, object>();
             bindingData.Add("MyItemId", "abc123");

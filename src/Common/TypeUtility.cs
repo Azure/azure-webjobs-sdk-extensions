@@ -8,7 +8,7 @@ namespace Microsoft.Azure.WebJobs
     internal static class TypeUtility
     {
         /// <summary>
-        /// Returns the core EasyTable type for the supplied parameter.
+        /// Returns the core type for the supplied parameter.
         /// </summary>
         /// <remarks>
         /// For example, the core Type is T in the following parameters:

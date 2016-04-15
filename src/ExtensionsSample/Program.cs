@@ -35,7 +35,7 @@ namespace ExtensionsSample
             config.UseFiles(filesConfig);
             config.UseTimers();
             config.UseSample();
-            config.UseEasyTables();
+            config.UseMobileApps();
             config.UseCore();
             config.UseDocumentDB();
             config.UseNotificationHubs();

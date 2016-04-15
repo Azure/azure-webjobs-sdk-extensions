@@ -3,7 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-using Microsoft.Azure.WebJobs.Extensions.Tests.EasyTables;
+using Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps;
 using Microsoft.WindowsAzure.MobileServices;
 using Newtonsoft.Json.Linq;
 using Xunit;

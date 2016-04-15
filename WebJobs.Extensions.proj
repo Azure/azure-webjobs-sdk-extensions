@@ -24,7 +24,7 @@
       <PublishType>Assembly</PublishType>
       <PublishPath>$(PublishPath)\Binaries</PublishPath>
     </Build>
-    <Build Include="src\WebJobs.Extensions.EasyTables\WebJobs.Extensions.EasyTables.csproj">
+    <Build Include="src\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj">
       <PublishType>Assembly</PublishType>
       <PublishPath>$(PublishPath)\Binaries</PublishPath>
     </Build>
@@ -52,7 +52,7 @@
       <PublishType>File</PublishType>
       <PublishPath>$(PublishPath)\Packages</PublishPath>
     </Build>
-    <Build Include="src\WebJobs.Extensions.EasyTables.Nuget\WebJobs.Extensions.EasyTables.nuproj">
+    <Build Include="src\WebJobs.Extensions.MobileApps.Nuget\WebJobs.Extensions.MobileApps.nuproj">
       <PublishType>File</PublishType>
       <PublishPath>$(PublishPath)\Packages</PublishPath>
     </Build>

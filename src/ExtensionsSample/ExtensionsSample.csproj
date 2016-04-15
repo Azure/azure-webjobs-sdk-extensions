@@ -167,7 +167,7 @@
     <Compile Include="Models\ItemDoc.cs" />
     <Compile Include="SamplesTypeLocator.cs" />
     <Compile Include="Samples\ApiHubSamples.cs" />
-    <Compile Include="Samples\EasyTableSamples.cs" />
+    <Compile Include="Samples\MobileAppSamples.cs" />
     <Compile Include="Samples\DocumentDBSamples.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Models\Order.cs" />
@@ -202,13 +202,13 @@
       <Project>{091041ae-378d-42b0-aa0a-6a1f47c0be2d}</Project>
       <Name>WebJobs.Extensions.ApiHub</Name>
     </ProjectReference>
-    <ProjectReference Include="..\WebJobs.Extensions.EasyTables\WebJobs.Extensions.EasyTables.csproj">
-      <Project>{c4d2e330-8fb9-4d2b-9db5-274fbfb69d69}</Project>
-      <Name>WebJobs.Extensions.EasyTables</Name>
-    </ProjectReference>
     <ProjectReference Include="..\WebJobs.Extensions.DocumentDB\WebJobs.Extensions.DocumentDB.csproj">
       <Project>{38372e3c-70c9-4678-892d-7295a4615561}</Project>
       <Name>WebJobs.Extensions.DocumentDB</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj">
+      <Project>{c4d2e330-8fb9-4d2b-9db5-274fbfb69d69}</Project>
+      <Name>WebJobs.Extensions.MobileApps</Name>
     </ProjectReference>
     <ProjectReference Include="..\WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.csproj">
       <Project>{0b6093f8-5b69-4432-b64c-539e19b2e03a}</Project>

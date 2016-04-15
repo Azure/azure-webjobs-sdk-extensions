@@ -39,6 +39,12 @@
     </NuGetSpec>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\WebJobs.Extensions.MobileApps.Nuget\WebJobs.Extensions.MobileApps.nuproj">
+      <Link>WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.nuproj</Link>
+    </None>
+    <None Include="..\WebJobs.Extensions.MobileApps.Nuget\WebJobs.Extensions.MobileApps.nuspec">
+      <Link>WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.nuspec</Link>
+    </None>
     <None Include="WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.nuproj" />
     <None Include="WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.nuspec" />
     <NuGetProject Include="..\WebJobs.Extensions.DocumentDB.Nuget\WebJobs.Extensions.DocumentDB.nuproj">
@@ -56,12 +62,6 @@
     </NuGetProject>
     <NuGetSpec Include="..\WebJobs.Extensions.ApiHub.Nuget\WebJobs.Extensions.ApiHub.nuspec">
       <Link>WebJobs.Extensions.ApiHub\WebJobs.Extensions.ApiHub.nuspec</Link>
-    </NuGetSpec>
-    <NuGetProject Include="..\WebJobs.Extensions.EasyTables.Nuget\WebJobs.Extensions.EasyTables.nuproj">
-      <Link>WebJobs.Extensions.EasyTables\WebJobs.Extensions.EasyTables.nuproj</Link>
-    </NuGetProject>
-    <NuGetSpec Include="..\WebJobs.Extensions.EasyTables.Nuget\WebJobs.Extensions.EasyTables.nuspec">
-      <Link>WebJobs.Extensions.EasyTables\WebJobs.Extensions.EasyTables.nuspec</Link>
     </NuGetSpec>
   </ItemGroup>
   <ItemGroup />

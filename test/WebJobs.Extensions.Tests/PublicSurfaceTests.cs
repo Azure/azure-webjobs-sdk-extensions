@@ -87,15 +87,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
         }
 
         [Fact]
-        public void EasyTablesPublicSurface_LimitedToSpecificTypes()
+        public void MobileTablesPublicSurface_LimitedToSpecificTypes()
         {
-            var assembly = typeof(EasyTableAttribute).Assembly;
+            var assembly = typeof(MobileTableAttribute).Assembly;
 
             var expected = new[]
             {
-                "EasyTableAttribute",
-                "EasyTablesConfiguration",
-                "EasyTablesJobHostConfigurationExtensions",
+                "MobileTableAttribute",
+                "MobileAppsConfiguration",
+                "MobileAppsJobHostConfigurationExtensions",
             };
 
             AssertPublicTypes(expected, assembly);

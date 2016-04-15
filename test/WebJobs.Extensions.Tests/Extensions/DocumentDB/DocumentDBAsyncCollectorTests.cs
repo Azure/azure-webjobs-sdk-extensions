@@ -1,7 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-// We are using this alias because the test assembly references both EasyTables and DocumentDB, which share
+// We are using this alias because the test assembly references both MobileApps and DocumentDB, which share
 // the TypeUtility. This results in a type name collision. This is only required for the test assembly.
 extern alias DocumentDB;
 
