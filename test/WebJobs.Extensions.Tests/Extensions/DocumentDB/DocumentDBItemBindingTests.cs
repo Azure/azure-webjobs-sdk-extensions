@@ -13,6 +13,7 @@ using DocumentDB::Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Models;
 using Microsoft.Azure.WebJobs.Host.Bindings;
+using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
@@ -60,25 +61,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         public void ResolveId_CreatesExpectedString(string token, string expected)
         {
             // Arrange
-            ParameterInfo parameter = DocumentDBTestUtility.GetValidItemInputParameters().First();
-
-            var docDbContext = new DocumentDBContext()
-            {
-                ResolvedId = token
-            };
-
+            var template = BindingTemplate.FromString(token);
             var bindingContract = new Dictionary<string, Type>();
             bindingContract.Add("MyItemId", typeof(string));
-
-            var bindingProviderContext = new BindingProviderContext(parameter, bindingContract, CancellationToken.None);
-
-            var binding = new DocumentDBItemBinding(parameter, docDbContext, bindingProviderContext);
 
             var bindingData = new Dictionary<string, object>();
             bindingData.Add("MyItemId", "abc123");
 
             // Act
-            var resolved = binding.ResolveId(bindingData);
+            var resolved = DocumentDBItemBinding.ResolveTemplate(template, bindingData);
 
             // Assert
             Assert.Equal(expected, resolved);

@@ -6,13 +6,11 @@ extern alias DocumentDB;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using DocumentDB::Microsoft.Azure.WebJobs;
 using DocumentDB::Microsoft.Azure.WebJobs.Extensions.DocumentDB;
-using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -23,10 +21,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 {
     public class DocumentDBAttributeBindingProviderTests
     {
-        private const string DatabaseName = "TestDatabase";
-        private const string CollectionName = "TestCollection";
-        private readonly Uri databaseUri = new Uri("dbs/" + DatabaseName, UriKind.Relative);
-
         public static IEnumerable<object[]> ValidParameters
         {
             get
@@ -93,141 +87,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var context = new BindingProviderContext(parameter, null, CancellationToken.None);
 
             return provider.TryCreateAsync(context);
-        }
-
-        [Fact]
-        public async Task CreateIfNotExists_DoesNotCreate_IfFalse()
-        {
-            // Arrange
-            var mockService = new Mock<IDocumentDBService>(MockBehavior.Strict);
-            var config = new DocumentDBConfiguration
-            {
-                ConnectionString = "AccountEndpoint=http://someuri;AccountKey=some_key",
-                DocumentDBServiceFactory = new TestDocumentDBServiceFactory(mockService.Object)
-            };
-            var attribute = new DocumentDBAttribute { CreateIfNotExists = false };
-            var provider = new DocumentDBAttributeBindingProvider(new JobHostConfiguration(), config, new TestTraceWriter());
-
-            // Act
-            await provider.TryCreateAsync(new BindingProviderContext(DocumentDBTestUtility.GetCreateIfNotExistsParameters().First(), null, CancellationToken.None));
-
-            // Assert
-            // Nothing to assert. Since the service was null, it was never called.
-        }
-
-        [Fact]
-        public async Task CreateIfNotExists_Creates_IfTrue()
-        {
-            // Arrange            
-            string databaseName = "TestDB";
-            string collectionName = "TestCollection";
-
-            var databaseUri = UriFactory.CreateDatabaseUri(databaseName);
-
-            var mockService = new Mock<IDocumentDBService>(MockBehavior.Strict);
-
-            mockService
-                .Setup(m => m.CreateDatabaseAsync(It.Is<Database>(d => d.Id == databaseName)))
-                .ReturnsAsync(new Database());
-
-            mockService
-                .Setup(m => m.CreateDocumentCollectionAsync(databaseUri, It.Is<DocumentCollection>(d => d.Id == collectionName)))
-                .ReturnsAsync(new DocumentCollection());
-
-            var config = new DocumentDBConfiguration
-            {
-                ConnectionString = "AccountEndpoint=http://someuri;AccountKey=some_key",
-                DocumentDBServiceFactory = new TestDocumentDBServiceFactory(mockService.Object)
-            };
-
-            var provider = new DocumentDBAttributeBindingProvider(new JobHostConfiguration(), config, new TestTraceWriter());
-
-            // Act
-            await provider.TryCreateAsync(new BindingProviderContext(DocumentDBTestUtility.GetCreateIfNotExistsParameters().Last(), null, CancellationToken.None));
-
-            // Assert
-            mockService.VerifyAll();
-        }
-
-        [Fact]
-        public async Task CreateIfNotExist_Succeeds_IfDbAndCollectionDoNotExist()
-        {
-            // Arrange
-            var mockService = new Mock<IDocumentDBService>(MockBehavior.Strict);
-
-            mockService
-                .Setup(m => m.CreateDatabaseAsync(It.Is<Database>(d => d.Id == DatabaseName)))
-                .ReturnsAsync(new Database());
-
-            mockService
-                .Setup(m => m.CreateDocumentCollectionAsync(databaseUri, It.Is<DocumentCollection>(d => d.Id == CollectionName)))
-                .ReturnsAsync(new DocumentCollection());
-
-            // Act
-            await DocumentDBAttributeBindingProvider.CreateIfNotExistAsync(mockService.Object, DatabaseName, CollectionName);
-
-            // Assert
-            mockService.VerifyAll();
-        }
-
-        [Fact]
-        public async Task CreateIfNotExist_Succeeds_IfCollectionDoesNotExist()
-        {
-            // Arrange
-            var mockService = new Mock<IDocumentDBService>(MockBehavior.Strict);
-
-            mockService
-                .Setup(m => m.CreateDatabaseAsync(It.Is<Database>(d => d.Id == DatabaseName)))
-                .ThrowsAsync(DocumentDBTestUtility.CreateDocumentClientException(HttpStatusCode.Conflict));
-
-            mockService
-                .Setup(m => m.CreateDocumentCollectionAsync(databaseUri, It.Is<DocumentCollection>(d => d.Id == CollectionName)))
-                .ReturnsAsync(new DocumentCollection());
-
-            // Act
-            await DocumentDBAttributeBindingProvider.CreateIfNotExistAsync(mockService.Object, DatabaseName, CollectionName);
-
-            // Assert
-            mockService.VerifyAll();
-        }
-
-        [Fact]
-        public async Task CreateIfNotExist_Succeeds_IfDbAndCollectionExist()
-        {
-            // Arrange
-            var mockService = new Mock<IDocumentDBService>(MockBehavior.Strict);
-
-            mockService
-                .Setup(m => m.CreateDatabaseAsync(It.Is<Database>(d => d.Id == DatabaseName)))
-                .ThrowsAsync(DocumentDBTestUtility.CreateDocumentClientException(HttpStatusCode.Conflict));
-
-            mockService
-                .Setup(m => m.CreateDocumentCollectionAsync(databaseUri, It.Is<DocumentCollection>(d => d.Id == CollectionName)))
-                .ThrowsAsync(DocumentDBTestUtility.CreateDocumentClientException(HttpStatusCode.Conflict));
-
-            // Act
-            await DocumentDBAttributeBindingProvider.CreateIfNotExistAsync(mockService.Object, DatabaseName, CollectionName);
-
-            // Assert
-            mockService.VerifyAll();
-        }
-
-        [Fact]
-        public async Task CreateIfNotExist_Throws_IfExceptionIsNotConflict()
-        {
-            // Arrange
-            var mockService = new Mock<IDocumentDBService>(MockBehavior.Strict);
-
-            mockService
-                .Setup(m => m.CreateDatabaseAsync(It.Is<Database>(d => d.Id == DatabaseName)))
-                .ThrowsAsync(DocumentDBTestUtility.CreateDocumentClientException(HttpStatusCode.BadRequest));
-
-            // Act
-            await Assert.ThrowsAsync<DocumentClientException>(
-                () => DocumentDBAttributeBindingProvider.CreateIfNotExistAsync(mockService.Object, DatabaseName, CollectionName));
-
-            // Assert            
-            mockService.VerifyAll();
         }
 
         [Fact]

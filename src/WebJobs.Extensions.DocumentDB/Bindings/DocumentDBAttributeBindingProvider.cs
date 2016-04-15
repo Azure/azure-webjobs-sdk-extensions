@@ -3,11 +3,8 @@
 
 using System;
 using System.Globalization;
-using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 
@@ -51,11 +48,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
             DocumentDBContext documentDBContext = CreateContext(_docDBConfig, attribute, _jobHostConfig.NameResolver, _trace);
 
-            if (attribute.CreateIfNotExists)
-            {
-                await CreateIfNotExistAsync(documentDBContext.Service, documentDBContext.ResolvedDatabaseName, documentDBContext.ResolvedCollectionName);
-            }
-
             IBindingProvider compositeProvider = new CompositeBindingProvider(new IBindingProvider[]
             {
                 new DocumentDBOutputBindingProvider(documentDBContext, _jobHostConfig.GetService<IConverterManager>()),
@@ -81,26 +73,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 ResolvedDatabaseName = Resolve(attribute.DatabaseName, resolver),
                 ResolvedCollectionName = Resolve(attribute.CollectionName, resolver),
                 ResolvedId = attribute.Id,
-                Trace = trace
+                Trace = trace,
+                ResolvedPartitionKey = attribute.PartitionKey,
+                CreateIfNotExists = attribute.CreateIfNotExists,
+                CollectionThroughput = attribute.CollectionThroughput
             };
-        }
-
-        public static async Task CreateIfNotExistAsync(IDocumentDBService service, string databaseName, string documentCollectionName)
-        {
-            Uri databaseUri = UriFactory.CreateDatabaseUri(databaseName);
-            Database database = new Database { Id = databaseName };
-            DocumentCollection documentCollection = new DocumentCollection
-            {
-                Id = documentCollectionName
-            };
-
-            // If we queried for the Database or Collection before creation, we may hit a race condition
-            // if multiple instances are running the same code. So let's just create and ignore a Conflict.
-            await DocumentDBUtility.ExecuteAndIgnoreStatusCodeAsync(HttpStatusCode.Conflict,
-                () => service.CreateDatabaseAsync(database));
-
-            await DocumentDBUtility.ExecuteAndIgnoreStatusCodeAsync(HttpStatusCode.Conflict,
-                () => service.CreateDocumentCollectionAsync(databaseUri, documentCollection));
         }
 
         private static string Resolve(string value, INameResolver resolver)

@@ -26,19 +26,36 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
         private const string Id = "abc123";
         private readonly Uri _expectedUri = UriFactory.CreateDocumentUri(DatabaseName, CollectionName, Id);
 
-        public DocumentDBItemValueBinderTests()
+        [Fact]
+        public void GetValue_JObject_QueriesItem_WithPartitionKey()
         {
+            // Arrange           
+            string partitionKey = "partitionKey";
+            string partitionKeyValue = string.Format("[\"{0}\"]", partitionKey);
+            var parameter = DocumentDBTestUtility.GetInputParameter<Item>();
+            Mock<IDocumentDBService> mockService;
+            IValueBinder binder = CreateBinder<Item>(parameter, out mockService, partitionKey);
+            mockService
+                .Setup(m => m.ReadDocumentAsync<Item>(_expectedUri, It.Is<RequestOptions>(r => r.PartitionKey.ToString() == partitionKeyValue)))
+                .ReturnsAsync(new Item());
+
+            // Act
+            var value = binder.GetValue();
+
+            // Assert
+            mockService.VerifyAll();
+            Assert.NotNull(value);
         }
 
         [Fact]
         public void GetValue_JObject_QueriesItem()
         {
-            // Arrange                        
+            // Arrange            
             var parameter = DocumentDBTestUtility.GetInputParameter<Item>();
             Mock<IDocumentDBService> mockService;
             IValueBinder binder = CreateBinder<Item>(parameter, out mockService);
             mockService
-                .Setup(m => m.ReadDocumentAsync<Item>(_expectedUri))
+                .Setup(m => m.ReadDocumentAsync<Item>(_expectedUri, null))
                 .ReturnsAsync(new Item());
 
             // Act
@@ -57,7 +74,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
             Mock<IDocumentDBService> mockService;
             IValueBinder binder = CreateBinder<Item>(parameter, out mockService);
             mockService
-                .Setup(m => m.ReadDocumentAsync<Item>(_expectedUri))
+                .Setup(m => m.ReadDocumentAsync<Item>(_expectedUri, null))
                 .ThrowsAsync(DocumentDBTestUtility.CreateDocumentClientException(HttpStatusCode.NotFound));
 
             // Act
@@ -76,7 +93,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
             Mock<IDocumentDBService> mockService;
             IValueBinder binder = CreateBinder<Item>(parameter, out mockService);
             mockService
-                .Setup(m => m.ReadDocumentAsync<Item>(_expectedUri))
+                .Setup(m => m.ReadDocumentAsync<Item>(_expectedUri, null))
                 .ThrowsAsync(DocumentDBTestUtility.CreateDocumentClientException(HttpStatusCode.ServiceUnavailable));
 
             // Act
@@ -224,7 +241,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
             mockService.Verify();
         }
 
-        private static DocumentDBItemValueBinder<T> CreateBinder<T>(ParameterInfo parameter, out Mock<IDocumentDBService> mockService) where T : class
+        private static DocumentDBItemValueBinder<T> CreateBinder<T>(ParameterInfo parameter, out Mock<IDocumentDBService> mockService,
+            string partitionKey = null) where T : class
         {
             mockService = new Mock<IDocumentDBService>(MockBehavior.Strict);
 
@@ -236,7 +254,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
                 Service = mockService.Object
             };
 
-            return new DocumentDBItemValueBinder<T>(parameter, context, "abc123");
+            var bindingContext = new DocumentDBItemBindingContext
+            {
+                Id = "abc123",
+                PartitionKey = partitionKey
+            };
+
+            return new DocumentDBItemValueBinder<T>(parameter, context, bindingContext);
         }
     }
 }

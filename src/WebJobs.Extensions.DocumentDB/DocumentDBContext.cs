@@ -20,5 +20,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         public string ResolvedId { get; set; }
         public int MaxThrottleRetries { get; set; }
         public TraceWriter Trace { get; set; }
+        public string ResolvedPartitionKey { get; set; }
+        public bool CreateIfNotExists { get; set; }
+        public int CollectionThroughput { get; set; }
     }
 }

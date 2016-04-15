@@ -25,8 +25,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         /// </summary>
         /// <param name="databaseUri">The self-link of the database to create the collection in.</param>
         /// <param name="documentCollection">The <see cref="DocumentCollection"/> to create.</param>
+        /// <param name="options">The <see cref="RequestOptions"/> for the request.</param>
         /// <returns>The task object representing the service response for the asynchronous operation.</returns>
-        Task<DocumentCollection> CreateDocumentCollectionAsync(Uri databaseUri, DocumentCollection documentCollection);
+        Task<DocumentCollection> CreateDocumentCollectionAsync(Uri databaseUri, DocumentCollection documentCollection, RequestOptions options);
 
         /// <summary>
         /// Inserts or replaces a document.
@@ -40,8 +41,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         /// Reads a document.
         /// </summary>
         /// <param name="documentUri">The self-link of the document.</param>
+        /// <param name="options">The <see cref="RequestOptions"/> for the request.</param>
         /// <returns>The task object representing the service response for the asynchronous operation.</returns>
-        Task<T> ReadDocumentAsync<T>(Uri documentUri);
+        Task<T> ReadDocumentAsync<T>(Uri documentUri, RequestOptions options);
 
         /// <summary>
         /// Replaces a document.

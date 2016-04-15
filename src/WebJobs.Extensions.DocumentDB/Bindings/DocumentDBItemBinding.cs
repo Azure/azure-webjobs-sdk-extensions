@@ -29,18 +29,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
     {
         private ParameterInfo _parameter;
         private DocumentDBContext _context;
-        private BindingTemplate _bindingTemplate;
+        private BindingTemplate _idBindingTemplate;
+        private BindingTemplate _partitionKeyBindingTemplate;
 
         public DocumentDBItemBinding(ParameterInfo parameter, DocumentDBContext context, BindingProviderContext bindingContext)
         {
             _parameter = parameter;
             _context = context;
 
-            // set up binding for '{ItemId}'-type bindings
+            // set up bindings for '{ItemId}'-type bindings
             if (_context.ResolvedId != null)
             {
-                _bindingTemplate = BindingTemplate.FromString(_context.ResolvedId);
-                _bindingTemplate.ValidateContractCompatibility(bindingContext.BindingDataContract);
+                _idBindingTemplate = BindingTemplate.FromString(_context.ResolvedId);
+                _idBindingTemplate.ValidateContractCompatibility(bindingContext.BindingDataContract);
+            }
+            if (_context.ResolvedPartitionKey != null)
+            {
+                _partitionKeyBindingTemplate = BindingTemplate.FromString(_context.ResolvedPartitionKey);
+                _partitionKeyBindingTemplate.ValidateContractCompatibility(bindingContext.BindingDataContract);
             }
         }
 
@@ -56,14 +62,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 throw new ArgumentNullException("context");
             }
 
-            string id = ResolveId(context.BindingData);
-            return BindAsync(id, context.ValueContext);
+            DocumentDBItemBindingContext itemContext = new DocumentDBItemBindingContext
+            {
+                Id = ResolveTemplate(_idBindingTemplate, context.BindingData),
+                PartitionKey = ResolveTemplate(_partitionKeyBindingTemplate, context.BindingData)
+            };
+
+            return BindAsync(itemContext, context.ValueContext);
         }
 
         public Task<IValueProvider> BindAsync(object value, ValueBindingContext context)
         {
             Type paramType = _parameter.ParameterType;
-            return Task.FromResult(CreateItemValueProvider(paramType, value as string));
+            return Task.FromResult(CreateItemValueProvider(paramType, value as DocumentDBItemBindingContext));
         }
 
         public ParameterDescriptor ToParameterDescriptor()
@@ -83,20 +94,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             return Task.FromResult<IBinding>(this);
         }
 
-        internal string ResolveId(IReadOnlyDictionary<string, object> bindingData)
+        internal static string ResolveTemplate(BindingTemplate template, IReadOnlyDictionary<string, object> bindingData)
         {
-            string id = null;
-            if (_bindingTemplate != null)
+            string value = null;
+            if (template != null)
             {
-                id = _bindingTemplate.Bind(bindingData);
+                value = template.Bind(bindingData);
             }
-            return id;
+            return value;
         }
 
-        private IValueProvider CreateItemValueProvider(Type coreType, string id)
+        private IValueProvider CreateItemValueProvider(Type coreType, DocumentDBItemBindingContext context)
         {
             Type genericType = typeof(DocumentDBItemValueBinder<>).MakeGenericType(coreType);
-            return (IValueProvider)Activator.CreateInstance(genericType, _parameter, _context, id);
+            return (IValueProvider)Activator.CreateInstance(genericType, _parameter, _context, context);
         }
     }
 }

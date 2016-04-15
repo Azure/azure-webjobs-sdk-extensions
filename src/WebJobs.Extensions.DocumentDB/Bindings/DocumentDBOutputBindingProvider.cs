@@ -2,9 +2,12 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Net;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 
 namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
@@ -20,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             _converterManager = converterManager;
         }
 
-        public Task<IBinding> TryCreateAsync(BindingProviderContext context)
+        public async Task<IBinding> TryCreateAsync(BindingProviderContext context)
         {
             if (context == null)
             {
@@ -31,10 +34,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
             if (IsTypeValid(parameter.ParameterType))
             {
+                if (_context.CreateIfNotExists)
+                {
+                    await CreateIfNotExistAsync(_context.Service, _context.ResolvedDatabaseName,
+                        _context.ResolvedCollectionName, _context.ResolvedPartitionKey, _context.CollectionThroughput);
+                }
+
                 return CreateBinding(parameter, _context, _converterManager);
             }
 
-            return Task.FromResult<IBinding>(null);
+            return null;
         }
 
         internal static bool IsTypeValid(Type type)
@@ -46,7 +55,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             return isValidOut || isValidCollector;
         }
 
-        internal static Task<IBinding> CreateBinding(ParameterInfo parameter, DocumentDBContext context, IConverterManager converterManager)
+        internal static IBinding CreateBinding(ParameterInfo parameter, DocumentDBContext context, IConverterManager converterManager)
         {
             IBinding binding = null;
             Type coreType = TypeUtility.GetCoreType(parameter.ParameterType);
@@ -66,7 +75,43 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
                 ExceptionDispatchInfo.Capture(ex).Throw();
             }
-            return Task.FromResult<IBinding>(binding);
+            return binding;
+        }
+
+        internal static async Task CreateIfNotExistAsync(IDocumentDBService service, string databaseName,
+         string documentCollectionName, string partitionKeyPath, int throughput)
+        {
+            Uri databaseUri = UriFactory.CreateDatabaseUri(databaseName);
+            Database database = new Database { Id = databaseName };
+
+            DocumentCollection documentCollection = new DocumentCollection
+            {
+                Id = documentCollectionName
+            };
+
+            if (!string.IsNullOrEmpty(partitionKeyPath))
+            {
+                documentCollection.PartitionKey.Paths.Add(partitionKeyPath);
+            }
+
+            // If there is any throughput specified, pass it on. DocumentClient will throw with a 
+            // descriptive message if the value does not meet the collection requirements.
+            RequestOptions collectionOptions = null;
+            if (throughput != 0)
+            {
+                collectionOptions = new RequestOptions
+                {
+                    OfferThroughput = throughput
+                };
+            }
+
+            // If we queried for the Database or Collection before creation, we may hit a race condition
+            // if multiple instances are running the same code. So let's just create and ignore a Conflict.
+            await DocumentDBUtility.ExecuteAndIgnoreStatusCodeAsync(HttpStatusCode.Conflict,
+                    () => service.CreateDatabaseAsync(database));
+
+            await DocumentDBUtility.ExecuteAndIgnoreStatusCodeAsync(HttpStatusCode.Conflict,
+                () => service.CreateDocumentCollectionAsync(databaseUri, documentCollection, collectionOptions));
         }
     }
 }

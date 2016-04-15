@@ -10,6 +10,9 @@ namespace ExtensionsSample.Models
         [JsonProperty("id")]
         public string Id { get; set; }
 
+        [JsonProperty("partition")]
+        public string Partition { get; set; }
+
         [JsonProperty("text")]
         public string Text { get; set; }
     }

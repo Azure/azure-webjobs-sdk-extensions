@@ -25,9 +25,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             return _client;
         }
 
-        public async Task<DocumentCollection> CreateDocumentCollectionAsync(Uri databaseUri, DocumentCollection documentCollection)
+        public async Task<DocumentCollection> CreateDocumentCollectionAsync(Uri databaseUri, DocumentCollection documentCollection, RequestOptions options)
         {
-            ResourceResponse<DocumentCollection> response = await _client.CreateDocumentCollectionAsync(databaseUri, documentCollection);
+            ResourceResponse<DocumentCollection> response = await _client.CreateDocumentCollectionAsync(databaseUri, documentCollection, options);
             return response.Resource;
         }
 
@@ -49,9 +49,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             return response.Resource;
         }
 
-        public async Task<T> ReadDocumentAsync<T>(Uri documentUri)
+        public async Task<T> ReadDocumentAsync<T>(Uri documentUri, RequestOptions options)
         {
-            ResourceResponse<Document> response = await _client.ReadDocumentAsync(documentUri);
+            ResourceResponse<Document> response = await _client.ReadDocumentAsync(documentUri, options);
             return (T)(dynamic)response.Resource;
         }
 

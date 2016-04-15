@@ -28,11 +28,10 @@ namespace ExtensionsSample.Samples
         //   ICollector<T>
         public static void InsertDocument(
             [TimerTrigger("00:01")] TimerInfo timer,
-            [DocumentDB("ItemDb", "ItemCollection")] out Item newItem)
+            [DocumentDB("ItemDb", "ItemCollection")] out ItemDoc newItem)
         {
-            newItem = new Item()
+            newItem = new ItemDoc()
             {
-                Id = Guid.NewGuid().ToString(),
                 Text = new Random().Next().ToString()
             };
         }

@@ -5,6 +5,7 @@ using System;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Newtonsoft.Json;
@@ -17,11 +18,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         private ParameterInfo _parameter;
         private DocumentDBContext _context;
         private JObject _originalItem;
-        private string _id;
+        private DocumentDBItemBindingContext _itemBindingContext;
 
-        public DocumentDBItemValueBinder(ParameterInfo parameter, DocumentDBContext context, string id)
+        public DocumentDBItemValueBinder(ParameterInfo parameter, DocumentDBContext context, DocumentDBItemBindingContext itemBindingContext)
         {
-            _id = id;
+            _itemBindingContext = itemBindingContext;
             _parameter = parameter;
             _context = context;
         }
@@ -43,9 +44,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
         public object GetValue()
         {
-            Uri documentUri = UriFactory.CreateDocumentUri(_context.ResolvedDatabaseName, _context.ResolvedCollectionName, _id);
+            Uri documentUri = UriFactory.CreateDocumentUri(_context.ResolvedDatabaseName, _context.ResolvedCollectionName, _itemBindingContext.Id);
+            RequestOptions options = null;
 
-            T document = DocumentDBUtility.ExecuteWithRetriesAsync(() => _context.Service.ReadDocumentAsync<T>(documentUri),
+            if (!string.IsNullOrEmpty(_itemBindingContext.PartitionKey))
+            {
+                options = new RequestOptions
+                {
+                    PartitionKey = new PartitionKey(_itemBindingContext.PartitionKey)
+                };
+            }
+
+            T document = DocumentDBUtility.ExecuteWithRetriesAsync(() => _context.Service.ReadDocumentAsync<T>(documentUri, options),
                 _context.MaxThrottleRetries, ignoreNotFound: true).Result;
 
             if (document != null)

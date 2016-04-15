@@ -52,6 +52,8 @@ namespace Microsoft.Azure.WebJobs
         public string CollectionName { get; private set; }
 
         /// <summary>
+        /// Optional.
+        /// Only applies to output bindings.
         /// If true, the database and collection will be automatically created if they do not exist.
         /// </summary>
         public bool CreateIfNotExists { get; set; }
@@ -64,8 +66,24 @@ namespace Microsoft.Azure.WebJobs
 
         /// <summary>
         /// Optional. The Id of the document to retrieve from the collection.
-        /// May include binding parameters
+        /// May include binding parameters.
         /// </summary>
         public string Id { get; set; }
+
+        /// <summary>
+        /// Optional.
+        /// When specified on an output binding and <see cref="CreateIfNotExists"/> is true, defines the partition key 
+        /// path for the created collection.
+        /// When specified on an input binding, specifies the partition key value for the lookup.
+        /// May include binding parameters.
+        /// </summary>
+        public string PartitionKey { get; set; }
+
+        /// <summary>
+        /// Optional.
+        /// When specified on an output binding and <see cref="CreateIfNotExists"/> is true, defines the throughput of the created
+        /// collection.
+        /// </summary>
+        public int CollectionThroughput { get; set; }
     }
 }
