@@ -61,7 +61,7 @@ namespace Microsoft.Azure.WebJobs
 
             var folder = await root.GetFolderReferenceAsync(folderName);
 
-            var listener = new ApiHubListener(folder, executor, attribute.PollIntervalInSeconds);
+            var listener = new ApiHubListener(folder, executor, attribute.PollIntervalInSeconds, attribute.FileWatcherType);
 
             return listener;
         }
