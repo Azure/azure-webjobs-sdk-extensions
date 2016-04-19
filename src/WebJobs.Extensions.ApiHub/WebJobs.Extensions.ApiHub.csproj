@@ -37,7 +37,7 @@
   <ItemGroup>
     <Reference Include="Microsoft.Azure.ApiHub.Sdk, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\Microsoft.Azure.ApiHub.Sdk.0.5\tools\Microsoft.Azure.ApiHub.Sdk.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.Azure.ApiHub.Sdk.0.6.1\tools\Microsoft.Azure.ApiHub.Sdk.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Azure.WebJobs, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.Azure.WebJobs.Core.1.2.0-alpha-10291\lib\net45\Microsoft.Azure.WebJobs.dll</HintPath>

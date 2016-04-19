@@ -11,6 +11,8 @@ using Microsoft.Azure.WebJobs.Extensions.ApiHub.Common;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
 {
+    // TODO: leveraging singleton listener for now untill the framework supports a generalized listener/queue mechanism.
+    [Singleton(Mode = SingletonMode.Listener)]
     internal class ApiHubListener : IListener
     {
         internal IFolderItem _folderSource;
@@ -20,15 +22,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
 
         private IFileWatcher _poll;
         private int _pollIntervalInSeconds;
+        private FileWatcherType _fileWatcherType;
 
         public ApiHubListener(
             IFolderItem folder,
             ITriggeredFunctionExecutor executor,
-            int pollIntervalInSeconds)
+            int pollIntervalInSeconds,
+            FileWatcherType fileWatcherType = FileWatcherType.Created)
         {
             this._folderSource = folder;
             this._executor = executor;
             this._pollIntervalInSeconds = pollIntervalInSeconds;
+            this._fileWatcherType = fileWatcherType;
         }
 
         public void Cancel()
@@ -46,11 +51,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _poll = _folderSource.CreateNewFileWatcher(OnNewFile, _pollIntervalInSeconds > 0 ? _pollIntervalInSeconds : DefaultPollIntervalInSeconds);
+            _poll = _folderSource.CreateFileWatcher(_fileWatcherType, OnFileWatcher, nextItem: null, pollIntervalInSeconds: _pollIntervalInSeconds > 0 ? _pollIntervalInSeconds : DefaultPollIntervalInSeconds);
+
+            // TODO: need to decide what to do when _poll is null i.e. trigger folder does not exist.
             return Task.FromResult(0);
         }
 
-        private Task OnNewFile(IFileItem file)
+        private Task OnFileWatcher(IFileItem file, object obj)
         {
             ApiHubFile apiHubFile = new ApiHubFile(file);
 
