@@ -27,14 +27,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
         public Task SetValueAsync(object value, CancellationToken cancellationToken)
         {
-            if (value == null)
-            {
-                return Task.FromResult(0);
-            }
-
             if (_onCompleted != null)
             {
                 return _onCompleted(value); // Flush hook 
+            }
+
+            if (value == null)
+            {
+                return Task.FromResult(0);
             }
 
             if (typeof(Stream).IsAssignableFrom(value.GetType()))
