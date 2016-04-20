@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
@@ -13,6 +14,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
     /// </summary>
     internal interface IDocumentDBService
     {
+        IOrderedQueryable<Database> CreateDatabaseQuery();
+
+        IOrderedQueryable<DocumentCollection> CreateDocumentCollectionQuery(Uri collectionUri);
+
         /// <summary>
         /// Creates the specified <see cref="Database"/>.
         /// </summary>

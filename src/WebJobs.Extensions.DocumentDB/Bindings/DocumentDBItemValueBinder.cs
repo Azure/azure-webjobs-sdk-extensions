@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Net;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -55,8 +56,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 };
             }
 
-            T document = DocumentDBUtility.ExecuteWithRetriesAsync(() => _context.Service.ReadDocumentAsync<T>(documentUri, options),
-                _context.MaxThrottleRetries, ignoreNotFound: true).Result;
+            T document = DocumentDBUtility.RetryAsync(() => _context.Service.ReadDocumentAsync<T>(documentUri, options),
+                _context.MaxThrottleRetries, codesToIgnore: HttpStatusCode.NotFound).Result;
 
             if (document != null)
             {
@@ -97,7 +98,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 }
 
                 Uri documentUri = UriFactory.CreateDocumentUri(context.ResolvedDatabaseName, context.ResolvedCollectionName, originalId);
-                await DocumentDBUtility.ExecuteWithRetriesAsync(() => context.Service.ReplaceDocumentAsync(documentUri, newItem),
+                await DocumentDBUtility.RetryAsync(() => context.Service.ReplaceDocumentAsync(documentUri, newItem),
                     context.MaxThrottleRetries);
             }
         }

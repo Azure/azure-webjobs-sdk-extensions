@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net;
 using System.Reflection;
 using DocumentDB::Microsoft.Azure.WebJobs;
@@ -21,6 +22,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 {
     internal static class DocumentDBTestUtility
     {
+        public static IOrderedQueryable<T> AsOrderedQueryable<T, TKey>(this IEnumerable<T> enumerable, Expression<Func<T, TKey>> keySelector)
+        {
+            return enumerable.AsQueryable().OrderBy(keySelector);
+        }
+
         public static DocumentClientException CreateDocumentClientException(HttpStatusCode status, int retryAfter = 0)
         {
             var headers = new NameValueCollection();

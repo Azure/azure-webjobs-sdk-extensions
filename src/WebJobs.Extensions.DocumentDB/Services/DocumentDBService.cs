@@ -2,9 +2,11 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Documents.Linq;
 using Microsoft.Azure.WebJobs.Extensions.DocumentDB.Config;
 
 namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
@@ -23,6 +25,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         public DocumentClient GetClient()
         {
             return _client;
+        }
+
+        public IOrderedQueryable<Database> CreateDatabaseQuery()
+        {
+            return _client.CreateDatabaseQuery();
+        }
+
+        public IOrderedQueryable<DocumentCollection> CreateDocumentCollectionQuery(Uri collectionUri)
+        {
+            return _client.CreateDocumentCollectionQuery(collectionUri);
         }
 
         public async Task<DocumentCollection> CreateDocumentCollectionAsync(Uri databaseUri, DocumentCollection documentCollection, RequestOptions options)
