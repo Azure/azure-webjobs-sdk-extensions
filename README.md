@@ -161,63 +161,6 @@ public static void ImportErrorHandler(
 
 To register the Error extensions, call `config.UseCore()` in your startup code. For more information see the [Error Monitoring](http://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Error-Monitoring) wiki page, as well as the the [Error Monitoring Sample](http://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/ErrorMonitoringSamples.cs).
 
-###WebHooks
-
-A WebHook trigger that allows you to write job functions that can be invoked by HTTP requests. This extension lives in the **Microsoft.Azure.WebJobs.Extensions.WebHooks** package. Here's an example job function that will be invoked whenever an issue in a source GitHub repo is created or modified:
-
-```csharp
-public static void GitHub([WebHookTrigger] string body, TraceWriter trace)
-{
-    dynamic issueEvent = JObject.Parse(body);
-
-    trace.Info(string.Format("GitHub WebHook invoked - Issue: '{0}', Action: '{1}', ",
-        issueEvent.issue.title, issueEvent.action));
-}
-```
-
-The web hook URL used to invoke the function is configured in the source repo ([more on GitHub web hooks here](https://developer.github.com/webhooks/)). Details on how to construct this URL can be found below. You can also find a **complete step-by-step walkthrough** for setting up WebJob WebHooks [here](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/WebHooks-Walkthrough).
-
-GitHub is just one example. Any event source supporting WebHooks can be used. Another popular source is [IFTTT](https://ifttt.com/). Using IFTTT ("If This, Then That"), you can configure your webjob to be invoked when stock prices change, on events coming from Facebook, Instagram, YouTube, EBay etc., or even when someone alters your Nest thermostat setting! WebHooks opens the WebJobs SDK up to a huge new set of triggers, complimenting the existing first class SDK triggers (and extension triggers). Here's an IFTTT triggered function that will get invoked whenever a new article is added to [Pocket](https://getpocket.com/) in the browser for later reading. The function demonstrates model binding to a custom type, and pushes the articles to blob storage:
-
-```csharp
-public static void NewArticle(
-    [WebHookTrigger] Article article,
-    [Blob("articles/{Title}", FileAccess.Write)] TextWriter output,
-    TraceWriter trace)
-{
-    output.WriteLine(article.Url);
-    output.WriteLine(article.Excerpt);
-
-    trace.Info(string.Format("New article added. '{0}'", article.Title));
-}
-```
-
-When running in Azure Web Apps, your WebHook job will be running in the context of a [Continuous WebJob](https://github.com/projectkudu/kudu/wiki/Web-jobs). This host will accept (and **authenticate**) incoming requests and forward them to the SDK JobHost. The URL used to trigger a WebHook function has the following format:
-
-    https://{uid}:{pwd}@{site}/api/continuouswebjobs/{job}/passthrough/{*path}
-
-To manually construct your WebHook URL, you need to replace the following tokens:
-* **uid** : This is the user ID from your publishing credentials. You can download your publishing credentials from the portal [as detailed in this blog post](http://blog.davidebbo.com/2015/05/scheduled-webjob.html)
-* **pwd** : This is the password from your publising credentials
-* **site** : Your SCM site (e.g. myapp.scm.azurewebsites.net)
-* **job** : The name of your Continuous WebJob
-* **path** : This is the route identifying the specific WebHook function to invoke. By convention, this is {ClassName}/{MethodName}, but can be overridden/specified explicitly via the WebHookTrigger attribute.
-
-In addition to functions using the WebHook trigger, you can invoke **any** of your job functions via an http request. When resolving an incoming POST request, if the route doesn't match a WebHookTrigger decorated function, a search is performed for a function matching the {ClassName}/{MethodName} convention described above. If found, that function is invoked, and the function parameters are parsed from the JSON body of the request. An example of this can be seen [in the walkthrough](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/WebHooks-Walkthrough). This ability to invoke your functions via HTTP requests opens the door for automation scenarios, and complements the way you can invoke/replay functions via the WebJobs Dashboard.
-
-Support for the [ASP.NET WebHooks SDK](http://blogs.msdn.com/b/webdev/archive/2015/09/04/introducing-microsoft-asp-net-webhooks-preview.aspx) is also built in. That SDK provides WebHook Receiver classes that handle the diverse WebHook authentication schemes of various providers. For providers that the SDK supports it is recommended that you use those receivers for authentication. For example, to leverage this for GitHub, you would:
-
-* reference the **Microsoft.AspNet.WebHooks.Receivers.GitHub** package
-* add the **MS_WebHookReceiverSecret_GitHub** app setting containing your secret
-* set the same shared secret on your GitHub WebHook
-* add [one line of code](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Program.cs#L46) to register the receiver on job startup
-* use the overload of WebHookTriggerAttribute that takes a receiver and optional id ([as in this example](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/WebHookSamples.cs#L67))
-* use a corresponding route format {receiver}/{id} for the WebHook in GitHub (the "id" portion is optional). I.e. for this example the route would be "github/issues"
-
-That's it - whenever a request comes in for your WebHook, the WebHook reveiver will perform all the authentication checks and your job function will *only* be invoked if the request is authenticated. For more information on the various ASP.NET WebHooks SDK reveivers supported, see their documentation.
-
-To register the WebHook extensions, call `config.UseWebHooks()` in your startup code. For more information, see the [WebHook samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/WebHookSamples.cs).
-
 ###Core Extensions
 
 There are a set of triggers/bindings that can be registered by calling `config.UseCore()`. The Core extensions contain a set of general purpose bindings. For example, the **ErrorTrigger** binding discussed in its own section above is part of the Core extension. There is also a binding for `ExecutionContext` which allows you to access invocation specific system information in your function. Here's an example showing how to access the function **Invocation ID** for the function:
@@ -232,7 +175,7 @@ public static void ProcessOrder(
 }
 ```
 
-The invocation ID is used in the Dashboard logs, so having access to this programatically allows you to correlate an invocation to those logs. This might be useful if you're also logging to your own external system. To register the WebHook extensions, call `config.Core()` in your startup code.
+The invocation ID is used in the Dashboard logs, so having access to this programatically allows you to correlate an invocation to those logs. This might be useful if you're also logging to your own external system. To register the Core extensions, call `config.Core()` in your startup code.
 
 ## License
 
