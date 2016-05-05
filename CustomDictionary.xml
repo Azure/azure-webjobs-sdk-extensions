@@ -43,7 +43,6 @@
       <Word>SendGrid</Word>
       <Word>ApiKey</Word>
       <Word>Api</Word>
-      <Word>WebHookTriggerAttribute</Word>
       <Word>Notifier</Word>
       <Word>AzureWebJobsMobileAppUri</Word>
       <Word>MobileAppsConfiguration</Word>

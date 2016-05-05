@@ -6,12 +6,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Mail;
 using ExtensionsSample.Samples;
-using Microsoft.AspNet.WebHooks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
-using Microsoft.Azure.WebJobs.Extensions.WebHooks;
 using Microsoft.Azure.WebJobs.Host;
 using WebJobsSandbox;
 
@@ -50,10 +48,6 @@ namespace ExtensionsSample
 
             EnsureSampleDirectoriesExist(filesConfig.RootPath);
 
-            WebHooksConfiguration webHooksConfig = new WebHooksConfiguration();
-            webHooksConfig.UseReceiver<GitHubWebHookReceiver>();
-            config.UseWebHooks(webHooksConfig);
-
             JobHost host = new JobHost(config);
 
             // Add or remove types from this list to choose which functions will 
@@ -65,8 +59,7 @@ namespace ExtensionsSample
                 typeof(SampleSamples),
                 typeof(SendGridSamples),
                 typeof(TableSamples),
-                typeof(TimerSamples),
-                typeof(WebHookSamples));
+                typeof(TimerSamples));
 
             host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
             host.Call(typeof(FileSamples).GetMethod("ReadWrite"));

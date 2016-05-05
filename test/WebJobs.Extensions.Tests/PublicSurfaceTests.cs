@@ -71,22 +71,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
         }
 
         [Fact]
-        public void WebHooksPublicSurface_LimitedToSpecificTypes()
-        {
-            var assembly = typeof(WebHookTriggerAttribute).Assembly;
-
-            var expected = new[]
-            {
-                "WebHookTriggerAttribute",
-                "WebHooksConfiguration",
-                "WebHooksJobHostConfigurationExtensions",
-                "WebHookContext"
-            };
-
-            AssertPublicTypes(expected, assembly);
-        }
-
-        [Fact]
         public void MobileTablesPublicSurface_LimitedToSpecificTypes()
         {
             var assembly = typeof(MobileTableAttribute).Assembly;
