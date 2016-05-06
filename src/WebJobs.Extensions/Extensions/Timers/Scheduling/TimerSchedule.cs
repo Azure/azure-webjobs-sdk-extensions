@@ -60,6 +60,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 string resolvedExpression = nameResolver.ResolveWholeString(attribute.ScheduleExpression);
 
                 CronSchedule cronSchedule = null;
+                TimeSpan periodTimespan;
                 if (CronSchedule.TryCreate(resolvedExpression, out cronSchedule))
                 {
                     schedule = cronSchedule;
@@ -79,9 +80,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                         attribute.UseMonitor = true;
                     }
                 }
-                else
+                else if (TimeSpan.TryParse(resolvedExpression, out periodTimespan))
                 {
-                    TimeSpan periodTimespan = TimeSpan.Parse(resolvedExpression);
                     schedule = new ConstantSchedule(periodTimespan);
 
                     if (periodTimespan.TotalMinutes < 1)
@@ -95,6 +95,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                         // set to true
                         attribute.UseMonitor = true;
                     }
+                }
+                else
+                {
+                    throw new ArgumentException("The schedule expression was not recognized as a valid cron expression or timespan string.");
                 }
             }
             else

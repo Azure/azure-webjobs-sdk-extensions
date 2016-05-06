@@ -90,6 +90,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             Assert.Equal(new TimeSpan(0, 0, 15), nextOccurrence - now);
         }
 
+        [Fact]
+        public void Create_InvalidSchedule()
+        {
+            TimerTriggerAttribute attribute = new TimerTriggerAttribute("invalid");
+            ArgumentException ex = Assert.Throws<ArgumentException>(() =>
+            {
+                TimerSchedule.Create(attribute, new TestNameResolver());
+            });
+
+            Assert.Equal("The schedule expression was not recognized as a valid cron expression or timespan string.", ex.Message);
+        }
+
         public class CustomSchedule : TimerSchedule
         {
             public override DateTime GetNextOccurrence(DateTime now)
