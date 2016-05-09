@@ -60,7 +60,7 @@ namespace ExtensionsSample
                 typeof(SampleSamples),
                 typeof(SendGridSamples),
                 typeof(TableSamples),
-                typeof(OutgoingHttpRequestSamples)),
+                typeof(OutgoingHttpRequestSamples),
                 typeof(TimerSamples));
 
             host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
