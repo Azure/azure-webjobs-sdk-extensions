@@ -27,8 +27,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
         [InlineData(typeof(IAsyncCollector<TodoItem>), null, false, true)]
         [InlineData(typeof(ICollector<JObject>), "Items", false, true)]
         [InlineData(typeof(IAsyncCollector<JObject>), "Items", false, true)]
-        [InlineData(typeof(ICollector<TodoItem>), null, true, false)]
-        [InlineData(typeof(TodoItem), null, false, false)]
         [InlineData(typeof(ICollector<NoId>), null, false, false)]
         [InlineData(typeof(ICollector<object>), "Item", false, true)]
         [InlineData(typeof(ICollector<object>), null, false, false)]
