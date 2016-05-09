@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -36,11 +35,34 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
         public FileListener(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor triggerExecutor, TraceWriter trace)
         {
+            if (config == null)
+            {
+                throw new ArgumentNullException("config");
+            }
+            if (attribute == null)
+            {
+                throw new ArgumentNullException("attribute");
+            }
+            if (triggerExecutor == null)
+            {
+                throw new ArgumentNullException("triggerExecutor");
+            }
+            if (trace == null)
+            {
+                throw new ArgumentNullException("trace");
+            }
+
             _config = config;
             _attribute = attribute;
             _triggerExecutor = triggerExecutor;
             _trace = trace;
             _cancellationTokenSource = new CancellationTokenSource();
+
+            if (string.IsNullOrEmpty(_config.RootPath) || !Directory.Exists(_config.RootPath))
+            {
+                throw new InvalidOperationException(string.Format("Path '{0}' is invalid. FilesConfiguration.RootPath must be set to a valid directory location.", _config.RootPath));
+            }
+
             _watchPath = Path.Combine(_config.RootPath, _attribute.GetRootPath());
         }
 
@@ -62,11 +84,6 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
                 throw new InvalidOperationException("The listener has already been started.");
             }
 
-            if (string.IsNullOrEmpty(_config.RootPath) || !Directory.Exists(_config.RootPath))
-            {
-                throw new InvalidOperationException(string.Format("Path '{0}' is invalid. FilesConfiguration.RootPath must be set to a valid directory location.", _config.RootPath));
-            }
-
             CreateFileWatcher();
 
             FileProcessorFactoryContext context = new FileProcessorFactoryContext(_config, _attribute, _triggerExecutor, _trace);
@@ -83,8 +100,10 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
             ProcessFiles();
 
             // Create a timer to cleanup processed files.
-            // The timer doesn't auto-reset. It will reset itself
-            // when we receive more file events
+            // The timer doesn't auto-reset. It resets itself as files
+            // are completed.
+            // We start the timer on startup so we have at least one
+            // cleanup pass
             _cleanupTimer = new System.Timers.Timer()
             {
                 AutoReset = false,
@@ -195,6 +214,12 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
         private void FileChangeHandler(object source, FileSystemEventArgs e)
         {
+            if (_processor.IsStatusFile(e.Name))
+            {
+                // We never want to trigger on our own status files
+                return;
+            }
+
             if (e.ChangeType == WatcherChangeTypes.Changed)
             {
                 // if this is a Change event stemming from a Create operation
@@ -210,14 +235,15 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
             // add the item to the work queue
             _workQueue.Post(e);
-
-            // when we receive file events, reset the cleanup timer
-            _cleanupTimer.Enabled = true;
         }
 
         private async Task ProcessWorkItem(FileSystemEventArgs e)
         {
             await _processor.ProcessFileAsync(e, _cancellationTokenSource.Token);
+
+            // Whenever we finish processing a file, reset the cleanup timer
+            // so it will run
+            _cleanupTimer.Enabled = true;
         }
 
         private void ProcessFiles()

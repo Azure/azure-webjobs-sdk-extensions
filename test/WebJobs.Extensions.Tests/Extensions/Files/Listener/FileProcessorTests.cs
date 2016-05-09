@@ -282,6 +282,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             Assert.False(File.Exists(completedStatusFile));
         }
 
+        [Theory]
+        [InlineData("input.status", true)]
+        [InlineData("input.status.status", true)]
+        [InlineData("input.txt", false)]
+        [InlineData("input", false)]
+        [InlineData("", false)]
+        public void IsStatusFile_ReturnsExpectedResult(string file, bool expected)
+        {
+            Assert.Equal(expected, processor.IsStatusFile(file));
+        }
+
         private string WriteTestFile(string extension = "dat", string fileContents = "TestData")
         {
             string testFileName = string.Format("{0}.{1}", Guid.NewGuid(), extension);

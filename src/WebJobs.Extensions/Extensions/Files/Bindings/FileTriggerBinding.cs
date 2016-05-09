@@ -82,6 +82,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 
         public ParameterDescriptor ToParameterDescriptor()
         {
+            // These path values are validated later during startup.
+            string triggerPath = Path.Combine(_config.RootPath ?? string.Empty, _attribute.Path ?? string.Empty);
+
             return new FileTriggerParameterDescriptor
             {
                 Name = _parameter.Name,
@@ -89,7 +92,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 {
                     Prompt = "Enter a file path",
                     Description = string.Format("File event occurred on path '{0}'", _attribute.GetRootPath()),
-                    DefaultValue = Path.Combine(_config.RootPath, _attribute.Path)
+                    DefaultValue = triggerPath
                 }
             };
         }
