@@ -33,6 +33,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             DeleteTestFiles(testFileDir);
         }
 
+        [Fact]
+        public void Constructor_ThrowsOnInvalidRootPath()
+        {
+            FilesConfiguration config = new FilesConfiguration();
+            FileTriggerAttribute attrib = new FileTriggerAttribute("test", "*.dat");
+            Mock<ITriggeredFunctionExecutor> mockExecutor = new Mock<ITriggeredFunctionExecutor>();
+
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+            {
+                new FileListener(config, attrib, mockExecutor.Object, new TestTraceWriter());
+            });
+
+            Assert.Equal("Path '' is invalid. FilesConfiguration.RootPath must be set to a valid directory location.", ex.Message);
+        }
+
         [Theory]
         [InlineData(1, 100)]
         [InlineData(4, 200)]
@@ -165,6 +180,42 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             {
                 listener.Dispose();
             }
+        }
+
+        /// <summary>
+        /// Regression test for issue #91
+        /// 
+        /// Previously for a *.* filter we'd process our own .status files, which would cause an infinite loop.
+        /// </summary>
+        [Fact]
+        public async Task CatchAllFilter_AutoDelete_ProcessesAndDeletesFiles()
+        {
+            Mock<ITriggeredFunctionExecutor> mockExecutor = new Mock<ITriggeredFunctionExecutor>(MockBehavior.Strict);
+            ConcurrentBag<string> processedFiles = new ConcurrentBag<string>();
+            FunctionResult result = new FunctionResult(true);
+            mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
+
+            FilesConfiguration config = new FilesConfiguration()
+            {
+                RootPath = rootPath
+            };
+            FileTriggerAttribute attribute = new FileTriggerAttribute(attributeSubPath, changeTypes: WatcherChangeTypes.Created, filter: "*.*", autoDelete: true);
+
+            FileListener listener = new FileListener(config, attribute, mockExecutor.Object, new TestTraceWriter());
+            await listener.StartAsync(CancellationToken.None);
+
+            // create a few files with different extensions
+            WriteTestFile("jpg");
+            WriteTestFile("txt");
+            WriteTestFile("png");
+
+            // wait for the files to be processed fully and all files deleted (autoDelete = true)
+            await TestHelpers.Await(() =>
+            {
+                return Directory.EnumerateFiles(testFileDir).Count() == 0;
+            });
+
+            listener.Dispose();
         }
 
         private void DeleteTestFiles(string path)

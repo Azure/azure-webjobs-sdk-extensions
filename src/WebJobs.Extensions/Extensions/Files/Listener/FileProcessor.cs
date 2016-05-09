@@ -247,6 +247,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// <returns>True if the file should be processed, false otherwise.</returns>
         public virtual bool ShouldProcessFile(string filePath)
         {
+            if (IsStatusFile(filePath))
+            {
+                return false;
+            }
+
             string statusFilePath = GetStatusFile(filePath);
             if (!File.Exists(statusFilePath))
             {
@@ -365,6 +370,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
             return file + "." + StatusFileExtension;
         }
 
+        internal bool IsStatusFile(string file)
+        {
+            return string.Compare(Path.GetExtension(file).Trim('.'), StatusFileExtension, StringComparison.OrdinalIgnoreCase) == 0;
+        }
+
         /// <summary>
         /// Clean up any files that have been fully processed
         /// </summary>
@@ -395,10 +405,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
                     // first delete the non status file(s)
                     foreach (string filePath in files)
                     {
-                        if (Path.GetExtension(filePath).TrimStart('.') == StatusFileExtension)
+                        if (IsStatusFile(filePath))
                         {
                             continue;
                         }
+
                         if (TryDelete(filePath))
                         {
                             filesDeleted++;
