@@ -1,4 +1,5 @@
 ﻿using Microsoft.Azure.ApiHub;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using System;
@@ -23,15 +24,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
         private IFileWatcher _poll;
         private int _pollIntervalInSeconds;
         private FileWatcherType _fileWatcherType;
+        private TraceWriter _trace;
 
         public ApiHubListener(
             IFolderItem folder,
             ITriggeredFunctionExecutor executor,
+            TraceWriter trace,
             int pollIntervalInSeconds,
             FileWatcherType fileWatcherType = FileWatcherType.Created)
         {
             this._folderSource = folder;
             this._executor = executor;
+            this._trace = trace;
             this._pollIntervalInSeconds = pollIntervalInSeconds;
             this._fileWatcherType = fileWatcherType;
         }
@@ -55,7 +59,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
 
             if (_poll == null)
             {
-                throw new InvalidOperationException(string.Format("Path '{0}' is invalid. IFolderItem.RootPath must be set to a valid directory location.", _folderSource.Path));
+                var errorText = string.Format("Path '{0}' is invalid. IFolderItem.RootPath must be set to a valid directory location.", _folderSource.Path);
+                _trace.Error(errorText);
+
+                throw new InvalidOperationException(errorText);
             }
 
             // TODO: need to decide what to do when _poll is null i.e. trigger folder does not exist.

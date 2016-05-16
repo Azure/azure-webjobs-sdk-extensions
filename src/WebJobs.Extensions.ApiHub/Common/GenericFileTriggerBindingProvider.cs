@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.WebJobs.Host.Bindings;
+﻿using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
@@ -13,18 +14,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
     internal class GenericFileTriggerBindingProvider<TAttribute, TFile> : ITriggerBindingProvider
           where TAttribute : Attribute, IFileAttribute
     {
-        private readonly Func<TAttribute, ITriggeredFunctionExecutor, Task<IListener>> _listenerBuilder;
+        private readonly Func<TAttribute, ITriggeredFunctionExecutor, TraceWriter, Task<IListener>> _listenerBuilder;
         private readonly IBindingProvider2 _provider; // for regular binding to objects. 
         private readonly IFileTriggerStrategy<TFile> _strategy;
+        private TraceWriter _trace;
 
         public GenericFileTriggerBindingProvider(
-            Func<TAttribute, ITriggeredFunctionExecutor, Task<IListener>> listenerBuilder,
+            Func<TAttribute, ITriggeredFunctionExecutor, TraceWriter, Task<IListener>> listenerBuilder,
             IBindingProvider2 provider,
-            IFileTriggerStrategy<TFile> strategy)
+            IFileTriggerStrategy<TFile> strategy,
+            TraceWriter trace)
         {
             this._listenerBuilder = listenerBuilder;
             this._provider = provider;
             this._strategy = strategy;
+            this._trace = trace;
         }
 
         // Called once at each parameter. 
@@ -40,7 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
             string path = attribute.Path;
 
-            var binding = new GenericTriggerbinding(parameter, attribute, this);
+            var binding = new GenericTriggerbinding(parameter, attribute, _trace, this);
 
             var bindingContract = binding.BindingDataContract;
             BindingProviderContext bindingContext2 = new BindingProviderContext(parameter, bindingContract, context.CancellationToken);
@@ -60,15 +64,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
             private readonly IReadOnlyDictionary<string, Type> _bindingContract;
             private readonly BindingDataProvider _bindingDataProvider;
             private readonly ParameterInfo _parameter;
+            private TraceWriter _trace;
 
             public GenericTriggerbinding(
                 ParameterInfo parameter,
-                TAttribute attribute, 
+                TAttribute attribute,
+                TraceWriter trace, 
                 GenericFileTriggerBindingProvider<TAttribute, TFile> parent)
             {
                 this._parameter = parameter;
                 this._attribute = attribute;
                 this._parent = parent;
+                this._trace = trace;
 
                 _bindingDataProvider = BindingDataProvider.FromTemplate(_attribute.Path);
                 _bindingContract = CreateBindingContract();
@@ -110,9 +117,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
             public async Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
             {
-                TFile file = (TFile)value;
-                var bindingData = GetBindingData(file);
-                string path = _parent._strategy.GetPath(file);
+                var path = value as string;
+                IReadOnlyDictionary<string, object> bindingData = null;
+
+                if (path != null)
+                {
+                    bindingData = GetBindingData(path);
+                }
+                else
+                {
+                    TFile file = (TFile)value;
+                    bindingData = GetBindingData(file);
+                    path = _parent._strategy.GetPath(file);
+                }
 
                 // generic binder binds on a Path as string 
                 var valueProvider = await _binding.BindAsync(path, context);
@@ -157,7 +174,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
             public Task<IListener> CreateListenerAsync(ListenerFactoryContext context)
             {
-                Task<IListener> listener = _parent._listenerBuilder(_attribute, context.Executor);
+                Task<IListener> listener = _parent._listenerBuilder(_attribute, context.Executor, _trace);
                 return listener;
             }
 

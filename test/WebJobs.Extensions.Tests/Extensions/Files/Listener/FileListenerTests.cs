@@ -184,7 +184,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
 
         /// <summary>
         /// Regression test for issue #91
-        /// 
         /// Previously for a *.* filter we'd process our own .status files, which would cause an infinite loop.
         /// </summary>
         [Fact]

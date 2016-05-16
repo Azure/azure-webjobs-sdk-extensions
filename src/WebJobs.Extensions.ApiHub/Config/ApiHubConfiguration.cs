@@ -21,6 +21,36 @@ namespace Microsoft.Azure.WebJobs
         // Map of saas names (ie, "Dropbox") to their underlying root folder. 
         Dictionary<string, IFolderItem> _map = new Dictionary<string, IFolderItem>(StringComparer.OrdinalIgnoreCase);
 
+        ApiHubLogger _logger;
+
+        /// <summary>
+        /// Gets or sets the logger.
+        /// </summary>
+        /// <value>
+        /// The logger.
+        /// </value>
+        public TraceWriter Logger
+        {
+            get
+            {
+                if (_logger != null)
+                {
+                    return _logger.TraceWriter;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            set
+            {
+                if (value != null)
+                {
+                    _logger = new ApiHubLogger(value);
+                }
+            }
+        }
+
         /// <inheritdoc />
         public void Initialize(ExtensionConfigContext context)
         {
@@ -33,16 +63,16 @@ namespace Microsoft.Azure.WebJobs
             var extensions = config.GetService<IExtensionRegistry>();
             var converterManager = config.GetService<IConverterManager>();
 
-            var bindingProvider = new GenerericStreamBindingProvider<ApiHubFileAttribute, ApiHubFile>(
-                BuildFromAttribute, converterManager);
+            var bindingProvider = new GenericStreamBindingProvider<ApiHubFileAttribute, ApiHubFile>(
+                BuildFromAttribute, converterManager, context.Trace);
             extensions.RegisterExtension<IBindingProvider>(bindingProvider);
 
             var triggerBindingProvider = new GenericFileTriggerBindingProvider<ApiHubFileTriggerAttribute, ApiHubFile>(
-                BuildListener, bindingProvider, this);
+                BuildListener, bindingProvider, this, context.Trace);
             extensions.RegisterExtension<ITriggerBindingProvider>(triggerBindingProvider);
         }
 
-        private async Task<IListener> BuildListener(ApiHubFileTriggerAttribute attribute, ITriggeredFunctionExecutor executor)
+        private async Task<IListener> BuildListener(ApiHubFileTriggerAttribute attribute, ITriggeredFunctionExecutor executor, TraceWriter trace)
         {
             var root = GetFileSource(attribute.Key);
 
@@ -51,17 +81,22 @@ namespace Microsoft.Azure.WebJobs
             if (i == -1)
             {
                 i = path.LastIndexOf('\\');
-
-                if (i == -1)
-                {
-                    throw new InvalidOperationException("Bad path: " + path);
-                }
             }
-            string folderName = path.Substring(0, i);
+
+            string folderName;
+            if (i <= 0)
+            {
+                // This is the root folder
+                folderName = "/";
+            }
+            else
+            {
+                folderName = path.Substring(0, i);
+            }
 
             var folder = await root.GetFolderReferenceAsync(folderName);
 
-            var listener = new ApiHubListener(folder, executor, attribute.PollIntervalInSeconds, attribute.FileWatcherType);
+            var listener = new ApiHubListener(folder, executor, trace, attribute.PollIntervalInSeconds, attribute.FileWatcherType);
 
             return listener;
         }
@@ -83,10 +118,10 @@ namespace Microsoft.Azure.WebJobs
         /// Add path to the configuration
         /// </summary>
         /// <param name="key">App settings key name that have the connections string</param>
-        /// <param name="connectionString">Connection string to access SAAS via ApiHub. <seealso cref="ApiHubJobHostConfigurationExtensions.GetApiHubProviderConnectionStringAsync"/></param>
+        /// <param name="connectionString">Connection string to access SAAS via ApiHub. <seealso cref="ApiHubJobHostConfigurationExtensions.GetApiHubProviderConnectionStringAsync" /></param>
         public void AddKeyPath(string key, string connectionString)
         {
-            var root = ItemFactory.Parse(connectionString);
+            var root = ItemFactory.Parse(connectionString, _logger);
             _map[key] = root;
         }
 

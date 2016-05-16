@@ -37,6 +37,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             _rootFolder = ItemFactory.Parse(_apiHubConnectionString);
 
             var folder = _rootFolder.GetFolderReferenceAsync(ImportTestPath).GetAwaiter().GetResult();
+
+            if (!folder.FolderExists(ImportTestPath))
+            {
+                // write a test file to create the folder if it doesn't exist.
+                WriteTestFile().GetAwaiter().GetResult();
+            }
+
             foreach (var item in folder.ListAsync(true).GetAwaiter().GetResult())
             {
                 var i = item as IFileItem;
@@ -116,6 +123,41 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             await VerifyInputBinding(host, typeof(ApiHubTestJobs).GetMethod("BindToTextReaderInput"));
 
             host.Stop();
+        }
+
+        [Fact]
+        public async Task ManualBindToString()
+        {
+            JobHost host = CreateTestJobHost();
+
+            var method = typeof(ApiHubTestJobs).GetMethod("BindToStringOutput");
+
+            string data = Guid.NewGuid().ToString();
+            string inputFileName = ImportTestPath + "/BindToString.txt";
+
+            var inputFile = await _rootFolder.GetFileReferenceAsync(inputFileName, true);
+            await inputFile.WriteAsync(Encoding.UTF8.GetBytes(data));
+
+            host.Call(method, new { input = inputFileName });
+
+            string outputFileName = OutputTestPath + "/BindToString.txt";
+            var outputFile = await _rootFolder.GetFileReferenceAsync(outputFileName, true);
+
+            await TestHelpers.Await(() =>
+            {
+                return _rootFolder.FileExists(outputFileName);
+            });
+
+            var result = string.Empty;
+
+            await TestHelpers.Await(() =>
+            {
+                // sometime there is a delay between a file being created in a SAAS provider and its content being non-empty. hence adding this logic.
+                result = Encoding.UTF8.GetString(outputFile.ReadAsync().GetAwaiter().GetResult());
+                return !string.IsNullOrEmpty(result);
+            });
+
+            Assert.Equal(data, result);
         }
 
         private async Task VerifyInputBinding(JobHost host, MethodInfo method)

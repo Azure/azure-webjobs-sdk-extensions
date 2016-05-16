@@ -1,4 +1,5 @@
 ﻿using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 using System;
@@ -12,19 +13,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
     /// </summary>
     /// <typeparam name="TAttribute"></typeparam>
     /// <typeparam name="TFile"></typeparam>
-    internal class GenerericStreamBindingProvider<TAttribute, TFile> : 
+    internal class GenericStreamBindingProvider<TAttribute, TFile> : 
         IBindingProvider, IBindingProvider2
         where TAttribute : Attribute, IFileAttribute
     {
         private readonly Func<TAttribute, Task<TFile>> _strategyBuilder;
         private readonly IConverterManager _converterManager;
+        private TraceWriter _trace;
 
-        public GenerericStreamBindingProvider(
+        public GenericStreamBindingProvider(
             Func<TAttribute, Task<TFile>> strategyBuilder,
-            IConverterManager converterManager)
+            IConverterManager converterManager, 
+            TraceWriter trace)
         {
             _strategyBuilder = strategyBuilder;
             _converterManager = converterManager;
+            _trace = trace;
         }
 
         public Task<IBinding> TryCreateAsync(BindingProviderContext context)
@@ -83,6 +87,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
             if (binding == null)
             {
+                _trace.Error("Binding is not supported: " + path);
                 throw new InvalidOperationException("Binding is not supported: " + path);
             }
 
