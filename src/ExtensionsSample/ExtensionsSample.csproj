@@ -54,7 +54,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Azure.ApiHub.Sdk, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.ApiHub.Sdk.0.6.5-alpha\lib\net45\Microsoft.Azure.ApiHub.Sdk.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.Azure.ApiHub.Sdk.0.6.6-alpha\lib\net45\Microsoft.Azure.ApiHub.Sdk.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.Documents.Client">
@@ -158,6 +158,7 @@
     <Compile Include="Models\Item.cs" />
     <Compile Include="Models\ItemDoc.cs" />
     <Compile Include="SamplesTypeLocator.cs" />
+    <Compile Include="Samples\ApiHubTableSamples.cs" />
     <Compile Include="Samples\ApiHubSamples.cs" />
     <Compile Include="Samples\MobileAppSamples.cs" />
     <Compile Include="Samples\DocumentDBSamples.cs" />

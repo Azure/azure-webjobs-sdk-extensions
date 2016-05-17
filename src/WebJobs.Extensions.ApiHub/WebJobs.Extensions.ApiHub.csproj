@@ -40,7 +40,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Azure.ApiHub.Sdk, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.ApiHub.Sdk.0.6.5-alpha\lib\net45\Microsoft.Azure.ApiHub.Sdk.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.Azure.ApiHub.Sdk.0.6.6-alpha\lib\net45\Microsoft.Azure.ApiHub.Sdk.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.KeyVault.Core, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -80,6 +80,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Net.Http.Formatting, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.AspNet.WebApi.Client.5.2.3\lib\net45\System.Net.Http.Formatting.dll</HintPath>
@@ -101,6 +102,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Table\ApiHubTableAttributeExtensions.cs" />
+    <Compile Include="Table\TableConfigContext.cs" />
+    <Compile Include="Table\ConnectionFactory.cs" />
+    <Compile Include="Extensions\TypeExtensions.cs" />
+    <Compile Include="Table\TableClientBinding.cs" />
+    <Compile Include="Table\TableEntityBinding.cs" />
+    <Compile Include="Table\ApiHubTableAttribute.cs" />
     <Compile Include="Common\ApiHubFile.cs" />
     <Compile Include="ApiHubFileAttribute.cs" />
     <Compile Include="ApiHubFileTriggerAttribute.cs" />
@@ -120,6 +128,10 @@
     <Compile Include="Helper\ApiHubHelper.cs" />
     <Compile Include="Listener\ApiHubListener.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Table\TableBindingProvider.cs" />
+    <Compile Include="Table\TableBinding.cs" />
+    <Compile Include="Table\TableAsyncCollector.cs" />
+    <Compile Include="Table\ParameterInfoExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

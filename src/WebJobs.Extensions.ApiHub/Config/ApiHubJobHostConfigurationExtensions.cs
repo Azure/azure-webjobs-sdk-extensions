@@ -17,7 +17,7 @@ namespace Microsoft.Azure.WebJobs
         /// </summary>
         /// <param name="config">current <see cref="JobHostConfiguration"/></param>
         /// <param name="apiHubConfiguration">Instance of <see cref="ApiHubConfiguration"/></param>
-        public static void UseApiHub(this JobHostConfiguration config, ApiHubConfiguration apiHubConfiguration)
+        public static void UseApiHub(this JobHostConfiguration config, ApiHubConfiguration apiHubConfiguration = null)
         {
             if (config == null)
             {
@@ -26,7 +26,7 @@ namespace Microsoft.Azure.WebJobs
 
             if (apiHubConfiguration == null)
             {
-                throw new ArgumentNullException("apiHubConfiguration");
+                apiHubConfiguration = new ApiHubConfiguration();
             }
             IExtensionRegistry extensions = config.GetService<IExtensionRegistry>();
             extensions.RegisterExtension<IExtensionConfigProvider>(apiHubConfiguration);

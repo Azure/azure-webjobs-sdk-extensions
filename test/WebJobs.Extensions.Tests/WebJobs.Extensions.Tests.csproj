@@ -39,7 +39,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Azure.ApiHub.Sdk, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.ApiHub.Sdk.0.6.5-alpha\lib\net45\Microsoft.Azure.ApiHub.Sdk.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.Azure.ApiHub.Sdk.0.6.6-alpha\lib\net45\Microsoft.Azure.ApiHub.Sdk.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.Documents.Client, Version=1.7.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -168,6 +168,11 @@
     <Compile Include="Common\TestHelpers.cs" />
     <Compile Include="Common\TestNameResolver.cs" />
     <Compile Include="Common\TestTraceWriter.cs" />
+    <Compile Include="Extensions\ApiHub\FakeConnectionFactory.cs" />
+    <Compile Include="Extensions\ApiHub\FakeConnection.cs" />
+    <Compile Include="Extensions\ApiHub\FakeTabularConnectorAdapter.cs" />
+    <Compile Include="Extensions\ApiHub\ApiHubTableBindingTests.cs" />
+    <Compile Include="Common\TypeExtensionsTests.cs" />
     <Compile Include="Extensions\Core\CoreBindingEndToEndTests.cs" />
     <Compile Include="Extensions\ApiHub\ApiHubBindingEndToEndTests.cs" />
     <Compile Include="Extensions\Core\ErrorTriggerAttributeTests.cs" />

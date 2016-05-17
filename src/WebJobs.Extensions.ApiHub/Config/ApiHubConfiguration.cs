@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.ApiHub;
 using Microsoft.Azure.WebJobs.Extensions.ApiHub;
 using Microsoft.Azure.WebJobs.Extensions.ApiHub.Common;
+using Microsoft.Azure.WebJobs.Extensions.ApiHub.Table;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
@@ -24,6 +25,17 @@ namespace Microsoft.Azure.WebJobs
         // Map of saas names (ie, "Dropbox") to their underlying root folder. 
         private Dictionary<string, IFolderItem> _map = new Dictionary<string, IFolderItem>(StringComparer.OrdinalIgnoreCase);
         private ApiHubLogger _logger;
+
+        /// <summary>
+        /// Creates a new instance of this class.
+        /// </summary>
+        /// <param name="connectionFactory">The factory used to create connections</param>
+        public ApiHubConfiguration(ConnectionFactory connectionFactory = null)
+        {
+            ConnectionFactory = connectionFactory ?? ConnectionFactory.Default;
+        }
+
+        private ConnectionFactory ConnectionFactory { get; }
 
         /// <summary>
         /// Gets or sets the logger.
@@ -64,6 +76,7 @@ namespace Microsoft.Azure.WebJobs
             var config = context.Config;
             var extensions = config.GetService<IExtensionRegistry>();
             var converterManager = config.GetService<IConverterManager>();
+            var nameResolver = context.Config.NameResolver;
 
             var bindingProvider = new GenericStreamBindingProvider<ApiHubFileAttribute, ApiHubFile>(
                 BuildFromAttribute, converterManager, context.Trace);
@@ -72,6 +85,12 @@ namespace Microsoft.Azure.WebJobs
             var triggerBindingProvider = new GenericFileTriggerBindingProvider<ApiHubFileTriggerAttribute, ApiHubFile>(
                 BuildListener, bindingProvider, this, context.Trace);
             extensions.RegisterExtension<ITriggerBindingProvider>(triggerBindingProvider);
+
+            extensions.RegisterExtension<IBindingProvider>(
+                new TableBindingProvider(
+                    new TableConfigContext(
+                        ConnectionFactory, 
+                        nameResolver)));
         }
 
         private async Task<IListener> BuildListener(ApiHubFileTriggerAttribute attribute, ITriggeredFunctionExecutor executor, TraceWriter trace)

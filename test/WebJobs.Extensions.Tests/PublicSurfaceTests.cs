@@ -123,6 +123,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
                 "ApiHubFileTriggerAttribute",
                 "ApiHubConfiguration",
                 "ApiHubJobHostConfigurationExtensions",
+                "ApiHubTableAttribute",
+                "ConnectionFactory"
             };
 
             AssertPublicTypes(expected, assembly);
