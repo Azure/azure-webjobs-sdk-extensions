@@ -30,7 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             catch (Exception ex)
             {
                 DocumentClientException de;
-                if (_docDBContext.CreateIfNotExists &&
+                if (_docDBContext.ResolvedAttribute.CreateIfNotExists &&
                     DocumentDBUtility.TryGetDocumentClientException(ex, out de) &&
                     de.StatusCode == HttpStatusCode.NotFound)
                 {
@@ -57,16 +57,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
         internal static async Task UpsertDocument(DocumentDBContext context, T item)
         {
-            Uri collectionUri = UriFactory.CreateDocumentCollectionUri(context.ResolvedDatabaseName, context.ResolvedCollectionName);
+            Uri collectionUri = UriFactory.CreateDocumentCollectionUri(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName);
             await DocumentDBUtility.RetryAsync(() => context.Service.UpsertDocumentAsync(collectionUri, item), context.MaxThrottleRetries);
         }
 
         internal static async Task CreateIfNotExistAsync(DocumentDBContext context)
         {
-            await DocumentDBUtility.RetryAsync(() => CreateDatabaseIfNotExistsAsync(context.Service, context.ResolvedDatabaseName),
+            await DocumentDBUtility.RetryAsync(() => CreateDatabaseIfNotExistsAsync(context.Service, context.ResolvedAttribute.DatabaseName),
                 context.MaxThrottleRetries, codesToIgnore: HttpStatusCode.Conflict);
 
-            await DocumentDBUtility.RetryAsync(() => CreateDocumentCollectionIfNotExistsAsync(context.Service, context.ResolvedDatabaseName, context.ResolvedCollectionName, context.ResolvedPartitionKey, context.CollectionThroughput),
+            await DocumentDBUtility.RetryAsync(() => CreateDocumentCollectionIfNotExistsAsync(context.Service, context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName, context.ResolvedAttribute.PartitionKey, context.ResolvedAttribute.CollectionThroughput),
                 context.MaxThrottleRetries, codesToIgnore: HttpStatusCode.Conflict);
         }
 

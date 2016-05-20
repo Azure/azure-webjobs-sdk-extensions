@@ -12,34 +12,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
     internal static class MobileAppUtility
     {
         /// <summary>
-        /// Gets the core type of the specified type. Then validates that it is
-        /// usable with mobile tables.
-        /// </summary>
-        /// <param name="type">The type to evaluate.</param>
-        /// <param name="context">The <see cref="MobileTableContext"/>.</param>
-        /// <returns></returns>
-        public static bool IsCoreTypeValidItemType(Type type, MobileTableContext context)
-        {
-            Type coreType = TypeUtility.GetCoreType(type);
-            return IsValidItemType(coreType, context);
-        }
-
-        /// <summary>
         /// Evaluates whether the specified type is valid for use with mobile tables.
-        /// If the type is <see cref="JObject"/>, then the ResolvedTableName property on 
-        /// <see cref="MobileTableAttribute"/> is required.
+        /// If the type is <see cref="JObject"/>, then then a table name is required.
         /// If the type is not <see cref="JObject"/>, then it must contain a single public
         /// string 'Id' property.
         /// </summary>
         /// <param name="itemType">The type to evaluate.</param>
-        /// <param name="context">The <see cref="MobileTableContext"/>.</param>
+        /// <param name="tableName">The table name.</param>
         /// <returns></returns>
-        public static bool IsValidItemType(Type itemType, MobileTableContext context)
+        public static bool IsValidItemType(Type itemType, string tableName)
         {
             // We cannot support a type of JObject without a TableName.
             if (itemType == typeof(JObject))
             {
-                return !string.IsNullOrEmpty(context.ResolvedTableName);
+                return !string.IsNullOrEmpty(tableName);
             }
 
             // POCO types must have a string id property (case insensitive).

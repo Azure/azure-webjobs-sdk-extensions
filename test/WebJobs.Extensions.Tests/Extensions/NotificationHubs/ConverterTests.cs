@@ -14,6 +14,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
 {
     public class ConverterTests
     {
+        public static IEnumerable<object[]> ValidNotificationPlatforms
+        {
+            get
+            {
+                var notificationPlatforms = (NotificationPlatform[])Enum.GetValues(typeof(NotificationPlatform));
+                return notificationPlatforms.Select(p => new object[] { p });
+            }
+        }
+
         [Fact]
         public void Converter_JsonString_Valid()
         {
@@ -29,6 +38,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             Type expectedExceptionType = typeof(JsonReaderException);
             var exception = Assert.ThrowsAny<Exception>(() => Converter.BuildTemplateNotificationFromJsonString(messageProperties));
             Assert.Equal(expectedExceptionType, exception.GetType());
+        }
+
+        [Theory]
+        [MemberData("ValidNotificationPlatforms")]
+        public void Converter_String_NotificationPlatform_Valid(NotificationPlatform platform)
+        {
+            string stringPayload = "native notification payload";
+            Notification notification = Converter.BuildNotificationFromString(stringPayload, platform);
+            Assert.NotNull(notification);
+            Assert.Equal(stringPayload, notification.Body);
         }
 
         [Fact]

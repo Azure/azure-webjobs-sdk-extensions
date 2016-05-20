@@ -22,7 +22,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
         {
             if (typeof(T) == typeof(JObject) || typeof(T) == typeof(object))
             {
-                if (string.IsNullOrEmpty(_context.ResolvedTableName))
+                if (string.IsNullOrEmpty(_context.ResolvedAttribute.TableName))
                 {
                     throw new InvalidOperationException("The table name must be specified.");
                 }
@@ -32,16 +32,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
                 // no 'Id' property on Object. This adds some useful functionality from scripting where you don't need to
                 // define models or add references to JSON.NET in order to add data to table.
                 JObject convertedItem = JObject.FromObject(item);
-                IMobileServiceTable table = _context.Client.GetTable(_context.ResolvedTableName);
+                IMobileServiceTable table = _context.Client.GetTable(_context.ResolvedAttribute.TableName);
                 await table.InsertAsync(convertedItem);
             }
             else
             {
                 // If TableName is specified, add it to the internal table cache. Now items of this type
                 // will operate on the specified TableName.
-                if (!string.IsNullOrEmpty(_context.ResolvedTableName))
+                if (!string.IsNullOrEmpty(_context.ResolvedAttribute.TableName))
                 {
-                    _context.Client.AddToTableNameCache(item.GetType(), _context.ResolvedTableName);
+                    _context.Client.AddToTableNameCache(item.GetType(), _context.ResolvedAttribute.TableName);
                 }
 
                 IMobileServiceTable<T> table = _context.Client.GetTable<T>();

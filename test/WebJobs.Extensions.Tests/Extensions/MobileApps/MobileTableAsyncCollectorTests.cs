@@ -74,10 +74,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
                 .Setup(m => m.GetTable("TodoItem"))
                 .Returns(mockTable.Object);
 
+            var attribute = new MobileTableAttribute
+            {
+                TableName = "TodoItem"
+            };
+
             var context = new MobileTableContext
             {
                 Client = mockClient.Object,
-                ResolvedTableName = "TodoItem"
+                ResolvedAttribute = attribute
             };
 
             IAsyncCollector<JObject> collector = new MobileTableAsyncCollector<JObject>(context);
@@ -137,9 +142,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
                 .Setup(m => m.GetTable("Item"))
                 .Returns(mockTable.Object);
 
+            var attribute = new MobileTableAttribute
+            {
+                TableName = "Item"
+            };
+
             var context = new MobileTableContext
             {
-                ResolvedTableName = "Item",
+                ResolvedAttribute = attribute,
                 Client = mockClient.Object,
             };
 
@@ -168,9 +178,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
 
         private static IAsyncCollector<T> CreateCollector<T>(HttpMessageHandler handler, string tableName)
         {
+            var attribute = new MobileTableAttribute
+            {
+                TableName = tableName
+            };
+
             var context = new MobileTableContext
             {
-                ResolvedTableName = tableName,
+                ResolvedAttribute = attribute,
                 Client = new MobileServiceClient("https://someuri", handler)
             };
             return new MobileTableAsyncCollector<T>(context);

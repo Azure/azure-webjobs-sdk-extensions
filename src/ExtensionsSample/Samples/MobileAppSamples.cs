@@ -34,7 +34,7 @@ namespace ExtensionsSample
         // Anonymous output binding 
         //   The binding inserts the newly created item into the table when the 
         //   method successfully exits.
-        public static void InsertItem(
+        public static void InsertItem_TableItem(
             [TimerTrigger("00:01")] TimerInfo timer,
             [MobileTable(TableName = "Item")] out object newItem)
         {

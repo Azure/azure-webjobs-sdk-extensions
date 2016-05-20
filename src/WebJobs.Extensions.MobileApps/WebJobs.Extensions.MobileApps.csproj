@@ -46,12 +46,12 @@
       <HintPath>..\..\packages\Microsoft.Azure.KeyVault.Core.1.0.0\lib\net40\Microsoft.Azure.KeyVault.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Azure.WebJobs, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.Core.1.2.0-alpha-10306\lib\net45\Microsoft.Azure.WebJobs.dll</HintPath>
+    <Reference Include="Microsoft.Azure.WebJobs, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.Core.2.0.0-alpha-10331\lib\net45\Microsoft.Azure.WebJobs.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Azure.WebJobs.Host, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.1.2.0-alpha-10306\lib\net45\Microsoft.Azure.WebJobs.Host.dll</HintPath>
+    <Reference Include="Microsoft.Azure.WebJobs.Host, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.2.0.0-alpha-10331\lib\net45\Microsoft.Azure.WebJobs.Host.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Data.Edm, Version=5.7.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -114,29 +114,17 @@
       <Link>CustomDictionary.xml</Link>
       <SubType>Designer</SubType>
     </CodeAnalysisDictionary>
-    <Compile Include="..\Common\TypeUtility.cs">
-      <Link>Common\TypeUtility.cs</Link>
-    </Compile>
-    <Compile Include="Bindings\CompositeBindingProvider.cs" />
     <Compile Include="Bindings\MobileTableAsyncCollector.cs" />
     <Compile Include="Config\DefaultMobileServiceClientFactory.cs" />
     <Compile Include="Config\IMobileServiceClientFactory.cs" />
     <Compile Include="Config\MobileServiceApiKeyHandler.cs" />
     <Compile Include="MobileTableAttribute.cs" />
-    <Compile Include="Bindings\MobileTableAttributeBindingProvider.cs" />
     <Compile Include="Config\MobileAppsConfiguration.cs" />
     <Compile Include="MobileTableContext.cs" />
     <Compile Include="Config\MobileAppsJobHostConfigurationExtensions.cs" />
-    <Compile Include="Bindings\MobileTableItemBinding.cs" />
     <Compile Include="Bindings\MobileTableItemValueBinder.cs" />
-    <Compile Include="Bindings\MobileTableOutputBindingProvider.cs" />
-    <Compile Include="Bindings\MobileTableQueryBinding.cs" />
-    <Compile Include="Bindings\MobileTableQueryValueProvider.cs" />
-    <Compile Include="Bindings\MobileTableTableBinding.cs" />
-    <Compile Include="Bindings\MobileTableTableValueProvider.cs" />
     <Compile Include="MobileAppUtility.cs" />
     <Compile Include="Extensions\IMobileServiceClientExtensions.cs" />
-    <Compile Include="Extensions\ParameterInfoExtensions.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

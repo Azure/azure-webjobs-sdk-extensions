@@ -51,15 +51,15 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.NotificationHubs, Version=2.16.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.NotificationHubs.1.0.3\lib\net45-full\Microsoft.Azure.NotificationHubs.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.Azure.NotificationHubs.1.0.5\lib\net45-full\Microsoft.Azure.NotificationHubs.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Azure.WebJobs, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.Core.1.2.0-alpha-10306\lib\net45\Microsoft.Azure.WebJobs.dll</HintPath>
+    <Reference Include="Microsoft.Azure.WebJobs, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.Core.2.0.0-alpha-10331\lib\net45\Microsoft.Azure.WebJobs.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Azure.WebJobs.Host, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.1.2.0-alpha-10306\lib\net45\Microsoft.Azure.WebJobs.Host.dll</HintPath>
+    <Reference Include="Microsoft.Azure.WebJobs.Host, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.2.0.0-alpha-10331\lib\net45\Microsoft.Azure.WebJobs.Host.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Data.Edm, Version=5.7.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -168,31 +168,21 @@
     <Compile Include="Common\TestHelpers.cs" />
     <Compile Include="Common\TestNameResolver.cs" />
     <Compile Include="Common\TestTraceWriter.cs" />
-    <Compile Include="Common\TypeUtilityTests.cs" />
-    <Compile Include="Extensions\DocumentDB\DocumentDBAttributeBindingProviderTests.cs" />
     <Compile Include="Extensions\Core\CoreBindingEndToEndTests.cs" />
     <Compile Include="Extensions\ApiHub\ApiHubBindingEndToEndTests.cs" />
     <Compile Include="Extensions\Core\ErrorTriggerAttributeTests.cs" />
     <Compile Include="Extensions\Core\SlidingWindowTraceFilterTests.cs" />
     <Compile Include="Extensions\Core\TraceFilterTests.cs" />
     <Compile Include="Extensions\Core\TraceMonitorTests.cs" />
-    <Compile Include="Extensions\DocumentDB\DocumentDBClientValueProviderTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBConnectionStringTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBContextTests.cs" />
-    <Compile Include="Extensions\DocumentDB\DocumentDBItemBindingTests.cs" />
-    <Compile Include="Extensions\DocumentDB\DocumentDBOutputBindingProviderTests.cs" />
+    <Compile Include="Extensions\DocumentDB\DocumentDBEndToEndTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBItemValueBinderTests.cs" />
     <Compile Include="Extensions\DocumentDB\TestDocumentDBServiceFactory.cs" />
     <Compile Include="Extensions\MobileApps\MobileTableAsyncCollectorTests.cs" />
-    <Compile Include="Extensions\MobileApps\MobileTableAttributeBindingProviderTests.cs" />
     <Compile Include="Extensions\MobileApps\MobileAppsConfigurationTests.cs" />
-    <Compile Include="Extensions\MobileApps\MobileTableItemBindingTests.cs" />
+    <Compile Include="Extensions\MobileApps\MobileTableEndToEndTests.cs" />
     <Compile Include="Extensions\MobileApps\MobileTableItemValueBinderTests.cs" />
-    <Compile Include="Extensions\MobileApps\MobileTableOutputBindingProviderTests.cs" />
-    <Compile Include="Extensions\MobileApps\MobileTableQueryBindingTests.cs" />
-    <Compile Include="Extensions\MobileApps\MobileTableQueryValueProviderTests.cs" />
-    <Compile Include="Extensions\MobileApps\MobileTableTableBindingTests.cs" />
-    <Compile Include="Extensions\MobileApps\MobileTableTableValueProviderTests.cs" />
     <Compile Include="Extensions\MobileApps\MobileTableTestHelper.cs" />
     <Compile Include="Extensions\MobileApps\MobileTableUtilityTests.cs" />
     <Compile Include="Extensions\MobileApps\MobileServiceApiKeyHandlerTests.cs" />
@@ -212,7 +202,6 @@
     <Compile Include="Extensions\Files\Listener\FileProcessorTests.cs" />
     <Compile Include="Extensions\NotificationHubs\ConverterTests.cs" />
     <Compile Include="Extensions\NotificationHubs\NotificationHubAsyncCollectorTests.cs" />
-    <Compile Include="Extensions\NotificationHubs\NotificationHubAttributeBindingProviderTests.cs" />
     <Compile Include="Extensions\Timers\Bindings\TimerTriggerBindingTests.cs" />
     <Compile Include="Extensions\Timers\Scheduling\StorageScheduleMonitorTests.cs" />
     <Compile Include="Extensions\Timers\Scheduling\TimerScheduleTests.cs" />
@@ -244,7 +233,7 @@
     <ProjectReference Include="..\..\src\WebJobs.Extensions.DocumentDB\WebJobs.Extensions.DocumentDB.csproj">
       <Project>{38372e3c-70c9-4678-892d-7295a4615561}</Project>
       <Name>WebJobs.Extensions.DocumentDB</Name>
-      <Aliases>DocumentDB</Aliases>
+      <Aliases>global</Aliases>
     </ProjectReference>
     <ProjectReference Include="..\..\src\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj">
       <Project>{c4d2e330-8fb9-4d2b-9db5-274fbfb69d69}</Project>

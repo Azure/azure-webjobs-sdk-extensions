@@ -1,13 +1,10 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-extern alias DocumentDB;
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using DocumentDB::Microsoft.Azure.WebJobs;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests

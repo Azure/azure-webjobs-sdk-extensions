@@ -3,7 +3,6 @@
 
 using System;
 using System.Net;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
@@ -16,21 +15,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 {
     internal class DocumentDBItemValueBinder<T> : IValueBinder where T : class
     {
-        private ParameterInfo _parameter;
         private DocumentDBContext _context;
         private JObject _originalItem;
-        private DocumentDBItemBindingContext _itemBindingContext;
 
-        public DocumentDBItemValueBinder(ParameterInfo parameter, DocumentDBContext context, DocumentDBItemBindingContext itemBindingContext)
+        public DocumentDBItemValueBinder(DocumentDBContext context)
         {
-            _itemBindingContext = itemBindingContext;
-            _parameter = parameter;
             _context = context;
         }
 
         public Type Type
         {
-            get { return _parameter.ParameterType; }
+            get { return typeof(T); }
         }
 
         public async Task SetValueAsync(object value, CancellationToken cancellationToken)
@@ -45,14 +40,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
         public object GetValue()
         {
-            Uri documentUri = UriFactory.CreateDocumentUri(_context.ResolvedDatabaseName, _context.ResolvedCollectionName, _itemBindingContext.Id);
+            Uri documentUri = UriFactory.CreateDocumentUri(_context.ResolvedAttribute.DatabaseName, _context.ResolvedAttribute.CollectionName, _context.ResolvedAttribute.Id);
             RequestOptions options = null;
 
-            if (!string.IsNullOrEmpty(_itemBindingContext.PartitionKey))
+            if (!string.IsNullOrEmpty(_context.ResolvedAttribute.PartitionKey))
             {
                 options = new RequestOptions
                 {
-                    PartitionKey = new PartitionKey(_itemBindingContext.PartitionKey)
+                    PartitionKey = new PartitionKey(_context.ResolvedAttribute.PartitionKey)
                 };
             }
 
@@ -82,7 +77,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 string originalId = null;
                 string currentId = null;
                 if (TryGetId(currentValue, out currentId) &&
-                    TryGetId(originalItem, out originalId))
+                    !string.IsNullOrEmpty(currentId) &&
+                    TryGetId(originalItem, out originalId) &&
+                    !string.IsNullOrEmpty(originalId))
                 {
                     // make sure it's not the Id that has changed
                     if (!string.Equals(originalId, currentId, StringComparison.Ordinal))
@@ -97,7 +94,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                     throw new InvalidOperationException(string.Format("The document must have an 'id' property."));
                 }
 
-                Uri documentUri = UriFactory.CreateDocumentUri(context.ResolvedDatabaseName, context.ResolvedCollectionName, originalId);
+                Uri documentUri = UriFactory.CreateDocumentUri(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName, originalId);
                 await DocumentDBUtility.RetryAsync(() => context.Service.ReplaceDocumentAsync(documentUri, newItem),
                     context.MaxThrottleRetries);
             }

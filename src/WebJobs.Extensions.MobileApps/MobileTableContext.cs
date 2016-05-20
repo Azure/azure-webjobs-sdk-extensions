@@ -7,12 +7,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
 {
     internal class MobileTableContext
     {
-        public MobileAppsConfiguration Config { get; set; }
+        public MobileTableContext()
+        {
+            ResolvedAttribute = new MobileTableAttribute();
+        }
+
+        public MobileTableAttribute ResolvedAttribute { get; set; }
 
         public IMobileServiceClient Client { get; set; }
-
-        public string ResolvedTableName { get; set; }
-
-        public string ResolvedId { get; set; }
     }
 }

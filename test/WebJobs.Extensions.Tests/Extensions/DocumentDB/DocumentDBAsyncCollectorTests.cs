@@ -1,18 +1,14 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-// We are using this alias because the test assembly references both MobileApps and DocumentDB, which share
-// the TypeUtility. This results in a type name collision. This is only required for the test assembly.
-extern alias DocumentDB;
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using DocumentDB::Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Models;
 using Moq;
 using Xunit;
@@ -93,7 +89,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             // Arrange
             var mockDocDBService = new Mock<IDocumentDBService>(MockBehavior.Strict);
             var context = CreateContext(mockDocDBService.Object);
-            context.CreateIfNotExists = true;
+            context.ResolvedAttribute.CreateIfNotExists = true;
             var collector = new DocumentDBAsyncCollector<Item>(context);
 
             mockDocDBService
@@ -113,7 +109,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             // Arrange
             var mockDocDBService = new Mock<IDocumentDBService>(MockBehavior.Strict);
             var context = CreateContext(mockDocDBService.Object);
-            context.CreateIfNotExists = false;
+            context.ResolvedAttribute.CreateIfNotExists = false;
             var collector = new DocumentDBAsyncCollector<Item>(context);
 
             mockDocDBService
@@ -306,14 +302,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         private static DocumentDBContext CreateContext(IDocumentDBService service, bool createIfNotExists = false,
             string partitionKeyPath = null, int throughput = 0)
         {
+            DocumentDBAttribute attribute = new DocumentDBAttribute(DatabaseName, CollectionName)
+            {
+                CreateIfNotExists = createIfNotExists,
+                PartitionKey = partitionKeyPath,
+                CollectionThroughput = throughput
+            };
+
             return new DocumentDBContext
             {
                 Service = service,
-                ResolvedDatabaseName = DatabaseName,
-                ResolvedCollectionName = CollectionName,
-                CreateIfNotExists = createIfNotExists,
-                ResolvedPartitionKey = partitionKeyPath,
-                CollectionThroughput = throughput
+                ResolvedAttribute = attribute
             };
         }
     }

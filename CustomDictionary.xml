@@ -55,6 +55,10 @@
       <Word>HubName</Word>
       <Word>ConnectionString</Word>
       <Word>Upsert</Word>
+      <Word>AzureWebJobsDocumentDBConnectionString</Word>
+      <Word>DocumentDB</Word>
+      <Word>DocumentDBAttribute</Word>
+      <Word>DocumentDBConfiguration</Word>
     </Recognized>
     <Deprecated/>
     <Compound>

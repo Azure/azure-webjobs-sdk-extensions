@@ -9,7 +9,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Newtonsoft.Json.Linq;
 
-namespace ExtensionsSample.Samples
+namespace ExtensionsSample
 {
     // To use the DocumentDB samples:
     // 1. Create a new DocumentDB account
@@ -45,7 +45,6 @@ namespace ExtensionsSample.Samples
         //
         // This example uses the binding template "{QueueTrigger}" to specify that the Id should come from
         // the string value of the queued item.
-
         public static void ReadDocument(
             [QueueTrigger("samples-documentdb-csharp")] string input,
             [DocumentDB("ItemDb", "ItemCollection", Id = "{QueueTrigger}")] JObject item)

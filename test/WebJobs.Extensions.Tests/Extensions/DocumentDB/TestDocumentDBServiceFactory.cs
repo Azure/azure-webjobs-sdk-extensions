@@ -1,9 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-extern alias DocumentDB;
-
-using DocumentDB::Microsoft.Azure.WebJobs.Extensions.DocumentDB;
+using Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 {

@@ -37,6 +37,7 @@ namespace Microsoft.Azure.WebJobs
         /// The Id of the item to retrieve from the table.
         /// May include binding parameters
         /// </summary>
+        [AutoResolve]
         public string Id { get; set; }
 
         /// <summary>
@@ -51,7 +52,7 @@ namespace Microsoft.Azure.WebJobs
         /// This value affects this parameter as follows:
         /// - If it is null, the ApiKey value from <see cref="MobileAppsConfiguration"/> is used.
         /// - If it is equal to string.Empty, no Api Key is used.
-        /// - If it is any other string, the value of that string is used as the Api Key.
+        /// - Otherwise, this value is used to indicate the app setting that contains the Azure Mobile App Api Key.
         /// </summary>
         public string ApiKey { get; set; }
     }

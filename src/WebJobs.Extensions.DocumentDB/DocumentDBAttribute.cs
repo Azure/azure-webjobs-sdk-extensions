@@ -43,12 +43,14 @@ namespace Microsoft.Azure.WebJobs
         /// The name of the database to which the parameter applies.        
         /// May include binding parameters.
         /// </summary>
+        [AutoResolve]
         public string DatabaseName { get; private set; }
 
         /// <summary>
         /// The name of the collection to which the parameter applies. 
         /// May include binding parameters.
         /// </summary>
+        [AutoResolve]
         public string CollectionName { get; private set; }
 
         /// <summary>
@@ -68,6 +70,7 @@ namespace Microsoft.Azure.WebJobs
         /// Optional. The Id of the document to retrieve from the collection.
         /// May include binding parameters.
         /// </summary>
+        [AutoResolve]
         public string Id { get; set; }
 
         /// <summary>
@@ -77,6 +80,7 @@ namespace Microsoft.Azure.WebJobs
         /// When specified on an input binding, specifies the partition key value for the lookup.
         /// May include binding parameters.
         /// </summary>
+        [AutoResolve]
         public string PartitionKey { get; set; }
 
         /// <summary>

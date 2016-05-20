@@ -1,13 +1,11 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-extern alias DocumentDB;
-
 using System;
 using System.Net;
 using System.Threading.Tasks;
-using DocumentDB::Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 using Microsoft.Azure.Documents;
+using Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Models;
 using Moq;
 using Xunit;
@@ -59,7 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             // Assert
             Assert.Equal(testString, s);
             Assert.Equal(HttpStatusCode.ServiceUnavailable, thrownEx.StatusCode);
-        }        
+        }
 
         [Fact]
         public async Task RetryAsync_Retries_IfStatusCode429()

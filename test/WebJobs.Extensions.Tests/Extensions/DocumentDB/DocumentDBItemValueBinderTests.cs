@@ -1,15 +1,12 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-extern alias DocumentDB;
-
 using System;
 using System.Net;
-using System.Reflection;
 using System.Threading.Tasks;
-using DocumentDB::Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Models;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -32,9 +29,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
             // Arrange           
             string partitionKey = "partitionKey";
             string partitionKeyValue = string.Format("[\"{0}\"]", partitionKey);
-            var parameter = DocumentDBTestUtility.GetInputParameter<Item>();
             Mock<IDocumentDBService> mockService;
-            IValueBinder binder = CreateBinder<Item>(parameter, out mockService, partitionKey);
+            IValueBinder binder = CreateBinder<Item>(out mockService, partitionKey);
             mockService
                 .Setup(m => m.ReadDocumentAsync<Item>(_expectedUri, It.Is<RequestOptions>(r => r.PartitionKey.ToString() == partitionKeyValue)))
                 .ReturnsAsync(new Item());
@@ -51,9 +47,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
         public void GetValue_JObject_QueriesItem()
         {
             // Arrange            
-            var parameter = DocumentDBTestUtility.GetInputParameter<Item>();
             Mock<IDocumentDBService> mockService;
-            IValueBinder binder = CreateBinder<Item>(parameter, out mockService);
+            IValueBinder binder = CreateBinder<Item>(out mockService);
             mockService
                 .Setup(m => m.ReadDocumentAsync<Item>(_expectedUri, null))
                 .ReturnsAsync(new Item());
@@ -70,9 +65,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
         public void GetValue_DoesNotThrow_WhenResponseIsNotFound()
         {
             // Arrange
-            var parameter = DocumentDBTestUtility.GetInputParameter<Item>();
             Mock<IDocumentDBService> mockService;
-            IValueBinder binder = CreateBinder<Item>(parameter, out mockService);
+            IValueBinder binder = CreateBinder<Item>(out mockService);
             mockService
                 .Setup(m => m.ReadDocumentAsync<Item>(_expectedUri, null))
                 .ThrowsAsync(DocumentDBTestUtility.CreateDocumentClientException(HttpStatusCode.NotFound));
@@ -89,9 +83,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
         public void GetValue_Throws_WhenErrorResponse()
         {
             // Arrange
-            var parameter = DocumentDBTestUtility.GetInputParameter<Item>();
             Mock<IDocumentDBService> mockService;
-            IValueBinder binder = CreateBinder<Item>(parameter, out mockService);
+            IValueBinder binder = CreateBinder<Item>(out mockService);
             mockService
                 .Setup(m => m.ReadDocumentAsync<Item>(_expectedUri, null))
                 .ThrowsAsync(DocumentDBTestUtility.CreateDocumentClientException(HttpStatusCode.ServiceUnavailable));
@@ -152,12 +145,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
                .Setup(m => m.ReplaceDocumentAsync(_expectedUri, updated))
                .ReturnsAsync(new Document());
 
+            DocumentDBAttribute attribute = new DocumentDBAttribute(DatabaseName, CollectionName)
+            {
+                Id = Id
+            };
+
             var context = new DocumentDBContext
             {
                 Service = mockService.Object,
-                ResolvedDatabaseName = DatabaseName,
-                ResolvedCollectionName = CollectionName,
-                ResolvedId = Id
+                ResolvedAttribute = attribute
             };
 
             JObject clonedOrig = DocumentDBItemValueBinder<object>.CloneItem(original);
@@ -187,12 +183,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
                 Text = "hello"
             };
 
+            DocumentDBAttribute attribute = new DocumentDBAttribute(DatabaseName, CollectionName)
+            {
+                Id = Id
+            };
+
             var context = new DocumentDBContext
             {
                 Service = mockService.Object,
-                ResolvedDatabaseName = DatabaseName,
-                ResolvedCollectionName = CollectionName,
-                ResolvedId = Id
+                ResolvedAttribute = attribute
             };
 
             JObject clonedOrig = DocumentDBItemValueBinder<object>.CloneItem(original);
@@ -222,12 +221,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
                 Id = "def456",
             };
 
+            DocumentDBAttribute attribute = new DocumentDBAttribute(DatabaseName, CollectionName)
+            {
+                Id = Id
+            };
+
             var context = new DocumentDBContext
             {
                 Service = mockService.Object,
-                ResolvedDatabaseName = DatabaseName,
-                ResolvedCollectionName = CollectionName,
-                ResolvedId = Id
+                ResolvedAttribute = attribute
             };
 
             var originalJson = JObject.FromObject(original);
@@ -241,26 +243,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
             mockService.Verify();
         }
 
-        private static DocumentDBItemValueBinder<T> CreateBinder<T>(ParameterInfo parameter, out Mock<IDocumentDBService> mockService,
-            string partitionKey = null) where T : class
+        private static DocumentDBItemValueBinder<T> CreateBinder<T>(out Mock<IDocumentDBService> mockService, string partitionKey = null) where T : class
         {
             mockService = new Mock<IDocumentDBService>(MockBehavior.Strict);
 
-            var context = new DocumentDBContext
+            DocumentDBAttribute attribute = new DocumentDBAttribute(DatabaseName, CollectionName)
             {
-                ResolvedDatabaseName = DatabaseName,
-                ResolvedCollectionName = CollectionName,
-                ResolvedId = Id,
-                Service = mockService.Object
-            };
-
-            var bindingContext = new DocumentDBItemBindingContext
-            {
-                Id = "abc123",
+                Id = Id,
                 PartitionKey = partitionKey
             };
 
-            return new DocumentDBItemValueBinder<T>(parameter, context, bindingContext);
+            var context = new DocumentDBContext
+            {
+                ResolvedAttribute = attribute,
+                Service = mockService.Object
+            };
+
+            return new DocumentDBItemValueBinder<T>(context);
         }
     }
 }

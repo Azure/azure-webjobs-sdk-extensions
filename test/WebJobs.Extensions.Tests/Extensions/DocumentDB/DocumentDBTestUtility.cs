@@ -1,8 +1,6 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-extern alias DocumentDB;
-
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -10,10 +8,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
 using System.Reflection;
-using DocumentDB::Microsoft.Azure.WebJobs;
-using DocumentDB::Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Models;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Newtonsoft.Json.Linq;

@@ -27,7 +27,13 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Optional. A tag expression is any boolean expression constructed using the logical operator
         /// </summary>
+        [AutoResolve]
         public string TagExpression { get; set; }
+
+        /// <summary>
+        /// Optional. Specify platform for sending native notifications.<see cref="NotificationPlatform"/>.
+        /// </summary>
+        public NotificationPlatform Platform { get; set; }
 
         /// <summary>
         /// Optional. A string value indicating the app setting to use as the Notification Hubs connection

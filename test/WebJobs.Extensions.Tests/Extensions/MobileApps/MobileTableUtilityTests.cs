@@ -11,6 +11,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
 {
     public class MobileAppUtilityTests
     {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1804:RemoveUnusedLocals", MessageId = "attribute")]
         [Theory]
         [InlineData(typeof(TodoItem), null, true)]
         [InlineData(typeof(JObject), "Item", true)]
@@ -26,11 +27,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
         [InlineData(typeof(object), null, false)]
         public void IsValidMobileTableType_CorrectlyEvaluates(Type typeToEvaluate, string tableName, bool expected)
         {
-            // Arrange
-            var context = new MobileTableContext { ResolvedTableName = tableName };
-
             // Act
-            bool result = MobileAppUtility.IsValidItemType(typeToEvaluate, context);
+            bool result = MobileAppUtility.IsValidItemType(typeToEvaluate, tableName);
 
             // Assert
             Assert.Equal(expected, result);

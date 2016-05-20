@@ -68,12 +68,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
         {
             // Arrange                        
             var handler = new TestHandler("{}");
+            var attribute = new MobileTableAttribute
+            {
+                Id = "abc123"
+            };
             var context = new MobileTableContext
             {
-                Client = new MobileServiceClient("https://someuri", handler)
+                Client = new MobileServiceClient("https://someuri", handler),
+                ResolvedAttribute = attribute
             };
-            var parameter = MobileAppTestHelper.GetInputParameter<TodoItem>();
-            var binder = new MobileTableItemValueBinder<TodoItem>(parameter, context, "abc123");
+            var binder = new MobileTableItemValueBinder<TodoItem>(context);
 
             // Act
             var value = binder.GetValue();
@@ -88,13 +92,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
         {
             // Arrange                        
             var handler = new TestHandler("{}");
+
+            var attribute = new MobileTableAttribute
+            {
+                TableName = "SomeOtherTable",
+                Id = "abc123"
+            };
+
             var context = new MobileTableContext
             {
-                ResolvedTableName = "SomeOtherTable",
+                ResolvedAttribute = attribute,
                 Client = new MobileServiceClient("https://someuri", handler)
             };
-            var parameter = MobileAppTestHelper.GetInputParameter<TodoItem>();
-            var binder = new MobileTableItemValueBinder<TodoItem>(parameter, context, "abc123");
+
+            var binder = new MobileTableItemValueBinder<TodoItem>(context);
 
             // Act
             var value = binder.GetValue();
@@ -264,10 +275,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
                .Setup(m => m.GetTable("TodoItem"))
                .Returns(mockTable.Object);
 
+            var attribute = new MobileTableAttribute
+            {
+                TableName = "TodoItem"
+            };
+
             var context = new MobileTableContext
             {
                 Client = mockClient.Object,
-                ResolvedTableName = "TodoItem"
+                ResolvedAttribute = attribute
             };
 
             // Act
@@ -366,10 +382,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
 
             JObject updated = original.DeepClone() as JObject;
 
+            var attribute = new MobileTableAttribute
+            {
+                TableName = "TodoItem"
+            };
+
             var context = new MobileTableContext
             {
                 Client = mockClient.Object,
-                ResolvedTableName = "TodoItem"
+                ResolvedAttribute = attribute
             };
 
             // Act
@@ -392,10 +413,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
             JObject updated = original.DeepClone() as JObject;
             original["id"] = "def456";
 
+            var attribute = new MobileTableAttribute
+            {
+                TableName = "TodoItem"
+            };
+
             var context = new MobileTableContext
             {
                 Client = mockClient.Object,
-                ResolvedTableName = "TodoItem"
+                ResolvedAttribute = attribute
             };
 
             // Act
@@ -463,9 +489,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
         {
             // Arrange                        
             var handler = new TestHandler("{}");
+
+            var attribute = new MobileTableAttribute
+            {
+                TableName = "SomeOtherTable"
+            };
+
             var context = new MobileTableContext
             {
-                ResolvedTableName = "SomeOtherTable",
+                ResolvedAttribute = attribute,
                 Client = new MobileServiceClient("https://someuri", handler)
             };
 
@@ -488,13 +520,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
                 .Setup(m => m.GetTable(It.IsAny<string>()))
                 .Returns(mockTable.Object);
 
+            var attribute = new MobileTableAttribute
+            {
+                TableName = "TodoItem",
+                Id = "abc123"
+            };
+
             var context = new MobileTableContext
             {
                 Client = mockClient.Object,
-                ResolvedTableName = "TodoItem"
+                ResolvedAttribute = attribute
             };
 
-            return new MobileTableItemValueBinder<JObject>(parameter, context, "abc123");
+            return new MobileTableItemValueBinder<JObject>(context);
         }
 
         private static IValueBinder CreatePocoBinder(ParameterInfo parameter, out Mock<IMobileServiceClient> mockClient, out Mock<IMobileServiceTable<TodoItem>> mockTable)
@@ -506,12 +544,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
                 .Setup(m => m.GetTable<TodoItem>())
                 .Returns(mockTable.Object);
 
-            var context = new MobileTableContext
+            var attribute = new MobileTableAttribute
             {
-                Client = mockClient.Object
+                Id = "abc123"
             };
 
-            return new MobileTableItemValueBinder<TodoItem>(parameter, context, "abc123");
+            var context = new MobileTableContext
+            {
+                Client = mockClient.Object,
+                ResolvedAttribute = attribute
+            };
+
+            return new MobileTableItemValueBinder<TodoItem>(context);
         }
 
         private static HttpResponseMessage CreateOkResponse(object payload = null)
