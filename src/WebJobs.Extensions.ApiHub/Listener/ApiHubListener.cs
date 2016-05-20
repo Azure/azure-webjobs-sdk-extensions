@@ -12,7 +12,7 @@ using Microsoft.Azure.WebJobs.Host.Listeners;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
 {
-    // TODO: leveraging singleton listener for now untill the framework supports a generalized listener/queue mechanism.
+    // TODO: leveraging singleton listener for now until the framework supports a generalized listener/queue mechanism.
     [Singleton(Mode = SingletonMode.Listener)]
     internal class ApiHubListener : IListener
     {
@@ -43,9 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
         public void Cancel()
         {
             // nop.. this is fire and forget
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-            this.StopAsync(CancellationToken.None);
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            Task taskIgnore = this.StopAsync(CancellationToken.None);
         }
 
         public void Dispose()
