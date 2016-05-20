@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Azure.ApiHub;
@@ -9,23 +12,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
     {
         private readonly IFileItem _fileSource;
 
+        public ApiHubFile(IFileItem fileSource)
+        {
+            _fileSource = fileSource;
+        }
+
         public string Path
         {
             get
             {
                 return _fileSource.Path;
             }
-        }
-
-        internal static async Task<ApiHubFile> New(IFolderItem rootFolder, string path)
-        {
-            var fileSource = await rootFolder.GetFileReferenceAsync(path, true);
-            return new ApiHubFile(fileSource);
-        }
-
-        public ApiHubFile(IFileItem fileSource)
-        {
-            _fileSource = fileSource;
         }
 
         public async Task<Stream> OpenReadStreamAsync()
@@ -41,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
         {
             var stream = new MemoryStream();
             
-            Func<object, Task > onClose = async obj =>
+            Func<object, Task> onClose = async obj =>
             {
                 byte[] bytes = obj as byte[];
                 if (bytes == null)
@@ -54,6 +51,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
             };
 
             return Task.FromResult(Tuple.Create((Stream)stream, onClose));            
+        }
+
+        internal static async Task<ApiHubFile> New(IFolderItem rootFolder, string path)
+        {
+            var fileSource = await rootFolder.GetFileReferenceAsync(path, true);
+            return new ApiHubFile(fileSource);
         }
     }
 }

@@ -1,4 +1,10 @@
-﻿using Microsoft.Azure.ApiHub;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.Azure.ApiHub;
 using Microsoft.Azure.WebJobs.Extensions.ApiHub;
 using Microsoft.Azure.WebJobs.Extensions.ApiHub.Common;
 using Microsoft.Azure.WebJobs.Host;
@@ -7,9 +13,6 @@ using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Triggers;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs
 {
@@ -19,9 +22,8 @@ namespace Microsoft.Azure.WebJobs
     public class ApiHubConfiguration : IExtensionConfigProvider, IFileTriggerStrategy<ApiHubFile>
     {
         // Map of saas names (ie, "Dropbox") to their underlying root folder. 
-        Dictionary<string, IFolderItem> _map = new Dictionary<string, IFolderItem>(StringComparer.OrdinalIgnoreCase);
-
-        ApiHubLogger _logger;
+        private Dictionary<string, IFolderItem> _map = new Dictionary<string, IFolderItem>(StringComparer.OrdinalIgnoreCase);
+        private ApiHubLogger _logger;
 
         /// <summary>
         /// Gets or sets the logger.
@@ -54,7 +56,7 @@ namespace Microsoft.Azure.WebJobs
         /// <inheritdoc />
         public void Initialize(ExtensionConfigContext context)
         {
-            if(context == null)
+            if (context == null)
             {
                 throw new ArgumentNullException("context");
             }
@@ -102,7 +104,7 @@ namespace Microsoft.Azure.WebJobs
         }
 
         // Attribute has path resolved
-        private  async Task<ApiHubFile> BuildFromAttribute(ApiHubFileAttribute attribute)
+        private async Task<ApiHubFile> BuildFromAttribute(ApiHubFileAttribute attribute)
         {
             var source = GetFileSource(attribute.Key);
             ApiHubFile file = await ApiHubFile.New(source, attribute.Path);

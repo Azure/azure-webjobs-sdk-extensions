@@ -1,13 +1,15 @@
-﻿using Microsoft.Azure.WebJobs;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using System;
+using System.IO;
+using System.Reflection;
+using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Newtonsoft.Json;
-using System;
-using System.IO;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 {
@@ -19,7 +21,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
         private readonly TAttribute _source;
         private readonly IConverterManager _converterManager;
         private readonly ParameterInfo _parameter;
-
 
         public GenericFileBinding(
             ParameterInfo parameter,
@@ -135,8 +136,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
             valueProvider = new ConstantObj
             {
                 Type = targetType,
-                _value = userObj,
-                _onCompleted = onComplete
+                Value = userObj,
+                OnCompleted = onComplete
             };
             return valueProvider;
         }
@@ -161,5 +162,4 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
             };
         }
     }
-
 }

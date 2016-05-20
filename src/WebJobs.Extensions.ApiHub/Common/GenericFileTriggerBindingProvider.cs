@@ -1,13 +1,16 @@
-﻿using Microsoft.Azure.WebJobs.Host;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 {
@@ -50,17 +53,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
             BindingProviderContext bindingContext2 = new BindingProviderContext(parameter, bindingContract, context.CancellationToken);
             var regularBinding = await _provider.BindDirect(bindingContext2);
 
-            binding._binding = regularBinding;
+            binding.Binding = regularBinding;
             
             return binding;
         }
 
         // 1 instance of the binding per parameter
-        class GenericTriggerbinding : ITriggerBinding
+        private class GenericTriggerbinding : ITriggerBinding
         {
             private readonly TAttribute _attribute;
             private readonly GenericFileTriggerBindingProvider<TAttribute, TFile> _parent;
-            internal  IBinding _binding;
             private readonly IReadOnlyDictionary<string, Type> _bindingContract;
             private readonly BindingDataProvider _bindingDataProvider;
             private readonly ParameterInfo _parameter;
@@ -80,6 +82,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
                 _bindingDataProvider = BindingDataProvider.FromTemplate(_attribute.Path);
                 _bindingContract = CreateBindingContract();
             }
+
+            internal IBinding Binding { get; set; }
 
             private IReadOnlyDictionary<string, Type> CreateBindingContract()
             {
@@ -132,7 +136,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
                 }
 
                 // generic binder binds on a Path as string 
-                var valueProvider = await _binding.BindAsync(path, context);
+                var valueProvider = await Binding.BindAsync(path, context);
 
                 ITriggerData data = new TriggerData(valueProvider, bindingData);
                 return data;

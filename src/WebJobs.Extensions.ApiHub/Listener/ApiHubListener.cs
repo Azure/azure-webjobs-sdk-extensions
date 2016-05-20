@@ -1,14 +1,14 @@
-﻿using Microsoft.Azure.ApiHub;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Azure.ApiHub;
+using Microsoft.Azure.WebJobs.Extensions.ApiHub.Common;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs.Extensions.ApiHub.Common;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
 {
@@ -16,8 +16,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
     [Singleton(Mode = SingletonMode.Listener)]
     internal class ApiHubListener : IListener
     {
-        internal IFolderItem _folderSource;
-        internal ITriggeredFunctionExecutor _executor;
+        private IFolderItem _folderSource;
+        private ITriggeredFunctionExecutor _executor;
 
         private const int DefaultPollIntervalInSeconds = 90;
 

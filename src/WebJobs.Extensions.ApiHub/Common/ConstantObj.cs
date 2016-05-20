@@ -1,35 +1,39 @@
-﻿using Microsoft.Azure.WebJobs.Host.Bindings;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
 using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Host.Bindings;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 {
     internal class ConstantObj : IValueBinder
     {
-        internal object _value;
-        internal Func<object, Task> _onCompleted;
-
         public Type Type { get; set; }
+
+        public object Value { get; set; }
+
+        public Func<object, Task> OnCompleted { get; set; }
 
         public object GetValue()
         {
-            if ((Type == typeof(byte[]) || Type == typeof(byte[]).MakeByRefType()) && _value is MemoryStream)
+            if ((Type == typeof(byte[]) || Type == typeof(byte[]).MakeByRefType()) && Value is MemoryStream)
             {
-                return ((MemoryStream)_value).ToArray();
+                return ((MemoryStream)Value).ToArray();
             }
             else
             {
-                return _value;
+                return Value;
             }
         }
 
         public Task SetValueAsync(object value, CancellationToken cancellationToken)
         {
-            if (_onCompleted != null)
+            if (OnCompleted != null)
             {
-                return _onCompleted(value); // Flush hook 
+                return OnCompleted(value); // Flush hook 
             }
 
             if (value == null)

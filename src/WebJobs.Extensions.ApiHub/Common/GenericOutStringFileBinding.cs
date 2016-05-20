@@ -1,12 +1,15 @@
-﻿using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Host.Bindings;
-using Microsoft.Azure.WebJobs.Host.Bindings.Path;
-using Microsoft.Azure.WebJobs.Host.Protocols;
-using Newtonsoft.Json;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
 using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Host.Bindings;
+using Microsoft.Azure.WebJobs.Host.Bindings.Path;
+using Microsoft.Azure.WebJobs.Host.Protocols;
+using Newtonsoft.Json;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 {
