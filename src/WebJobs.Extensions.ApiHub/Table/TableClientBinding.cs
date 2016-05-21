@@ -85,8 +85,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
                 ConfigContext = configContext;
             }
 
-            private ParameterInfo Parameter { get; }
-            private TableConfigContext ConfigContext { get; }
+            private ParameterInfo Parameter { get; set; }
+            private TableConfigContext ConfigContext { get; set; }
 
             public Type Type
             {

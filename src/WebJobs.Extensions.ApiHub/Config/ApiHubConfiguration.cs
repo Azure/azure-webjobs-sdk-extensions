@@ -35,7 +35,7 @@ namespace Microsoft.Azure.WebJobs
             ConnectionFactory = connectionFactory ?? ConnectionFactory.Default;
         }
 
-        private ConnectionFactory ConnectionFactory { get; }
+        private ConnectionFactory ConnectionFactory { get; set; }
 
         /// <summary>
         /// Gets or sets the logger.
