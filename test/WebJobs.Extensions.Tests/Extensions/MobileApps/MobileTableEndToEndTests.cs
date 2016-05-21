@@ -21,7 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
 {
     public class MobileTableEndToEndTests
     {
-        private const string tableName = "TestTable";
+        private const string TableName = "TestTable";
 
         [Fact]
         public void OutputBindings()
@@ -31,7 +31,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             var tablePocoMock = new Mock<IMobileServiceTable<TodoItem>>(MockBehavior.Strict);
 
             serviceMock
-                .Setup(m => m.GetTable(tableName))
+                .Setup(m => m.GetTable(TableName))
                 .Returns(tableJObjectMock.Object);
 
             serviceMock
@@ -99,7 +99,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             var tablePocoMock = new Mock<IMobileServiceTable<TodoItem>>(MockBehavior.Strict);
 
             serviceMock
-                .Setup(m => m.GetTable(tableName))
+                .Setup(m => m.GetTable(TableName))
                 .Returns(tableJObjectMock.Object);
 
             serviceMock
@@ -234,16 +234,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         {
             [NoAutomaticTrigger]
             public static void Outputs(
-                [MobileTable(TableName = tableName)] out JObject newJObject,
-                [MobileTable(TableName = tableName)] out JObject[] arrayJObject,
-                [MobileTable(TableName = tableName)] IAsyncCollector<JObject> asyncCollectorJObject,
-                [MobileTable(TableName = tableName)] ICollector<JObject> collectorJObject,
+                [MobileTable(TableName = TableName)] out JObject newJObject,
+                [MobileTable(TableName = TableName)] out JObject[] arrayJObject,
+                [MobileTable(TableName = TableName)] IAsyncCollector<JObject> asyncCollectorJObject,
+                [MobileTable(TableName = TableName)] ICollector<JObject> collectorJObject,
                 [MobileTable] out TodoItem newPoco,
                 [MobileTable] out TodoItem[] arrayPoco,
                 [MobileTable] IAsyncCollector<TodoItem> asyncCollectorPoco,
                 [MobileTable] ICollector<TodoItem> collectorPoco,
                 TraceWriter trace)
-
             {
                 newJObject = new JObject();
                 arrayJObject = new[]
@@ -280,7 +279,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             public static void Client(
                 [MobileTable] IMobileServiceClient client,
                 TraceWriter trace)
-
             {
                 Assert.NotNull(client);
                 trace.Warning("Client");
@@ -290,7 +288,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             public static void Query(
                 [MobileTable] IMobileServiceTableQuery<TodoItem> query,
                 TraceWriter trace)
-
             {
                 Assert.NotNull(query);
                 trace.Warning("Query");
@@ -298,10 +295,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
 
             [NoAutomaticTrigger]
             public static void Table(
-                [MobileTable(TableName = tableName)] IMobileServiceTable tableJObject,
+                [MobileTable(TableName = TableName)] IMobileServiceTable tableJObject,
                 [MobileTable] IMobileServiceTable<TodoItem> tablePoco,
                 TraceWriter trace)
-
             {
                 Assert.NotNull(tableJObject);
                 Assert.NotNull(tablePoco);
@@ -311,8 +307,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             [NoAutomaticTrigger]
             public static void Inputs(
                 [QueueTrigger("fakequeue1")] string triggerData,
-                [MobileTable(TableName = tableName, Id = "item1")] JObject item1,
-                [MobileTable(TableName = tableName, Id = "{QueueTrigger}")] JObject item2,
+                [MobileTable(TableName = TableName, Id = "item1")] JObject item1,
+                [MobileTable(TableName = TableName, Id = "{QueueTrigger}")] JObject item2,
                 [MobileTable(Id = "item3")] TodoItem item3,
                 [MobileTable(Id = "{QueueTrigger}")] TodoItem item4,
                 TraceWriter trace)

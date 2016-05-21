@@ -223,7 +223,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
                 [DocumentDB(DatabaseName, CollectionName)] IAsyncCollector<object> asyncCollector,
                 [DocumentDB(DatabaseName, CollectionName)] ICollector<object> collector,
                 TraceWriter trace)
-
             {
                 newItem = new { };
 
@@ -233,7 +232,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
                     new Document()
                 };
 
-                Task.WaitAll(new[] {
+                Task.WaitAll(new[] 
+                {
                     asyncCollector.AddAsync(new { }),
                     asyncCollector.AddAsync(new { })
                 });
@@ -248,7 +248,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             public static void Client(
                 [DocumentDB] DocumentClient client,
                 TraceWriter trace)
-
             {
                 Assert.NotNull(client);
 
@@ -292,12 +291,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             [NoAutomaticTrigger]
             public static void Client(
                 [DocumentDB] DocumentClient client)
-
             {
             }
-
         }
-
 
         private class QueueData
         {
