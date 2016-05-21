@@ -15,8 +15,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
             NameResolver = nameResolver;
         }
 
-        public ConnectionFactory ConnectionFactory { get; }
+        public ConnectionFactory ConnectionFactory { get; set; }
 
-        public INameResolver NameResolver { get; }
+        public INameResolver NameResolver { get; set; }
     }
 }

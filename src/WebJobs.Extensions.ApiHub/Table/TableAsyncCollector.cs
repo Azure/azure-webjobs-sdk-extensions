@@ -15,7 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
             Table = table;
         }
 
-        private ITable<T> Table { get; }
+        private ITable<T> Table { get; set; }
 
         public async Task AddAsync(T item, CancellationToken cancellationToken = default(CancellationToken))
         {

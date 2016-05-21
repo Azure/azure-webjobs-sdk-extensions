@@ -27,8 +27,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             Objects = new Dictionary<string, object>();
         }
 
-        private Dictionary<string, TableMetadata> Metadata { get; }
-        private Dictionary<string, object> Objects { get; }
+        private Dictionary<string, TableMetadata> Metadata { get; set; }
+        private Dictionary<string, object> Objects { get; set; }
 
         public virtual Task<SegmentedResult<IDataSet>> ListDataSetsAsync(
             Query query = null, 

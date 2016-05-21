@@ -14,7 +14,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             TableAdapter = tableAdapter;
         }
 
-        private FakeTabularConnectorAdapter TableAdapter { get; }
+        private FakeTabularConnectorAdapter TableAdapter { get; set; }
 
         public override ITableClient CreateTableClient()
         {

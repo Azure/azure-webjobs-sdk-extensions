@@ -14,7 +14,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
             ConfigContext = configContext;
         }
 
-        private TableConfigContext ConfigContext { get; }
+        private TableConfigContext ConfigContext { get; set; }
 
         public Task<IBinding> TryCreateAsync(BindingProviderContext context)
         {

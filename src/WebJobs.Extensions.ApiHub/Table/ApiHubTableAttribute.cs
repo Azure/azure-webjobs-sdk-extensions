@@ -29,7 +29,7 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Gets the key of the configuration setting that specifies the connection string.
         /// </summary>
-        public string Connection { get; }
+        public string Connection { get; private set; }
 
         /// <summary>
         /// Gets or sets the data set name.

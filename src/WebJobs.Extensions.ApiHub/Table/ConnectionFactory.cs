@@ -12,10 +12,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
     /// </summary>
     public class ConnectionFactory
     {
+        private static ConnectionFactory _connectionFactory = new ConnectionFactory();
+
         /// <summary>
         /// Gets or sets the default ConnectionFactory instance.
         /// </summary>
-        public static ConnectionFactory Default { get; set; } = new ConnectionFactory();
+        public static ConnectionFactory Default
+        {
+            get { return _connectionFactory; }
+            set { _connectionFactory = value; }
+        }
 
         /// <summary>
         /// Creates a connection.
