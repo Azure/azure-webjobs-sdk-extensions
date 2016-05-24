@@ -68,7 +68,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
 
             BindingFactory factory = new BindingFactory(nameResolver, converterManager);
 
-            IBindingProvider outputProvider = factory.BindToGenericAsyncCollector<MobileTableAttribute>(BindForOutput, ThrowIfInvalidItemType);
+            IBindingProvider outputProvider = factory.BindToGenericAsyncCollector<MobileTableAttribute>(BindForOutput, ThrowIfInvalidOutputItemType);
 
             IBindingProvider clientProvider = factory.BindToExactType<MobileTableAttribute, IMobileServiceClient>(BindForClient);
 
@@ -133,6 +133,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
             // Assume IsQueryType or IsTableType has already run -- so we know there is only one argument
             Type argumentType = paramType.GetGenericArguments().Single();
             ThrowIfInvalidItemType(attribute, argumentType);
+        }
+
+        internal static bool ThrowIfInvalidOutputItemType(MobileTableAttribute attribute, Type paramType)
+        {
+            // We explicitly allow object as a type to enable anonymous types, but TableName must be specified.
+            if (paramType == typeof(object))
+            {
+                if (string.IsNullOrEmpty(attribute.TableName))
+                {
+                    throw new InvalidOperationException("A parameter of type 'object' must have table name specified.");
+                }
+
+                return true;
+            }
+
+            return ThrowIfInvalidItemType(attribute, paramType);
         }
 
         internal static bool ThrowIfInvalidItemType(MobileTableAttribute attribute, Type paramType)

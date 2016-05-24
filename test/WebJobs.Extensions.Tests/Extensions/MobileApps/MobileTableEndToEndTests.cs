@@ -56,7 +56,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             RunTest("Outputs", factoryMock.Object, testTrace);
 
             factoryMock.Verify(f => f.CreateClient(It.IsAny<Uri>(), It.IsAny<HttpMessageHandler[]>()), Times.Once());
-            tableJObjectMock.Verify(m => m.InsertAsync(It.IsAny<JObject>()), Times.Exactly(7));
+
+            // parameters of type object are converted to JObject
+            tableJObjectMock.Verify(m => m.InsertAsync(It.IsAny<JObject>()), Times.Exactly(14));
             tablePocoMock.Verify(t => t.InsertAsync(It.IsAny<TodoItem>()), Times.Exactly(7));
             Assert.Equal(1, testTrace.Events.Count);
             Assert.Equal("Outputs", testTrace.Events[0].Message);
@@ -178,6 +180,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             Assert.StartsWith("'Id' must be set", ex.InnerException.Message);
         }
 
+        [Fact]
+        public void ObjectWithNoTable()
+        {
+            var ex = Assert.Throws<FunctionIndexingException>(() => IndexBindings(typeof(MobileTableObjectNoTable)));
+            Assert.IsType<InvalidOperationException>(ex.InnerException);
+        }
+
         private void IndexBindings(Type testType, MobileAppsConfiguration mobileConfig = null)
         {
             // Just start the jobhost -- this should fail if function indexing fails.
@@ -242,6 +251,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
                 [MobileTable] out TodoItem[] arrayPoco,
                 [MobileTable] IAsyncCollector<TodoItem> asyncCollectorPoco,
                 [MobileTable] ICollector<TodoItem> collectorPoco,
+                [MobileTable(TableName = TableName)] out object newObject, // we explicitly allow object
+                [MobileTable(TableName = TableName)] out object[] arrayObject,
+                [MobileTable(TableName = TableName)] IAsyncCollector<object> asyncCollectorObject,
+                [MobileTable(TableName = TableName)] ICollector<object> collectorObject,
                 TraceWriter trace)
             {
                 newJObject = new JObject();
@@ -271,6 +284,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
                 });
                 collectorPoco.Add(new TodoItem());
                 collectorPoco.Add(new TodoItem());
+
+                newObject = new { };
+                arrayObject = new[]
+                {
+                    new { },
+                    new { }
+                };
+                Task.WaitAll(new[]
+                {
+                    asyncCollectorObject.AddAsync(new TodoItem()),
+                    asyncCollectorObject.AddAsync(new TodoItem())
+                });
+                collectorObject.Add(new { });
+                collectorObject.Add(new { });
 
                 trace.Warning("Outputs");
             }
@@ -370,6 +397,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             public static void Broken(
                 [MobileTable] TodoItem item)
             {
+            }
+        }
+
+        private class MobileTableObjectNoTable
+        {
+            // object should be treated like JObject and fail indexing if no TableName is specified
+            public static void Broken(
+                [MobileTable] out object item)
+            {
+                item = null;
             }
         }
 
