@@ -15,7 +15,7 @@
     <tags>Microsoft Azure WebJobs Jobs Extensions DocumentDB document windowsazureofficial Web</tags>
     <dependencies>
       <dependency id="Microsoft.Azure.WebJobs.Extensions" version="$WebJobsPackageVersion$" />
-      <dependency id="Microsoft.Azure.DocumentDB" version="1.6.3" />
+      <dependency id="Microsoft.Azure.DocumentDB" version="1.7.1" />
     </dependencies>
   </metadata>
 </package>
