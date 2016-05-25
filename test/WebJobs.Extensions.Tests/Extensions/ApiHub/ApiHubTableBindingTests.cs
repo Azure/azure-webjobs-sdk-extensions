@@ -286,13 +286,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             entity.Text = "bar";
         }
 
-        public class TestInput
-        {
-            public int Id { get; set; }
-            public string Table { get; set; }
-            public string DataSet { get; set; }
-        }
-
         [Fact]
         public async void BindToJObjectAndUpdate()
         {
@@ -551,6 +544,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
                     new[] { GetFirstParameter(type, "Func4") }
                 };
             }
+        }
+
+        public class TestInput
+        {
+            public int Id { get; set; }
+            public string Table { get; set; }
+            public string DataSet { get; set; }
         }
     }
 }
