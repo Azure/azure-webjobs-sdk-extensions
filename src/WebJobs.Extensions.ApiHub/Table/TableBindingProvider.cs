@@ -2,8 +2,11 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
+using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
 {
@@ -44,7 +47,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
                 binding = new TableEntityBinding(parameter, ConfigContext);
             }
 
+            ValidateContract(attribute, ConfigContext.NameResolver, context.BindingDataContract);
+
             return Task.FromResult<IBinding>(binding);
+        }
+
+        private static void ValidateContract(ApiHubTableAttribute attribute, INameResolver nameResolver, IReadOnlyDictionary<string, Type> contract)
+        {
+            ValidateContract(attribute.DataSetName, nameResolver, contract);
+            ValidateContract(attribute.TableName, nameResolver, contract);
+            ValidateContract(attribute.EntityId, nameResolver, contract);
+        }
+
+        private static void ValidateContract(string value, INameResolver nameResolver, IReadOnlyDictionary<string, Type> contract)
+        {
+            if (!string.IsNullOrEmpty(value))
+            {
+                if (nameResolver != null)
+                {
+                    value = nameResolver.ResolveWholeString(value);
+                }
+                BindingTemplate bindingTemplate = BindingTemplate.FromString(value);
+                bindingTemplate.ValidateContractCompatibility(contract);
+            }
         }
     }
 }

@@ -8,12 +8,16 @@ using System.Threading.Tasks;
 using Microsoft.Azure.ApiHub.Sdk.Table;
 using Microsoft.Azure.WebJobs.Extensions.ApiHub.Extensions;
 using Microsoft.Azure.WebJobs.Host.Bindings;
+using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
 {
     internal class TableBinding : IBinding
     {
+        private readonly BindingTemplate _dataSetNameBindingTemplate;
+        private readonly BindingTemplate _tableNameBindingTemplate;
+
         public TableBinding(
             ParameterInfo parameter, 
             TableConfigContext configContext)
@@ -22,6 +26,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
 
             Parameter = parameter;
             ConfigContext = configContext;
+
+            ApiHubTableAttribute attribute = Parameter.GetTableAttribute();
+            if (!string.IsNullOrEmpty(attribute.DataSetName))
+            {
+                _dataSetNameBindingTemplate = BindingTemplate.FromString(attribute.DataSetName);
+            }
+
+            if (!string.IsNullOrEmpty(attribute.TableName))
+            {
+                _tableNameBindingTemplate = BindingTemplate.FromString(attribute.TableName);
+            }
         }
 
         private ParameterInfo Parameter { get; set; }
@@ -39,7 +54,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
                 throw new ArgumentNullException("context");
             }
 
-            return BindAsync(null, context.ValueContext);
+            var attribute = Parameter.GetTableAttribute();
+            var resolvedAttribute = new ApiHubTableAttribute(attribute.Connection)
+            {
+                DataSetName = attribute.DataSetName,
+                TableName = attribute.TableName
+            };
+
+            if (context.BindingData != null)
+            {
+                if (_dataSetNameBindingTemplate != null)
+                {
+                    resolvedAttribute.DataSetName = _dataSetNameBindingTemplate.Bind(context.BindingData);
+                }
+
+                if (_tableNameBindingTemplate != null)
+                {
+                    resolvedAttribute.TableName = _tableNameBindingTemplate.Bind(context.BindingData);
+                }
+            }
+
+            return BindAsync(resolvedAttribute);
         }
 
         public Task<IValueProvider> BindAsync(object value, ValueBindingContext context)
@@ -49,10 +84,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
                 throw new ArgumentNullException("context");
             }
 
+            // TODO: Add support for Dashboard string invoke
+
+            var attribute = Parameter.GetTableAttribute();
+            return BindAsync(attribute);
+        }
+
+        private Task<IValueProvider> BindAsync(ApiHubTableAttribute resolvedAttribute)
+        {
             var entityType = Parameter.ParameterType.GetGenericArguments().Single();
             var valueProviderType = typeof(TableValueProvider<>).MakeGenericType(entityType);
             var valueProvider = (IValueProvider)Activator.CreateInstance(
-                valueProviderType, Parameter, ConfigContext);
+                valueProviderType, Parameter, resolvedAttribute, ConfigContext);
 
             return Task.FromResult(valueProvider);
         }
@@ -91,13 +134,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
         private class TableValueProvider<TEntity> : IValueProvider
             where TEntity : class
         {
-            public TableValueProvider(ParameterInfo parameter, TableConfigContext configContext)
+            public TableValueProvider(
+                ParameterInfo parameter,
+                ApiHubTableAttribute resolvedAttribute,
+                TableConfigContext configContext)
             {
                 Parameter = parameter;
+                ResolvedAttribute = resolvedAttribute;
                 ConfigContext = configContext;
             }
 
             private ParameterInfo Parameter { get; set; }
+            private ApiHubTableAttribute ResolvedAttribute { get; set; }
             private TableConfigContext ConfigContext { get; set; }
 
             public Type Type
@@ -107,8 +155,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
 
             public object GetValue()
             {
-                var attribute = Parameter.GetTableAttribute();
-                var table = attribute.GetTableReference<TEntity>(ConfigContext);
+                var table = ResolvedAttribute.GetTableReference<TEntity>(ConfigContext);
                 var parameterType = Parameter.ParameterType;
                 var genericTypeDefinition = parameterType.GetGenericTypeDefinition();
 

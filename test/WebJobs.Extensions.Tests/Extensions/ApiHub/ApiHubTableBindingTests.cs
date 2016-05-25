@@ -11,6 +11,7 @@ using Microsoft.Azure.ApiHub.Sdk.Table;
 using Microsoft.Azure.WebJobs.Extensions.ApiHub.Table;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host.Bindings;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
@@ -75,10 +76,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             adapter.AddDataSet("dataset1");
             adapter.AddTable("dataset1", "table1", "Id");
 
+            TestInput input = new TestInput
+            {
+                DataSet = "dataset1",
+                Table = "table1"
+            };
+            var args = new Dictionary<string, object>()
+                {
+                    { "input", JsonConvert.SerializeObject(input) }
+                };
+
             using (var host = CreateTestJobHost(adapter))
             {
                 host.Start();
-                host.Call(typeof(ApiHubTableBindingTests).GetMethod("BindToTableAndAddEntityFunc"));
+                host.Call(typeof(ApiHubTableBindingTests).GetMethod("BindToTableAndAddEntityFunc"), args);
                 host.Stop();
             }
 
@@ -89,7 +100,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
         }
 
         public static async void BindToTableAndAddEntityFunc(
-            [ApiHubTable("AzureWebJobsSql", DataSetName = "dataset1", TableName = "table1")]
+            [QueueTrigger("testqueue")] TestInput input,
+            [ApiHubTable("AzureWebJobsSql", DataSetName = "{DataSet}", TableName = "{Table}")]
             ITable<SampleEntity> table)
         {
             await table.CreateEntityAsync(
@@ -226,6 +238,59 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             SampleEntity entity)
         {
             entity.Text = "bar";
+        }
+
+        [Fact]
+        public async void BindToEntityWithBindingParameters()
+        {
+            var adapter = new FakeTabularConnectorAdapterWithUpdateCount();
+            adapter.AddDataSet("default");
+            adapter.AddTable("default", "table1", "Id");
+            await adapter.CreateEntityAsync(
+                "default",
+                "table1",
+                new SampleEntity
+                {
+                    Id = 1,
+                    Text = "foo"
+                });
+
+            TestInput input = new TestInput
+            {
+                Id = 1,
+                Table = "table1"
+            };
+            var args = new Dictionary<string, object>()
+                {
+                    { "input", JsonConvert.SerializeObject(input) }
+                };
+
+            using (var host = CreateTestJobHost(adapter))
+            {
+                host.Start();
+                host.Call(typeof(ApiHubTableBindingTests).GetMethod("BindToEntityWithBindingParametersFunc"), args);
+                host.Stop();
+            }
+
+            var entity = await adapter.GetEntityAsync<SampleEntity>("default", "table1", "1");
+            Assert.NotNull(entity);
+            Assert.Equal(1, entity.Id);
+            Assert.Equal("bar", entity.Text);
+            Assert.Equal(1, adapter.UpdateCount);
+        }
+
+        public static void BindToEntityWithBindingParametersFunc(
+            [QueueTrigger("testqueue")] TestInput input,
+            [ApiHubTable("AzureWebJobsSql", TableName = "{Table}", EntityId = "{Id}")] SampleEntity entity)
+        {
+            entity.Text = "bar";
+        }
+
+        public class TestInput
+        {
+            public int Id { get; set; }
+            public string Table { get; set; }
+            public string DataSet { get; set; }
         }
 
         [Fact]
