@@ -177,6 +177,105 @@ public static void ProcessOrder(
 
 The invocation ID is used in the Dashboard logs, so having access to this programatically allows you to correlate an invocation to those logs. This might be useful if you're also logging to your own external system. To register the Core extensions, call `config.Core()` in your startup code.
 
+###Azure Mobile Apps
+
+A binding that allows you to easily create, read, and update records from an [Azure Mobile App](https://azure.microsoft.com/en-us/services/app-service/mobile/). This extension lives in **Microsoft.Azure.WebJobs.Extensions.MobileApps** nuget package. To configure the binding, add the Mobile App's URI (like `https://{yourapp}.azurewebsites.net`) as an app setting or environment variable using the setting name `AzureWebJobsMobileAppUri`. 
+
+By default, the binding will only be able to interact with Mobile App tables that are configured to be Anonymous. However, you can configure an Api Key on the Mobile App by following the Api Key sample for the [Node SDK](https://github.com/Azure/azure-mobile-apps-node/tree/master/samples/api-key) and the guide for the [.NET SDK](https://github.com/Azure/azure-mobile-apps-net-server/wiki/Implementing-Application-Key). Once your Api Key is properly configured for your Mobile App, you can configure your binding to use it by setting an app setting or environment variable with the name `AzureWebJobsMobileAppApiKey`.
+
+In this scenario, a record is created in the `Item` table each time a message appears in the queue. This specific sample uses an anonymous type for the record, but it could also have used `JObject` or any other type with a `public string Id` property.
+
+```csharp
+public static void MobileTableOutputSample(
+    [QueueTrigger("sample")] QueueData trigger,
+    [MobileTable(TableName = "Item")] out object item)
+{    
+    item = new { Text = "some sample text" };
+}
+```
+
+The following sample performs a lookup based on the data in the queue trigger. The `RecordId` property value of the `QueueData` object is used to query the `Item` table of the Mobile App. If the record exists, it is provided in the `item` parameter. If not, the `item` parameter will be `null`. Inside the method, the `item` object is changed. This change is automatically sent back to the Mobile App when the method exits. This scenario uses the `Item` type, but it could also have used `JObject` or any type with a `public string Id` property.
+
+```csharp
+public static void MobileTableInputSample(
+    [QueueTrigger("sample")] QueueData trigger,
+    [MobileTable(TableName = "Item", Id = "{RecordId}")] Item item)
+{    
+    // item will be null if the record is not found
+    if (item != null)
+    {
+        // Perform some processing...    
+        item.IsProcessed = true;
+    }
+}
+```
+
+If you need more control over the interaction with your Mobile App, you can also use parameters of type `IMobileServiceTable`, `IMobileServiceTable<T>`, `IMobileServiceTableQuery<T>`, or even `IMobileServiceClient`. For example, the method below can be used to execute a more complex query against the `Item` table. Note that if you are using a type other than `object` or `JObject`, the `TableName` is not required as the underlying Mobile App Client SDK will determine the table name based on the type. However, if you need to use a table name that does not match your type, you can specify that name as the `TableName` and it will override the type name.
+
+```csharp
+public static void MobileTableSample(
+    [QueueTrigger("sample")] QueueData trigger,
+    [MobileTable] IMobileServiceTable<Item> itemTable)
+{    
+    IEnumerable<Item> processedItems = await itemTable.CreateQuery()
+        .Where(i => i.IsProcessed && i.ProcessedAt < DateTime.Now.AddMinutes(-5))
+        .ToListAsync();
+
+    foreach (Item i in processedItems)
+    {
+        await table.DeleteAsync(i);
+    }
+}
+```
+###DocumentDB
+
+Use an [Azure DocumentDB](https://azure.microsoft.com/en-us/services/documentdb/) binding to easily create, read, and update JSON documents from a WebJob. This extension lives in **Microsoft.Azure.WebJobs.Extensions.DocumentDB** nuget package. To configure the binding, add the DocumentDB connection string as an app setting or environment variable using the setting name `AzureWebJobsDocumentDBConnectionString`.
+
+By default, the collection and database must exist before the binding runs or it will throw an Exception. You can configure the binding to automatically create your datatabase and collection by setting `CreateIfNotExists` to true. This property only applies to `out` parameters. For input (lookup) scenarios, if the database or collection do not exist, the parameter is returned as `null`. To define a partition key for automatically-created collections, set the `PartitionKey` property. To control the throughput of the collection, set the `CollectionThroughput` property. For more information on partition keys and throughput, see [Partitioning and scaling in Azure DocumentDB](https://azure.microsoft.com/en-us/documentation/articles/documentdb-partition-data/).
+
+In this example, the `newItem` object is upserted into the `ItemCollection` collection of the `ItemDb` DocumentDB database. The collection will be automatically created if it does not exist, with a partition key of `/mypartition` and a throughput of `12000`.
+
+```csharp
+public static void InsertDocument(
+    [QueueTrigger("sample")] QueueData trigger,
+    [DocumentDB("ItemDb", "ItemCollection", CreateIfNotExists = true, PartitionKey = "/mypartition", CollectionThroughput = 12000)] out ItemDoc newItem)
+{
+    newItem = new ItemDoc()
+    {
+        Text = "sample text"
+    };
+}
+```
+
+The following sample performs a lookup based on the data in the queue trigger. The `DocumentId` and `PartitionKey` properties value of the `QueueData` object are used to query the `ItemCollection` document collection. The `PartitionKey` property is optional and does not need to be specified unless your collection has a partition key. If the document exists, it is provided in the `item` parameter. If not, the `item` parameter will be `null`. Inside the method, the `item` object is changed. This change is automatically sent back to the document collection when the method exits.
+
+```csharp
+public static void ReadDocument(
+    [QueueTrigger("sample")] QueueData trigger,
+    [DocumentDB("ItemDb", "ItemCollection", Id = "{DocumentId}", PartitionKey = "{PartitionKey}")] JObject item)
+{
+    item["text"] = "Text changed!";
+}
+```
+
+If you need more control, you can also specify a parameter of type `DocumentClient`. The following example uses DocumentClient to query for all documents in `ItemCollection` and log their ids.
+
+```csharp
+public static void DocumentClient(
+    [QueueTrigger("sample")] QueueData trigger,
+    [DocumentDB] DocumentClient client,
+    TraceWriter log)
+{
+    var collectionUri = UriFactory.CreateDocumentCollectionUri("ItemDb", "ItemCollection");
+    var documents = client.CreateDocumentQuery(collectionUri);
+
+    foreach (Document d in documents)
+    {
+        log.Info(d.Id);
+    }
+}
+```
+
 ## License
 
 This project is under the benevolent umbrella of the [.NET Foundation](http://www.dotnetfoundation.org/) and is licensed under [the MIT License](LICENSE.txt)
