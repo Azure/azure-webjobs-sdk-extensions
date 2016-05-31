@@ -105,7 +105,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             // Arrange            
             var attribute = new DocumentDBAttribute
             {
-                ConnectionString = attributeConnection
+                ConnectionStringSetting = attributeConnection
             };
 
             var mockFactory = new Mock<IDocumentDBServiceFactory>();

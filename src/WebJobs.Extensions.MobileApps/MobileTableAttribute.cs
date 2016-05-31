@@ -44,7 +44,7 @@ namespace Microsoft.Azure.WebJobs
         /// Optional. A string value indicating the app setting to use as the Azure Mobile App Uri, if different
         /// than the one specified in the <see cref="MobileAppsConfiguration"/>.
         /// </summary>
-        public string MobileAppUri { get; set; }
+        public string MobileAppUriSetting { get; set; }
 
         /// <summary>
         /// Optional. A string value indicating the app setting to use as the Azure Mobile App Api Key, if different
@@ -54,6 +54,6 @@ namespace Microsoft.Azure.WebJobs
         /// - If it is equal to string.Empty, no Api Key is used.
         /// - Otherwise, this value is used to indicate the app setting that contains the Azure Mobile App Api Key.
         /// </summary>
-        public string ApiKey { get; set; }
+        public string ApiKeySetting { get; set; }
     }
 }

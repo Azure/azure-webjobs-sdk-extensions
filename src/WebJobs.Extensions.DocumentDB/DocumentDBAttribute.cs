@@ -64,7 +64,7 @@ namespace Microsoft.Azure.WebJobs
         /// Optional. A string value indicating the app setting to use as the DocumentDB connection string, if different
         /// than the one specified in the <see cref="DocumentDBConfiguration"/>.
         /// </summary>
-        public string ConnectionString { get; set; }
+        public string ConnectionStringSetting { get; set; }
 
         /// <summary>
         /// Optional. The Id of the document to retrieve from the collection.

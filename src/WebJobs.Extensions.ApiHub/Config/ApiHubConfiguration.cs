@@ -95,7 +95,7 @@ namespace Microsoft.Azure.WebJobs
 
         private async Task<IListener> BuildListener(ApiHubFileTriggerAttribute attribute, ITriggeredFunctionExecutor executor, TraceWriter trace)
         {
-            var root = GetFileSource(attribute.Key);
+            var root = GetFileSource(attribute.ConnectionStringSetting);
 
             string path = attribute.Path;
             int i = path.LastIndexOf('/');
@@ -125,7 +125,7 @@ namespace Microsoft.Azure.WebJobs
         // Attribute has path resolved
         private async Task<ApiHubFile> BuildFromAttribute(ApiHubFileAttribute attribute)
         {
-            var source = GetFileSource(attribute.Key);
+            var source = GetFileSource(attribute.ConnectionStringSetting);
             ApiHubFile file = await ApiHubFile.New(source, attribute.Path);
             return file;
         }

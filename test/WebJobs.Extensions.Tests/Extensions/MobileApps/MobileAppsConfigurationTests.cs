@@ -100,7 +100,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             // Arrange
             var attribute = new MobileTableAttribute
             {
-                MobileAppUri = attributeUriString
+                MobileAppUriSetting = attributeUriString
             };
 
             var mockFactory = new Mock<IMobileServiceClientFactory>();
@@ -130,7 +130,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             // Arrange
             var attribute = new MobileTableAttribute
             {
-                ApiKey = attributeKey
+                ApiKeySetting = attributeKey
             };
 
             var handler = new TestHandler();

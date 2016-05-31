@@ -57,7 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 
         private IAsyncCollector<Notification> BuildFromAttribute(NotificationHubAttribute attribute)
         {
-            string resolvedConnectionString = ResolveConnectionString(ConnectionString, attribute.ConnectionString);
+            string resolvedConnectionString = ResolveConnectionString(ConnectionString, attribute.ConnectionStringSetting);
             string resolvedHubName = ResolveHubName(HubName, attribute.HubName);
 
             INotificationHubClientService service = new NotificationHubClientService(resolvedConnectionString, resolvedHubName);

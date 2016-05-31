@@ -164,7 +164,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
         internal void ValidateMobileAppUri(MobileTableAttribute attribute, Type paramType)
         {
             if (MobileAppUri == null &&
-                string.IsNullOrEmpty(attribute.MobileAppUri))
+                string.IsNullOrEmpty(attribute.MobileAppUriSetting))
             {
                 throw new InvalidOperationException(
                     string.Format(CultureInfo.CurrentCulture,
@@ -253,8 +253,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
 
         internal MobileTableContext CreateContext(MobileTableAttribute attribute)
         {
-            Uri resolvedUri = ResolveMobileAppUri(MobileAppUri, attribute.MobileAppUri);
-            string resolvedApiKey = ResolveApiKey(ApiKey, attribute.ApiKey);
+            Uri resolvedUri = ResolveMobileAppUri(MobileAppUri, attribute.MobileAppUriSetting);
+            string resolvedApiKey = ResolveApiKey(ApiKey, attribute.ApiKeySetting);
 
             return new MobileTableContext
             {

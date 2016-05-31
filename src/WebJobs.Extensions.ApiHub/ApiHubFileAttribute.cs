@@ -16,12 +16,12 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Create an instance of an attribute that points to the file on SAAS file provider
         /// </summary>
-        /// <param name="key">App settings key name that have the connections string</param>
+        /// <param name="connectionStringSetting">App settings key name that have the connections string</param>
         /// <param name="path">Relative path to the file <example>/folder/subfolder/file.txt</example> </param>
         /// <param name="access">Type of access requests <seealso cref="FileAccess"/></param>
-        public ApiHubFileAttribute(string key, string path, FileAccess access = FileAccess.Read)
+        public ApiHubFileAttribute(string connectionStringSetting, string path, FileAccess access = FileAccess.Read)
         {
-            this.Key = key;
+            this.ConnectionStringSetting = connectionStringSetting;
             this.Path = path;
             this.Access = access;
         }
@@ -29,7 +29,7 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Gets or sets app settings key name that have the connections string to the SAAS provider
         /// </summary>
-        public string Key { get; private set; }
+        public string ConnectionStringSetting { get; private set; }
 
         /// <summary>
         /// Type of access requests <seealso cref="FileAccess"/>

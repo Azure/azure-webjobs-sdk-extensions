@@ -63,7 +63,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         internal void ValidateConnection(DocumentDBAttribute attribute, Type paramType)
         {
             if (string.IsNullOrEmpty(ConnectionString) &&
-                string.IsNullOrEmpty(attribute.ConnectionString))
+                string.IsNullOrEmpty(attribute.ConnectionStringSetting))
             {
                 throw new InvalidOperationException(
                     string.Format(CultureInfo.CurrentCulture,
@@ -83,7 +83,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
         internal DocumentClient BindForClient(DocumentDBAttribute attribute)
         {
-            string resolvedConnectionString = ResolveConnectionString(this.ConnectionString, attribute.ConnectionString);
+            string resolvedConnectionString = ResolveConnectionString(this.ConnectionString, attribute.ConnectionStringSetting);
             IDocumentDBService service = GetService(resolvedConnectionString);
 
             return service.GetClient();
@@ -118,7 +118,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
         internal DocumentDBContext CreateContext(DocumentDBAttribute attribute, TraceWriter trace)
         {
-            string resolvedConnectionString = ResolveConnectionString(ConnectionString, attribute.ConnectionString);
+            string resolvedConnectionString = ResolveConnectionString(ConnectionString, attribute.ConnectionStringSetting);
 
             IDocumentDBService service = GetService(resolvedConnectionString);
 
