@@ -1,4 +1,4 @@
-﻿Azure WebJobs SDK Extensions
+﻿﻿Azure WebJobs SDK Extensions
 ===
 
 This repo contains binding extensions for the **Azure WebJobs SDK**. See the [Azure WebJobs SDK repo](https://github.com/Azure/azure-webjobs-sdk) for more information. The binding extensions in this repo are available as the **Microsoft.Azure.WebJobs.Extensions** [nuget package](http://www.nuget.org/packages/Microsoft.Azure.WebJobs.Extensions). **Note**: some of the extensions in this repo (like SendGrid, WebHooks, etc.) live in their own separate nuget packages following a standard naming scheme (e.g. Microsoft.Azure.WebJobs.Extensions.SendGrid). Also note that some of the features discussed here or in the wiki may still be in **pre-release**. To access those features you may need to pull the very latest pre-release packages from our "nightlies" package feed ([instructions here](https://github.com/Azure/azure-webjobs-sdk/wiki/%22Nightly%22-Builds)).
@@ -275,6 +275,37 @@ public static void DocumentClient(
     }
 }
 ```
+
+###Azure Notification Hubs
+
+An [Azure Notification Hub](https://azure.microsoft.com/en-us/services/notification-hubs/) binding allows you to easily send push notifications to any platform. This extension lives in **Microsoft.Azure.WebJobs.Extensions.NotificationHubs** nuget package. To configure the binding, add the NotificationHubs namespace connection string as an app setting or environment variable using the setting name `AzureWebJobsNotificationHubsConnectionString` and add the name of the NotificationHub as an app setting or environment variable using the setting name `AzureWebJobsNotificationHubName`.
+
+Azure Notification Hub must be configured for the Platform Notifications Services (PNS) you want to use. For more information on configuring an Azure Notification Hub and developing a client applications that register for notifications, see [Getting started with Notification Hubs] (https://azure.microsoft.com/en-us/documentation/articles/notification-hubs-windows-store-dotnet-get-started/) and click your target client platform at the top.
+
+The following sample sends windows toast notification when a new file is uploaded to a blob
+
+```csharp
+ public static void SendNotification(
+    [BlobTrigger("sample/{name}.{ext}")] Stream input, string name, string ext
+    [NotificationHub] out Notification notification)
+{
+    string message = string.Format("File {0}.{1} uploaded to Blob container sample", name, ext);
+    string toastPayload = string.Format("<toast><visual><binding template=\"ToastText01\"><text id=\"1\">{0}</text></binding></visual></toast>", message);
+    notification = new WindowsNotification(toastPayload);
+}
+```
+
+Here's an example for sending [template notification] (https://msdn.microsoft.com/en-us/library/azure/dn530748.aspx) to an userId [tag] (https://azure.microsoft.com/en-us/documentation/articles/notification-hubs-routing-tag-expressions/) in the queue trigger. The `userId` is a property value of the `QueueData` object.
+
+```csharp
+public static void SendTemplateNotification(
+    [QueueTrigger("queue")] QueueData queueData,
+    [NotificationHub(TagExpression = "{userId}")] out string messageProperties)
+{
+    messageProperties = "{\"message\":\"Hello\",\"location\":\"Redmond\"}";
+}
+```
+
 
 ## License
 
