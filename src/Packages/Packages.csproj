@@ -38,8 +38,12 @@
     <None Include="..\WebJobs.Extensions.MobileApps.Nuget\WebJobs.Extensions.MobileApps.nuspec">
       <Link>WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.nuspec</Link>
     </None>
-    <None Include="WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.nuproj" />
-    <None Include="WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.nuspec" />
+    <None Include="..\WebJobs.Extensions.NotificationHubs.Nuget\WebJobs.Extensions.NotificationHubs.nuproj">
+      <Link>WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.nuproj</Link>
+    </None>
+    <None Include="..\WebJobs.Extensions.NotificationHubs.Nuget\WebJobs.Extensions.NotificationHubs.nuspec">
+      <Link>WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.nuspec</Link>
+    </None>
     <NuGetProject Include="..\WebJobs.Extensions.DocumentDB.Nuget\WebJobs.Extensions.DocumentDB.nuproj">
       <Link>WebJobs.Extensions.DocumentDB\WebJobs.Extensions.DocumentDB.nuproj</Link>
     </NuGetProject>
