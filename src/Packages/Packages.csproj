@@ -32,14 +32,21 @@
     </NuGetSpec>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\WebJobs.Extensions.MobileApps.Nuget\WebJobs.Extensions.MobileApps.nuproj">
+    <NuGetProject Include="..\WebJobs.Extensions.NotificationHubs.Nuget\WebJobs.Extensions.NotificationHubs.nuproj">
+      <Link>WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.nuproj</Link>
+      <SubType>Designer</SubType>
+    </NuGetProject>
+    <NuGetSpec Include="..\WebJobs.Extensions.NotificationHubs.Nuget\WebJobs.Extensions.NotificationHubs.nuspec">
+      <Link>WebJobs.Extensions.ApiHub\WebJobs.Extensions.NotificationHubs.nuspec</Link>
+    </NuGetSpec>
+  </ItemGroup>
+  <ItemGroup>
+    <NuGetProject Include="..\WebJobs.Extensions.MobileApps.Nuget\WebJobs.Extensions.MobileApps.nuproj">
       <Link>WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.nuproj</Link>
-    </None>
-    <None Include="..\WebJobs.Extensions.MobileApps.Nuget\WebJobs.Extensions.MobileApps.nuspec">
+    </NuGetProject>
+    <NuGetSpec Include="..\WebJobs.Extensions.MobileApps.Nuget\WebJobs.Extensions.MobileApps.nuspec">
       <Link>WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.nuspec</Link>
-    </None>
-    <None Include="WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.nuproj" />
-    <None Include="WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.nuspec" />
+    </NuGetSpec>
     <NuGetProject Include="..\WebJobs.Extensions.DocumentDB.Nuget\WebJobs.Extensions.DocumentDB.nuproj">
       <Link>WebJobs.Extensions.DocumentDB\WebJobs.Extensions.DocumentDB.nuproj</Link>
     </NuGetProject>
