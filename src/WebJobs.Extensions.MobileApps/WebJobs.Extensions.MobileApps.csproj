@@ -122,7 +122,7 @@
     <Compile Include="Config\DefaultMobileServiceClientFactory.cs" />
     <Compile Include="Config\IMobileServiceClientFactory.cs" />
     <Compile Include="Config\MobileServiceApiKeyHandler.cs" />
-    <Compile Include="MobileAppsScriptBindingProvider.cs" />
+    <Compile Include="Bindings\MobileAppsScriptBindingProvider.cs" />
     <Compile Include="MobileTableAttribute.cs" />
     <Compile Include="Config\MobileAppsConfiguration.cs" />
     <Compile Include="MobileTableContext.cs" />

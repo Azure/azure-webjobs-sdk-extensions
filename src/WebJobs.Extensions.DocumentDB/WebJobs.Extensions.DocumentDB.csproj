@@ -108,7 +108,7 @@
     <Compile Include="Config\IDocumentDBServiceFactory.cs" />
     <Compile Include="DocumentDBAttribute.cs" />
     <Compile Include="DocumentDBContext.cs" />
-    <Compile Include="DocumentDBScriptBindingProvider.cs" />
+    <Compile Include="Bindings\DocumentDBScriptBindingProvider.cs" />
     <Compile Include="DocumentDBUtility.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
