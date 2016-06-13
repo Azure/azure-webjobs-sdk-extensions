@@ -46,7 +46,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
                 "TraceFilter",
                 "TraceMonitor",
                 "ValueBinder",
-                "WeeklySchedule"
+                "WeeklySchedule",
+                "CoreExtensionsScriptBindingProvider"
             };
 
             AssertPublicTypes(expected, assembly);
@@ -77,6 +78,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
                 "MobileTableAttribute",
                 "MobileAppsConfiguration",
                 "MobileAppsJobHostConfigurationExtensions",
+                "MobileAppsScriptBindingProvider"
             };
 
             AssertPublicTypes(expected, assembly);
@@ -92,6 +94,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
                 "DocumentDBAttribute",
                 "DocumentDBConfiguration",
                 "DocumentDBJobHostConfigurationExtensions",
+                "DocumentDBScriptBindingProvider"
             };
 
             AssertPublicTypes(expected, assembly);
@@ -107,6 +110,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
                 "NotificationHubAttribute",
                 "NotificationHubsConfiguration",
                 "NotificationHubJobHostConfigurationExtensions",
+                "NotificationHubScriptBindingProvider"
             };
 
             AssertPublicTypes(expected, assembly);
@@ -124,7 +128,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
                 "ApiHubConfiguration",
                 "ApiHubJobHostConfigurationExtensions",
                 "ApiHubTableAttribute",
-                "ConnectionFactory"
+                "ConnectionFactory",
+                "ApiHubScriptBindingProvider"
             };
 
             AssertPublicTypes(expected, assembly);
