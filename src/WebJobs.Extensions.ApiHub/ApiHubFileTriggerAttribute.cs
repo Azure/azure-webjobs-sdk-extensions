@@ -15,12 +15,12 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Attribute used to bind a parameter to a SAAS file
         /// </summary>
-        /// <param name="key">App settings key name that have the connections string</param>
+        /// <param name="connectionStringSetting">App settings key name that have the connections string</param>
         /// <param name="path">Relative path to the file <example>/folder/subfolder/file.txt</example></param>
         /// <param name="fileWatcherType">Type of the file watcher.</param>
         /// <param name="pollIntervalInSeconds">The poll interval in seconds.</param>
-        public ApiHubFileTriggerAttribute(string key, string path, FileWatcherType fileWatcherType = FileWatcherType.Created, int pollIntervalInSeconds = 0)
-            : base(key, path)
+        public ApiHubFileTriggerAttribute(string connectionStringSetting, string path, FileWatcherType fileWatcherType = FileWatcherType.Created, int pollIntervalInSeconds = 0)
+            : base(connectionStringSetting, path)
         {
             this.PollIntervalInSeconds = pollIntervalInSeconds;
             this.FileWatcherType = fileWatcherType;

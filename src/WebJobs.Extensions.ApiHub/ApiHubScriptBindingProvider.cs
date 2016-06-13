@@ -94,15 +94,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
             {
                 Collection<Attribute> attributes = new Collection<Attribute>();
 
-                string connection = Context.GetMetadataValue<string>("connection");
-                string key = null;
-                if (!string.IsNullOrEmpty(connection))
+                string connectionStringSetting = Context.GetMetadataValue<string>("connection");
+                if (!string.IsNullOrEmpty(connectionStringSetting))
                 {
-                    connection = GetAppSettingOrEnvironmentValue(connection);
-
                     // Register each binding connection with the global config
-                    key = Guid.NewGuid().ToString();
-                    _apiHubConfig.AddKeyPath(key, connection);
+                    string connectionStringValue = GetAppSettingOrEnvironmentValue(connectionStringSetting);
+                    _apiHubConfig.AddKeyPath(connectionStringSetting, connectionStringValue);
                 }
 
                 string path = Context.GetMetadataValue<string>("path");
@@ -111,11 +108,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
                     FileWatcherType fileWatcherType = Context.GetMetadataEnumValue<FileWatcherType>("fileWatcherType", FileWatcherType.Created);
                     int pollIntervalInSeconds = Context.GetMetadataValue<int>("pollIntervalInSeconds");
 
-                    attributes.Add(new ApiHubFileTriggerAttribute(key, path, fileWatcherType, pollIntervalInSeconds));
+                    attributes.Add(new ApiHubFileTriggerAttribute(connectionStringSetting, path, fileWatcherType, pollIntervalInSeconds));
                 }
                 else
                 {
-                    attributes.Add(new ApiHubFileAttribute(key, path, Context.Access));
+                    attributes.Add(new ApiHubFileAttribute(connectionStringSetting, path, Context.Access));
                 }
 
                 return attributes;
