@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
         /// jobs are executed. In this case, job functions can specify minimal info in
         /// their bindings, for example just a Subject and Text body.
         /// </remarks>
-        public string ToAddress { get; set; }
+        public MailAddress ToAddress { get; set; }
 
         /// <summary>
         /// Gets or sets the default "from" address that will be used for messages.

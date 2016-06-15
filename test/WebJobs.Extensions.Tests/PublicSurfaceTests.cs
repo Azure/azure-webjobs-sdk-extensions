@@ -62,7 +62,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
             {
                 "SendGridAttribute",
                 "SendGridConfiguration",
-                "SampleJobHostConfigurationExtensions"
+                "SampleJobHostConfigurationExtensions",
+                "SendGridScriptBindingProvider"
             };
 
             AssertPublicTypes(expected, assembly);

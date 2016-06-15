@@ -5,6 +5,7 @@ using System;
 using System.Configuration;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Mail;
 using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 using SendGrid;
@@ -79,7 +80,7 @@ namespace ExtensionsSample
                 Subject = "WebJob Error Notification",
                 Text = filter.GetDetailedMessage(5)
             };
-            message.AddTo(_sendGridConfig.ToAddress);
+            message.To = new MailAddress[] { _sendGridConfig.ToAddress };
 
             _sendGrid.DeliverAsync(message);
         }

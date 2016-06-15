@@ -39,7 +39,7 @@ namespace ExtensionsSample
             config.UseNotificationHubs();
             var sendGridConfiguration = new SendGridConfiguration()
             {
-                ToAddress = "admin@webjobssamples.com",
+                ToAddress = new MailAddress("admin@webjobssamples.com", "WebJobs Extensions Samples"),
                 FromAddress = new MailAddress("samples@webjobssamples.com", "WebJobs Extensions Samples")
             };
             config.UseSendGrid(sendGridConfiguration);

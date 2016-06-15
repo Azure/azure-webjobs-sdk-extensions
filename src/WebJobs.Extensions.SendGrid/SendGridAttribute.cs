@@ -6,20 +6,16 @@ using System;
 namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
-    /// Attribute used to binds a parameter to a SendGridMessage that will automatically be
+    /// Attribute used to bind a parameter to a SendGridMessage that will automatically be
     /// sent when the function completes.
     /// </summary>
-    /// <remarks>
-    /// The method parameter can be of type <see cref="SendGrid.SendGridMessage"/> or a reference
-    /// to one ('ref' parameter). When using a reference parameter, you can indicate that the message
-    /// should not be sent by setting it to <see langword="null"/> before your job function returns.
-    /// </remarks>
     [AttributeUsage(AttributeTargets.Parameter)]
     public sealed class SendGridAttribute : Attribute
     {
         /// <summary>
         /// Gets or sets the message "To" field. May include binding parameters.
         /// </summary>
+        [AutoResolve]
         public string To { get; set; }
 
         /// <summary>
@@ -29,16 +25,19 @@ namespace Microsoft.Azure.WebJobs
         /// separated by a colon. Example: "orders@acme.net:Order Processor".
         /// </remarks>
         /// </summary>
+        [AutoResolve]
         public string From { get; set; }
 
         /// <summary>
         /// Gets or sets the message "Subject" field. May include binding parameters.
         /// </summary>
+        [AutoResolve]
         public string Subject { get; set; }
 
         /// <summary>
         /// Gets or sets the message "Text" field. May include binding parameters.
         /// </summary>
+        [AutoResolve]
         public string Text { get; set; }
     }
 }
