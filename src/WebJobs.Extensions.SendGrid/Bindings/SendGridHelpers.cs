@@ -138,5 +138,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
 
             return message;
         }
+
+        internal static SendGridConfiguration CreateConfiguration(JObject metadata)
+        {
+            SendGridConfiguration sendGridConfig = new SendGridConfiguration();
+
+            JObject configSection = (JObject)metadata.GetValue("sendGrid", StringComparison.OrdinalIgnoreCase);
+            JToken value = null;
+            if (configSection != null)
+            {
+                MailAddress mailAddress = null;
+                if (configSection.TryGetValue("from", StringComparison.OrdinalIgnoreCase, out value) &&
+                    SendGridHelpers.TryParseAddress((string)value, out mailAddress))
+                {
+                    sendGridConfig.FromAddress = mailAddress;
+                }
+
+                if (configSection.TryGetValue("to", StringComparison.OrdinalIgnoreCase, out value) &&
+                    SendGridHelpers.TryParseAddress((string)value, out mailAddress))
+                {
+                    sendGridConfig.ToAddress = mailAddress;
+                }
+            }
+
+            return sendGridConfig;
+        }
     }
 }

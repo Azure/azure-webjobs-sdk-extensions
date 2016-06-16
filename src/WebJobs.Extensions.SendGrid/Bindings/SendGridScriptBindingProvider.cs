@@ -3,9 +3,7 @@
 
 using System;
 using System.Collections.ObjectModel;
-using System.Net.Mail;
 using System.Reflection;
-using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Script.Extensibility;
 using Newtonsoft.Json.Linq;
@@ -45,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
         /// <inheritdoc/>
         public override void Initialize()
         {
-            SendGridConfiguration sendGridConfig = CreateConfiguration(Metadata);
+            var sendGridConfig = SendGridHelpers.CreateConfiguration(Metadata);
             Config.UseSendGrid(sendGridConfig);
         }
 
@@ -60,31 +58,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
             }
 
             return assembly != null;
-        }
-
-        internal static SendGridConfiguration CreateConfiguration(JObject metadata)
-        {
-            SendGridConfiguration sendGridConfig = new SendGridConfiguration();
-
-            JObject configSection = (JObject)metadata.GetValue("sendGrid", StringComparison.OrdinalIgnoreCase);
-            JToken value = null;
-            if (configSection != null)
-            {
-                MailAddress mailAddress = null;
-                if (configSection.TryGetValue("fromAddress", StringComparison.OrdinalIgnoreCase, out value) &&
-                    SendGridHelpers.TryParseAddress((string)value, out mailAddress))
-                {
-                    sendGridConfig.FromAddress = mailAddress;
-                }
-
-                if (configSection.TryGetValue("toAddress", StringComparison.OrdinalIgnoreCase, out value) &&
-                    SendGridHelpers.TryParseAddress((string)value, out mailAddress))
-                {
-                    sendGridConfig.ToAddress = mailAddress;
-                }
-            }
-
-            return sendGridConfig;
         }
 
         private class SendGridBinding : ScriptBinding

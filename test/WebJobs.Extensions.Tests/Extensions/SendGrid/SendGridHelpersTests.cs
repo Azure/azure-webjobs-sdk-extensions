@@ -113,5 +113,31 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.SendGrid
             Assert.Equal("Test Subject", result.Subject);
             Assert.Equal("Test Text", result.Text);
         }
+
+        [Fact]
+        public void CreateConfiguration_CreatesExpectedConfiguration()
+        {
+            JObject config = new JObject();
+            var result = SendGridHelpers.CreateConfiguration(config);
+
+            Assert.Null(result.FromAddress);
+            Assert.Null(result.ToAddress);
+
+            config = new JObject
+            {
+                { "sendGrid", new JObject
+                    {
+                        { "to", "test1@test.com:Testing1" },
+                        { "from", "test2@test.com:Testing2" }
+                    }
+                }
+            };
+            result = SendGridHelpers.CreateConfiguration(config);
+
+            Assert.Equal("test1@test.com", result.ToAddress.Address);
+            Assert.Equal("Testing1", result.ToAddress.DisplayName);
+            Assert.Equal("test2@test.com", result.FromAddress.Address);
+            Assert.Equal("Testing2", result.FromAddress.DisplayName);
+        }
     }
 }
