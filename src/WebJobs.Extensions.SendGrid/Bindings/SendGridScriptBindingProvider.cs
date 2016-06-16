@@ -44,7 +44,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
         public override void Initialize()
         {
             var sendGridConfig = SendGridHelpers.CreateConfiguration(Metadata);
-            Config.UseSendGrid(sendGridConfig);
+            if (!string.IsNullOrEmpty(sendGridConfig.ApiKey))
+            {
+                Config.UseSendGrid(sendGridConfig);
+            }
         }
 
         /// <inheritdoc/>

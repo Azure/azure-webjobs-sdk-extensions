@@ -42,7 +42,10 @@ namespace ExtensionsSample
                 ToAddress = new MailAddress("admin@webjobssamples.com", "WebJobs Extensions Samples"),
                 FromAddress = new MailAddress("samples@webjobssamples.com", "WebJobs Extensions Samples")
             };
-            config.UseSendGrid(sendGridConfiguration);
+            if (!string.IsNullOrEmpty(sendGridConfiguration.ApiKey))
+            {
+                config.UseSendGrid(sendGridConfiguration);
+            }
 
             ConfigureTraceMonitor(config, sendGridConfiguration);
 
@@ -57,7 +60,6 @@ namespace ExtensionsSample
                 typeof(FileSamples),
                 typeof(MiscellaneousSamples),
                 typeof(SampleSamples),
-                typeof(SendGridSamples),
                 typeof(TableSamples),
                 typeof(TimerSamples));
 

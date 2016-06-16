@@ -7,6 +7,9 @@ using SendGrid;
 
 namespace ExtensionsSample
 {
+    // To use the SendGridSamples:
+    // 1. Configure your SendGrid API Key via the 'AzureWebJobsSendGridApiKey' App Setting or Environment variable
+    // 4. Add typeof(SendGridSamples) to the SamplesTypeLocator in Program.cs
     public static class SendGridSamples
     {
         /// <summary>
