@@ -17,24 +17,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
         {
             mailAddress = null;
 
-            int idx = value.IndexOf('@');
-            if (idx < 0)
+            if (string.IsNullOrEmpty(value))
             {
                 return false;
             }
 
-            idx = value.IndexOf(':', idx);
-            if (idx > 0)
-            {
-                string address = value.Substring(0, idx);
-                string displayName = value.Substring(idx + 1);
-                mailAddress = new MailAddress(address, displayName);
-                return true;
-            }
-            else
+            try
             {
                 mailAddress = new MailAddress(value);
                 return true;
+            }
+            catch (FormatException)
+            {
+                return false;
             }
         }
 
@@ -62,7 +57,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
             {
                 if (!string.IsNullOrEmpty(attribute.To))
                 {
-                    message.AddTo(attribute.To);
+                    MailAddress to = null;
+                    if (!TryParseAddress(attribute.To, out to))
+                    {
+                        throw new ArgumentException("Invalid 'To' address specified");
+                    }
+                    message.To = new MailAddress[] { to };
                 }
                 else if (config.ToAddress != null)
                 {

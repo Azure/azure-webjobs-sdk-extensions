@@ -20,10 +20,6 @@ namespace Microsoft.Azure.WebJobs
 
         /// <summary>
         /// Gets or sets the message "From" field. May include binding parameters.
-        /// <remarks>
-        /// The string must include a From address, and can also include an optional DisplayName,
-        /// separated by a colon. Example: "orders@acme.net:Order Processor".
-        /// </remarks>
         /// </summary>
         [AutoResolve]
         public string From { get; set; }

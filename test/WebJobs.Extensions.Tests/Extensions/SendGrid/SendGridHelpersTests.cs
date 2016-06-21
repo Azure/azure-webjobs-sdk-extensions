@@ -22,14 +22,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.SendGrid
             Assert.Equal(string.Empty, address.DisplayName);
 
             address = null;
-            SendGridHelpers.TryParseAddress("test@test.com:Test Account", out address);
+            SendGridHelpers.TryParseAddress("Test Account <test@test.com>", out address);
             Assert.Equal("test@test.com", address.Address);
             Assert.Equal("Test Account", address.DisplayName);
-
-            address = null;
-            SendGridHelpers.TryParseAddress("test@test.com:Test Acco:unt", out address);
-            Assert.Equal("test@test.com", address.Address);
-            Assert.Equal("Test Acco:unt", address.DisplayName);
         }
 
         [Theory]
@@ -77,10 +72,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.SendGrid
                     "to", new JArray
                     {
                         "test1@acme.com",
-                        "test2@acme.com:Test Account 2"
+                        "Test Account 2 <test2@acme.com>"
                     }
                 },
-                { "from", "test3@contoso.com:Test Account 3" },
+                { "from", "Test Account 3 <test3@contoso.com>" },
                 { "subject", "Test Subject" },
                 { "text", "Test Text" }
             };
@@ -99,8 +94,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.SendGrid
             // single recipient
             input = new JObject
             {
-                { "to", "test2@acme.com:Test Account 2" },
-                { "from", "test3@contoso.com:Test Account 3" },
+                { "to", "Test Account 2 <test2@acme.com>" },
+                { "from", "Test Account 3 <test3@contoso.com>" },
                 { "subject", "Test Subject" },
                 { "text", "Test Text" }
             };
@@ -129,8 +124,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.SendGrid
             {
                 { "sendGrid", new JObject
                     {
-                        { "to", "test1@test.com:Testing1" },
-                        { "from", "test2@test.com:Testing2" }
+                        { "to", "Testing1 <test1@test.com>" },
+                        { "from", "Testing2 <test2@test.com>" }
                     }
                 }
             };
