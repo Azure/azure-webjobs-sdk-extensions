@@ -67,7 +67,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
                 {
                     value = nameResolver.ResolveWholeString(value);
                 }
-                BindingTemplate bindingTemplate = BindingTemplate.FromString(value);
+                BindingTemplate bindingTemplate = BindingTemplate.FromString(value, ignoreCase: true);
                 bindingTemplate.ValidateContractCompatibility(contract);
             }
         }

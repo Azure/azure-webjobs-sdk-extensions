@@ -79,7 +79,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
                 this._parent = parent;
                 this._trace = trace;
 
-                _bindingDataProvider = BindingDataProvider.FromTemplate(_attribute.Path);
+                _bindingDataProvider = BindingDataProvider.FromTemplate(_attribute.Path, ignoreCase: true);
                 _bindingContract = CreateBindingContract();
             }
 

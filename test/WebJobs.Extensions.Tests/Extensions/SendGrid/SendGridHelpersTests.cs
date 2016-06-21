@@ -73,7 +73,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.SendGrid
             // multiple recipients
             JObject input = new JObject
             {
-                { "to", new JArray {
+                {
+                    "to", new JArray
+                    {
                         "test1@acme.com",
                         "test2@acme.com:Test Account 2"
                     }

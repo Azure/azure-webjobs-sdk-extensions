@@ -61,7 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
             string path = attribute.Path;
 
-            BindingTemplate bindingTemplate = BindingTemplate.FromString(path);
+            BindingTemplate bindingTemplate = BindingTemplate.FromString(path, ignoreCase: true);
             bindingTemplate.ValidateContractCompatibility(context.BindingDataContract);
 
             IBinding binding = null;

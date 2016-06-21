@@ -30,12 +30,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
             ApiHubTableAttribute attribute = Parameter.GetTableAttribute();
             if (!string.IsNullOrEmpty(attribute.DataSetName))
             {
-                _dataSetNameBindingTemplate = BindingTemplate.FromString(attribute.DataSetName);
+                _dataSetNameBindingTemplate = BindingTemplate.FromString(attribute.DataSetName, ignoreCase: true);
             }
 
             if (!string.IsNullOrEmpty(attribute.TableName))
             {
-                _tableNameBindingTemplate = BindingTemplate.FromString(attribute.TableName);
+                _tableNameBindingTemplate = BindingTemplate.FromString(attribute.TableName, ignoreCase: true);
             }
         }
 
