@@ -21,7 +21,7 @@ namespace WebJobsSandbox
         /// Example job triggered by an crontab schedule that is also configured
         /// to run immediately on startup.
         /// </summary>
-        public static void StartupJob([TimerTrigger("0 0 */2 * * *", RunOnStartup = true)] TimerInfo timerInfo)
+        public static void StartupJob([TimerTrigger("0 0 */2 * * *", RunOnStartup = true, UseMonitor = true)] TimerInfo timerInfo)
         {
             Console.WriteLine("Timer job fired!");
 

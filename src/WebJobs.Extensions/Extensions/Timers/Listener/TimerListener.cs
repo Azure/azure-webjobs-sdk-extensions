@@ -40,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             _trace = trace;
             _cancellationTokenSource = new CancellationTokenSource();
             _schedule = schedule;
-            ScheduleMonitor = _attribute.UseMonitor.GetValueOrDefault() ? _config.ScheduleMonitor : null;
+            ScheduleMonitor = _attribute.UseMonitor ? _config.ScheduleMonitor : null;
         }
 
         internal static TimeSpan MaxTimerInterval 

@@ -14,7 +14,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             TimerTriggerAttribute attribute = new TimerTriggerAttribute("00:00:15");
             Assert.Equal("00:00:15", attribute.ScheduleExpression);
             Assert.Null(attribute.ScheduleType);
-            Assert.Null(attribute.UseMonitor);
+            Assert.True(attribute.UseMonitor);
         }
 
         [Fact]
@@ -23,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             TimerTriggerAttribute attribute = new TimerTriggerAttribute(typeof(DailySchedule));
             Assert.Null(attribute.ScheduleExpression);
             Assert.Equal(typeof(DailySchedule), attribute.ScheduleType);
-            Assert.Null(attribute.UseMonitor);
+            Assert.True(attribute.UseMonitor);
         }
     }
 }

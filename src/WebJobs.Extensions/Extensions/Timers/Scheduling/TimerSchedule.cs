@@ -73,12 +73,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                         // persistence
                         attribute.UseMonitor = false;
                     }
-                    else if (!attribute.UseMonitor.HasValue)
-                    {
-                        // if the user hasn't specified a value
-                        // set to true
-                        attribute.UseMonitor = true;
-                    }
                 }
                 else if (TimeSpan.TryParse(resolvedExpression, out periodTimespan))
                 {
@@ -89,12 +83,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                         // for very frequent constant schedules, we want to disable persistence
                         attribute.UseMonitor = false;
                     }
-                    else if (!attribute.UseMonitor.HasValue)
-                    {
-                        // if the user hasn't specified a value
-                        // set to true
-                        attribute.UseMonitor = true;
-                    }
                 }
                 else
                 {
@@ -104,12 +92,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             else
             {
                 schedule = (TimerSchedule)Activator.CreateInstance(attribute.ScheduleType);
-                if (!attribute.UseMonitor.HasValue)
-                {
-                    // if the user hasn't specified a value
-                    // set to true
-                    attribute.UseMonitor = true;
-                }
             }
 
             return schedule;

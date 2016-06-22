@@ -22,6 +22,7 @@ namespace Microsoft.Azure.WebJobs
         public TimerTriggerAttribute(string scheduleExpression)
         {
             ScheduleExpression = scheduleExpression;
+            UseMonitor = true;
         }
 
         /// <summary>
@@ -31,6 +32,7 @@ namespace Microsoft.Azure.WebJobs
         public TimerTriggerAttribute(Type scheduleType)
         {
             ScheduleType = scheduleType;
+            UseMonitor = true;
         }
 
         /// <summary>
@@ -51,7 +53,7 @@ namespace Microsoft.Azure.WebJobs
         /// interval greater than 1 minute (i.e., for schedules that occur more than once
         /// per minute, persistence will be disabled).
         /// </summary>
-        public bool? UseMonitor { get; set; }
+        public bool UseMonitor { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the function should be invoked
