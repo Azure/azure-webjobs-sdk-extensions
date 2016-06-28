@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -11,18 +12,27 @@ using System.Threading.Tasks;
 using Microsoft.Azure.ApiHub;
 using Microsoft.Azure.WebJobs.Extensions.ApiHub;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 {
     public class ApiHubBindingEndToEndTests
     {
+        private const string HostContainerName = "azure-webjobs-hosts";
+        private const string ApiHubBlobDirectoryPathTemplate = "apihubs/{0}";
+
         private const string ImportTestPath = @"import";
         private const string OutputTestPath = @"output";
 
         private string _apiHubConnectionString;
         private IFolderItem _rootFolder;
+        private CloudBlobDirectory _apiHubBlobDirectory;
 
+        private JobHostConfiguration _config;
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Globalization", "CA1308:NormalizeStringsToUppercase")]
         public ApiHubBindingEndToEndTests()
         {
             if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AzureWebJobsDropBox")))
@@ -33,6 +43,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             {
                 _apiHubConnectionString = "UseLocalFileSystem=true;Path=" + Path.GetTempPath() + "ApiHubDropBox";
             }
+
+            ExplicitTypeLocator locator = new ExplicitTypeLocator(typeof(ApiHubTestJobs));
+
+            // Use MachineName as the host Id
+            var machineName = Environment.MachineName.ToLower(CultureInfo.InvariantCulture);
+            if (machineName.Length > 30)
+            {
+                machineName = machineName.Substring(0, 30);
+            }
+
+            _config = new JobHostConfiguration
+            {
+                TypeLocator = locator,
+                HostId = machineName,
+            };
 
             _rootFolder = ItemFactory.Parse(_apiHubConnectionString);
 
@@ -64,6 +89,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             }
 
             ApiHubTestJobs.Processed.Clear();
+
+            CloudStorageAccount account = CloudStorageAccount.Parse(_config.StorageConnectionString);
+            CloudBlobClient blobClient = account.CreateCloudBlobClient();
+
+            string apiHubBlobDirectoryPath = string.Format(ApiHubBlobDirectoryPathTemplate, _config.HostId);
+            _apiHubBlobDirectory = blobClient.GetContainerReference(HostContainerName).GetDirectoryReference(apiHubBlobDirectoryPath);
+
+            DeleteApiHubBlobs();
         }
 
         [Fact]
@@ -93,6 +126,60 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             host.Stop();
 
             await fileItem.DeleteAsync();
+        }
+
+        [Fact]
+        public async void ChecksRelatedBlobsGettingUpdated()
+        {
+            JobHost host = CreateTestJobHost();
+
+            host.Start();
+
+            // now write a file to trigger the job
+            var fileItem = await WriteTestFile();
+
+            await TestHelpers.Await(() =>
+            {
+                return _rootFolder.FileExists(fileItem.Path);
+            });
+
+            await TestHelpers.Await(() =>
+            {
+                return ApiHubTestJobs.Processed.Count != 0;
+            });
+
+            var apiHubBlob = GetBlobReference("ImportTestJob");
+
+            Assert.True(await apiHubBlob.ExistsAsync());
+            var content = await apiHubBlob.DownloadTextAsync();
+
+            Assert.True(!string.IsNullOrEmpty(content));
+
+            // waiting for 1 sec to make sure we get an updated DateTime for the blob entry which is in the HH:mm:ss format for local files. 
+            await Task.Delay(1000);
+            ApiHubTestJobs.Processed.Clear();
+
+            // now write a 2nd file to trigger the job and making sure the blob is updated
+            var fileItem2 = await WriteTestFile();
+
+            await TestHelpers.Await(() =>
+            {
+                return _rootFolder.FileExists(fileItem2.Path);
+            });
+
+            await TestHelpers.Await(() =>
+            {
+                return ApiHubTestJobs.Processed.Count != 0;
+            });
+
+            var content2 = await apiHubBlob.DownloadTextAsync();
+
+            Assert.False(content2.Equals(content, StringComparison.OrdinalIgnoreCase));
+
+            host.Stop();
+
+            await fileItem.DeleteAsync();
+            await fileItem2.DeleteAsync();
         }
 
         [Fact]
@@ -220,19 +307,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
         private JobHost CreateTestJobHost()
         {
-            ExplicitTypeLocator locator = new ExplicitTypeLocator(typeof(ApiHubTestJobs));
-
-            JobHostConfiguration config = new JobHostConfiguration
-            {
-                TypeLocator = locator,
-            };
-
             var apiHubConfig = new ApiHubConfiguration();
 
-            apiHubConfig.AddKeyPath("dropbox", _apiHubConnectionString);
-            config.UseApiHub(apiHubConfig);
+            apiHubConfig.AddConnection("dropbox", _apiHubConnectionString);
+            _config.UseApiHub(apiHubConfig);
 
-            return new JobHost(config);
+            return new JobHost(_config);
         }
 
         private void DeleteTestFiles(string path)
@@ -240,6 +320,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             foreach (string file in Directory.GetFiles(path))
             {
                 File.Delete(file);
+            }
+        }
+
+        private void DeleteApiHubBlobs()
+        {
+            foreach (var blob in this._apiHubBlobDirectory.ListBlobs())
+            {
+                var blockBlob = blob as CloudBlockBlob;
+
+                if (blockBlob != null)
+                {
+                    blockBlob.DeleteIfExists();
+                }
             }
         }
 
@@ -253,6 +346,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
             Assert.True(_rootFolder.FileExists(file.Path));
             return file;
+        }
+
+        private CloudBlockBlob GetBlobReference(string functionName)
+        {
+            // Path to apiHub blob is:
+            // apihubs/{siteName}/{functionName}/status
+            string blobName = string.Format("{0}/status", functionName);
+            return this._apiHubBlobDirectory.GetBlockBlobReference(blobName);
         }
 
         public static class ApiHubTestJobs

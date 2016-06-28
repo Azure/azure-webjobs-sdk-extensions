@@ -99,7 +99,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
                 {
                     // Register each binding connection with the global config
                     string connectionStringValue = GetAppSettingOrEnvironmentValue(connectionStringSetting);
-                    _apiHubConfig.AddKeyPath(connectionStringSetting, connectionStringValue);
+                    _apiHubConfig.AddConnection(connectionStringSetting, connectionStringValue);
                 }
 
                 string path = Context.GetMetadataValue<string>("path");

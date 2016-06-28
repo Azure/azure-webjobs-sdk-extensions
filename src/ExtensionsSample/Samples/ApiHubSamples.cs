@@ -96,7 +96,7 @@ namespace ExtensionsSample.Samples
             if (!string.IsNullOrEmpty(apiHubConnectionString))
             {
                 var apiHubConfig = new ApiHubConfiguration();
-                apiHubConfig.AddKeyPath("dropbox", apiHubConnectionString);
+                apiHubConfig.AddConnection("dropbox", apiHubConnectionString);
                 config.UseApiHub(apiHubConfig);
 
                 // Create some initialization files.

@@ -83,7 +83,7 @@ namespace Microsoft.Azure.WebJobs
             extensions.RegisterExtension<IBindingProvider>(bindingProvider);
 
             var triggerBindingProvider = new GenericFileTriggerBindingProvider<ApiHubFileTriggerAttribute, ApiHubFile>(
-                BuildListener, bindingProvider, this, context.Trace);
+                BuildListener, config, bindingProvider, this, context.Trace);
             extensions.RegisterExtension<ITriggerBindingProvider>(triggerBindingProvider);
 
             extensions.RegisterExtension<IBindingProvider>(
@@ -93,7 +93,7 @@ namespace Microsoft.Azure.WebJobs
                         nameResolver)));
         }
 
-        private async Task<IListener> BuildListener(ApiHubFileTriggerAttribute attribute, ITriggeredFunctionExecutor executor, TraceWriter trace)
+        private async Task<IListener> BuildListener(JobHostConfiguration config, ApiHubFileTriggerAttribute attribute, string functionName, ITriggeredFunctionExecutor executor, TraceWriter trace)
         {
             var root = GetFileSource(attribute.ConnectionStringSetting);
 
@@ -117,7 +117,7 @@ namespace Microsoft.Azure.WebJobs
 
             var folder = await root.GetFolderReferenceAsync(folderName);
 
-            var listener = new ApiHubListener(folder, executor, trace, attribute.PollIntervalInSeconds, attribute.FileWatcherType);
+            var listener = new ApiHubListener(config, folder, functionName, executor, trace, attribute);
 
             return listener;
         }
@@ -136,14 +136,14 @@ namespace Microsoft.Azure.WebJobs
         }
 
         /// <summary>
-        /// Add path to the configuration
+        /// Adds a connection to the configuration
         /// </summary>
-        /// <param name="key">App settings key name that have the connections string</param>
+        /// <param name="settingName">App settings settingName name that have the connections string</param>
         /// <param name="connectionString">Connection string to access SAAS via ApiHub. <seealso cref="ApiHubJobHostConfigurationExtensions.GetApiHubProviderConnectionStringAsync" /></param>
-        public void AddKeyPath(string key, string connectionString)
+        public void AddConnection(string settingName, string connectionString)
         {
             var root = ItemFactory.Parse(connectionString, _logger);
-            _map[key] = root;
+            _map[settingName] = root;
         }
 
         string IFileTriggerStrategy<ApiHubFile>.GetPath(ApiHubFile file)

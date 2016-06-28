@@ -15,7 +15,7 @@
     <tags>Microsoft Azure WebJobs Jobs Extensions ApiHub windowsazureofficial Web</tags>
     <dependencies>
       <dependency id="Microsoft.Azure.WebJobs.Extensions" version="$WebJobsPackageVersion$" />
-      <dependency id="Microsoft.Azure.ApiHub.Sdk" version="0.6.6-alpha" />
+      <dependency id="Microsoft.Azure.ApiHub.Sdk" version="0.6.7-alpha" />
     </dependencies>
   </metadata>
 </package>

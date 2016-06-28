@@ -17,18 +17,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
     internal class GenericFileTriggerBindingProvider<TAttribute, TFile> : ITriggerBindingProvider
           where TAttribute : Attribute, IFileAttribute
     {
-        private readonly Func<TAttribute, ITriggeredFunctionExecutor, TraceWriter, Task<IListener>> _listenerBuilder;
+        private readonly Func<JobHostConfiguration, TAttribute, string, ITriggeredFunctionExecutor, TraceWriter, Task<IListener>> _listenerBuilder;
         private readonly IBindingProvider2 _provider; // for regular binding to objects. 
         private readonly IFileTriggerStrategy<TFile> _strategy;
         private TraceWriter _trace;
+        private JobHostConfiguration _config;
 
         public GenericFileTriggerBindingProvider(
-            Func<TAttribute, ITriggeredFunctionExecutor, TraceWriter, Task<IListener>> listenerBuilder,
+            Func<JobHostConfiguration, TAttribute, string, ITriggeredFunctionExecutor, TraceWriter, Task<IListener>> listenerBuilder,
+            JobHostConfiguration config,
             IBindingProvider2 provider,
             IFileTriggerStrategy<TFile> strategy,
             TraceWriter trace)
         {
             this._listenerBuilder = listenerBuilder;
+            this._config = config;
             this._provider = provider;
             this._strategy = strategy;
             this._trace = trace;
@@ -47,7 +50,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
             string path = attribute.Path;
 
-            var binding = new GenericTriggerbinding(parameter, attribute, _trace, this);
+            var binding = new GenericTriggerbinding(_config, parameter, attribute, _trace, this);
 
             var bindingContract = binding.BindingDataContract;
             BindingProviderContext bindingContext2 = new BindingProviderContext(parameter, bindingContract, context.CancellationToken);
@@ -67,17 +70,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
             private readonly BindingDataProvider _bindingDataProvider;
             private readonly ParameterInfo _parameter;
             private TraceWriter _trace;
+            private JobHostConfiguration _config;
+            private string _functionName;
 
             public GenericTriggerbinding(
+                JobHostConfiguration config,
                 ParameterInfo parameter,
                 TAttribute attribute,
                 TraceWriter trace, 
                 GenericFileTriggerBindingProvider<TAttribute, TFile> parent)
             {
+                this._config = config;
                 this._parameter = parameter;
                 this._attribute = attribute;
                 this._parent = parent;
                 this._trace = trace;
+
+                MethodInfo methodInfo = (MethodInfo)parameter.Member;
+                _functionName = methodInfo.Name;
 
                 _bindingDataProvider = BindingDataProvider.FromTemplate(_attribute.Path, ignoreCase: true);
                 _bindingContract = CreateBindingContract();
@@ -178,7 +188,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
             public Task<IListener> CreateListenerAsync(ListenerFactoryContext context)
             {
-                Task<IListener> listener = _parent._listenerBuilder(_attribute, context.Executor, _trace);
+                Task<IListener> listener = _parent._listenerBuilder(_config, _attribute, _functionName, context.Executor, _trace);
                 return listener;
             }
 
