@@ -23,6 +23,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         private const string DatabaseName = "TestDatabase";
         private const string CollectionName = "TestCollection";
 
+        private const string AttributeConnStr = "AccountEndpoint=https://attribute;AccountKey=attribute";
+        private const string ConfigConnStr = "AccountEndpoint=https://config;AccountKey=config";
+        private const string DefaultConnStr = "AccountEndpoint=https://default;AccountKey=default";
+
         [Fact]
         public void OutputBindings()
         {
@@ -34,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 
             var factoryMock = new Mock<IDocumentDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(It.IsAny<string>()))
+                .Setup(f => f.CreateService(ConfigConnStr))
                 .Returns(serviceMock.Object);
 
             var testTrace = new TestTraceWriter(TraceLevel.Warning);
@@ -43,7 +47,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             RunTest("Outputs", factoryMock.Object, testTrace);
 
             // Assert
-            factoryMock.Verify(f => f.CreateService(It.IsAny<string>()), Times.Once());
+            factoryMock.Verify(f => f.CreateService(ConfigConnStr), Times.Once());
             serviceMock.Verify(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()), Times.Exactly(7));
             Assert.Equal("Outputs", testTrace.Events.Single().Message);
         }
@@ -54,16 +58,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             // Arrange
             var factoryMock = new Mock<IDocumentDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(It.IsAny<string>()))
+                .Setup(f => f.CreateService(DefaultConnStr))
                 .Returns<string>(connectionString => new DocumentDBService(connectionString));
 
             var testTrace = new TestTraceWriter(TraceLevel.Warning);
 
             // Act
-            RunTest("Client", factoryMock.Object, testTrace);
+            // Also verify that this falls back to the default by setting the config connection string to null
+            RunTest("Client", factoryMock.Object, testTrace, configConnectionString: null);
 
             //Assert
-            factoryMock.Verify(f => f.CreateService(It.IsAny<string>()), Times.Once());
+            factoryMock.Verify(f => f.CreateService(DefaultConnStr), Times.Once());
             Assert.Equal("Client", testTrace.Events.Single().Message);
         }
 
@@ -139,7 +144,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 
             var factoryMock = new Mock<IDocumentDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(It.IsAny<string>()))
+                .Setup(f => f.CreateService(AttributeConnStr))
                 .Returns(serviceMock.Object);
 
             var jobject = JObject.FromObject(new QueueData { DocumentId = "docid1", PartitionKey = "partkey1" });
@@ -150,7 +155,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             RunTest("TriggerObject", factoryMock.Object, testTrace, jobject.ToString());
 
             // Assert
-            factoryMock.Verify(f => f.CreateService(It.IsAny<string>()), Times.Once());
+            factoryMock.Verify(f => f.CreateService(AttributeConnStr), Times.Once());
             Assert.Equal(1, testTrace.Events.Count);
             Assert.Equal("TriggerObject", testTrace.Events[0].Message);
         }
@@ -158,26 +163,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         [Fact]
         public void NoConnectionString()
         {
-            // Arrange
-            var config = new DocumentDBConfiguration
-            {
-                ConnectionString = null
-            };
-
             // Act
             var ex = Assert.Throws<FunctionIndexingException>(
-                () => RunTest(typeof(DocumentDBNoConnectionStringFunctions), "Broken", new DefaultDocumentDBServiceFactory(), new TestTraceWriter(), documentDBConfig: config));
+                () => RunTest(typeof(DocumentDBNoConnectionStringFunctions), "Broken", new DefaultDocumentDBServiceFactory(), new TestTraceWriter(), configConnectionString: null, includeDefaultConnectionString: false));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex.InnerException);
         }
 
-        private void RunTest(string testName, IDocumentDBServiceFactory factory, TraceWriter testTrace, object argument = null, DocumentDBConfiguration documentDBConfig = null)
+        private void RunTest(string testName, IDocumentDBServiceFactory factory, TraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr)
         {
-            RunTest(typeof(DocumentDBEndToEndFunctions), testName, factory, testTrace, argument, documentDBConfig);
+            RunTest(typeof(DocumentDBEndToEndFunctions), testName, factory, testTrace, argument, configConnectionString);
         }
 
-        private void RunTest(Type testType, string testName, IDocumentDBServiceFactory factory, TraceWriter testTrace, object argument = null, DocumentDBConfiguration documentDBConfig = null)
+        private void RunTest(Type testType, string testName, IDocumentDBServiceFactory factory, TraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr, bool includeDefaultConnectionString = true)
         {
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
             JobHostConfiguration config = new JobHostConfiguration
@@ -190,18 +189,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var arguments = new Dictionary<string, object>();
             arguments.Add("triggerData", argument);
 
-            if (documentDBConfig == null)
+            var documentDBConfig = new DocumentDBConfiguration()
             {
-                documentDBConfig = new DocumentDBConfiguration()
-                {
-                    ConnectionString = "AccountEndpoint=https://someuri;AccountKey=some_key",
-                    DocumentDBServiceFactory = factory
-                };
-            }
+                ConnectionString = configConnectionString,
+                DocumentDBServiceFactory = factory
+            };
 
             var resolver = new TestNameResolver();
             resolver.Values.Add("Database", "ResolvedDatabase");
             resolver.Values.Add("Collection", "ResolvedCollection");
+            resolver.Values.Add("MyConnectionString", AttributeConnStr);
+            if (includeDefaultConnectionString)
+            {
+                resolver.Values.Add(DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName, DefaultConnStr);
+            }
 
             config.NameResolver = resolver;
 
@@ -232,7 +233,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
                     new Document()
                 };
 
-                Task.WaitAll(new[] 
+                Task.WaitAll(new[]
                 {
                     asyncCollector.AddAsync(new { }),
                     asyncCollector.AddAsync(new { })
@@ -277,7 +278,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             [NoAutomaticTrigger]
             public static void TriggerObject(
                 [QueueTrigger("fakequeue1")] QueueData triggerData,
-                [DocumentDB(DatabaseName, CollectionName, Id = "{DocumentId}", PartitionKey = "{PartitionKey}")] dynamic item1,
+                [DocumentDB(DatabaseName, CollectionName, Id = "{DocumentId}", PartitionKey = "{PartitionKey}", ConnectionStringSetting = "MyConnectionString")] dynamic item1,
                 TraceWriter trace)
             {
                 Assert.NotNull(item1);
@@ -289,7 +290,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         private class DocumentDBNoConnectionStringFunctions
         {
             [NoAutomaticTrigger]
-            public static void Client(
+            public static void Broken(
                 [DocumentDB] DocumentClient client)
             {
             }

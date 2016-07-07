@@ -59,6 +59,8 @@
       <Word>DocumentDB</Word>
       <Word>DocumentDBAttribute</Word>
       <Word>DocumentDBConfiguration</Word>
+      <Word>ConnectionStringSetting</Word>
+      <Word>MobileAppUriSetting</Word>
     </Recognized>
     <Deprecated/>
     <Compound>

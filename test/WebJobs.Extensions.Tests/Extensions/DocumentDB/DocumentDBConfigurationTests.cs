@@ -1,31 +1,24 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Models;
-using Moq;
+using Microsoft.Azure.WebJobs.Host.Config;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 {
     public class DocumentDBConfigurationTests
     {
-        private const string ConnectionStringKey = DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName;
-        private const string AppSettingKey = ConnectionStringKey + "_appsetting";
-        private const string EnvironmentKey = ConnectionStringKey + "_environment";
-        private const string NeitherKey = ConnectionStringKey + "_neither";
-
         [Fact]
         public async Task Configuration_Caches_Clients()
         {
             // Arrange            
             var config = new DocumentDBConfiguration
             {
-                ConnectionString = "AccountEndpoint=https://someuri;AccountKey=some_key",                
+                ConnectionString = "AccountEndpoint=https://someuri;AccountKey=some_key",
             };
             var attribute = new DocumentDBAttribute();
 
@@ -39,98 +32,51 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         }
 
         [Fact]
-        public void Resolve_UsesConnectionString_First()
+        public void Resolve_UsesAttribute_First()
         {
-            // Arrange
-            SetEnvironment(ConnectionStringKey);
+            var config = InitializeConfig("Default");
+            config.ConnectionString = "Config";
 
             // Act
-            var connString = DocumentDBConfiguration.GetSettingFromConfigOrEnvironment(ConnectionStringKey);
+            var connString = config.ResolveConnectionString("Attribute");
 
-            // Assert            
-            Assert.Equal("AccountEndpoint=https://fromconnstrings;AccountKey=some_key", connString);
-
-            ClearEnvironment();
+            // Assert
+            Assert.Equal("Attribute", connString);
         }
 
         [Fact]
-        public void Resolve_UsesAppSetting_Second()
+        public void Resolve_UsesConfig_Second()
         {
-            // Arrange
-            SetEnvironment(AppSettingKey);
+            var config = InitializeConfig("Default");
+            config.ConnectionString = "Config";
 
             // Act
-            var connString = DocumentDBConfiguration.GetSettingFromConfigOrEnvironment(AppSettingKey);
+            var connString = config.ResolveConnectionString(null);
 
             // Assert
-            Assert.Equal("AccountEndpoint=https://fromappsettings2;AccountKey=some_key", connString);
-
-            ClearEnvironment();
+            Assert.Equal("Config", connString);
         }
 
         [Fact]
-        public void Resolve_UsesEnvironment_Third()
+        public void Resolve_UsesDefault_Last()
         {
-            // Arrange
-            SetEnvironment(EnvironmentKey);
+            var config = InitializeConfig("Default");
 
             // Act
-            var connString = DocumentDBConfiguration.GetSettingFromConfigOrEnvironment(EnvironmentKey);
+            var connString = config.ResolveConnectionString(null);
 
             // Assert
-            Assert.Equal("https://fromenvironment/", connString);
-
-            ClearEnvironment();
-        }
-
-        [Fact]
-        public void Resolve_FallsBackToNull()
-        {
-            // Arrange
-            ClearEnvironment();
-
-            // Act
-            var connString = DocumentDBConfiguration.GetSettingFromConfigOrEnvironment(NeitherKey);
-
-            // Assert            
-            Assert.Null(connString);
-        }
-
-        [Theory]
-        [InlineData("MyDocumentDBConnectionString", "AccountEndpoint=https://fromappsetting;AccountKey=some_key")]
-        [InlineData(null, "AccountEndpoint=https://fromconnstrings;AccountKey=some_key")]
-        [InlineData("", "AccountEndpoint=https://fromconnstrings;AccountKey=some_key")]
-        public void CreateContext_AttributeUri_Wins(string attributeConnection, string expectedConnection)
-        {
-            // Arrange            
-            var attribute = new DocumentDBAttribute
-            {
-                ConnectionStringSetting = attributeConnection
-            };
-
-            var mockFactory = new Mock<IDocumentDBServiceFactory>();
-            mockFactory
-                .Setup(f => f.CreateService(expectedConnection))
-                .Returns<IDocumentDBService>(null);
-
-            // Default ConnecitonString will come from app.config
-            var config = new DocumentDBConfiguration
-            {
-                DocumentDBServiceFactory = mockFactory.Object
-            };
-
-            // Act
-            config.CreateContext(attribute, new TestTraceWriter());
-
-            // Assert
-            mockFactory.VerifyAll();
+            Assert.Equal("Default", connString);
         }
 
         [Fact]
         public void CreateContext_UsesDefaultRetryValue()
         {
             // Arrange            
-            var attribute = new DocumentDBAttribute();
+            var attribute = new DocumentDBAttribute
+            {
+                ConnectionStringSetting = "AccountEndpoint=https://someuri;AccountKey=some_key"
+            };
             var config = new DocumentDBConfiguration();
 
             // Act
@@ -140,16 +86,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             Assert.Equal(DocumentDBContext.DefaultMaxThrottleRetries, context.MaxThrottleRetries);
         }
 
-        private static void SetEnvironment(string key)
+        private DocumentDBConfiguration InitializeConfig(string defaultConnStr)
         {
-            Environment.SetEnvironmentVariable(key, "https://fromenvironment/");
-        }
+            var config = new DocumentDBConfiguration();
 
-        private static void ClearEnvironment()
-        {
-            Environment.SetEnvironmentVariable(ConnectionStringKey, null);
-            Environment.SetEnvironmentVariable(EnvironmentKey, null);
-            Environment.SetEnvironmentVariable(NeitherKey, null);
-        }       
+            var nameResolver = new TestNameResolver();
+            nameResolver.Values[DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName] = defaultConnStr;
+
+            var jobHostConfig = new JobHostConfiguration();
+            jobHostConfig.AddService<INameResolver>(nameResolver);
+
+            var context = new ExtensionConfigContext()
+            {
+                Config = jobHostConfig
+            };
+
+            config.Initialize(context);
+
+            return config;
+        }
     }
 }

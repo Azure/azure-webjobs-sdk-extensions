@@ -22,6 +22,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
     public class MobileTableEndToEndTests
     {
         private const string TableName = "TestTable";
+        private const string DefaultUri = "https://default/";
+        private const string AttributeUri = "https://attribute/";
+        private const string ConfigUri = "https://config/";
+        private const string DefaultKey = "Default";
+        private const string AttributeKey = "Attribute";
+        private const string ConfigKey = "Config";
+
 
         [Fact]
         public void OutputBindings()
@@ -46,14 +53,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
                 .Setup(t => t.InsertAsync(It.IsAny<TodoItem>()))
                 .Returns(Task.FromResult(0));
 
+            // Also verify the default uri and null api key is used
             var factoryMock = new Mock<IMobileServiceClientFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateClient(It.IsAny<Uri>(), It.IsAny<HttpMessageHandler[]>()))
-                .Returns(serviceMock.Object);
+                    .Setup(f => f.CreateClient(new Uri(DefaultUri), null))
+                    .Returns(serviceMock.Object);
 
             TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Warning);
 
-            RunTest("Outputs", factoryMock.Object, testTrace);
+            RunTest("Outputs", factoryMock.Object, testTrace, includeDefaultKey: false);
 
             factoryMock.Verify(f => f.CreateClient(It.IsAny<Uri>(), It.IsAny<HttpMessageHandler[]>()), Times.Once());
 
@@ -62,35 +70,59 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             tablePocoMock.Verify(t => t.InsertAsync(It.IsAny<TodoItem>()), Times.Exactly(7));
             Assert.Equal(1, testTrace.Events.Count);
             Assert.Equal("Outputs", testTrace.Events[0].Message);
+            factoryMock.VerifyAll();
         }
 
         [Fact]
         public void ClientBinding()
         {
             TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Warning);
-            RunTest("Client", new DefaultMobileServiceClientFactory(), testTrace);
+
+            // Verify the values from teh attribute are being used.
+            var factoryMock = CreateMockFactory(new Uri(AttributeUri), AttributeKey);
+
+            RunTest("Client", factoryMock.Object, testTrace);
 
             Assert.Equal("Client", testTrace.Events.Single().Message);
+            factoryMock.VerifyAll();
+        }
+
+        private Mock<IMobileServiceClientFactory> CreateMockFactory(Uri expectedUri, string expectedApiKey)
+        {
+            var factoryMock = new Mock<IMobileServiceClientFactory>(MockBehavior.Strict);
+            factoryMock
+                .Setup(f => f.CreateClient(expectedUri, It.Is<HttpMessageHandler[]>(h => ((MobileServiceApiKeyHandler)h.Single()).ApiKey == expectedApiKey)))
+                .Returns<Uri, HttpMessageHandler[]>((uri, h) => new MobileServiceClient(uri, h));
+
+            return factoryMock;
         }
 
         [Fact]
         public void QueryBinding()
         {
             TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Warning);
-            RunTest("Query", new DefaultMobileServiceClientFactory(), testTrace);
+
+            // Verify that we pick up from the config correctly
+            var factoryMock = CreateMockFactory(new Uri(ConfigUri), ConfigKey);
+            RunTest("Query", factoryMock.Object, testTrace, configUri: new Uri(ConfigUri), configKey: ConfigKey);
 
             Assert.Equal(1, testTrace.Events.Count);
             Assert.Equal("Query", testTrace.Events[0].Message);
+            factoryMock.VerifyAll();
         }
 
         [Fact]
         public void TableBindings()
         {
             TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Warning);
-            RunTest("Table", new DefaultMobileServiceClientFactory(), testTrace);
+
+            // Verify that we pick up the defaults
+            var factoryMock = CreateMockFactory(new Uri(DefaultUri), DefaultKey);
+            RunTest("Table", factoryMock.Object, testTrace);
 
             Assert.Equal(1, testTrace.Events.Count);
             Assert.Equal("Table", testTrace.Events[0].Message);
+            factoryMock.VerifyAll();
         }
 
         [Fact]
@@ -130,11 +162,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
 
             var factoryMock = new Mock<IMobileServiceClientFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateClient(It.IsAny<Uri>(), It.IsAny<HttpMessageHandler[]>()))
+                .Setup(f => f.CreateClient(new Uri(DefaultUri), null))
                 .Returns(serviceMock.Object);
 
             TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Warning);
-            RunTest("Inputs", factoryMock.Object, testTrace, "triggerItem");
+            RunTest("Inputs", factoryMock.Object, testTrace, "triggerItem", includeDefaultKey: false);
 
             Assert.Equal(1, testTrace.Events.Count);
             Assert.Equal("Inputs", testTrace.Events[0].Message);
@@ -164,11 +196,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         [Fact]
         public void NoUri()
         {
-            var config = new MobileAppsConfiguration
-            {
-                MobileAppUri = null
-            };
-            var ex = Assert.Throws<FunctionIndexingException>(() => IndexBindings(typeof(MobileTableNoUri), config));
+            var ex = Assert.Throws<FunctionIndexingException>(() => IndexBindings(typeof(MobileTableNoUri), includeDefaultUri: false));
             Assert.IsType<InvalidOperationException>(ex.InnerException);
         }
 
@@ -187,17 +215,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             Assert.IsType<InvalidOperationException>(ex.InnerException);
         }
 
-        private void IndexBindings(Type testType, MobileAppsConfiguration mobileConfig = null)
+        private void IndexBindings(Type testType, bool includeDefaultUri = true)
         {
             // Just start the jobhost -- this should fail if function indexing fails.
 
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
+            var nameResolver = new TestNameResolver();
+            if (includeDefaultUri)
+            {
+                nameResolver.Values.Add(MobileAppsConfiguration.AzureWebJobsMobileAppUriName, "https://default");
+            }
             JobHostConfiguration config = new JobHostConfiguration
             {
+                NameResolver = nameResolver,
                 TypeLocator = locator,
             };
 
-            config.UseMobileApps(mobileConfig);
+            config.UseMobileApps();
 
             JobHost host = new JobHost(config);
 
@@ -205,7 +239,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             host.Stop();
         }
 
-        private void RunTest(string testName, IMobileServiceClientFactory factory, TraceWriter testTrace, object argument = null)
+        private void RunTest(string testName, IMobileServiceClientFactory factory, TraceWriter testTrace, object argument = null,
+            Uri configUri = null, string configKey = null, bool includeDefaultKey = true, bool includeDefaultUri = true)
         {
             Type testType = typeof(MobileTableEndToEndFunctions);
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
@@ -221,12 +256,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
 
             var mobileAppsConfig = new MobileAppsConfiguration
             {
-                MobileAppUri = new Uri("https://someuri"),
-                ApiKey = "api_key",
+                MobileAppUri = configUri,
+                ApiKey = configKey,
                 ClientFactory = factory
             };
 
             var resolver = new TestNameResolver();
+            resolver.Values.Add("MyUri", AttributeUri);
+            resolver.Values.Add("MyKey", AttributeKey);
+            if (includeDefaultUri)
+            {
+                resolver.Values.Add(MobileAppsConfiguration.AzureWebJobsMobileAppUriName, DefaultUri);
+            }
+            if (includeDefaultKey)
+            {
+                resolver.Values.Add(MobileAppsConfiguration.AzureWebJobsMobileAppApiKeyName, DefaultKey);
+            }
 
             config.NameResolver = resolver;
 
@@ -304,7 +349,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
 
             [NoAutomaticTrigger]
             public static void Client(
-                [MobileTable] IMobileServiceClient client,
+                [MobileTable(MobileAppUriSetting = "MyUri", ApiKeySetting = "MyKey")] IMobileServiceClient client,
                 TraceWriter trace)
             {
                 Assert.NotNull(client);

@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Configuration;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
@@ -25,21 +24,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
         internal const string AzureWebJobsMobileAppApiKeyName = "AzureWebJobsMobileAppApiKey";
         internal readonly ConcurrentDictionary<string, IMobileServiceClient> ClientCache = new ConcurrentDictionary<string, IMobileServiceClient>();
 
+        private string _defaultApiKey;
+        private Uri _defaultMobileAppUri;
+
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
         public MobileAppsConfiguration()
         {
-            this.ApiKey = GetSettingFromConfigOrEnvironment(AzureWebJobsMobileAppApiKeyName);
-
-            string uriString = GetSettingFromConfigOrEnvironment(AzureWebJobsMobileAppUriName);
-
-            // if not found, MobileAppUri must be set explicitly before using the config
-            if (!string.IsNullOrEmpty(uriString))
-            {
-                this.MobileAppUri = new Uri(uriString);
-            }
-
             this.ClientFactory = new DefaultMobileServiceClientFactory();
         }
 
@@ -65,6 +57,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
 
             INameResolver nameResolver = context.Config.GetService<INameResolver>();
             IConverterManager converterManager = context.Config.GetService<IConverterManager>();
+
+            // Set defaults, to be used if no other values are found:
+            _defaultApiKey = nameResolver.Resolve(AzureWebJobsMobileAppApiKeyName);
+
+            string uriString = nameResolver.Resolve(AzureWebJobsMobileAppUriName);
+            Uri.TryCreate(uriString, UriKind.Absolute, out _defaultMobileAppUri);
 
             BindingFactory factory = new BindingFactory(nameResolver, converterManager);
 
@@ -164,11 +162,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
         internal void ValidateMobileAppUri(MobileTableAttribute attribute, Type paramType)
         {
             if (MobileAppUri == null &&
-                string.IsNullOrEmpty(attribute.MobileAppUriSetting))
+                string.IsNullOrEmpty(attribute.MobileAppUriSetting) &&
+                _defaultMobileAppUri == null)
             {
                 throw new InvalidOperationException(
                     string.Format(CultureInfo.CurrentCulture,
-                    "The mobile app Uri must be set either via a '{0}' app setting, via the MobileTableAttribute.MobileAppUri property or via MobileAppsConfiguration.MobileAppUri.",
+                    "The mobile app Uri must be set either via a '{0}' app setting, via the MobileTableAttribute.MobileAppUriSetting property or via MobileAppsConfiguration.MobileAppUri.",
                     AzureWebJobsMobileAppUriName));
             }
         }
@@ -238,23 +237,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
             return Activator.CreateInstance(collectorType, context);
         }
 
-        internal static Uri ResolveMobileAppUri(Uri defaultUri, string attributeUriString)
+        internal Uri ResolveMobileAppUri(string attributeUriString)
         {
-            Uri resolvedUri = defaultUri;
-
-            if (!string.IsNullOrEmpty(attributeUriString))
+            // First, try the Attribute's Uri.
+            Uri attributeUri;
+            if (Uri.TryCreate(attributeUriString, UriKind.Absolute, out attributeUri))
             {
-                string resolvedUriString = GetSettingFromConfigOrEnvironment(attributeUriString);
-                resolvedUri = new Uri(resolvedUriString);
+                return attributeUri;
             }
 
-            return resolvedUri;
+            // Second, try the config's Uri
+            if (MobileAppUri != null)
+            {
+                return MobileAppUri;
+            }
+
+            // Finally, fall back to the default.
+            return _defaultMobileAppUri;
         }
 
         internal MobileTableContext CreateContext(MobileTableAttribute attribute)
         {
-            Uri resolvedUri = ResolveMobileAppUri(MobileAppUri, attribute.MobileAppUriSetting);
-            string resolvedApiKey = ResolveApiKey(ApiKey, attribute.ApiKeySetting);
+            Uri resolvedUri = ResolveMobileAppUri(attribute.MobileAppUriSetting);
+            string resolvedApiKey = ResolveApiKey(attribute.ApiKeySetting);
 
             return new MobileTableContext
             {
@@ -263,21 +268,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
             };
         }
 
-        internal static string ResolveApiKey(string defaultApiKey, string attributeApiKey)
+        internal string ResolveApiKey(string attributeApiKey)
         {
-            string resolvedApiKey = defaultApiKey;
+            // If an attribute sets the ApiKeySetting to an empty string,
+            // that overwrites any default value and sets it to null.
+            // If ApiKeySetting is null, it returns the default value.
 
-            // If the attribute specifies an empty string ApiKey, set the ApiKey to null.
-            if (attributeApiKey == string.Empty)
+            // First, if the key is an empty string, return null.
+            if (attributeApiKey != null && attributeApiKey.Length == 0)
             {
-                resolvedApiKey = null;
-            }
-            else if (attributeApiKey != null)
-            {
-                resolvedApiKey = GetSettingFromConfigOrEnvironment(attributeApiKey);
+                return null;
             }
 
-            return resolvedApiKey;
+            // Second, if it is anything other than null, return the value
+            if (attributeApiKey != null)
+            {
+                return attributeApiKey;
+            }
+
+            // Third, try the config's key
+            if (!string.IsNullOrEmpty(ApiKey))
+            {
+                return ApiKey;
+            }
+
+            // Finally, fall back to the default.
+            return _defaultApiKey;
         }
 
         internal IMobileServiceClient GetClient(Uri mobileAppUri, string apiKey)
@@ -300,22 +316,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
             }
 
             return factory.CreateClient(mobileAppUri, handlers);
-        }
-
-        internal static string GetSettingFromConfigOrEnvironment(string key)
-        {
-            string value = null;
-
-            if (string.IsNullOrEmpty(value))
-            {
-                value = ConfigurationManager.AppSettings[key];
-                if (string.IsNullOrEmpty(value))
-                {
-                    value = Environment.GetEnvironmentVariable(key);
-                }
-            }
-
-            return value;
         }
     }
 }

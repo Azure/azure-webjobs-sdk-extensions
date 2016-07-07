@@ -7,7 +7,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.MobileApps;
+using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps;
+using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.WindowsAzure.MobileServices;
 using Moq;
 using Xunit;
@@ -16,51 +18,99 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
 {
     public class MobileAppsConfigurationTests
     {
-        private const string AppSettingKey = MobileAppsConfiguration.AzureWebJobsMobileAppUriName;
-        private const string EnvironmentKey = AppSettingKey + "_environment";
-        private const string NeitherKey = AppSettingKey + "_neither";
+        private Uri _configUri = new Uri("https://config/");
 
         [Fact]
-        public void Resolve_UsesAppSettings_First()
+        public void ResolveApiKey_ReturnsNull_IfAttributeEmpty()
         {
             // Arrange
-            SetEnvironment(AppSettingKey);
+            var config = InitializeConfig("Config", _configUri);
 
             // Act
-            var mobileAppUri = MobileAppsConfiguration.GetSettingFromConfigOrEnvironment(AppSettingKey);
+            var apiKey = config.ResolveApiKey(string.Empty);
 
             // Assert            
-            Assert.Equal("https://fromappsettings/", mobileAppUri.ToString());
-
-            ClearEnvironment();
+            Assert.Null(apiKey);
         }
 
         [Fact]
-        public void Resolve_UsesEnvironment_Second()
+        public void ResolveApiKey_UsesAttribute_First()
         {
             // Arrange
-            SetEnvironment(EnvironmentKey);
+            var config = InitializeConfig("Config", _configUri);
 
             // Act
-            var mobileAppUri = MobileAppsConfiguration.GetSettingFromConfigOrEnvironment(EnvironmentKey);
+            var apiKey = config.ResolveApiKey("Attribute");
 
-            // Assert
-            Assert.Equal("https://fromenvironment/", mobileAppUri.ToString());
+            // Assert            
+            Assert.Equal("Attribute", apiKey);
+        }
 
-            ClearEnvironment();
+
+        [Fact]
+        public void ResolveApiKey_UsesConfig_Second()
+        {
+            // Arrange
+            var config = InitializeConfig("Config", _configUri);
+
+            // Act
+            var apiKey = config.ResolveApiKey(null);
+
+            // Assert            
+            Assert.Equal("Config", apiKey);
         }
 
         [Fact]
-        public void Resolve_FallsBackToNull()
+        public void ResolveApiKey_UsesDefault_Last()
         {
             // Arrange
-            ClearEnvironment();
+            var config = InitializeConfig(null, _configUri);
 
             // Act
-            var mobileAppUri = MobileAppsConfiguration.GetSettingFromConfigOrEnvironment(NeitherKey);
+            var apiKey = config.ResolveApiKey(null);
 
             // Assert            
-            Assert.Null(mobileAppUri);
+            Assert.Equal("Default", apiKey);
+        }
+
+        [Fact]
+        public void ResolveUri_UsesAttribute_First()
+        {
+            // Arrange
+            var config = InitializeConfig("Config", _configUri);
+
+            // Act
+            var uri = config.ResolveMobileAppUri("https://attribute/");
+
+            // Assert            
+            Assert.Equal("https://attribute/", uri.ToString());
+        }
+
+
+        [Fact]
+        public void ResolveUri_UsesConfig_Second()
+        {
+            // Arrange
+            var config = InitializeConfig("Config", _configUri);
+
+            // Act
+            var uri = config.ResolveMobileAppUri(null);
+
+            // Assert            
+            Assert.Equal("https://config/", uri.ToString());
+        }
+
+        [Fact]
+        public void ResolveUri_UsesDefault_Last()
+        {
+            // Arrange
+            var config = InitializeConfig("Config", null);
+
+            // Act
+            var uri = config.ResolveMobileAppUri(null);
+
+            // Assert            
+            Assert.Equal("https://default/", uri.ToString());
         }
 
         [Fact]
@@ -89,73 +139,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             Assert.NotSame(client1, client3);
             mockFactory.Verify(f => f.CreateClient(uri1, null), Times.Once);
             mockFactory.Verify(f => f.CreateClient(uri2, null), Times.Once);
-        }
-
-        [Theory]
-        [InlineData("MyMobileAppUri", "https://configUri", "https://attruri/")]
-        [InlineData(null, "https://configUri", "https://configuri/")]
-        [InlineData("", "https://configUri", "https://configuri/")]
-        public void CreateContext_AttributeUri_Wins(string attributeUriString, string configUriString, string expectedUriString)
-        {
-            // Arrange
-            var attribute = new MobileTableAttribute
-            {
-                MobileAppUriSetting = attributeUriString
-            };
-
-            var mockFactory = new Mock<IMobileServiceClientFactory>();
-            mockFactory
-                .Setup(f => f.CreateClient(new Uri(expectedUriString), null))
-                .Returns<IMobileServiceClient>(null);
-
-            var config = new MobileAppsConfiguration
-            {
-                MobileAppUri = new Uri(configUriString),
-                ClientFactory = mockFactory.Object
-            };
-
-            // Act
-            config.CreateContext(attribute);
-
-            // Assert
-            mockFactory.VerifyAll();
-        }
-
-        [Theory]
-        [InlineData("MyMobileAppKey", "config_key", "attr_key")]
-        [InlineData(null, "config_key", "config_key")]
-        [InlineData("", "config_key", null)]
-        public void CreateContext_AttributeKey_Wins(string attributeKey, string configKey, string expectedKey)
-        {
-            // Arrange
-            var attribute = new MobileTableAttribute
-            {
-                ApiKeySetting = attributeKey
-            };
-
-            var handler = new TestHandler();
-            var config = new MobileAppsConfiguration
-            {
-                MobileAppUri = new Uri("https://someuri"),
-                ApiKey = configKey,
-                ClientFactory = new TestMobileServiceClientFactory(handler)
-            };
-
-            // Act
-            var context = config.CreateContext(attribute);
-
-            // Assert
-            // Issue a request to check the header that's being sent.
-            context.Client.GetTable("Test").LookupAsync("123");
-
-            IEnumerable<string> values = null;
-            string actualKey = null;
-            if (handler.IssuedRequest.Headers.TryGetValues("ZUMO-API-KEY", out values))
-            {
-                actualKey = values.Single();
-            }
-
-            Assert.Equal(expectedKey, actualKey);
         }
 
         [Theory]
@@ -217,7 +200,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         public async Task BindForQuery_ReturnsCorrectType()
         {
             var attribute = new MobileTableAttribute();
-            var config = new MobileAppsConfiguration();
+            var config = new MobileAppsConfiguration
+            {
+                MobileAppUri = new Uri("https://someuri/")
+            };
 
             var query = await config.BindForQueryAsync(attribute, typeof(IMobileServiceTableQuery<TodoItem>));
 
@@ -232,7 +218,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
                 TableName = "SomeOtherTable"
             };
 
-            var config = new MobileAppsConfiguration();
+            var config = new MobileAppsConfiguration
+            {
+                MobileAppUri = new Uri("https://someuri/")
+            };
 
             var query = await config.BindForQueryAsync(attribute, typeof(IMobileServiceTableQuery<TodoItem>)) as IMobileServiceTableQuery<TodoItem>;
 
@@ -248,7 +237,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             {
                 TableName = "TodoItem"
             };
-            var config = new MobileAppsConfiguration();
+            var config = new MobileAppsConfiguration
+            {
+                MobileAppUri = new Uri("https://someuri/")
+            };
 
             // Act
             var table = config.BindForTable(attribute);
@@ -263,7 +255,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         {
             // Arrange
             var attribute = new MobileTableAttribute();
-            var config = new MobileAppsConfiguration();
+            var config = new MobileAppsConfiguration
+            {
+                MobileAppUri = new Uri("https://someuri/")
+            };
 
             // Act
             var table = await config.BindForTableAsync(attribute, typeof(IMobileServiceTable<TodoItem>)) as IMobileServiceTable<TodoItem>;
@@ -281,8 +276,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             {
                 TableName = "SomeOtherTable"
             };
-            var config = new MobileAppsConfiguration();
-
+            var config = new MobileAppsConfiguration
+            {
+                MobileAppUri = new Uri("https://someuri/")
+            };
             // Act
             var table = await config.BindForTableAsync(attribute, typeof(IMobileServiceTable<TodoItem>)) as IMobileServiceTable<TodoItem>;
 
@@ -291,16 +288,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             Assert.Equal("SomeOtherTable", table.TableName);
         }
 
-        private static void SetEnvironment(string key)
+        private MobileAppsConfiguration InitializeConfig(string configApiKey, Uri configMobileAppUri)
         {
-            Environment.SetEnvironmentVariable(key, "https://fromenvironment/");
-        }
+            var config = new MobileAppsConfiguration
+            {
+                ApiKey = configApiKey,
+                MobileAppUri = configMobileAppUri
+            };
 
-        private static void ClearEnvironment()
-        {
-            Environment.SetEnvironmentVariable(AppSettingKey, null);
-            Environment.SetEnvironmentVariable(EnvironmentKey, null);
-            Environment.SetEnvironmentVariable(NeitherKey, null);
+            var nameResolver = new TestNameResolver();
+            nameResolver.Values[MobileAppsConfiguration.AzureWebJobsMobileAppApiKeyName] = "Default";
+            nameResolver.Values[MobileAppsConfiguration.AzureWebJobsMobileAppUriName] = "https://default";
+
+            var jobHostConfig = new JobHostConfiguration();
+            jobHostConfig.NameResolver = nameResolver;
+
+            var context = new ExtensionConfigContext
+            {
+                Config = jobHostConfig
+            };
+
+
+            config.Initialize(context);
+
+            return config;
         }
     }
 }
