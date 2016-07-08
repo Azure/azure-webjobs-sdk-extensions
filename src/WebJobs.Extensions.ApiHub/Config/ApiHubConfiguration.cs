@@ -22,10 +22,13 @@ namespace Microsoft.Azure.WebJobs
     /// </summary>
     public class ApiHubConfiguration : IExtensionConfigProvider, IFileTriggerStrategy<ApiHubFile>
     {
+        private const int DefaultMaxFunctionExecutionRetryCount = 5;
         // Map of saas names (ie, "Dropbox") to their underlying root folder. 
         private Dictionary<string, IFolderItem> _map = new Dictionary<string, IFolderItem>(StringComparer.OrdinalIgnoreCase);
         private ApiHubLogger _logger;
 
+        private int _maxFunctionExecutionRetryCount = DefaultMaxFunctionExecutionRetryCount;
+        
         /// <summary>
         /// Creates a new instance of this class.
         /// </summary>
@@ -62,6 +65,25 @@ namespace Microsoft.Azure.WebJobs
                 {
                     _logger = new ApiHubLogger(value);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the number of times to try processing a file before moving it to the poison queue (where
+        /// possible).
+        /// </summary>
+        public int MaxFunctionExecutionRetryCount
+        {
+            get { return _maxFunctionExecutionRetryCount; }
+
+            set
+            {
+                if (value < 1)
+                {
+                    throw new ArgumentOutOfRangeException("value");
+                }
+
+                _maxFunctionExecutionRetryCount = value;
             }
         }
 
@@ -117,7 +139,7 @@ namespace Microsoft.Azure.WebJobs
 
             var folder = await root.GetFolderReferenceAsync(folderName);
 
-            var listener = new ApiHubListener(config, folder, functionName, executor, trace, attribute);
+            var listener = new ApiHubListener(this, config, folder, functionName, executor, trace, attribute);
 
             return listener;
         }
