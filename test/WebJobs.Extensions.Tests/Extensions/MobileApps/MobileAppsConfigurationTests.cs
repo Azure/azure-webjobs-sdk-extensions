@@ -46,7 +46,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             Assert.Equal("Attribute", apiKey);
         }
 
-
         [Fact]
         public void ResolveApiKey_UsesConfig_Second()
         {
@@ -85,7 +84,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             // Assert            
             Assert.Equal("https://attribute/", uri.ToString());
         }
-
 
         [Fact]
         public void ResolveUri_UsesConfig_Second()
@@ -307,7 +305,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             {
                 Config = jobHostConfig
             };
-
 
             config.Initialize(context);
 

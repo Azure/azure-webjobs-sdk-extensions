@@ -14,6 +14,8 @@ using Microsoft.Azure.WebJobs.Extensions.ApiHub;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
+using Microsoft.WindowsAzure.Storage.Queue;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
@@ -21,16 +23,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
     public class ApiHubBindingEndToEndTests
     {
         private const string HostContainerName = "azure-webjobs-hosts";
+        private const string PoisonQueueName = "webjobs-apihubtrigger-poison";
         private const string ApiHubBlobDirectoryPathTemplate = "apihubs/{0}";
 
         private const string ImportTestPath = @"import";
         private const string OutputTestPath = @"output";
+        private const string ExceptionPath = @"exceptionPath";
 
         private string _apiHubConnectionString;
         private IFolderItem _rootFolder;
         private CloudBlobDirectory _apiHubBlobDirectory;
+        private CloudQueue _poisonQueue;
 
         private JobHostConfiguration _config;
+        private JsonSerializer _serializer;
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Globalization", "CA1308:NormalizeStringsToUppercase")]
         public ApiHubBindingEndToEndTests()
@@ -61,32 +67,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
             _rootFolder = ItemFactory.Parse(_apiHubConnectionString);
 
-            var folder = _rootFolder.GetFolderReferenceAsync(ImportTestPath).GetAwaiter().GetResult();
-
-            if (!folder.FolderExists(ImportTestPath))
-            {
-                // write a test file to create the folder if it doesn't exist.
-                WriteTestFile().GetAwaiter().GetResult();
-            }
-
-            foreach (var item in folder.ListAsync(true).GetAwaiter().GetResult())
-            {
-                var i = item as IFileItem;
-                if (i != null)
-                {
-                    i.DeleteAsync();
-                }
-            }
-
-            folder = _rootFolder.GetFolderReferenceAsync(OutputTestPath).GetAwaiter().GetResult();
-            foreach (var item in folder.ListAsync(true).GetAwaiter().GetResult())
-            {
-                var i = item as IFileItem;
-                if (i != null)
-                {
-                    i.DeleteAsync();
-                }
-            }
+            SetupFolder(ImportTestPath).Wait();
+            SetupFolder(OutputTestPath).Wait();
+            SetupFolder(ExceptionPath).Wait();
 
             ApiHubTestJobs.Processed.Clear();
 
@@ -97,6 +80,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             _apiHubBlobDirectory = blobClient.GetContainerReference(HostContainerName).GetDirectoryReference(apiHubBlobDirectoryPath);
 
             DeleteApiHubBlobs();
+            this._serializer = JsonSerializer.Create();
+            CloudQueueClient queueClient = CloudStorageAccount.Parse(this._config.StorageConnectionString).CreateCloudQueueClient();
+            this._poisonQueue = queueClient.GetQueueReference(PoisonQueueName);
         }
 
         [Fact]
@@ -180,6 +166,51 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
             await fileItem.DeleteAsync();
             await fileItem2.DeleteAsync();
+        }
+
+        [Fact]
+        public async void ChecksPoisonQueueGettingPopulated()
+        {
+            JobHost host = CreateTestJobHost();
+
+            host.Start();
+
+            // now write a file to trigger the job
+            var fileItem = await WriteTestFile(path: ExceptionPath);
+
+            await TestHelpers.Await(() =>
+            {
+                return _rootFolder.FileExists(fileItem.Path);
+            });
+       
+            await TestHelpers.Await(() =>
+            {
+                return _poisonQueue.Exists();
+            });
+
+            await TestHelpers.Await(() =>
+            {
+                return _poisonQueue.PeekMessage() != null;
+            });
+
+            var message = await _poisonQueue.GetMessageAsync();
+
+            Assert.True(!string.IsNullOrEmpty(message.AsString));
+
+            ApiHubFileInfo status;
+            using (StringReader stringReader = new StringReader(message.AsString))
+            {
+                status = (ApiHubFileInfo)_serializer.Deserialize(stringReader, typeof(ApiHubFileInfo));
+            }
+
+            Assert.Equal("ThrowException", status.FunctionName);
+            Assert.Equal(Path.GetFileName(fileItem.Path), Path.GetFileName(status.FilePath));
+            Assert.Equal("dropbox", status.Connection);
+
+            host.Stop();
+
+            await fileItem.DeleteAsync();
+            _poisonQueue.DeleteIfExists();
         }
 
         [Fact]
@@ -310,17 +341,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             var apiHubConfig = new ApiHubConfiguration();
 
             apiHubConfig.AddConnection("dropbox", _apiHubConnectionString);
+            apiHubConfig.MaxFunctionExecutionRetryCount = 2;
+
             _config.UseApiHub(apiHubConfig);
 
             return new JobHost(_config);
-        }
-
-        private void DeleteTestFiles(string path)
-        {
-            foreach (string file in Directory.GetFiles(path))
-            {
-                File.Delete(file);
-            }
         }
 
         private void DeleteApiHubBlobs()
@@ -336,10 +361,39 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             }
         }
 
-        private async Task<IFileItem> WriteTestFile(string extension = "txt")
+        private async Task SetupFolder(string folderName)
         {
+            var folder = await _rootFolder.GetFolderReferenceAsync(folderName);
+
+            if (!folder.FolderExists(folderName))
+            {
+                // write a test file to create the folder if it doesn't exist.
+                await WriteTestFile(path: folderName);
+            }
+
+            foreach (var item in await folder.ListAsync(true))
+            {
+                var i = item as IFileItem;
+                if (i != null)
+                {
+                    await i.DeleteAsync();
+                }
+            }
+        }
+
+        private async Task<IFileItem> WriteTestFile(string extension = "txt", string path = null)
+        {
+            string filePath;
+            if (path != null)
+            {
+                filePath = path;
+            }
+            else
+            {
+                filePath = ImportTestPath;
+            }
             string testFileName = string.Format("{0}.{1}", Guid.NewGuid(), extension);
-            string testFilePath = ImportTestPath + "/" + testFileName;
+            string testFilePath = filePath + "/" + testFileName;
 
             var file = await _rootFolder.GetFileReferenceAsync(testFilePath, true);
             await file.WriteAsync(new byte[] { 0, 1, 2, 3 });
@@ -356,6 +410,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             return this._apiHubBlobDirectory.GetBlockBlobReference(blobName);
         }
 
+        private class ApiHubFileInfo
+        {
+            public string FunctionName { get; set; }
+
+            public string FilePath { get; set; }
+
+            public string Connection { get; set; }
+        }
         public static class ApiHubTestJobs
         {
             static ApiHubTestJobs()
@@ -371,6 +433,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             {
                 Processed.Add(name);
                 sr.Close();
+            }
+
+            public static void ThrowException(
+                [ApiHubFileTrigger("dropbox", ExceptionPath + @"/{name}", PollIntervalInSeconds = 1)] Stream sr,
+                string name)
+            {
+                throw new ApplicationException("Error");
             }
 
             public static void BindToStringOutput(

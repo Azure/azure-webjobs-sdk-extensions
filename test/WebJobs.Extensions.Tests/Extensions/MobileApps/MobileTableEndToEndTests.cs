@@ -29,7 +29,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         private const string AttributeKey = "Attribute";
         private const string ConfigKey = "Config";
 
-
         [Fact]
         public void OutputBindings()
         {
