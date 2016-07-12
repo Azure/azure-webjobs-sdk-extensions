@@ -99,7 +99,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
                 return attributeHubName;
             }
 
-            // Second, try the config's ConnectionString
+            // Second, try the config's HubName
             if (!string.IsNullOrEmpty(HubName))
             {
                 return HubName;
