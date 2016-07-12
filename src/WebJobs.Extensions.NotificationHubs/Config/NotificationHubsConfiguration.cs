@@ -17,15 +17,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
     {
         internal const string NotificationHubConnectionStringName = "AzureWebJobsNotificationHubsConnectionString";
         internal const string NotificationHubSettingName = "AzureWebJobsNotificationHubName";
-
-        /// <summary>
-        /// Constructs a new instance.
-        /// </summary>
-        public NotificationHubsConfiguration()
-        {
-            ConnectionString = GetSettingFromConfigOrEnvironment(NotificationHubConnectionStringName);
-            HubName = GetSettingFromConfigOrEnvironment(NotificationHubSettingName);
-        }
+        private string _defaultConnectionString;
+        private string _defaultHubName;
 
         /// <summary>
         /// Gets or sets the NotificationHubs ConnectionString to use with the Mobile App.
@@ -47,6 +40,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 
             INameResolver nameResolver = context.Config.NameResolver;
             IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
+            _defaultConnectionString = nameResolver.Resolve(NotificationHubConnectionStringName);
+            _defaultHubName = nameResolver.Resolve(NotificationHubSettingName);
+
             var converterManager = context.Config.GetService<IConverterManager>();
             converterManager.AddNotificationHubConverters();
 
@@ -57,8 +53,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 
         private IAsyncCollector<Notification> BuildFromAttribute(NotificationHubAttribute attribute)
         {
-            string resolvedConnectionString = ResolveConnectionString(ConnectionString, attribute.ConnectionStringSetting);
-            string resolvedHubName = ResolveHubName(HubName, attribute.HubName);
+            string resolvedConnectionString = ResolveConnectionString(attribute.ConnectionStringSetting);
+            string resolvedHubName = ResolveHubName(attribute.HubName);
 
             INotificationHubClientService service = new NotificationHubClientService(resolvedConnectionString, resolvedHubName);
             return new NotificationHubAsyncCollector(service, attribute.TagExpression);
@@ -69,58 +65,48 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
         /// AppSettings, and Environment variables, in that order. Otherwise, the config ConnectionString is
         /// returned.
         /// </summary>
-        /// <param name="configConnectionString">The connection string from the <see cref="NotificationHubsConfiguration"/>.</param>
         /// <param name="attributeConnectionString">The connection string from the <see cref="NotificationHubAttribute"/>.</param>
         /// <returns></returns>
-        internal static string ResolveConnectionString(string configConnectionString, string attributeConnectionString)
+        internal string ResolveConnectionString(string attributeConnectionString)
         {
+            // First, try the Attribute's string.
             if (!string.IsNullOrEmpty(attributeConnectionString))
             {
-                return GetSettingFromConfigOrEnvironment(attributeConnectionString);
+                return attributeConnectionString;
             }
-            return configConnectionString;
+
+            // Second, try the config's ConnectionString
+            if (!string.IsNullOrEmpty(ConnectionString))
+            {
+                return ConnectionString;
+            }
+
+            // Finally, fall back to the default.
+            return _defaultConnectionString;
         }
 
         /// <summary>
         /// Returns the attributeHubName, as-is, if it is not null or empty. Because the HubName is not considered
         /// a secret, it can be passed as a string literal without requiring an app setting lookup.
         /// </summary>
-        /// <param name="configHubName">The hub name from the <see cref="NotificationHubsConfiguration"/>.</param>
         /// <param name="attributeHubName">The hub name from the <see cref="NotificationHubAttribute"/>.</param>
         /// <returns></returns>
-        internal static string ResolveHubName(string configHubName, string attributeHubName)
+        internal string ResolveHubName(string attributeHubName)
         {
+            // First, try the Attribute's string.
             if (!string.IsNullOrEmpty(attributeHubName))
             {
                 return attributeHubName;
             }
-            return configHubName;
-        }
 
-        internal static string GetSettingFromConfigOrEnvironment(string key)
-        {
-            string value = null;
-
-            if (string.IsNullOrEmpty(value))
+            // Second, try the config's HubName
+            if (!string.IsNullOrEmpty(HubName))
             {
-                ConnectionStringSettings connectionString = ConfigurationManager.ConnectionStrings[key];
-                if (connectionString != null)
-                {
-                    value = connectionString.ConnectionString;
-                }
-
-                if (string.IsNullOrEmpty(value))
-                {
-                    value = ConfigurationManager.AppSettings[key];
-                }
-
-                if (string.IsNullOrEmpty(value))
-                {
-                    value = Environment.GetEnvironmentVariable(key);
-                }
+                return HubName;
             }
 
-            return value;
+            // Finally, fall back to the default.
+            return _defaultHubName;
         }
     }
 }
