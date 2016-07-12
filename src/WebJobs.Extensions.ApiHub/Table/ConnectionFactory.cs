@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Configuration;
 using Microsoft.Azure.ApiHub.Sdk;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
@@ -13,6 +12,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
     public class ConnectionFactory
     {
         private static ConnectionFactory _connectionFactory = new ConnectionFactory();
+        private readonly INameResolver _nameResolver;
+
+        /// <summary>
+        /// Constructs a new instance.
+        /// </summary>
+        protected ConnectionFactory()
+        {
+            _nameResolver = new DefaultNameResolver();
+        }
 
         /// <summary>
         /// Gets or sets the default ConnectionFactory instance.
@@ -36,42 +44,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
                 throw new ArgumentException("The key must not be null or empty.", "key");
             }
 
-            var connectionString = GetConnectionString(key);
+            var connectionString = _nameResolver.Resolve(key);
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new InvalidOperationException(string.Format(
+                    "The connection string with key '{0}' was not found in app settings or environment variables.", key));
+            }
 
             return new Connection(connectionString);
-        }
-
-        private static string GetConnectionString(string key)
-        {
-            var connectionString = GetSettingFromConfigOrEnvironment(key);
-
-            if (connectionString != null)
-            {
-                return connectionString;
-            }
-
-            throw new InvalidOperationException(string.Format(
-                "The connection string with key '{0}' was not found in app settings or environment variables.",
-                key));
-        }
-
-        private static string GetSettingFromConfigOrEnvironment(string key)
-        {
-            var setting = ConfigurationManager.AppSettings[key];
-
-            if (!string.IsNullOrEmpty(setting))
-            {
-                return setting;
-            }
-
-            setting = Environment.GetEnvironmentVariable(key);
-
-            if (!string.IsNullOrEmpty(setting))
-            {
-                return setting;
-            }
-
-            return null;
         }
     }
 }

@@ -8,7 +8,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 {
     internal class FakeConnectionFactory : ConnectionFactory
     {
-        public FakeConnectionFactory(FakeTabularConnectorAdapter tableAdapter)
+        public FakeConnectionFactory(FakeTabularConnectorAdapter tableAdapter) : base()
         {
             TableAdapter = tableAdapter;
         }
