@@ -211,6 +211,7 @@
     <Compile Include="Extensions\Files\Listener\FileProcessorTests.cs" />
     <Compile Include="Extensions\NotificationHubs\ConverterTests.cs" />
     <Compile Include="Extensions\NotificationHubs\NotificationHubAsyncCollectorTests.cs" />
+    <Compile Include="Extensions\NotificationHubs\NotificationHubConfigurationTests.cs" />
     <Compile Include="Extensions\SendGrid\SendGridHelpersTests.cs" />
     <Compile Include="Extensions\SendGrid\SendGridScriptBindingProviderTests.cs" />
     <Compile Include="Extensions\Timers\Bindings\TimerTriggerBindingTests.cs" />

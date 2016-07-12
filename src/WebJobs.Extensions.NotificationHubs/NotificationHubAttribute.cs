@@ -39,12 +39,14 @@ namespace Microsoft.Azure.WebJobs
         /// Optional. A string value indicating the app setting to use as the Notification Hubs connection
         /// string, if different than the one specified in the <see cref="NotificationHubsConfiguration"/>.
         /// </summary>
+        [AutoResolve(AllowTokens = false)]
         public string ConnectionStringSetting { get; set; }
 
         /// <summary>
         /// Optional. The Notification Hub Name to use, if different than the one specified in the
         /// <see cref="NotificationHubsConfiguration"/>.
         /// </summary>
+        [AutoResolve(AllowTokens = false)]
         public string HubName { get; set; }
     }
 }
