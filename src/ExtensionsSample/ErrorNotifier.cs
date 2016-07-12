@@ -2,10 +2,10 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Configuration;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Mail;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 using SendGrid;
@@ -34,11 +34,8 @@ namespace ExtensionsSample
             _sendGrid = new Web(sendGridConfig.ApiKey);
 
             // pull our IFTTT notification URL from app settings (since it contains a secret key)
-            _webNotificationUri = ConfigurationManager.AppSettings.Get(NotificationUriSettingName);
-            if (string.IsNullOrEmpty(_webNotificationUri))
-            {
-                _webNotificationUri = Environment.GetEnvironmentVariable(NotificationUriSettingName);
-            }
+            var nameResolver = new DefaultNameResolver();
+            _webNotificationUri = nameResolver.Resolve(NotificationUriSettingName);
         }
 
         /// <summary>

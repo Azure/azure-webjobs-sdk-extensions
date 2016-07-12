@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.ObjectModel;
-using System.Configuration;
 using System.IO;
 using System.Reflection;
 using Microsoft.Azure.ApiHub;
@@ -19,11 +18,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
     public class ApiHubScriptBindingProvider : ScriptBindingProvider
     {
         private readonly ApiHubConfiguration _apiHubConfig = new ApiHubConfiguration();
+        private readonly INameResolver _nameResolver;
 
         /// <inheritdoc/>
         public ApiHubScriptBindingProvider(JobHostConfiguration config, JObject hostMetadata, TraceWriter traceWriter) 
             : base(config, hostMetadata, traceWriter)
         {
+            if (config == null)
+            {
+                throw new ArgumentNullException("config");
+            }
+
+            _nameResolver = config.NameResolver;
         }
 
         /// <inheritdoc/>
@@ -39,7 +45,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
             if (string.Compare(context.Type, "apiHubFileTrigger", StringComparison.OrdinalIgnoreCase) == 0 ||
                 string.Compare(context.Type, "apiHubFile", StringComparison.OrdinalIgnoreCase) == 0)
             {
-                binding = new ApiHubFileScriptBinding(_apiHubConfig, context);
+                binding = new ApiHubFileScriptBinding(_apiHubConfig, context, _nameResolver);
             }
             else if (string.Compare(context.Type, "apiHubTable", StringComparison.OrdinalIgnoreCase) == 0)
             {
@@ -76,10 +82,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
         private class ApiHubFileScriptBinding : ScriptBinding
         {
             private readonly ApiHubConfiguration _apiHubConfig;
+            private readonly INameResolver _nameResolver;
 
-            public ApiHubFileScriptBinding(ApiHubConfiguration apiHubConfig, ScriptBindingContext context) : base(context)
+            public ApiHubFileScriptBinding(ApiHubConfiguration apiHubConfig, ScriptBindingContext context, INameResolver nameResolver) : base(context)
             {
                 _apiHubConfig = apiHubConfig;
+                _nameResolver = nameResolver;
             }
 
             public override Type DefaultType
@@ -98,7 +106,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
                 if (!string.IsNullOrEmpty(connectionStringSetting))
                 {
                     // Register each binding connection with the global config
-                    string connectionStringValue = GetAppSettingOrEnvironmentValue(connectionStringSetting);
+                    string connectionStringValue = _nameResolver.Resolve(connectionStringSetting);
                     _apiHubConfig.AddConnection(connectionStringSetting, connectionStringValue);
                 }
 
@@ -116,26 +124,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
                 }
 
                 return attributes;
-            }
-
-            // TODO: Helper for this, or otherwise remove need for it
-            private static string GetAppSettingOrEnvironmentValue(string name)
-            {
-                // first check app settings
-                string value = ConfigurationManager.AppSettings[name];
-                if (!string.IsNullOrEmpty(value))
-                {
-                    return value;
-                }
-
-                // Check environment variables
-                value = Environment.GetEnvironmentVariable(name);
-                if (value != null)
-                {
-                    return value;
-                }
-
-                return null;
             }
         }
 

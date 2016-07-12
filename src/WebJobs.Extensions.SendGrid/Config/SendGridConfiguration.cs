@@ -1,8 +1,6 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using System;
-using System.Configuration;
 using System.Net.Mail;
 
 namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
@@ -19,11 +17,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
         /// </summary>
         public SendGridConfiguration()
         {
-            ApiKey = ConfigurationManager.AppSettings.Get(AzureWebJobsSendGridApiKeyName);
-            if (string.IsNullOrEmpty(ApiKey))
-            {
-                ApiKey = Environment.GetEnvironmentVariable(AzureWebJobsSendGridApiKeyName);
-            }
+            var nameResolver = new DefaultNameResolver();
+            ApiKey = nameResolver.Resolve(AzureWebJobsSendGridApiKeyName);
         }
 
         /// <summary>
