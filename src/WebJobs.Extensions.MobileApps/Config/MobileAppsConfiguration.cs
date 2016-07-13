@@ -24,15 +24,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
         internal const string AzureWebJobsMobileAppApiKeyName = "AzureWebJobsMobileAppApiKey";
         internal readonly ConcurrentDictionary<string, IMobileServiceClient> ClientCache = new ConcurrentDictionary<string, IMobileServiceClient>();
 
-        private string _defaultApiKey;
-        private Uri _defaultMobileAppUri;
-
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
         public MobileAppsConfiguration()
         {
             this.ClientFactory = new DefaultMobileServiceClientFactory();
+
+            // set defaults based on environment settings
+            var nameResolver = new DefaultNameResolver();
+            ApiKey = nameResolver.Resolve(AzureWebJobsMobileAppApiKeyName);
+
+            string uriString = nameResolver.Resolve(AzureWebJobsMobileAppUriName);
+            Uri mobileAppUri;
+            Uri.TryCreate(uriString, UriKind.Absolute, out mobileAppUri);
+            MobileAppUri = mobileAppUri;
         }
 
         /// <summary>
@@ -57,12 +63,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
 
             INameResolver nameResolver = context.Config.GetService<INameResolver>();
             IConverterManager converterManager = context.Config.GetService<IConverterManager>();
-
-            // Set defaults, to be used if no other values are found:
-            _defaultApiKey = nameResolver.Resolve(AzureWebJobsMobileAppApiKeyName);
-
-            string uriString = nameResolver.Resolve(AzureWebJobsMobileAppUriName);
-            Uri.TryCreate(uriString, UriKind.Absolute, out _defaultMobileAppUri);
 
             BindingFactory factory = new BindingFactory(nameResolver, converterManager);
 
@@ -162,8 +162,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
         internal void ValidateMobileAppUri(MobileTableAttribute attribute, Type paramType)
         {
             if (MobileAppUri == null &&
-                string.IsNullOrEmpty(attribute.MobileAppUriSetting) &&
-                _defaultMobileAppUri == null)
+                string.IsNullOrEmpty(attribute.MobileAppUriSetting))
             {
                 throw new InvalidOperationException(
                     string.Format(CultureInfo.CurrentCulture,
@@ -246,14 +245,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
                 return attributeUri;
             }
 
-            // Second, try the config's Uri
-            if (MobileAppUri != null)
-            {
-                return MobileAppUri;
-            }
-
-            // Finally, fall back to the default.
-            return _defaultMobileAppUri;
+            // fall back the config's Uri
+            return MobileAppUri;
         }
 
         internal MobileTableContext CreateContext(MobileTableAttribute attribute)
@@ -286,14 +279,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
                 return attributeApiKey;
             }
 
-            // Third, try the config's key
-            if (!string.IsNullOrEmpty(ApiKey))
-            {
-                return ApiKey;
-            }
-
-            // Finally, fall back to the default.
-            return _defaultApiKey;
+            // finally, fall back to the config's key
+            return ApiKey;
         }
 
         internal IMobileServiceClient GetClient(Uri mobileAppUri, string apiKey)

@@ -19,6 +19,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
     public class MobileAppsConfigurationTests
     {
         private Uri _configUri = new Uri("https://config/");
+        private readonly Uri _defaultUri;
+        private readonly string _defaultApiKey;
+
+        public MobileAppsConfigurationTests()
+        {
+            var nameResolver = new DefaultNameResolver();
+            _defaultApiKey = nameResolver.Resolve(MobileAppsConfiguration.AzureWebJobsMobileAppApiKeyName);
+
+            string uriString = nameResolver.Resolve(MobileAppsConfiguration.AzureWebJobsMobileAppUriName);
+            Uri mobileAppUri;
+            Uri.TryCreate(uriString, UriKind.Absolute, out mobileAppUri);
+            _defaultUri = mobileAppUri;
+        }
 
         [Fact]
         public void ResolveApiKey_ReturnsNull_IfAttributeEmpty()
@@ -70,7 +83,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             var apiKey = config.ResolveApiKey(null);
 
             // Assert            
-            Assert.Equal("Default", apiKey);
+            Assert.Equal(_defaultApiKey, apiKey);
         }
 
         [Fact]
@@ -110,7 +123,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             var uri = config.ResolveMobileAppUri(null);
 
             // Assert            
-            Assert.Equal("https://default/", uri.ToString());
+            Assert.Equal(_defaultUri, uri);
         }
 
         [Fact]
@@ -288,18 +301,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             Assert.Equal("SomeOtherTable", table.TableName);
         }
 
-        private MobileAppsConfiguration InitializeConfig(string configApiKey, Uri configMobileAppUri)
+        private MobileAppsConfiguration InitializeConfig(string configApiKey = null, Uri configMobileAppUri = null)
         {
-            var config = new MobileAppsConfiguration
+            var config = new MobileAppsConfiguration();
+
+            if (configApiKey != null)
             {
-                ApiKey = configApiKey,
-                MobileAppUri = configMobileAppUri
-            };
+                config.ApiKey = configApiKey;
+            }
+
+            if (configMobileAppUri != null)
+            {
+                config.MobileAppUri = configMobileAppUri;
+            }
 
             var nameResolver = new TestNameResolver();
-            nameResolver.Values[MobileAppsConfiguration.AzureWebJobsMobileAppApiKeyName] = "Default";
-            nameResolver.Values[MobileAppsConfiguration.AzureWebJobsMobileAppUriName] = "https://default";
-
             var jobHostConfig = new JobHostConfiguration();
             jobHostConfig.NameResolver = nameResolver;
 
