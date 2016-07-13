@@ -10,11 +10,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
 {
     public class NotificationHubConfigurationTests
     {
+        private readonly string _defaultConnectionString;
+
+        public NotificationHubConfigurationTests()
+        {
+            var nameResolver = new DefaultNameResolver();
+            _defaultConnectionString = nameResolver.Resolve(NotificationHubsConfiguration.NotificationHubConnectionStringName);
+        }
+
         [Fact]
         public void Resolve_UsesAttribute_First()
         {
-            var config = InitializeConfig("Default");
-            config.ConnectionString = "Config";
+            var config = InitializeConfig("Config");
 
             // Act
             var connString = config.ResolveConnectionString("Attribute");
@@ -26,7 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
         [Fact]
         public void Resolve_UsesConfig_Second()
         {
-            var config = InitializeConfig("Default");
+            var config = InitializeConfig();
             config.ConnectionString = "Config";
 
             // Act
@@ -39,22 +46,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
         [Fact]
         public void Resolve_UsesDefault_Last()
         {
-            var config = InitializeConfig("Default");
+            var config = InitializeConfig();
 
             // Act
             var connString = config.ResolveConnectionString(null);
 
             // Assert
-            Assert.Equal("Default", connString);
+            Assert.Equal(_defaultConnectionString, connString);
         }
 
-        private NotificationHubsConfiguration InitializeConfig(string defaultConnStr)
+        private NotificationHubsConfiguration InitializeConfig(string configConnectionString = null)
         {
             var config = new NotificationHubsConfiguration();
 
-            var nameResolver = new TestNameResolver();
-            nameResolver.Values[NotificationHubsConfiguration.NotificationHubConnectionStringName] = defaultConnStr;
+            if (configConnectionString != null)
+            {
+                config.ConnectionString = configConnectionString;
+            }
 
+            var nameResolver = new TestNameResolver();
             var jobHostConfig = new JobHostConfiguration();
             jobHostConfig.AddService<INameResolver>(nameResolver);
 

@@ -19,7 +19,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
     {
         internal const string AzureWebJobsDocumentDBConnectionStringName = "AzureWebJobsDocumentDBConnectionString";
         internal readonly ConcurrentDictionary<string, IDocumentDBService> ClientCache = new ConcurrentDictionary<string, IDocumentDBService>();
-        private string _defaultConnectionString;
 
         /// <summary>
         /// Constructs a new instance.
@@ -27,6 +26,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         public DocumentDBConfiguration()
         {
             DocumentDBServiceFactory = new DefaultDocumentDBServiceFactory();
+
+            // default the connection string
+            var nameResolver = new DefaultNameResolver();
+            ConnectionString = nameResolver.Resolve(AzureWebJobsDocumentDBConnectionStringName);
         }
 
         internal IDocumentDBServiceFactory DocumentDBServiceFactory { get; set; }
@@ -44,12 +47,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 throw new ArgumentNullException("context");
             }
 
-            INameResolver nameResolver = context.Config.GetService<INameResolver>();
             IConverterManager converterManager = context.Config.GetService<IConverterManager>();
-
-            // Use this if there is no other connection string set.
-            _defaultConnectionString = nameResolver.Resolve(AzureWebJobsDocumentDBConnectionStringName);
-
+            INameResolver nameResolver = context.Config.GetService<INameResolver>();
             BindingFactory factory = new BindingFactory(nameResolver, converterManager);
 
             IBindingProvider outputProvider = factory.BindToGenericAsyncCollector<DocumentDBAttribute>((attr, t) => BindForOutput(attr, t, context.Trace));
@@ -65,8 +64,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         internal void ValidateConnection(DocumentDBAttribute attribute, Type paramType)
         {
             if (string.IsNullOrEmpty(ConnectionString) &&
-                string.IsNullOrEmpty(attribute.ConnectionStringSetting) &&
-                string.IsNullOrEmpty(_defaultConnectionString))
+                string.IsNullOrEmpty(attribute.ConnectionStringSetting))
             {
                 throw new InvalidOperationException(
                     string.Format(CultureInfo.CurrentCulture,
@@ -110,14 +108,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 return attributeConnectionString;
             }
 
-            // Second, try the config's ConnectionString
-            if (!string.IsNullOrEmpty(ConnectionString))
-            {
-                return ConnectionString;
-            }
-
-            // Finally, fall back to the default.
-            return _defaultConnectionString;
+            // fall back to the config's connection string
+            return ConnectionString;
         }
 
         internal IDocumentDBService GetService(string connectionString)

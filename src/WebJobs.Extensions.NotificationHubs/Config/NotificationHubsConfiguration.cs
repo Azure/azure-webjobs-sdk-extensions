@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Configuration;
 using Microsoft.Azure.NotificationHubs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -17,8 +16,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
     {
         internal const string NotificationHubConnectionStringName = "AzureWebJobsNotificationHubsConnectionString";
         internal const string NotificationHubSettingName = "AzureWebJobsNotificationHubName";
-        private string _defaultConnectionString;
-        private string _defaultHubName;
+
+        /// <summary>
+        /// Constructs a new instance.
+        /// </summary>
+        public NotificationHubsConfiguration()
+        {
+            // set defaults based on environment settings
+            var nameResolver = new DefaultNameResolver();
+            ConnectionString = nameResolver.Resolve(NotificationHubConnectionStringName);
+            HubName = nameResolver.Resolve(NotificationHubSettingName);
+        }
 
         /// <summary>
         /// Gets or sets the NotificationHubs ConnectionString to use with the Mobile App.
@@ -40,8 +48,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 
             INameResolver nameResolver = context.Config.NameResolver;
             IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
-            _defaultConnectionString = nameResolver.Resolve(NotificationHubConnectionStringName);
-            _defaultHubName = nameResolver.Resolve(NotificationHubSettingName);
 
             var converterManager = context.Config.GetService<IConverterManager>();
             converterManager.AddNotificationHubConverters();
@@ -75,14 +81,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
                 return attributeConnectionString;
             }
 
-            // Second, try the config's ConnectionString
-            if (!string.IsNullOrEmpty(ConnectionString))
-            {
-                return ConnectionString;
-            }
-
-            // Finally, fall back to the default.
-            return _defaultConnectionString;
+            // fall back to the config's ConnectionString
+            return ConnectionString;
         }
 
         /// <summary>
@@ -99,14 +99,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
                 return attributeHubName;
             }
 
-            // Second, try the config's HubName
-            if (!string.IsNullOrEmpty(HubName))
-            {
-                return HubName;
-            }
-
-            // Finally, fall back to the default.
-            return _defaultHubName;
+            // fall back to the config's HubName
+            return HubName;
         }
     }
 }

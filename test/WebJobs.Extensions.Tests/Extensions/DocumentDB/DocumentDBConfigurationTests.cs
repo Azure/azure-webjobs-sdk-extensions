@@ -12,6 +12,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 {
     public class DocumentDBConfigurationTests
     {
+        private readonly string _defaultConnectionString;
+
+        public DocumentDBConfigurationTests()
+        {
+            var nameResolver = new DefaultNameResolver();
+            _defaultConnectionString = nameResolver.Resolve(DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName);
+        }
+
         [Fact]
         public async Task Configuration_Caches_Clients()
         {
@@ -34,7 +42,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         [Fact]
         public void Resolve_UsesAttribute_First()
         {
-            var config = InitializeConfig("Default");
+            var config = InitializeConfig();
             config.ConnectionString = "Config";
 
             // Act
@@ -47,7 +55,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         [Fact]
         public void Resolve_UsesConfig_Second()
         {
-            var config = InitializeConfig("Default");
+            var config = InitializeConfig();
             config.ConnectionString = "Config";
 
             // Act
@@ -60,13 +68,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         [Fact]
         public void Resolve_UsesDefault_Last()
         {
-            var config = InitializeConfig("Default");
+            var config = InitializeConfig();
 
             // Act
             var connString = config.ResolveConnectionString(null);
 
             // Assert
-            Assert.Equal("Default", connString);
+            Assert.Equal(_defaultConnectionString, connString);
         }
 
         [Fact]
@@ -86,13 +94,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             Assert.Equal(DocumentDBContext.DefaultMaxThrottleRetries, context.MaxThrottleRetries);
         }
 
-        private DocumentDBConfiguration InitializeConfig(string defaultConnStr)
+        private DocumentDBConfiguration InitializeConfig()
         {
             var config = new DocumentDBConfiguration();
 
             var nameResolver = new TestNameResolver();
-            nameResolver.Values[DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName] = defaultConnStr;
-
             var jobHostConfig = new JobHostConfiguration();
             jobHostConfig.AddService<INameResolver>(nameResolver);
 
