@@ -15,6 +15,7 @@
         <DocDBPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</DocDBPackageVersion>
         <NotificationHubsPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</NotificationHubsPackageVersion>
         <ApiHubPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</ApiHubPackageVersion>
+        <TwilioPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</TwilioPackageVersion>
     </PropertyGroup>
     </When>
     <Otherwise>
@@ -24,6 +25,7 @@
         <DocDBPackageVersion>1.0.0$(PrereleaseTag)</DocDBPackageVersion>
         <NotificationHubsPackageVersion>1.0.0$(PrereleaseTag)</NotificationHubsPackageVersion>
         <ApiHubPackageVersion>1.0.0$(PrereleaseTag)</ApiHubPackageVersion>
+        <TwilioPackageVersion>1.0.0$(PrereleaseTag)</TwilioPackageVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>

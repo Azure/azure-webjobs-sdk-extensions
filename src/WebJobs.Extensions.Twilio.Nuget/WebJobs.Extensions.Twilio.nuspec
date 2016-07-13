@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package>
+  <metadata>
+    <id>$NuGetPackageId$</id>
+    <title>Microsoft.Azure.WebJobs.Extensions.Twilio</title>
+    <version>$NuGetPackageVersion$</version>
+    <authors>Microsoft</authors>
+    <copyright>&#169; Microsoft Corporation. All rights reserved.</copyright>
+    <summary>Microsoft.Azure.WebJobs.Extensions.Twilio adds Twilio binders to the WebJobs SDK.</summary>
+    <description>This package contains the runtime assemblies for Microsoft.Azure.WebJobs.Extensions.Twilio. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources</description>
+    <language>en-US</language>
+    <projectUrl>https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources</projectUrl>
+    <licenseUrl>$PackageEULA$</licenseUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <tags>Microsoft Azure WebJobs Jobs Extensions Twilio Email windowsazureofficial Web</tags>
+    <dependencies>
+      <dependency id="Microsoft.Azure.WebJobs.Extensions" version="$WebJobsPackageVersion$" />
+      <dependency id="Twilio" version="4.7.2" />
+    </dependencies>
+  </metadata>
+</package>

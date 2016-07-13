@@ -31,6 +31,7 @@
       <Word>rev</Word>
       <Word>rfc</Word>
       <Word>src</Word>
+      <Word>sms</Word>
       <Word>Cron</Word>
       <Word>FileTriggerAttribute</Word>
       <Word>TimerTriggerAttribute</Word>
@@ -61,6 +62,7 @@
       <Word>DocumentDBConfiguration</Word>
       <Word>ConnectionStringSetting</Word>
       <Word>MobileAppUriSetting</Word>
+      <Word>Twilio</Word>
     </Recognized>
     <Deprecated/>
     <Compound>

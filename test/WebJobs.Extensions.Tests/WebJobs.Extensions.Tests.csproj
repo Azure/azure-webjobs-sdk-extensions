@@ -106,6 +106,10 @@
       <HintPath>..\..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="RestSharp, Version=105.2.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\RestSharp.105.2.2\lib\net45\RestSharp.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="SendGrid, Version=6.3.4.0, Culture=neutral, PublicKeyToken=4f047e93159395ca, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Sendgrid.6.3.4\lib\SendGrid.dll</HintPath>
       <Private>True</Private>
@@ -150,6 +154,10 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="Twilio.Api, Version=3.4.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Twilio.4.7.2\lib\3.5\Twilio.Api.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="xunit.abstractions">
       <HintPath>..\..\packages\xunit.abstractions.2.0.0\lib\net35\xunit.abstractions.dll</HintPath>
     </Reference>
@@ -220,6 +228,8 @@
     <Compile Include="Extensions\Timers\Bindings\TimerTriggerBindingTests.cs" />
     <Compile Include="Extensions\Timers\Scheduling\StorageScheduleMonitorTests.cs" />
     <Compile Include="Extensions\Timers\Scheduling\TimerScheduleTests.cs" />
+    <Compile Include="Extensions\Twilio\TwilioScriptBindingProviderTests.cs" />
+    <Compile Include="Extensions\Twilio\TwilioSmsMessageAsyncCollectorTests.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Extensions\Core\ErrorTriggerEndToEndTests.cs" />
     <Compile Include="Extensions\Core\ErrorTriggerListenerTests.cs" />
@@ -254,6 +264,10 @@
     <ProjectReference Include="..\..\src\WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.csproj">
       <Project>{0b6093f8-5b69-4432-b64c-539e19b2e03a}</Project>
       <Name>WebJobs.Extensions.NotificationHubs</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.Twilio\WebJobs.Extensions.Twilio.csproj">
+      <Project>{65563C23-75B9-4F48-93E0-9A9FA2141CF9}</Project>
+      <Name>WebJobs.Extensions.Twilio</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\src\WebJobs.Extensions\WebJobs.Extensions.csproj">
       <Project>{e6f59990-f3a1-469f-a9d8-6d529121d385}</Project>

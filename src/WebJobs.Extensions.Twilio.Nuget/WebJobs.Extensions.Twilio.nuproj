@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), WebJobs.Extensions.sln))\tools\NuGetProj.settings.targets"/>
+  <PropertyGroup>
+    <NuSpecFile>$(MSBuildProjectName).nuspec</NuSpecFile>
+    <NuGetPackageId>Microsoft.Azure.WebJobs.Extensions.Twilio</NuGetPackageId>
+    <NuGetPackageVersion>$(TwilioPackageVersion)</NuGetPackageVersion>
+    <NuGetPackSymbols>false</NuGetPackSymbols>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WebJobs.Extensions.Twilio\WebJobs.Extensions.Twilio.csproj">
+      <Project>{E6F59990-F3A1-469F-A9D8-6D5291212DB1}</Project>
+      <Name>WebJobs.Extensions.Twilio</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <NuGetContent Include="$(WebJobsRootPath)\src\WebJobs.Extensions.Twilio\bin\$(Configuration)\Microsoft.Azure.WebJobs.Extensions.Twilio.dll">
+      <Destination>lib\net45\Microsoft.Azure.WebJobs.Extensions.Twilio.dll</Destination>
+    </NuGetContent>
+  </ItemGroup>
+  <Import Project="$(WebJobsToolsPath)NuGetProj.targets"/>
+  <Target Name="BeforeBuild">
+    <PropertyGroup>
+      <!-- Define properties you want to use inside your nuspec file. -->
+      <NuSpecProperties>NuGetPackageId=$(NuGetPackageId);NuGetPackageVersion=$(NuGetPackageVersion);PackageEULA=$(WebJobsPackageEULA);WebJobsPackageVersion=$(WebJobsPackageVersion)</NuSpecProperties>
+    </PropertyGroup>
+  </Target>
+</Project>

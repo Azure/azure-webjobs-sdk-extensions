@@ -109,6 +109,10 @@
       <HintPath>..\..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="RestSharp, Version=105.2.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\RestSharp.105.2.2\lib\net45\RestSharp.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="SendGrid, Version=6.3.4.0, Culture=neutral, PublicKeyToken=4f047e93159395ca, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Sendgrid.6.3.4\lib\SendGrid.dll</HintPath>
       <Private>True</Private>
@@ -153,6 +157,10 @@
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Xml" />
+    <Reference Include="Twilio.Api, Version=3.4.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Twilio.4.7.2\lib\3.5\Twilio.Api.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\Item.cs" />
@@ -176,6 +184,7 @@
     <Compile Include="Samples\SendGridSamples.cs" />
     <Compile Include="Samples\TableSamples.cs" />
     <Compile Include="Samples\TimerSamples.cs" />
+    <Compile Include="Samples\TwilioSamples.cs" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
@@ -213,6 +222,10 @@
     <ProjectReference Include="..\Sample.Extension\Sample.Extension.csproj">
       <Project>{55edaba0-8d31-43c9-ab3c-2a40d0eff28a}</Project>
       <Name>Sample.Extension</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WebJobs.Extensions.Twilio\WebJobs.Extensions.Twilio.csproj">
+      <Project>{65563c23-75b9-4f48-93e0-9a9fa2141cf9}</Project>
+      <Name>WebJobs.Extensions.Twilio</Name>
     </ProjectReference>
     <ProjectReference Include="..\WebJobs.Extensions\WebJobs.Extensions.csproj">
       <Project>{e6f59990-f3a1-469f-a9d8-6d529121d385}</Project>

@@ -310,6 +310,39 @@ public static void SendTemplateNotification(
 }
 ```
 
+###Twilio SMS
+
+A [Twilio](https://twilio.com) binding that allows you to easily send SMS messages from your job functions. This extension lives in the **Microsoft.Azure.WebJobs.Extensions.Twilio** package. Simply add your Twilio Account SID and Auth Token as app settings or environment variables (with settings named `AzureWebJobsTwilioAccountSid` and `AzureWebJobsTwilioAuthToken`, respectively), and you can write functions like the below which demonstrates full route binding for message fields. In this scenario, an SMS message is sent each time a new order is successfully placed. The message fields are automatically bound to the `CustomerPhoneNumber/StorePhoneNumber/CustomerName/OrderId` properties of the Order object that triggered the function.
+
+```csharp
+ public static void ProcessOrder(
+    [QueueTrigger(@"samples-orders")] Order order,
+    [TwilioSms(
+        To = "{CustomerPhoneNumber}",
+        From = "{StorePhoneNumber}",
+        Body = "{CustomerName}, we've received your order ({OrderId}) and have begun processing it!")]
+    out SMSMessage message)
+{
+    // You can set additional message properties here
+    message = new SMSMessage();
+}
+```
+
+Here's another example showing how you can easily send yourself notification mails to your own admin address when your jobs complete. In this case, the default To/From addresses come from the global TwilioSmsConfiguration object specified on startup, so don't need to be specified.
+
+```csharp
+public static void Purge(
+    [QueueTrigger(@"purge-tasks")] PurgeTask task,
+    [TwilioSms(Body = "Purge {Description} succeeded. Purged {Count} items")]
+    out SMSMessage message)
+{
+    // Purge logic here
+}
+```
+
+The above messages are fully declarative, but you can also set the message properties in your job function code (e.g. From number, To number, Body, etc.). 
+
+To register the Twilio SMS extensions, call `config.UseTwilioSms()` in your startup code. For more information on the Twilio binding, see the [Twilio samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/TwilioSamples.cs).
 
 ## License
 

@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Mail;
@@ -10,6 +11,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
+using Microsoft.Azure.WebJobs.Extensions.Twilio;
 using Microsoft.Azure.WebJobs.Host;
 using WebJobsSandbox;
 
@@ -49,6 +51,8 @@ namespace ExtensionsSample
 
             ConfigureTraceMonitor(config, sendGridConfiguration);
 
+            config.UseTwilioSms();
+            
             EnsureSampleDirectoriesExist(filesConfig.RootPath);
 
             JobHost host = new JobHost(config);
