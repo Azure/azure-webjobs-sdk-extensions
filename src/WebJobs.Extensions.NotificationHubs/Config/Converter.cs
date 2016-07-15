@@ -34,9 +34,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
             Notification notification = null;
             if (platform == 0)
             {
-                JObject jobj = JObject.Parse(notificationAsString);
-                Dictionary<string, string> templateProperties = jobj.ToObject<Dictionary<string, string>>();
-                notification = new TemplateNotification(templateProperties);
+                return BuildTemplateNotificationFromJsonString(notificationAsString);
             }
             else
             {
