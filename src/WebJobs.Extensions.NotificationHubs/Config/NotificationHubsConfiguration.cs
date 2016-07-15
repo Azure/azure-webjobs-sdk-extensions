@@ -1,8 +1,9 @@
-﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Configuration;
+using System.Collections.Concurrent;
+using System.Globalization;
 using Microsoft.Azure.NotificationHubs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -17,8 +18,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
     {
         internal const string NotificationHubConnectionStringName = "AzureWebJobsNotificationHubsConnectionString";
         internal const string NotificationHubSettingName = "AzureWebJobsNotificationHubName";
+        internal readonly ConcurrentDictionary<Tuple<string, string>, INotificationHubClientService> ClientCache = new ConcurrentDictionary<Tuple<string, string>, INotificationHubClientService>();
+
         private string _defaultConnectionString;
         private string _defaultHubName;
+
+        /// <summary>
+        /// Constructs a new instance.
+        /// </summary>
+        public NotificationHubsConfiguration()
+        {
+            NotificationHubClientServiceFactory = new DefaultNotificationHubClientServiceFactory();
+        }
+
+        internal INotificationHubClientServiceFactory NotificationHubClientServiceFactory { get; set; }
 
         /// <summary>
         /// Gets or sets the NotificationHubs ConnectionString to use with the Mobile App.
@@ -47,17 +60,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
             converterManager.AddNotificationHubConverters();
 
             var bindingFactory = new BindingFactory(nameResolver, converterManager);
+            IBindingProvider clientProvider = bindingFactory.BindToExactType<NotificationHubAttribute, NotificationHubClient>(BindForNotificationHubClient);
+
             var ruleOutput = bindingFactory.BindToAsyncCollector<NotificationHubAttribute, Notification>(BuildFromAttribute);
-            extensions.RegisterBindingRules<NotificationHubAttribute>(ruleOutput);
+
+            extensions.RegisterBindingRules<NotificationHubAttribute>(ruleOutput, clientProvider);
         }
 
-        private IAsyncCollector<Notification> BuildFromAttribute(NotificationHubAttribute attribute)
+        internal IAsyncCollector<Notification> BuildFromAttribute(NotificationHubAttribute attribute)
         {
             string resolvedConnectionString = ResolveConnectionString(attribute.ConnectionStringSetting);
             string resolvedHubName = ResolveHubName(attribute.HubName);
 
-            INotificationHubClientService service = new NotificationHubClientService(resolvedConnectionString, resolvedHubName);
+            INotificationHubClientService service = GetService(resolvedConnectionString, resolvedHubName);
             return new NotificationHubAsyncCollector(service, attribute.TagExpression);
+        }
+
+        internal NotificationHubClient BindForNotificationHubClient(NotificationHubAttribute attribute)
+        {
+            string resolvedConnectionString = ResolveConnectionString(attribute.ConnectionStringSetting);
+            string resolvedHubName = ResolveHubName(attribute.HubName);
+            INotificationHubClientService service = GetService(resolvedConnectionString, resolvedHubName);
+
+            return service.GetNotificationHubClient();
+        }
+
+        internal INotificationHubClientService GetService(string connectionString, string hubName)
+        {
+            return ClientCache.GetOrAdd(new Tuple<string, string>(connectionString, hubName.ToLowerInvariant()), (c) => NotificationHubClientServiceFactory.CreateService(c.Item1, c.Item2));
         }
 
         /// <summary>

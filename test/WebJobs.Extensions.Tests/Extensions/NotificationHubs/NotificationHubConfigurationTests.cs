@@ -1,4 +1,4 @@
-﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using Microsoft.Azure.WebJobs.Extensions.NotificationHubs;
@@ -10,6 +10,55 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
 {
     public class NotificationHubConfigurationTests
     {
+        [Fact]
+        public void Configuration_Caches_NotificationHubClients()
+        {
+            // Arrange            
+            var config = new NotificationHubsConfiguration
+            {
+                ConnectionString = "Endpoint=sb://TestNS.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=2XgXnw2bVCd7GT9RPaZ/RandomKey",
+                HubName = "TestHub"
+            };
+            var attribute = new NotificationHubAttribute();
+            config.BindForNotificationHubClient(attribute);
+
+            // Act
+            config.BuildFromAttribute(attribute);
+
+            // Assert
+            Assert.Equal(1, config.ClientCache.Count);
+
+            // Act
+            attribute.HubName = "TestHub2";
+            config.BuildFromAttribute(attribute);
+
+            // Assert
+            Assert.Equal(2, config.ClientCache.Count);
+
+        }
+
+        [Fact]
+        public void Configuration_Caches_NotificationHubClients_HubName_CaseInsensitive()
+        {
+            // Arrange            
+            var config = new NotificationHubsConfiguration
+            {
+                ConnectionString = "Endpoint=sb://TestNS.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=2XgXnw2bVCd7GT9RPaZ/RandomKey",
+                HubName = "TestHub"
+            };
+            var attribute = new NotificationHubAttribute();
+            config.BindForNotificationHubClient(attribute);
+
+            // Act
+            config.BuildFromAttribute(attribute);
+            attribute.HubName = "testhub";
+            config.BuildFromAttribute(attribute);
+
+            // Assert
+            Assert.Equal(1, config.ClientCache.Count);
+
+        }
+
         [Fact]
         public void Resolve_UsesAttribute_First()
         {

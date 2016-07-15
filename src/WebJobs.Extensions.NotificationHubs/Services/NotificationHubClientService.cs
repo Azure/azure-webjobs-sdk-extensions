@@ -16,20 +16,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
         {
             _connectionString = connectionString;
             _hubName = hubName;
+            _notificationHubClient = NotificationHubClient.CreateClientFromConnectionString(_connectionString, _hubName);
         }
 
-        public async Task<NotificationOutcome> SendNotificationAsync(Notification notification, string tagExpression)
+        public Task<NotificationOutcome> SendNotificationAsync(Notification notification, string tagExpression)
         {
-            var notificationOutcome = await GetNotificationHubClient().SendNotificationAsync(notification, tagExpression);
-            return notificationOutcome;
+            return _notificationHubClient.SendNotificationAsync(notification, tagExpression);
         }
 
-        private NotificationHubClient GetNotificationHubClient()
+        public NotificationHubClient GetNotificationHubClient()
         {
-            if (_notificationHubClient == null)
-            {
-                _notificationHubClient = NotificationHubClient.CreateClientFromConnectionString(_connectionString, _hubName);
-            }
             return _notificationHubClient;
         }
     }

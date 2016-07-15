@@ -42,6 +42,8 @@
   <ItemGroup>
     <Compile Include="Bindings\NotificationHubAsyncCollector.cs" />
     <Compile Include="Config\Converter.cs" />
+    <Compile Include="Config\DefaultNotificationHubServiceFactory.cs" />
+    <Compile Include="Config\INotificationHubClientServiceFactory.cs" />
     <Compile Include="Config\NotificationHubsConfiguration.cs" />
     <Compile Include="Config\NotificationHubJobHostConfigurationExtensions.cs" />
     <Compile Include="GlobalSuppressions.cs" />

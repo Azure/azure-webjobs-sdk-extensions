@@ -18,5 +18,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
         /// <param name="tagExpression">A tag expression is any boolean expression constructed using the logical operator</param>
         /// <returns></returns>
         Task<NotificationOutcome> SendNotificationAsync(Notification notification, string tagExpression);
+
+        /// <summary>
+        /// Returns the underlying <see cref="NotificationHubClient"/>.
+        /// </summary>
+        /// <returns></returns>
+        NotificationHubClient GetNotificationHubClient();
     }
 }
