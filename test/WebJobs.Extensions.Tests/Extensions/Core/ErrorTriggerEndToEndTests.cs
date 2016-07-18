@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
@@ -12,6 +11,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
 {
+    [Trait("Category", "E2E")]
     public class ErrorTriggerEndToEndTests
     {
         [Fact]
@@ -244,7 +244,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
 
             public TraceFilter TraceFilter { get; set; }
 
-            public Collection<TraceEvent> Errors { get; private set; } 
+            public Collection<TraceEvent> Errors { get; private set; }
 
             [NoAutomaticTrigger]
             public void Throw()

@@ -17,6 +17,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 {
+    [Trait("Category", "E2E")]
     public class ApiHubTableBindingTests
     {
         public static IEnumerable<ParameterInfo[]> InvalidTableClientParameters
@@ -427,19 +428,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             public int UpdateCount { get; set; }
 
             public override Task UpdateEntityAsync<TEntity>(
-                string dataSetName, 
-                string tableName, 
-                string entityId, 
-                TEntity entity, 
+                string dataSetName,
+                string tableName,
+                string entityId,
+                TEntity entity,
                 CancellationToken cancellationToken = default(CancellationToken))
             {
                 UpdateCount++;
 
                 return base.UpdateEntityAsync<TEntity>(
-                    dataSetName, 
-                    tableName, 
-                    entityId, 
-                    entity, 
+                    dataSetName,
+                    tableName,
+                    entityId,
+                    entity,
                     cancellationToken);
             }
         }

@@ -14,6 +14,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
 {
+    [Trait("Category", "E2E")]
     public class FileBindingEndToEndTests
     {
         private readonly string testInputDir;
@@ -280,7 +281,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
                 {
                     string text = reader.ReadToEnd();
                     output.Write(text);
-                } 
+                }
             }
 
             public static void BindToTextWriterOutput(

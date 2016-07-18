@@ -10,6 +10,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
 {
+    [Trait("Category", "E2E")]
     public class StorageScheduleMonitorTests : IDisposable
     {
         private const string TestTimerName = "TestProgram.TestTimer";
