@@ -115,7 +115,7 @@ namespace Microsoft.Azure.WebJobs
                         nameResolver)));
         }
 
-        private async Task<IListener> BuildListener(JobHostConfiguration config, ApiHubFileTriggerAttribute attribute, string functionName, ITriggeredFunctionExecutor executor, TraceWriter trace)
+        private Task<IListener> BuildListener(JobHostConfiguration config, ApiHubFileTriggerAttribute attribute, string functionName, ITriggeredFunctionExecutor executor, TraceWriter trace)
         {
             var root = GetFileSource(attribute.ConnectionStringSetting);
 
@@ -137,19 +137,19 @@ namespace Microsoft.Azure.WebJobs
                 folderName = path.Substring(0, i);
             }
 
-            var folder = await root.GetFolderReferenceAsync(folderName);
+            var folder = root.GetFolderReference(folderName);
 
             var listener = new ApiHubListener(this, config, folder, functionName, executor, trace, attribute);
 
-            return listener;
+            return Task.FromResult<IListener>(listener);
         }
 
         // Attribute has path resolved
-        private async Task<ApiHubFile> BuildFromAttribute(ApiHubFileAttribute attribute)
+        private Task<ApiHubFile> BuildFromAttribute(ApiHubFileAttribute attribute)
         {
             var source = GetFileSource(attribute.ConnectionStringSetting);
-            ApiHubFile file = await ApiHubFile.New(source, attribute.Path);
-            return file;
+            ApiHubFile file = ApiHubFile.New(source, attribute.Path);
+            return Task.FromResult(file);
         }
 
         private IFolderItem GetFileSource(string key)

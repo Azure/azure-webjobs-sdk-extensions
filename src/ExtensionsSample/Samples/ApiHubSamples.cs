@@ -101,7 +101,7 @@ namespace ExtensionsSample.Samples
 
                 // Create some initialization files.
                 var root = ItemFactory.Parse(apiHubConnectionString);
-                var file = root.GetFileReferenceAsync("test/file1.txt", true).GetAwaiter().GetResult();
+                var file = root.GetFileReference("test/file1.txt", true);
                 file.WriteAsync(new byte[] { 0, 1, 2, 3 });
             }
         }

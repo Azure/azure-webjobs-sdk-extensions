@@ -20,118 +20,60 @@ using Xunit;
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 {
     [Trait("Category", "E2E")]
-    public class ApiHubBindingEndToEndTests
+    public class ApiHubBindingEndToEndTests : IClassFixture<ApiHubTestFixture>, IDisposable
     {
-        private const string HostContainerName = "azure-webjobs-hosts";
-        private const string PoisonQueueName = "webjobs-apihubtrigger-poison";
-        private const string ApiHubBlobDirectoryPathTemplate = "apihubs/{0}";
+        private ApiHubTestFixture _fixture;
 
-        private const string ImportTestPath = @"import";
-        private const string OutputTestPath = @"output";
-        private const string ExceptionPath = @"exceptionPath";
-
-        private string _apiHubConnectionString;
-        private IFolderItem _rootFolder;
-        private CloudBlobDirectory _apiHubBlobDirectory;
-        private CloudQueue _poisonQueue;
-
-        private JobHostConfiguration _config;
-        private JsonSerializer _serializer;
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Globalization", "CA1308:NormalizeStringsToUppercase")]
-        public ApiHubBindingEndToEndTests()
+        public ApiHubBindingEndToEndTests(ApiHubTestFixture fixture)
         {
-            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AzureWebJobsDropBox")))
-            {
-                _apiHubConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsDropBox");
-            }
-            else
-            {
-                _apiHubConnectionString = "UseLocalFileSystem=true;Path=" + Path.GetTempPath() + "ApiHubDropBox";
-            }
-
-            ExplicitTypeLocator locator = new ExplicitTypeLocator(typeof(ApiHubTestJobs));
-
-            // Use MachineName as the host Id
-            var machineName = Environment.MachineName.ToLower(CultureInfo.InvariantCulture);
-            if (machineName.Length > 30)
-            {
-                machineName = machineName.Substring(0, 30);
-            }
-
-            _config = new JobHostConfiguration
-            {
-                TypeLocator = locator,
-                HostId = machineName,
-            };
-
-            _rootFolder = ItemFactory.Parse(_apiHubConnectionString);
-
-            SetupFolder(ImportTestPath).Wait();
-            SetupFolder(OutputTestPath).Wait();
-            SetupFolder(ExceptionPath).Wait();
-
-            ApiHubTestJobs.Processed.Clear();
-
-            CloudStorageAccount account = CloudStorageAccount.Parse(_config.StorageConnectionString);
-            CloudBlobClient blobClient = account.CreateCloudBlobClient();
-
-            string apiHubBlobDirectoryPath = string.Format(ApiHubBlobDirectoryPathTemplate, _config.HostId);
-            _apiHubBlobDirectory = blobClient.GetContainerReference(HostContainerName).GetDirectoryReference(apiHubBlobDirectoryPath);
-
-            DeleteApiHubBlobs();
-            this._serializer = JsonSerializer.Create();
-            CloudQueueClient queueClient = CloudStorageAccount.Parse(this._config.StorageConnectionString).CreateCloudQueueClient();
-            this._poisonQueue = queueClient.GetQueueReference(PoisonQueueName);
+            _fixture = fixture;
         }
 
         [Fact]
         public async void JobIsTriggeredForNewFiles()
         {
             JobHost host = CreateTestJobHost();
-
             host.Start();
 
-            Assert.Equal(0, ApiHubTestJobs.Processed.Count);
+            int count = ApiHubFileTestJobs.Processed.Count;
 
             // now write a file to trigger the job
-            var fileItem = await WriteTestFile();
+            var fileItem = await _fixture.WriteTestFile();
 
             await TestHelpers.Await(() =>
             {
-                return _rootFolder.FileExists(fileItem.Path);
+                return _fixture.RootFolder.FileExistsAsync(fileItem.Path).GetAwaiter().GetResult();
             });
 
             await TestHelpers.Await(() =>
             {
-                return ApiHubTestJobs.Processed.Count != 0;
+                return ApiHubFileTestJobs.Processed.Count > count;
             });
 
-            Assert.Equal(1, ApiHubTestJobs.Processed.Count);
-            Assert.Equal(Path.GetFileName(fileItem.Path), ApiHubTestJobs.Processed.Single());
+            Assert.True(ApiHubFileTestJobs.Processed.Contains(Path.GetFileName(fileItem.Path)));
+
             host.Stop();
 
             await fileItem.DeleteAsync();
         }
-
+        
         [Fact]
         public async void ChecksRelatedBlobsGettingUpdated()
         {
             JobHost host = CreateTestJobHost();
-
             host.Start();
 
             // now write a file to trigger the job
-            var fileItem = await WriteTestFile();
+            var fileItem = await _fixture.WriteTestFile();
 
             await TestHelpers.Await(() =>
             {
-                return _rootFolder.FileExists(fileItem.Path);
+                return _fixture.RootFolder.FileExistsAsync(fileItem.Path).GetAwaiter().GetResult();
             });
 
             await TestHelpers.Await(() =>
             {
-                return ApiHubTestJobs.Processed.Count != 0;
+                return ApiHubFileTestJobs.Processed.Count != 0;
             });
 
             var apiHubBlob = GetBlobReference("ImportTestJob");
@@ -143,19 +85,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
             // waiting for 1 sec to make sure we get an updated DateTime for the blob entry which is in the HH:mm:ss format for local files. 
             await Task.Delay(1000);
-            ApiHubTestJobs.Processed.Clear();
+            ApiHubFileTestJobs.Processed.Clear();
 
             // now write a 2nd file to trigger the job and making sure the blob is updated
-            var fileItem2 = await WriteTestFile();
+            var fileItem2 = await _fixture.WriteTestFile();
 
             await TestHelpers.Await(() =>
             {
-                return _rootFolder.FileExists(fileItem2.Path);
+                return _fixture.RootFolder.FileExistsAsync(fileItem2.Path).GetAwaiter().GetResult();
             });
 
             await TestHelpers.Await(() =>
             {
-                return ApiHubTestJobs.Processed.Count != 0;
+                return ApiHubFileTestJobs.Processed.Count != 0;
             });
 
             var content2 = await apiHubBlob.DownloadTextAsync();
@@ -172,35 +114,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
         public async void ChecksPoisonQueueGettingPopulated()
         {
             JobHost host = CreateTestJobHost();
-
             host.Start();
 
             // now write a file to trigger the job
-            var fileItem = await WriteTestFile(path: ExceptionPath);
+            var fileItem = await _fixture.WriteTestFile(path: ApiHubTestFixture.ExceptionPath);
 
             await TestHelpers.Await(() =>
             {
-                return _rootFolder.FileExists(fileItem.Path);
+                return _fixture.RootFolder.FileExistsAsync(fileItem.Path).GetAwaiter().GetResult();
             });
        
             await TestHelpers.Await(() =>
             {
-                return _poisonQueue.Exists();
+                return _fixture.PoisonQueue.Exists();
             });
 
             await TestHelpers.Await(() =>
             {
-                return _poisonQueue.PeekMessage() != null;
+                return _fixture.PoisonQueue.PeekMessage() != null;
             });
 
-            var message = await _poisonQueue.GetMessageAsync();
+            var message = await _fixture.PoisonQueue.GetMessageAsync();
 
             Assert.True(!string.IsNullOrEmpty(message.AsString));
 
             ApiHubFileInfo status;
             using (StringReader stringReader = new StringReader(message.AsString))
             {
-                status = (ApiHubFileInfo)_serializer.Deserialize(stringReader, typeof(ApiHubFileInfo));
+                status = (ApiHubFileInfo)_fixture.Serializer.Deserialize(stringReader, typeof(ApiHubFileInfo));
             }
 
             Assert.Equal("ThrowException", status.FunctionName);
@@ -210,20 +151,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             host.Stop();
 
             await fileItem.DeleteAsync();
-            _poisonQueue.DeleteIfExists();
         }
 
         [Fact]
         public async Task ApiHubAttribute_SupportsExpectedOutputBindings()
         {
+            var fileName = "bindtooutputtypes.txt";
             JobHost host = CreateTestJobHost();
             host.Start();
 
-            await VerifyOutputBinding(typeof(ApiHubTestJobs).GetMethod("BindToStringOutput"));
-            await VerifyOutputBinding(typeof(ApiHubTestJobs).GetMethod("BindToByteArrayOutput"));
-            await VerifyOutputBinding(typeof(ApiHubTestJobs).GetMethod("BindToStreamOutput"));
-            await VerifyOutputBinding(typeof(ApiHubTestJobs).GetMethod("BindToStreamWriterOutput"));
-            await VerifyOutputBinding(typeof(ApiHubTestJobs).GetMethod("BindToTextWriterOutput"));
+            string data = Guid.NewGuid().ToString();
+            string inputFileName = ApiHubTestFixture.ImportTestPath + "/" + fileName;
+
+            var inputFile = _fixture.RootFolder.GetFileReference(inputFileName, true);
+            await inputFile.WriteAsync(Encoding.UTF8.GetBytes(data));
+
+            await VerifyOutputBinding(data, string.Format("{0}.string", fileName));
+            await VerifyOutputBinding(data, string.Format("{0}.byte", fileName));
+            await VerifyOutputBinding(data, string.Format("{0}.stream", fileName));
+            await VerifyOutputBinding(data, string.Format("{0}.streamWriter", fileName));
+            await VerifyOutputBinding(data, string.Format("{0}.textWriter", fileName));
 
             host.Stop();
         }
@@ -234,11 +181,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             JobHost host = CreateTestJobHost();
             host.Start();
 
-            await VerifyInputBinding(host, typeof(ApiHubTestJobs).GetMethod("BindToStringInput"));
-            await VerifyInputBinding(host, typeof(ApiHubTestJobs).GetMethod("BindToByteArrayInput"));
-            await VerifyInputBinding(host, typeof(ApiHubTestJobs).GetMethod("BindToStreamInput"));
-            await VerifyInputBinding(host, typeof(ApiHubTestJobs).GetMethod("BindToStreamReaderInput"));
-            await VerifyInputBinding(host, typeof(ApiHubTestJobs).GetMethod("BindToTextReaderInput"));
+            await VerifyInputBinding(host, typeof(ApiHubFileTestJobs).GetMethod("BindToStringInput"));
+            await VerifyInputBinding(host, typeof(ApiHubFileTestJobs).GetMethod("BindToByteArrayInput"));
+            await VerifyInputBinding(host, typeof(ApiHubFileTestJobs).GetMethod("BindToStreamInput"));
+            await VerifyInputBinding(host, typeof(ApiHubFileTestJobs).GetMethod("BindToStreamReaderInput"));
+            await VerifyInputBinding(host, typeof(ApiHubFileTestJobs).GetMethod("BindToTextReaderInput"));
 
             host.Stop();
         }
@@ -248,22 +195,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
         {
             JobHost host = CreateTestJobHost();
 
-            var method = typeof(ApiHubTestJobs).GetMethod("BindToStringOutput");
+            var method = typeof(ApiHubFileTestJobs).GetMethod("BindToOutputTypes");
 
             string data = Guid.NewGuid().ToString();
-            string inputFileName = ImportTestPath + "/BindToString.txt";
+            string inputFileName = ApiHubTestFixture.ImportTestPath + "/ManualBindToString.txt";
 
-            var inputFile = await _rootFolder.GetFileReferenceAsync(inputFileName, true);
+            var inputFile = _fixture.RootFolder.GetFileReference(inputFileName, true);
             await inputFile.WriteAsync(Encoding.UTF8.GetBytes(data));
 
             host.Call(method, new { input = inputFileName });
 
-            string outputFileName = OutputTestPath + "/BindToString.txt";
-            var outputFile = await _rootFolder.GetFileReferenceAsync(outputFileName, true);
+            string outputFileName = ApiHubTestFixture.OutputTestPath + "/ManualBindToString.txt.string";
+            var outputFile = _fixture.RootFolder.GetFileReference(outputFileName, true);
 
             await TestHelpers.Await(() =>
             {
-                return _rootFolder.FileExists(outputFileName);
+                return _fixture.RootFolder.FileExistsAsync(outputFileName).GetAwaiter().GetResult();
             });
 
             var result = string.Empty;
@@ -281,19 +228,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
         private async Task VerifyInputBinding(JobHost host, MethodInfo method)
         {
             string data = Guid.NewGuid().ToString();
-            string inputFileName = ImportTestPath + "/" + string.Format("{0}.txt", method.Name);
+            string inputFileName = ApiHubTestFixture.ImportTestPath + "/" + string.Format("{0}.txt", method.Name);
 
-            var inputFile = await _rootFolder.GetFileReferenceAsync(inputFileName, true);
+            var inputFile = _fixture.RootFolder.GetFileReference(inputFileName, true);
             await inputFile.WriteAsync(Encoding.UTF8.GetBytes(data));
 
             host.Call(method);
 
-            string outputFileName = OutputTestPath + "/" + string.Format("{0}.txt", method.Name);
-            var outputFile = await _rootFolder.GetFileReferenceAsync(outputFileName, true);
+            string outputFileName = ApiHubTestFixture.OutputTestPath + "/" + string.Format("{0}.txt", method.Name);
+            var outputFile = _fixture.RootFolder.GetFileReference(outputFileName, true);
 
             await TestHelpers.Await(() =>
             {
-                return _rootFolder.FileExists(outputFileName);
+                return _fixture.RootFolder.FileExistsAsync(outputFileName).GetAwaiter().GetResult();
             });
 
             var result = string.Empty;
@@ -308,20 +255,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             Assert.Equal(data, result);
         }
 
-        private async Task VerifyOutputBinding(MethodInfo method)
+        private async Task VerifyOutputBinding(string data, string fileName)
         {
-            string data = Guid.NewGuid().ToString();
-            string inputFileName = ImportTestPath + "/" + string.Format("{0}.txt", method.Name);
-
-            var inputFile = await _rootFolder.GetFileReferenceAsync(inputFileName, true);
-            await inputFile.WriteAsync(Encoding.UTF8.GetBytes(data));
-
-            string outputFileName = OutputTestPath + "/" + string.Format("{0}.txt", method.Name);
-            var outputFile = await _rootFolder.GetFileReferenceAsync(outputFileName, true);
+            string outputFileName = ApiHubTestFixture.OutputTestPath + "/" + fileName;
+            var outputFile = _fixture.RootFolder.GetFileReference(outputFileName, true);
 
             await TestHelpers.Await(() =>
             {
-                return _rootFolder.FileExists(outputFileName);
+                return _fixture.RootFolder.FileExistsAsync(outputFileName).GetAwaiter().GetResult();
             });
 
             var result = string.Empty;
@@ -334,72 +275,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             });
 
             Assert.Equal(data, result);
-        }
+        }        
 
         private JobHost CreateTestJobHost()
         {
             var apiHubConfig = new ApiHubConfiguration();
-
-            apiHubConfig.AddConnection("dropbox", _apiHubConnectionString);
+            apiHubConfig.Logger = _fixture.TraceWriter;
+            apiHubConfig.Logger.Level = System.Diagnostics.TraceLevel.Verbose;
+            apiHubConfig.AddConnection("dropbox", _fixture.ApiHubConnectionString);
             apiHubConfig.MaxFunctionExecutionRetryCount = 2;
 
-            _config.UseApiHub(apiHubConfig);
+            _fixture.Config.UseApiHub(apiHubConfig);
 
-            return new JobHost(_config);
-        }
-
-        private void DeleteApiHubBlobs()
-        {
-            foreach (var blob in this._apiHubBlobDirectory.ListBlobs())
-            {
-                var blockBlob = blob as CloudBlockBlob;
-
-                if (blockBlob != null)
-                {
-                    blockBlob.DeleteIfExists();
-                }
-            }
-        }
-
-        private async Task SetupFolder(string folderName)
-        {
-            var folder = await _rootFolder.GetFolderReferenceAsync(folderName);
-
-            if (!folder.FolderExists(folderName))
-            {
-                // write a test file to create the folder if it doesn't exist.
-                await WriteTestFile(path: folderName);
-            }
-
-            foreach (var item in await folder.ListAsync(true))
-            {
-                var i = item as IFileItem;
-                if (i != null)
-                {
-                    await i.DeleteAsync();
-                }
-            }
-        }
-
-        private async Task<IFileItem> WriteTestFile(string extension = "txt", string path = null)
-        {
-            string filePath;
-            if (path != null)
-            {
-                filePath = path;
-            }
-            else
-            {
-                filePath = ImportTestPath;
-            }
-            string testFileName = string.Format("{0}.{1}", Guid.NewGuid(), extension);
-            string testFilePath = filePath + "/" + testFileName;
-
-            var file = await _rootFolder.GetFileReferenceAsync(testFilePath, true);
-            await file.WriteAsync(new byte[] { 0, 1, 2, 3 });
-
-            Assert.True(_rootFolder.FileExists(file.Path));
-            return file;
+            return new JobHost(_fixture.Config);
         }
 
         private CloudBlockBlob GetBlobReference(string functionName)
@@ -407,7 +295,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             // Path to apiHub blob is:
             // apihubs/{siteName}/{functionName}/status
             string blobName = string.Format("{0}/status", functionName);
-            return this._apiHubBlobDirectory.GetBlockBlobReference(blobName);
+            return _fixture.ApiHubBlobDirectory.GetBlockBlobReference(blobName);
+        }
+
+        public void Dispose()
+        {
         }
 
         private class ApiHubFileInfo
@@ -417,108 +309,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             public string FilePath { get; set; }
 
             public string Connection { get; set; }
-        }
-        public static class ApiHubTestJobs
-        {
-            static ApiHubTestJobs()
-            {
-                Processed = new List<string>();
-            }
-
-            public static List<string> Processed { get; private set; }
-
-            public static void ImportTestJob(
-                [ApiHubFileTrigger("dropbox", "import/{name}", PollIntervalInSeconds = 1)] Stream sr,
-                string name)
-            {
-                Processed.Add(name);
-                sr.Close();
-            }
-
-            public static void ThrowException(
-                [ApiHubFileTrigger("dropbox", ExceptionPath + @"/{name}", PollIntervalInSeconds = 1)] Stream sr,
-                string name)
-            {
-                throw new ApplicationException("Error");
-            }
-
-            public static void BindToStringOutput(
-                [ApiHubFileTrigger("dropbox", ImportTestPath + @"/{name}", PollIntervalInSeconds = 1)] string input,
-                [ApiHubFile("dropbox", OutputTestPath + @"/{name}", FileAccess.Write)] out string output)
-            {
-                output = input;
-            }
-
-            public static void BindToByteArrayOutput(
-                [ApiHubFileTrigger("dropbox", ImportTestPath + @"/{name}", PollIntervalInSeconds = 1)] string input,
-                [ApiHubFile("dropbox", OutputTestPath + @"/{name}", FileAccess.Write)] out byte[] output)
-            {
-                output = Encoding.UTF8.GetBytes(input);
-            }
-
-            public static void BindToStreamOutput(
-                [ApiHubFileTrigger("dropbox", ImportTestPath + @"/{name}", PollIntervalInSeconds = 1)] string input,
-                [ApiHubFile("dropbox", OutputTestPath + @"/{name}", FileAccess.Write)] Stream output)
-            {
-                StreamWriter sw = new StreamWriter(output);
-                sw.Write(input);
-
-                // TODO: this test will fail if we call Close() here. needs more investigation.
-                //sw.Close();
-            }
-
-            public static void BindToStreamWriterOutput(
-                [ApiHubFileTrigger("dropbox", ImportTestPath + @"/{name}", PollIntervalInSeconds = 1)] Stream input,
-                [ApiHubFile("dropbox", OutputTestPath + @"/{name}", FileAccess.Write)] StreamWriter output)
-            {
-                using (StreamReader reader = new StreamReader(input))
-                {
-                    string text = reader.ReadToEnd();
-                    output.Write(text);
-                }
-            }
-
-            public static void BindToTextWriterOutput(
-                [ApiHubFileTrigger("dropbox", ImportTestPath + @"/{name}", PollIntervalInSeconds = 1)] StreamReader input,
-                [ApiHubFile("dropbox", OutputTestPath + @"/{name}", FileAccess.Write)] TextWriter output)
-            {
-                output.Write(input.ReadToEnd());
-            }
-
-            public static void BindToStreamInput(
-                [ApiHubFile("dropbox", ImportTestPath + @"/BindToStreamInput.txt")] Stream input,
-                [ApiHubFile("dropbox", OutputTestPath + @"/BindToStreamInput.txt", FileAccess.Write)] Stream output)
-            {
-                input.CopyTo(output);
-            }
-
-            public static void BindToStreamReaderInput(
-                [ApiHubFile("dropbox", ImportTestPath + @"/BindToStreamReaderInput.txt")] StreamReader input,
-                [ApiHubFile("dropbox", OutputTestPath + @"/BindToStreamReaderInput.txt", FileAccess.Write)] out string output)
-            {
-                output = input.ReadToEnd();
-            }
-
-            public static void BindToTextReaderInput(
-                [ApiHubFile("dropbox", ImportTestPath + @"/BindToTextReaderInput.txt")] TextReader input,
-                [ApiHubFile("dropbox", OutputTestPath + @"/BindToTextReaderInput.txt", FileAccess.Write)] out string output)
-            {
-                output = input.ReadToEnd();
-            }
-
-            public static void BindToStringInput(
-                [ApiHubFile("dropbox", ImportTestPath + "/BindToStringInput.txt")] string input,
-                [ApiHubFile("dropbox", OutputTestPath + "/BindToStringInput.txt", FileAccess.Write)] out string output)
-            {
-                output = input;
-            }
-
-            public static void BindToByteArrayInput(
-                [ApiHubFile("dropbox", ImportTestPath + @"/BindToByteArrayInput.txt")] byte[] input,
-                [ApiHubFile("dropbox", OutputTestPath + @"/BindToByteArrayInput.txt", FileAccess.Write)] out string output)
-            {
-                output = Encoding.UTF8.GetString(input);
-            }
         }
     }
 }

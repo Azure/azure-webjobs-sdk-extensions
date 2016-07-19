@@ -53,9 +53,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
             return Task.FromResult(Tuple.Create((Stream)stream, onClose));            
         }
 
-        internal static async Task<ApiHubFile> New(IFolderItem rootFolder, string path)
+        internal static ApiHubFile New(IFolderItem rootFolder, string path)
         {
-            var fileSource = await rootFolder.GetFileReferenceAsync(path, true);
+            var fileSource = rootFolder.GetFileReference(path, true);
             return new ApiHubFile(fileSource);
         }
     }
