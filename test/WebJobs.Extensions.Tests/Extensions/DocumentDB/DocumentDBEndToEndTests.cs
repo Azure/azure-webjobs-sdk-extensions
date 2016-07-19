@@ -18,6 +18,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 {
+    [Trait("Category", "E2E")]
     public class DocumentDBEndToEndTests
     {
         private const string DatabaseName = "TestDatabase";

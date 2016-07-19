@@ -40,6 +40,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
                 throw new ArgumentNullException("context");
             }
 
+            if (_apiHubConfig.Logger == null)
+            {
+                _apiHubConfig.Logger = TraceWriter;
+            }
+
             binding = null;
 
             if (string.Compare(context.Type, "apiHubFileTrigger", StringComparison.OrdinalIgnoreCase) == 0 ||
@@ -58,11 +63,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
         /// <inheritdoc/>
         public override void Initialize()
         {
-            if (_apiHubConfig.Logger == null)
-            {
-                _apiHubConfig.Logger = TraceWriter;
-            }
-
             Config.UseApiHub(_apiHubConfig);
         }
 

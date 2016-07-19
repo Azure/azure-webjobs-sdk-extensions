@@ -19,6 +19,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
 {
+    [Trait("Category", "E2E")]
     public class MobileTableEndToEndTests
     {
         private const string TableName = "TestTable";

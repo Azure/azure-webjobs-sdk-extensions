@@ -10,7 +10,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.ApiHub;
-using Microsoft.Azure.WebJobs.Extensions.ApiHub;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
@@ -20,6 +19,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 {
+    [Trait("Category", "E2E")]
     public class ApiHubBindingEndToEndTests
     {
         private const string HostContainerName = "azure-webjobs-hosts";

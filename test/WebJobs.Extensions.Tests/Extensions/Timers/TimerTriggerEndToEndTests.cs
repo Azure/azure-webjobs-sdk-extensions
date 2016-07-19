@@ -10,6 +10,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 {
+    [Trait("Category", "E2E")]
     public class TimerTriggerEndToEndTests
     {
         [Fact]

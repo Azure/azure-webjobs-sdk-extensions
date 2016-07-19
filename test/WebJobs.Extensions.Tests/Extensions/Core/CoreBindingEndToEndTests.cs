@@ -2,12 +2,12 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.Azure.WebJobs.Extensions.Core;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
 {
+    [Trait("Category", "E2E")]
     public class CoreBindingEndToEndTests
     {
         [Fact]
