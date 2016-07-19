@@ -16,7 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
     public class MobileAppsScriptBindingProvider : ScriptBindingProvider
     {
         /// <inheritdoc/>
-        public MobileAppsScriptBindingProvider(JobHostConfiguration config, JObject hostMetadata, TraceWriter traceWriter) 
+        public MobileAppsScriptBindingProvider(JobHostConfiguration config, JObject hostMetadata, TraceWriter traceWriter)
             : base(config, hostMetadata, traceWriter)
         {
         }
@@ -74,7 +74,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
                     {
                         TableName = Context.GetMetadataValue<string>("tableName"),
                         Id = Context.GetMetadataValue<string>("id"),
-                        MobileAppUriSetting = Context.GetMetadataValue<string>("mobileAppUri"),
+                        MobileAppUriSetting = Context.GetMetadataValue<string>("connection"),
                         ApiKeySetting = Context.GetMetadataValue<string>("apiKey")
                     }
                 };
