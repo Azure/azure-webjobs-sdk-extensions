@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Globalization;
 using Microsoft.Azure.NotificationHubs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -86,7 +87,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 
         internal INotificationHubClientService GetService(string connectionString, string hubName)
         {
-            return ClientCache.GetOrAdd(new Tuple<string, string>(connectionString, hubName), (c) => NotificationHubClientServiceFactory.CreateService(c.Item1, c.Item2));
+            return ClientCache.GetOrAdd(new Tuple<string, string>(connectionString, hubName.ToLowerInvariant()), (c) => NotificationHubClientServiceFactory.CreateService(c.Item1, c.Item2));
         }
 
         /// <summary>

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.NotificationHubs;
@@ -14,42 +15,32 @@ using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
+
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
 {
     public class NotificationHubEndToEndTests
     {
-        private const string AttributeConnStr = "Endpoint=sb://TestAttrNS.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=RandomKey";
+        private const string AttributeConnStr = "Endpoint=sb://AttrTestNS.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=RandomKey";
         private const string AttributeHubName = "AttributeHubName";
-        private const string ConfigConnStr = "Endpoint=sb://TestConfigNS.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=RandomKey";
-        private const string DefaultConnStr = "Endpoint=sb://TestNS.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=RandomKey";
-        private const string DefaultHubName = "TestHub";
+        private const string ConfigConnStr = "Endpoint=sb://ConfigTestNS.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=RandomKey";
+        private const string ConfigHubName = "ConfigTestHub";
+        private const string DefaultConnStr = "Endpoint=sb://DefaultTestNS.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=RandomKey";
+        private const string DefaultHubName = "defaulttesthub";
         private const string MessagePropertiesJSON = "{\"message\":\"Hello\",\"location\":\"Redmond\"}";
+        private const string WindowsToastPayload = "<toast><visual><binding template=\"ToastText01\"><text id=\"1\">Test message</text></binding></visual></toast>";
         private const string UserIdTag = "myuserid123";
         private static Notification TestNotification = Converter.BuildTemplateNotificationFromJsonString(MessagePropertiesJSON);
 
         [Fact]
         public void OutputBindings()
         {
-            //Arrage
-            var serviceMock = new Mock<INotificationHubClientService>(MockBehavior.Strict);
-            serviceMock
-                .Setup(x => x.SendNotificationAsync(It.IsAny<Notification>(), It.IsAny<string>()))
-                  .Returns(Task.FromResult(new NotificationOutcome()));
+            SetupAndVerifyOutputBindings("Outputs", 11);
+        }
 
-            var factoryMock = new Mock<INotificationHubClientServiceFactory>(MockBehavior.Strict);
-            factoryMock
-                .Setup(f => f.CreateService(ConfigConnStr, DefaultHubName))
-                .Returns(serviceMock.Object);
-
-            var testTrace = new TestTraceWriter(TraceLevel.Warning);
-
-            //Act
-            RunTest("Outputs", factoryMock.Object, testTrace);
-
-            // Assert
-            factoryMock.Verify(f => f.CreateService(ConfigConnStr, DefaultHubName), Times.Once());
-            serviceMock.Verify(m => m.SendNotificationAsync(It.IsAny<Notification>(), It.IsAny<string>()), Times.Exactly(9));
-            Assert.Equal("Outputs", testTrace.Events.Single().Message);
+        [Fact]
+        public void OutputBindingsAsyncCollector()
+        {
+            SetupAndVerifyOutputBindings("OutputsAsyncCollector", 2);
         }
 
         [Fact]
@@ -63,7 +54,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
 
             var factoryMock = new Mock<INotificationHubClientServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(ConfigConnStr, AttributeHubName))
+                .Setup(f => f.CreateService(ConfigConnStr, AttributeHubName.ToLowerInvariant()))
                 .Returns(serviceMock.Object);
 
             var jobject = JObject.FromObject(new QueueData { UserName = "TestUser", UserIdTag = UserIdTag });
@@ -74,7 +65,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             RunTest("TriggerObject", factoryMock.Object, testTrace, jobject.ToString());
 
             // Assert
-            factoryMock.Verify(f => f.CreateService(ConfigConnStr, AttributeHubName), Times.Once());
+            factoryMock.Verify(f => f.CreateService(ConfigConnStr, AttributeHubName.ToLowerInvariant()), Times.Once());
             Assert.Equal(1, testTrace.Events.Count);
             Assert.Equal("TriggerObject", testTrace.Events[0].Message);
         }
@@ -82,16 +73,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
         [Fact]
         public void ClientBinding()
         {
-            // Arrange
             var factoryMock = new Mock<INotificationHubClientServiceFactory>(MockBehavior.Strict);
             factoryMock
                 .Setup(f => f.CreateService(DefaultConnStr, DefaultHubName))
-                .Returns(new NotificationHubClientService(DefaultConnStr, DefaultHubName));
+                .Returns(new NotificationHubClientService(DefaultConnStr,DefaultHubName));
 
             var testTrace = new TestTraceWriter(TraceLevel.Warning);
 
             // Act
-            RunTest("Client", factoryMock.Object, testTrace, configConnectionString: null);
+            RunTest("Client", factoryMock.Object, testTrace, configConnectionString: null, configHubName: null);
 
             //Assert
             factoryMock.Verify(f => f.CreateService(DefaultConnStr, DefaultHubName), Times.Once());
@@ -109,12 +99,46 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             Assert.IsType<InvalidOperationException>(ex.InnerException);
         }
 
-        private void RunTest(string testName, INotificationHubClientServiceFactory factory, TraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr)
+        [Fact]
+        public void NoHubName()
         {
-            RunTest(typeof(NotificationHubEndToEndFunctions), testName, factory, testTrace, argument, configConnectionString);
+            // Act
+            var ex = Assert.Throws<FunctionInvocationException>(
+                () => RunTest(typeof(NotificationHubNoConnectionStringFunctions), "Broken", new DefaultNotificationHubClientServiceFactory(), new TestTraceWriter(), configHubName: null, includeDefaultHubName: false));
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex.InnerException);
         }
 
-        private void RunTest(Type testType, string testName, INotificationHubClientServiceFactory factory, TraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr, bool includeDefaultConnectionString = true)
+        private void SetupAndVerifyOutputBindings(string test, int invokeSendNotificationTimes)
+        {
+            var serviceMock = new Mock<INotificationHubClientService>(MockBehavior.Strict);
+            serviceMock
+                .Setup(x => x.SendNotificationAsync(It.IsAny<Notification>(), It.IsAny<string>()))
+                .Returns(Task.FromResult(new NotificationOutcome()));
+
+            var factoryMock = new Mock<INotificationHubClientServiceFactory>(MockBehavior.Strict);
+            factoryMock
+                .Setup(f => f.CreateService(ConfigConnStr, ConfigHubName.ToLowerInvariant()))
+                .Returns(serviceMock.Object);
+
+            var testTrace = new TestTraceWriter(TraceLevel.Warning);
+
+            //Act
+            RunTest(test, factoryMock.Object, testTrace);
+
+            // Assert
+            factoryMock.Verify(f => f.CreateService(ConfigConnStr, ConfigHubName.ToLowerInvariant()), Times.Once());
+            serviceMock.Verify(m => m.SendNotificationAsync(It.IsAny<Notification>(), It.IsAny<string>()), Times.Exactly(invokeSendNotificationTimes));
+            Assert.Equal(test, testTrace.Events.Single().Message);
+        }
+
+        private void RunTest(string testName, INotificationHubClientServiceFactory factory, TraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr, string configHubName = ConfigHubName)
+        {
+            RunTest(typeof(NotificationHubEndToEndFunctions), testName, factory, testTrace, argument, configConnectionString, configHubName);
+        }
+
+        private void RunTest(Type testType, string testName, INotificationHubClientServiceFactory factory, TraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr, string configHubName = ConfigHubName, bool includeDefaultConnectionString = true, bool includeDefaultHubName = true)
         {
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
             JobHostConfiguration config = new JobHostConfiguration
@@ -130,6 +154,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             var notificationHubConfig = new NotificationHubsConfiguration()
             {
                 ConnectionString = configConnectionString,
+                HubName =  configHubName,
                 NotificationHubClientServiceFactory = factory
             };
 
@@ -139,6 +164,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             if (includeDefaultConnectionString)
             {
                 resolver.Values.Add(NotificationHubsConfiguration.NotificationHubConnectionStringName, DefaultConnStr);
+            }
+            if (includeDefaultHubName)
+            {
                 resolver.Values.Add(NotificationHubsConfiguration.NotificationHubSettingName, DefaultHubName);
             }
 
@@ -160,30 +188,41 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
                             [NotificationHub] out Notification notification,
                             [NotificationHub(TagExpression = "tag")] out Notification notificationToTag,
                             [NotificationHub] out WindowsNotification windowsNotification,
-                            [NotificationHub(Platform = NotificationPlatform.Wns)] out string windowsToastNotification,
+                            [NotificationHub(Platform = NotificationPlatform.Wns)] out string windowsToastNotificationAsString,
                             [NotificationHub] out TemplateNotification templateNotification,
                             [NotificationHub] out string templateProperties,
                             [NotificationHub] out Notification[] notificationsArray,
                             [NotificationHub] out IDictionary<string, string> templatePropertiesDictionary,
-                            [NotificationHub] IAsyncCollector<TemplateNotification> asyncCollector,
-                            [NotificationHub] IAsyncCollector<string> asyncCollectorString,
                             [NotificationHub] ICollector<Notification> collector,
                             [NotificationHub] ICollector<string> collectorString,
                 TraceWriter trace)
             {
                 notification = GetTemplateNotification("Hi");
-                notificationToTag = GetTemplateNotification("Hi tag"); string toastPayload = "<toast><visual><binding template=\"ToastText01\"><text id=\"1\">Test message</text></binding></visual></toast>";
-                windowsNotification = new WindowsNotification(toastPayload);
-                windowsToastNotification = @"<toast><visual><binding template=""ToastText01""><text id=""1"">Hello from a .NET App!</text></binding></visual></toast>";
+                notificationToTag = GetTemplateNotification("Hi tag");
+                windowsNotification = new WindowsNotification(WindowsToastPayload);
+                windowsToastNotificationAsString = WindowsToastPayload;
                 templateNotification = GetTemplateNotification("Hello");
-                templateProperties = "{\"message\":\"Hello\",\"location\":\"Redmond\"}";
+                templateProperties = MessagePropertiesJSON;
                 templatePropertiesDictionary = GetTemplateProperties("Hello");
                 notificationsArray = new TemplateNotification[]
                 {
                     GetTemplateNotification("Message1"),
                     GetTemplateNotification("Message2")
                 };
+                collector.Add(GetTemplateNotification("Hi"));
+                collectorString.Add(MessagePropertiesJSON);
                 trace.Warning("Outputs");
+            }
+
+            [NoAutomaticTrigger]
+            public async static void OutputsAsyncCollector(
+                           [NotificationHub] IAsyncCollector<TemplateNotification> asyncCollector,
+                           [NotificationHub] IAsyncCollector<string> asyncCollectorString,
+               TraceWriter trace)
+            {
+                await asyncCollector.AddAsync(GetTemplateNotification("Hello"));
+                await asyncCollectorString.AddAsync(MessagePropertiesJSON);
+                trace.Warning("OutputsAsyncCollector");
             }
 
             [NoAutomaticTrigger]

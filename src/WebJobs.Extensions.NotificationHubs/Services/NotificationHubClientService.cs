@@ -19,10 +19,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
             _notificationHubClient = NotificationHubClient.CreateClientFromConnectionString(_connectionString, _hubName);
         }
 
-        public async Task<NotificationOutcome> SendNotificationAsync(Notification notification, string tagExpression)
+        public Task<NotificationOutcome> SendNotificationAsync(Notification notification, string tagExpression)
         {
-            var notificationOutcome = await GetNotificationHubClient().SendNotificationAsync(notification, tagExpression);
-            return notificationOutcome;
+            return _notificationHubClient.SendNotificationAsync(notification, tagExpression);
         }
 
         public NotificationHubClient GetNotificationHubClient()

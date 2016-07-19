@@ -38,6 +38,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
         }
 
         [Fact]
+        public void Configuration_Caches_NotificationHubClients_HubName_CaseInsensitive()
+        {
+            // Arrange            
+            var config = new NotificationHubsConfiguration
+            {
+                ConnectionString = "Endpoint=sb://TestNS.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=2XgXnw2bVCd7GT9RPaZ/RandomKey",
+                HubName = "TestHub"
+            };
+            var attribute = new NotificationHubAttribute();
+            config.BindForNotificationHubClient(attribute);
+
+            // Act
+            config.BuildFromAttribute(attribute);
+            attribute.HubName = "testhub";
+            config.BuildFromAttribute(attribute);
+
+            // Assert
+            Assert.Equal(1, config.ClientCache.Count);
+
+        }
+
+        [Fact]
         public void Resolve_UsesAttribute_First()
         {
             var config = InitializeConfig("Default");
