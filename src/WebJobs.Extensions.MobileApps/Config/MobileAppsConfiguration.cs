@@ -26,6 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
 
         private string _defaultApiKey;
         private Uri _defaultMobileAppUri;
+        private INameResolver _nameResolver;
 
         /// <summary>
         /// Constructs a new instance.
@@ -55,16 +56,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
                 throw new ArgumentNullException("context");
             }
 
-            INameResolver nameResolver = context.Config.GetService<INameResolver>();
+            _nameResolver = context.Config.GetService<INameResolver>();
             IConverterManager converterManager = context.Config.GetService<IConverterManager>();
 
             // Set defaults, to be used if no other values are found:
-            _defaultApiKey = nameResolver.Resolve(AzureWebJobsMobileAppApiKeyName);
+            _defaultApiKey = _nameResolver.Resolve(AzureWebJobsMobileAppApiKeyName);
 
-            string uriString = nameResolver.Resolve(AzureWebJobsMobileAppUriName);
+            string uriString = _nameResolver.Resolve(AzureWebJobsMobileAppUriName);
             Uri.TryCreate(uriString, UriKind.Absolute, out _defaultMobileAppUri);
 
-            BindingFactory factory = new BindingFactory(nameResolver, converterManager);
+            BindingFactory factory = new BindingFactory(_nameResolver, converterManager);
 
             IBindingProvider outputProvider = factory.BindToGenericAsyncCollector<MobileTableAttribute>(BindForOutput, ThrowIfInvalidOutputItemType);
 
@@ -82,7 +83,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
             itemProvider = factory.AddFilter<MobileTableAttribute>(IsItemType, itemProvider);
 
             IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
-            extensions.RegisterBindingRules<MobileTableAttribute>(ValidateMobileAppUri, nameResolver, outputProvider, clientProvider, jObjectTableProvider, queryProvider, tableProvider, itemProvider);
+            extensions.RegisterBindingRules<MobileTableAttribute>(ValidateMobileAppUri, _nameResolver, outputProvider, clientProvider, jObjectTableProvider, queryProvider, tableProvider, itemProvider);
         }
 
         internal static bool IsQueryType(MobileTableAttribute attribute, Type paramType)
@@ -270,6 +271,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
 
         internal string ResolveApiKey(string attributeApiKey)
         {
+            // The behavior for ApiKey is unique, so we do not use the AutoResolve
+            // functionality.
             // If an attribute sets the ApiKeySetting to an empty string,
             // that overwrites any default value and sets it to null.
             // If ApiKeySetting is null, it returns the default value.
@@ -280,10 +283,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
                 return null;
             }
 
-            // Second, if it is anything other than null, return the value
+            // Second, if it is anything other than null, return the resolved value
             if (attributeApiKey != null)
             {
-                return attributeApiKey;
+                return _nameResolver.Resolve(attributeApiKey);
             }
 
             // Third, try the config's key

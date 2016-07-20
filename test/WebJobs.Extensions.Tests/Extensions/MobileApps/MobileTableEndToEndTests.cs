@@ -173,6 +173,43 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         }
 
         [Fact]
+        public void ApiKey()
+        {
+            TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Warning);
+
+            // Set up mocks for the three flavors of ApiKey:
+            var defaultUri = new Uri(DefaultUri);
+            var factoryMock = new Mock<IMobileServiceClientFactory>(MockBehavior.Strict);
+            int nullCalled = 0;
+            int emptyCalled = 0;
+            int keyCalled = 0;
+
+            // if ApiKey is null, use the DefaultKey
+            factoryMock
+                .Setup(f => f.CreateClient(defaultUri, It.Is<HttpMessageHandler[]>(h => h == null ? false : ((MobileServiceApiKeyHandler)h.Single()).ApiKey == DefaultKey)))
+                .Callback(() => nullCalled++)
+                .Returns<Uri, HttpMessageHandler[]>((uri, h) => new MobileServiceClient(uri, h));
+
+            // if ApiKey is an empty string, do not use any key
+            factoryMock
+                .Setup(f => f.CreateClient(defaultUri, null))
+                .Callback(() => emptyCalled++)
+                .Returns<Uri, HttpMessageHandler[]>((uri, h) => new MobileServiceClient(uri, null));
+
+            // otherwise, use the specified key after resolving it
+            factoryMock
+                .Setup(f => f.CreateClient(defaultUri, It.Is<HttpMessageHandler[]>(h => h == null ? false : ((MobileServiceApiKeyHandler)h.Single()).ApiKey == AttributeKey)))
+                .Callback(() => keyCalled++)
+                .Returns<Uri, HttpMessageHandler[]>((uri, h) => new MobileServiceClient(uri, h));
+
+            RunTest("ApiKey", factoryMock.Object, testTrace);
+
+            Assert.Equal(1, nullCalled);
+            Assert.Equal(1, emptyCalled);
+            Assert.Equal(1, keyCalled);
+        }
+
+        [Fact]
         public void BrokenTableBinding()
         {
             var ex = Assert.Throws<FunctionIndexingException>(() => IndexBindings(typeof(MobileTableBrokenTable)));
@@ -402,6 +439,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
                 [MobileTable(Id = "{RecordId}")] TodoItem item)
             {
                 Assert.NotNull(item);
+            }
+
+            [NoAutomaticTrigger]
+            public static void ApiKey(
+                [MobileTable(ApiKeySetting = null)] IMobileServiceClient client1,
+                [MobileTable(ApiKeySetting = "")] IMobileServiceClient client2,
+                [MobileTable(ApiKeySetting = "MyKey")] IMobileServiceClient client3)
+            {
             }
         }
 

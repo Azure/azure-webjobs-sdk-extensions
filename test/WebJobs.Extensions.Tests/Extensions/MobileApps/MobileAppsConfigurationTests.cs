@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             var apiKey = config.ResolveApiKey("Attribute");
 
             // Assert            
-            Assert.Equal("Attribute", apiKey);
+            Assert.Equal("ResolvedAttribute", apiKey);
         }
 
         [Fact]
@@ -297,6 +297,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             var nameResolver = new TestNameResolver();
             nameResolver.Values[MobileAppsConfiguration.AzureWebJobsMobileAppApiKeyName] = "Default";
             nameResolver.Values[MobileAppsConfiguration.AzureWebJobsMobileAppUriName] = "https://default";
+            nameResolver.Values["Attribute"] = "ResolvedAttribute";
 
             var jobHostConfig = new JobHostConfiguration();
             jobHostConfig.NameResolver = nameResolver;

@@ -55,7 +55,6 @@ namespace Microsoft.Azure.WebJobs
         /// - If it is equal to string.Empty, no Api Key is used.
         /// - Otherwise, this value is used to indicate the app setting that contains the Azure Mobile App Api Key.
         /// </summary>
-        [AutoResolve(AllowTokens = false)]
         public string ApiKeySetting { get; set; }
     }
 }
