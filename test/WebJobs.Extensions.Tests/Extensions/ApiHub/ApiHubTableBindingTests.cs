@@ -7,7 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.ApiHub.Sdk.Table;
+using Microsoft.Azure.ApiHub;
 using Microsoft.Azure.WebJobs.Extensions.ApiHub.Table;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host.Bindings;

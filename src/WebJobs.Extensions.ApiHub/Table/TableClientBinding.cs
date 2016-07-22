@@ -4,7 +4,7 @@
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.Azure.ApiHub.Sdk.Table;
+using Microsoft.Azure.ApiHub;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 

@@ -15,7 +15,6 @@ using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
-
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
 {
     public class NotificationHubEndToEndTests
@@ -29,7 +28,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
         private const string MessagePropertiesJSON = "{\"message\":\"Hello\",\"location\":\"Redmond\"}";
         private const string WindowsToastPayload = "<toast><visual><binding template=\"ToastText01\"><text id=\"1\">Test message</text></binding></visual></toast>";
         private const string UserIdTag = "myuserid123";
-        private static Notification TestNotification = Converter.BuildTemplateNotificationFromJsonString(MessagePropertiesJSON);
+        private static Notification testNotification = Converter.BuildTemplateNotificationFromJsonString(MessagePropertiesJSON);
 
         [Fact]
         public void OutputBindings()
@@ -49,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             // Arrange
             var serviceMock = new Mock<INotificationHubClientService>(MockBehavior.Strict);
             serviceMock
-                .Setup(x => x.SendNotificationAsync(TestNotification, UserIdTag))
+                .Setup(x => x.SendNotificationAsync(testNotification, UserIdTag))
                   .Returns(Task.FromResult(new NotificationOutcome()));
 
             var factoryMock = new Mock<INotificationHubClientServiceFactory>(MockBehavior.Strict);
@@ -76,7 +75,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             var factoryMock = new Mock<INotificationHubClientServiceFactory>(MockBehavior.Strict);
             factoryMock
                 .Setup(f => f.CreateService(DefaultConnStr, DefaultHubName))
-                .Returns(new NotificationHubClientService(DefaultConnStr,DefaultHubName));
+                .Returns(new NotificationHubClientService(DefaultConnStr, DefaultHubName));
 
             var testTrace = new TestTraceWriter(TraceLevel.Warning);
 
@@ -154,7 +153,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             var notificationHubConfig = new NotificationHubsConfiguration()
             {
                 ConnectionString = configConnectionString,
-                HubName =  configHubName,
+                HubName = configHubName,
                 NotificationHubClientServiceFactory = factory
             };
 
@@ -215,7 +214,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             }
 
             [NoAutomaticTrigger]
-            public async static void OutputsAsyncCollector(
+            public static async void OutputsAsyncCollector(
                            [NotificationHub] IAsyncCollector<TemplateNotification> asyncCollector,
                            [NotificationHub] IAsyncCollector<string> asyncCollectorString,
                TraceWriter trace)
@@ -241,7 +240,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
               [NotificationHub(HubName = AttributeHubName, TagExpression = "{userIdTag}")] out Notification notification,
               TraceWriter trace)
             {
-                notification = TestNotification;
+                notification = testNotification;
                 trace.Warning("TriggerObject");
             }
 

@@ -34,7 +34,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
 
             // Assert
             Assert.Equal(2, config.ClientCache.Count);
-
         }
 
         [Fact]
@@ -56,7 +55,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
 
             // Assert
             Assert.Equal(1, config.ClientCache.Count);
-
         }
 
         [Fact]

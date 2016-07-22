@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.Azure.ApiHub.Sdk;
+using Microsoft.Azure.ApiHub;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 {

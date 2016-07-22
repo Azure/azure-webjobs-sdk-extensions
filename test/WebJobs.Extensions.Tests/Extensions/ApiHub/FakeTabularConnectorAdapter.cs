@@ -6,9 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.ApiHub.Sdk.Common;
-using Microsoft.Azure.ApiHub.Sdk.Table;
-using Microsoft.Azure.ApiHub.Sdk.Table.Internal;
+using Microsoft.Azure.ApiHub;
+using Microsoft.Azure.ApiHub.Table.Internal;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub

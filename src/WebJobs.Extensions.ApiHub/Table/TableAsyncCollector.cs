@@ -3,7 +3,7 @@
 
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.ApiHub.Sdk.Table;
+using Microsoft.Azure.ApiHub;
 
 namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
 {
