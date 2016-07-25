@@ -72,14 +72,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             config.Tracing.Tracers.Add(testTrace);
             JobHost host = new JobHost(config);
 
-            host.Start();
+            await host.StartAsync();
 
             await TestHelpers.Await(() =>
             {
                 return condition();
             });
 
-            host.Stop();
+            await host.StopAsync();
 
             // ensure there were no errors
             Assert.Equal(0, testTrace.Events.Count);

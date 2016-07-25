@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
         {
             JobHost host = CreateTestJobHost();
 
-            host.Start();
+            await host.StartAsync();
 
             Assert.Equal(0, FilesTestJobs.Processed.Count);
 
@@ -64,7 +64,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
             Assert.Equal(1, FilesTestJobs.Processed.Count);
             Assert.True(File.Exists(ignoreFilePath));
 
-            host.Stop();
+            await host.StopAsync();
         }
 
         [Fact]
@@ -84,7 +84,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
             // write a non .dat file - don't expect it to be processed
             WriteTestFile("txt");
 
-            host.Start();
+            await host.StartAsync();
 
             await TestHelpers.Await(() =>
                 {
@@ -93,14 +93,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
 
             Assert.True(FilesTestJobs.Processed.OrderBy(p => p).SequenceEqual(filesToProcess.OrderBy(p => p)));
 
-            host.Stop();
+            await host.StopAsync();
         }
 
         [Fact]
         public async Task FileAttribute_SupportsExpectedOutputBindings()
         {
             JobHost host = CreateTestJobHost();
-            host.Start();
+            await host.StartAsync();
 
             await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToStringOutput"));
             await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToByteArrayOutput"));
@@ -109,14 +109,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
             await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToStreamWriterOutput"));
             await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToTextWriterOutput"));
 
-            host.Stop();
+            await host.StopAsync();
         }
 
         [Fact]
         public async Task FileAttribute_SupportsExpectedInputBindings()
         {
             JobHost host = CreateTestJobHost();
-            host.Start();
+            await host.StartAsync();
 
             await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToStringInput"));
             await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToByteArrayInput"));
@@ -125,7 +125,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
             await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToTextReaderInput"));
             await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToFileInfoInput"));
 
-            host.Stop();
+            await host.StopAsync();
         }
 
         [Fact]
@@ -149,7 +149,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
             string inputFile = Path.Combine(rootPath, ImportTestPath, string.Format("{0}.txt", method.Name));
             File.WriteAllText(inputFile, data);
 
-            host.Call(method);
+            await host.CallAsync(method);
 
             string outputFile = Path.Combine(rootPath, OutputTestPath, string.Format("{0}.txt", method.Name));
             await TestHelpers.Await(() =>

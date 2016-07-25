@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Xunit;
 
@@ -11,7 +12,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
     public class CoreBindingEndToEndTests
     {
         [Fact]
-        public void CanBindExecutionContext()
+        public async Task CanBindExecutionContext()
         {
             JobHostConfiguration config = new JobHostConfiguration
             {
@@ -20,7 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             config.UseCore();
             JobHost host = new JobHost(config);
 
-            host.Call(typeof(CoreTestJobs).GetMethod("ExecutionContext"));
+            await host.CallAsync(typeof(CoreTestJobs).GetMethod("ExecutionContext"));
 
             ExecutionContext result = CoreTestJobs.Context;
             Assert.NotNull(result);

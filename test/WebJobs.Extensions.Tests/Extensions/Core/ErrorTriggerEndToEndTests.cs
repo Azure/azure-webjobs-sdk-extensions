@@ -5,6 +5,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host;
 using Xunit;
@@ -15,7 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
     public class ErrorTriggerEndToEndTests
     {
         [Fact]
-        public void GlobalErrorHandler_SlidingWindow_InvokedAsExpected()
+        public async Task GlobalErrorHandler_SlidingWindow_InvokedAsExpected()
         {
             ErrorTriggerProgram_GlobalSlidingWindowHandler instance = new ErrorTriggerProgram_GlobalSlidingWindowHandler();
 
@@ -26,14 +27,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             };
             config.UseCore();
             JobHost host = new JobHost(config);
-            host.Start();
+            await host.StartAsync();
 
             MethodInfo method = instance.GetType().GetMethod("Throw");
-            CallSafe(host, method);
-            CallSafe(host, method);
+            await CallSafe(host, method);
+            await CallSafe(host, method);
             Assert.Null(instance.TraceFilter);
 
-            CallSafe(host, method);
+            await CallSafe(host, method);
             Assert.NotNull(instance.TraceFilter);
 
             Assert.Equal("3 events at level 'Error' or lower have occurred within time window 00:05:00.", instance.TraceFilter.Message);
@@ -47,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
         }
 
         [Fact]
-        public void GlobalErrorHandler_CatchAll_InvokedAsExpected()
+        public async Task GlobalErrorHandler_CatchAll_InvokedAsExpected()
         {
             ErrorTriggerProgram_GlobalCatchAllHandler instance = new ErrorTriggerProgram_GlobalCatchAllHandler();
 
@@ -58,10 +59,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             };
             config.UseCore();
             JobHost host = new JobHost(config);
-            host.Start();
+            await host.StartAsync();
 
             MethodInfo method = instance.GetType().GetMethod("Throw");
-            CallSafe(host, method);
+            await CallSafe(host, method);
             Assert.NotNull(instance.TraceFilter);
 
             Assert.Equal("One or more WebJob errors have occurred.", instance.TraceFilter.Message);
@@ -69,7 +70,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
         }
 
         [Fact]
-        public void FunctionLevelErrorHandler_InvokedAsExpected()
+        public async Task FunctionLevelErrorHandler_InvokedAsExpected()
         {
             ErrorTriggerProgram_FunctionLevelHandler instance = new ErrorTriggerProgram_FunctionLevelHandler();
 
@@ -80,22 +81,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             };
             config.UseCore();
             JobHost host = new JobHost(config);
-            host.Start();
+            await host.StartAsync();
 
             MethodInfo method = instance.GetType().GetMethod("ThrowA");
-            CallSafe(host, method);
-            CallSafe(host, method);
+            await CallSafe(host, method);
+            await CallSafe(host, method);
             Assert.Null(instance.TraceFilter);
 
             method = instance.GetType().GetMethod("ThrowB");
-            CallSafe(host, method);
+            await CallSafe(host, method);
 
             Assert.Equal("Function 'ErrorTriggerProgram_FunctionLevelHandler.ThrowB' failed.", instance.TraceFilter.Message);
             Assert.Equal(1, instance.TraceFilter.Events.Count);
         }
 
         [Fact]
-        public void FunctionLevelErrorHandler_SlidingWindow_InvokedAsExpected()
+        public async Task FunctionLevelErrorHandler_SlidingWindow_InvokedAsExpected()
         {
             ErrorTriggerProgram_FunctionLevelHandler_SlidingWindow instance = new ErrorTriggerProgram_FunctionLevelHandler_SlidingWindow();
 
@@ -106,14 +107,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             };
             config.UseCore();
             JobHost host = new JobHost(config);
-            host.Start();
+            await host.StartAsync();
 
             MethodInfo method = instance.GetType().GetMethod("Throw");
-            CallSafe(host, method);
-            CallSafe(host, method);
+            await CallSafe(host, method);
+            await CallSafe(host, method);
             Assert.Null(instance.TraceFilter);
 
-            CallSafe(host, method);
+            await CallSafe(host, method);
 
             Assert.Equal(3, instance.TraceFilter.Events.Count);
             Assert.Equal("3 events at level 'Error' or lower have occurred within time window 00:10:00.", instance.TraceFilter.Message);
@@ -121,7 +122,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
         }
 
         [Fact]
-        public void GlobalErrorHandler_HandlerFails_NoInfiniteLoop()
+        public async Task GlobalErrorHandler_HandlerFails_NoInfiniteLoop()
         {
             ErrorTriggerProgram_GlobalCatchAllHandler instance = new ErrorTriggerProgram_GlobalCatchAllHandler(fail: true);
 
@@ -132,13 +133,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             };
             config.UseCore();
             JobHost host = new JobHost(config);
-            host.Start();
+            await host.StartAsync();
 
             TestTraceWriter traceWriter = new TestTraceWriter();
             config.Tracing.Tracers.Add(traceWriter);
 
             MethodInfo method = instance.GetType().GetMethod("Throw");
-            CallSafe(host, method);
+            await CallSafe(host, method);
 
             Assert.Equal(1, instance.Errors.Count);
             TraceEvent error = instance.Errors.Single();
@@ -159,7 +160,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
         }
 
         [Fact]
-        public void GlobalErrorHandler_ManualSubscriberFails_NoInfiniteLoop()
+        public async Task GlobalErrorHandler_ManualSubscriberFails_NoInfiniteLoop()
         {
             JobHostConfiguration config = new JobHostConfiguration()
             {
@@ -178,13 +179,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             config.Tracing.Tracers.Add(traceMonitor);
 
             JobHost host = new JobHost(config);
-            host.Start();
+            await host.StartAsync();
 
             TestTraceWriter traceWriter = new TestTraceWriter();
             config.Tracing.Tracers.Add(traceWriter);
 
             MethodInfo method = typeof(ErrorProgram).GetMethod("Throw");
-            CallSafe(host, method);
+            await CallSafe(host, method);
 
             Assert.Equal(1, notificationCount);
 
@@ -196,11 +197,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             Assert.True(events[3].Message.StartsWith("  Function had errors. See Azure WebJobs SDK dashboard for details."));
         }
 
-        private void CallSafe(JobHost host, MethodInfo method)
+        private async Task CallSafe(JobHost host, MethodInfo method)
         {
             try
             {
-                host.Call(method);
+                await host.CallAsync(method);
             }
             catch
             {

@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.NotificationHubs;
@@ -17,6 +16,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
 {
+    [Trait("Category", "E2E")]
     public class NotificationHubEndToEndTests
     {
         private const string AttributeConnStr = "Endpoint=sb://AttrTestNS.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=RandomKey";

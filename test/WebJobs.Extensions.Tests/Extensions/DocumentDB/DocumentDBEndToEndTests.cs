@@ -29,7 +29,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         private const string DefaultConnStr = "AccountEndpoint=https://default;AccountKey=default";
 
         [Fact]
-        public void OutputBindings()
+        public async Task OutputBindings()
         {
             // Arrange
             var serviceMock = new Mock<IDocumentDBService>(MockBehavior.Strict);
@@ -45,7 +45,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var testTrace = new TestTraceWriter(TraceLevel.Warning);
 
             //Act
-            RunTest("Outputs", factoryMock.Object, testTrace);
+            await RunTestAsync("Outputs", factoryMock.Object, testTrace);
 
             // Assert
             factoryMock.Verify(f => f.CreateService(ConfigConnStr), Times.Once());
@@ -54,7 +54,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         }
 
         [Fact]
-        public void ClientBinding()
+        public async Task ClientBinding()
         {
             // Arrange
             var factoryMock = new Mock<IDocumentDBServiceFactory>(MockBehavior.Strict);
@@ -66,7 +66,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 
             // Act
             // Also verify that this falls back to the default by setting the config connection string to null
-            RunTest("Client", factoryMock.Object, testTrace, configConnectionString: null);
+            await RunTestAsync("Client", factoryMock.Object, testTrace, configConnectionString: null);
 
             //Assert
             factoryMock.Verify(f => f.CreateService(DefaultConnStr), Times.Once());
@@ -74,7 +74,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         }
 
         [Fact]
-        public void InputBindings()
+        public async Task InputBindings()
         {
             // Arrange
             string item1Id = "docid1";
@@ -120,7 +120,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var testTrace = new TestTraceWriter(TraceLevel.Warning);
 
             // Act
-            RunTest("Inputs", factoryMock.Object, testTrace, item1Id);
+            await RunTestAsync("Inputs", factoryMock.Object, testTrace, item1Id);
 
             // Assert
             factoryMock.Verify(f => f.CreateService(It.IsAny<string>()), Times.Once());
@@ -129,7 +129,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         }
 
         [Fact]
-        public void TriggerObject()
+        public async Task TriggerObject()
         {
             // Arrange
             string itemId = "docid1";
@@ -153,7 +153,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var testTrace = new TestTraceWriter(TraceLevel.Warning);
 
             // Act
-            RunTest("TriggerObject", factoryMock.Object, testTrace, jobject.ToString());
+            await RunTestAsync("TriggerObject", factoryMock.Object, testTrace, jobject.ToString());
 
             // Assert
             factoryMock.Verify(f => f.CreateService(AttributeConnStr), Times.Once());
@@ -162,22 +162,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         }
 
         [Fact]
-        public void NoConnectionString()
+        public async Task NoConnectionString()
         {
             // Act
-            var ex = Assert.Throws<FunctionIndexingException>(
-                () => RunTest(typeof(DocumentDBNoConnectionStringFunctions), "Broken", new DefaultDocumentDBServiceFactory(), new TestTraceWriter(), configConnectionString: null, includeDefaultConnectionString: false));
+            var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
+                () => RunTestAsync(typeof(DocumentDBNoConnectionStringFunctions), "Broken", new DefaultDocumentDBServiceFactory(), new TestTraceWriter(), configConnectionString: null, includeDefaultConnectionString: false));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex.InnerException);
         }
 
-        private void RunTest(string testName, IDocumentDBServiceFactory factory, TraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr)
+        private Task RunTestAsync(string testName, IDocumentDBServiceFactory factory, TraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr)
         {
-            RunTest(typeof(DocumentDBEndToEndFunctions), testName, factory, testTrace, argument, configConnectionString);
+            return RunTestAsync(typeof(DocumentDBEndToEndFunctions), testName, factory, testTrace, argument, configConnectionString);
         }
 
-        private void RunTest(Type testType, string testName, IDocumentDBServiceFactory factory, TraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr, bool includeDefaultConnectionString = true)
+        private async Task RunTestAsync(Type testType, string testName, IDocumentDBServiceFactory factory, TraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr, bool includeDefaultConnectionString = true)
         {
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
             JobHostConfiguration config = new JobHostConfiguration
@@ -211,9 +211,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 
             JobHost host = new JobHost(config);
 
-            host.Start();
-            host.Call(testType.GetMethod(testName), arguments);
-            host.Stop();
+            await host.StartAsync();
+            await host.CallAsync(testType.GetMethod(testName), arguments);
+            await host.StopAsync();
         }
 
         private class DocumentDBEndToEndFunctions

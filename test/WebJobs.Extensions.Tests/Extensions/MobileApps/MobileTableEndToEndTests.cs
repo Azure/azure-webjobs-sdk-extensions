@@ -31,7 +31,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         private const string ConfigKey = "Config";
 
         [Fact]
-        public void OutputBindings()
+        public async Task OutputBindings()
         {
             var serviceMock = new Mock<IMobileServiceClient>(MockBehavior.Strict);
             var tableJObjectMock = new Mock<IMobileServiceTable>(MockBehavior.Strict);
@@ -61,7 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
 
             TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Warning);
 
-            RunTest("Outputs", factoryMock.Object, testTrace, includeDefaultKey: false);
+            await RunTestAsync("Outputs", factoryMock.Object, testTrace, includeDefaultKey: false);
 
             factoryMock.Verify(f => f.CreateClient(It.IsAny<Uri>(), It.IsAny<HttpMessageHandler[]>()), Times.Once());
 
@@ -74,14 +74,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         }
 
         [Fact]
-        public void ClientBinding()
+        public async Task ClientBinding()
         {
             TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Warning);
 
             // Verify the values from teh attribute are being used.
             var factoryMock = CreateMockFactory(new Uri(AttributeUri), AttributeKey);
 
-            RunTest("Client", factoryMock.Object, testTrace);
+            await RunTestAsync("Client", factoryMock.Object, testTrace);
 
             Assert.Equal("Client", testTrace.Events.Single().Message);
             factoryMock.VerifyAll();
@@ -98,13 +98,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         }
 
         [Fact]
-        public void QueryBinding()
+        public async Task QueryBinding()
         {
             TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Warning);
 
             // Verify that we pick up from the config correctly
             var factoryMock = CreateMockFactory(new Uri(ConfigUri), ConfigKey);
-            RunTest("Query", factoryMock.Object, testTrace, configUri: new Uri(ConfigUri), configKey: ConfigKey);
+            await RunTestAsync("Query", factoryMock.Object, testTrace, configUri: new Uri(ConfigUri), configKey: ConfigKey);
 
             Assert.Equal(1, testTrace.Events.Count);
             Assert.Equal("Query", testTrace.Events[0].Message);
@@ -112,13 +112,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         }
 
         [Fact]
-        public void TableBindings()
+        public async Task TableBindings()
         {
             TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Warning);
 
             // Verify that we pick up the defaults
             var factoryMock = CreateMockFactory(new Uri(DefaultUri), DefaultKey);
-            RunTest("Table", factoryMock.Object, testTrace);
+            await RunTestAsync("Table", factoryMock.Object, testTrace);
 
             Assert.Equal(1, testTrace.Events.Count);
             Assert.Equal("Table", testTrace.Events[0].Message);
@@ -126,7 +126,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         }
 
         [Fact]
-        public void InputBindings()
+        public async Task InputBindings()
         {
             var serviceMock = new Mock<IMobileServiceClient>(MockBehavior.Strict);
             var tableJObjectMock = new Mock<IMobileServiceTable>(MockBehavior.Strict);
@@ -166,14 +166,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
                 .Returns(serviceMock.Object);
 
             TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Warning);
-            RunTest("Inputs", factoryMock.Object, testTrace, "triggerItem", includeDefaultKey: false);
+            await RunTestAsync("Inputs", factoryMock.Object, testTrace, "triggerItem", includeDefaultKey: false);
 
             Assert.Equal(1, testTrace.Events.Count);
             Assert.Equal("Inputs", testTrace.Events[0].Message);
         }
 
         [Fact]
-        public void ApiKey()
+        public async Task ApiKey()
         {
             TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Warning);
 
@@ -202,7 +202,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
                 .Callback(() => keyCalled++)
                 .Returns<Uri, HttpMessageHandler[]>((uri, h) => new MobileServiceClient(uri, h));
 
-            RunTest("ApiKey", factoryMock.Object, testTrace);
+            await RunTestAsync("ApiKey", factoryMock.Object, testTrace);
 
             Assert.Equal(1, nullCalled);
             Assert.Equal(1, emptyCalled);
@@ -210,49 +210,49 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         }
 
         [Fact]
-        public void BrokenTableBinding()
+        public async Task BrokenTableBinding()
         {
-            var ex = Assert.Throws<FunctionIndexingException>(() => IndexBindings(typeof(MobileTableBrokenTable)));
+            var ex = await Assert.ThrowsAsync<FunctionIndexingException>(() => IndexBindings(typeof(MobileTableBrokenTable)));
             Assert.IsType<ArgumentException>(ex.InnerException);
         }
 
         [Fact]
-        public void BrokenItemBinding()
+        public async Task BrokenItemBinding()
         {
-            var ex = Assert.Throws<FunctionIndexingException>(() => IndexBindings(typeof(MobileTableBrokenItem)));
+            var ex = await Assert.ThrowsAsync<FunctionIndexingException>(() => IndexBindings(typeof(MobileTableBrokenItem)));
             Assert.IsType<ArgumentException>(ex.InnerException);
         }
 
         [Fact]
-        public void BrokenQueryBinding()
+        public async Task BrokenQueryBinding()
         {
-            var ex = Assert.Throws<FunctionIndexingException>(() => IndexBindings(typeof(MobileTableBrokenQuery)));
+            var ex = await Assert.ThrowsAsync<FunctionIndexingException>(() => IndexBindings(typeof(MobileTableBrokenQuery)));
             Assert.IsType<ArgumentException>(ex.InnerException);
         }
 
         [Fact]
-        public void NoUri()
+        public async Task NoUri()
         {
-            var ex = Assert.Throws<FunctionIndexingException>(() => IndexBindings(typeof(MobileTableNoUri), includeDefaultUri: false));
+            var ex = await Assert.ThrowsAsync<FunctionIndexingException>(() => IndexBindings(typeof(MobileTableNoUri), includeDefaultUri: false));
             Assert.IsType<InvalidOperationException>(ex.InnerException);
         }
 
         [Fact]
-        public void NoId()
+        public async Task NoId()
         {
-            var ex = Assert.Throws<FunctionIndexingException>(() => IndexBindings(typeof(MobileTableNoId)));
+            var ex = await Assert.ThrowsAsync<FunctionIndexingException>(() => IndexBindings(typeof(MobileTableNoId)));
             Assert.IsType<InvalidOperationException>(ex.InnerException);
             Assert.StartsWith("'Id' must be set", ex.InnerException.Message);
         }
 
         [Fact]
-        public void ObjectWithNoTable()
+        public async Task ObjectWithNoTable()
         {
-            var ex = Assert.Throws<FunctionIndexingException>(() => IndexBindings(typeof(MobileTableObjectNoTable)));
+            var ex = await Assert.ThrowsAsync<FunctionIndexingException>(() => IndexBindings(typeof(MobileTableObjectNoTable)));
             Assert.IsType<InvalidOperationException>(ex.InnerException);
         }
 
-        private void IndexBindings(Type testType, bool includeDefaultUri = true)
+        private async Task IndexBindings(Type testType, bool includeDefaultUri = true)
         {
             // Just start the jobhost -- this should fail if function indexing fails.
 
@@ -272,11 +272,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
 
             JobHost host = new JobHost(config);
 
-            host.Start();
-            host.Stop();
+            await host.StartAsync();
+            await host.StopAsync();
         }
 
-        private void RunTest(string testName, IMobileServiceClientFactory factory, TraceWriter testTrace, object argument = null,
+        private async Task RunTestAsync(string testName, IMobileServiceClientFactory factory, TraceWriter testTrace, object argument = null,
             Uri configUri = null, string configKey = null, bool includeDefaultKey = true, bool includeDefaultUri = true)
         {
             Type testType = typeof(MobileTableEndToEndFunctions);
@@ -316,9 +316,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
 
             JobHost host = new JobHost(config);
 
-            host.Start();
-            host.Call(testType.GetMethod(testName), arguments);
-            host.Stop();
+            await host.StartAsync();
+            await host.CallAsync(testType.GetMethod(testName), arguments);
+            await host.StopAsync();
         }
 
         private class MobileTableEndToEndFunctions

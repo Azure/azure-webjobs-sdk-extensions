@@ -2,19 +2,13 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.ApiHub;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
-using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
-using Microsoft.WindowsAzure.Storage.Queue;
-using Newtonsoft.Json;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
@@ -33,7 +27,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
         public async void JobIsTriggeredForNewFiles()
         {
             JobHost host = CreateTestJobHost();
-            host.Start();
+            await host.StartAsync();
 
             int count = ApiHubFileTestJobs.Processed.Count;
 
@@ -52,16 +46,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
             Assert.True(ApiHubFileTestJobs.Processed.Contains(Path.GetFileName(fileItem.Path)));
 
-            host.Stop();
+            await host.StopAsync();
 
             await fileItem.DeleteAsync();
         }
-        
+
         [Fact]
         public async void ChecksRelatedBlobsGettingUpdated()
         {
             JobHost host = CreateTestJobHost();
-            host.Start();
+            await host.StartAsync();
 
             // now write a file to trigger the job
             var fileItem = await _fixture.WriteTestFile();
@@ -104,7 +98,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
             Assert.False(content2.Equals(content, StringComparison.OrdinalIgnoreCase));
 
-            host.Stop();
+            await host.StopAsync();
 
             await fileItem.DeleteAsync();
             await fileItem2.DeleteAsync();
@@ -114,7 +108,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
         public async void ChecksPoisonQueueGettingPopulated()
         {
             JobHost host = CreateTestJobHost();
-            host.Start();
+            await host.StartAsync();
 
             // now write a file to trigger the job
             var fileItem = await _fixture.WriteTestFile(path: ApiHubTestFixture.ExceptionPath);
@@ -123,7 +117,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             {
                 return _fixture.RootFolder.FileExistsAsync(fileItem.Path).GetAwaiter().GetResult();
             });
-       
+
             await TestHelpers.Await(() =>
             {
                 return _fixture.PoisonQueue.Exists();
@@ -148,7 +142,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             Assert.Equal(Path.GetFileName(fileItem.Path), Path.GetFileName(status.FilePath));
             Assert.Equal("dropbox", status.Connection);
 
-            host.Stop();
+            await host.StopAsync();
 
             await fileItem.DeleteAsync();
         }
@@ -158,7 +152,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
         {
             var fileName = "bindtooutputtypes.txt";
             JobHost host = CreateTestJobHost();
-            host.Start();
+            await host.StartAsync();
 
             string data = Guid.NewGuid().ToString();
             string inputFileName = ApiHubTestFixture.ImportTestPath + "/" + fileName;
@@ -172,14 +166,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             await VerifyOutputBinding(data, string.Format("{0}.streamWriter", fileName));
             await VerifyOutputBinding(data, string.Format("{0}.textWriter", fileName));
 
-            host.Stop();
+            await host.StopAsync();
         }
 
         [Fact]
         public async Task ApiHubAttribute_SupportsExpectedInputBindings()
         {
             JobHost host = CreateTestJobHost();
-            host.Start();
+            await host.StartAsync();
 
             await VerifyInputBinding(host, typeof(ApiHubFileTestJobs).GetMethod("BindToStringInput"));
             await VerifyInputBinding(host, typeof(ApiHubFileTestJobs).GetMethod("BindToByteArrayInput"));
@@ -187,7 +181,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             await VerifyInputBinding(host, typeof(ApiHubFileTestJobs).GetMethod("BindToStreamReaderInput"));
             await VerifyInputBinding(host, typeof(ApiHubFileTestJobs).GetMethod("BindToTextReaderInput"));
 
-            host.Stop();
+            await host.StopAsync();
         }
 
         [Fact]
@@ -203,7 +197,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             var inputFile = _fixture.RootFolder.GetFileReference(inputFileName, true);
             await inputFile.WriteAsync(Encoding.UTF8.GetBytes(data));
 
-            host.Call(method, new { input = inputFileName });
+            await host.CallAsync(method, new { input = inputFileName });
 
             string outputFileName = ApiHubTestFixture.OutputTestPath + "/ManualBindToString.txt.string";
             var outputFile = _fixture.RootFolder.GetFileReference(outputFileName, true);
@@ -233,7 +227,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             var inputFile = _fixture.RootFolder.GetFileReference(inputFileName, true);
             await inputFile.WriteAsync(Encoding.UTF8.GetBytes(data));
 
-            host.Call(method);
+            await host.CallAsync(method);
 
             string outputFileName = ApiHubTestFixture.OutputTestPath + "/" + string.Format("{0}.txt", method.Name);
             var outputFile = _fixture.RootFolder.GetFileReference(outputFileName, true);
@@ -275,7 +269,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             });
 
             Assert.Equal(data, result);
-        }        
+        }
 
         private JobHost CreateTestJobHost()
         {

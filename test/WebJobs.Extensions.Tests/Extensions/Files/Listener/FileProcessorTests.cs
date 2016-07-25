@@ -40,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             {
                 RootPath = rootPath
             };
-            
+
             FileTriggerAttribute attribute = new FileTriggerAttribute(AttributeSubPath, "*.dat");
             processor = CreateTestProcessor(attribute);
 
@@ -158,6 +158,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             FileSystemEventArgs eventArgs = new FileSystemEventArgs(WatcherChangeTypes.Created, testFilePath, testFileName);
             bool fileProcessedSuccessfully = await processor.ProcessFileAsync(eventArgs, CancellationToken.None);
             Assert.True(fileProcessedSuccessfully);
+
+            // Wait briefly so the changed time is slightly different than the created time
+            await Task.Delay(10);
 
             // now process a Change event
             File.WriteAllText(testFile, "update");

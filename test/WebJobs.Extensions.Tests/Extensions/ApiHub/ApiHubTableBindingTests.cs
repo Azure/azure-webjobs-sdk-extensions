@@ -36,7 +36,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
         }
 
         [Fact]
-        public async void BindToTableClientAndAddEntity()
+        public async Task BindToTableClientAndAddEntity()
         {
             var adapter = new FakeTabularConnectorAdapter();
             adapter.AddDataSet("default");
@@ -44,9 +44,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
             using (var host = CreateTestJobHost(adapter))
             {
-                host.Start();
-                host.Call(typeof(ApiHubTableBindingTests).GetMethod("BindToTableClientAndAddEntityFunc"));
-                host.Stop();
+                await host.StartAsync();
+                await host.CallAsync(typeof(ApiHubTableBindingTests).GetMethod("BindToTableClientAndAddEntityFunc"));
+                await host.StopAsync();
             }
 
             var entity = await adapter.GetEntityAsync<SampleEntity>("default", "table1", "1");
@@ -71,7 +71,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
         }
 
         [Fact]
-        public async void BindToTableAndAddEntity()
+        public async Task BindToTableAndAddEntity()
         {
             var adapter = new FakeTabularConnectorAdapter();
             adapter.AddDataSet("dataset1");
@@ -89,9 +89,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
             using (var host = CreateTestJobHost(adapter))
             {
-                host.Start();
-                host.Call(typeof(ApiHubTableBindingTests).GetMethod("BindToTableAndAddEntityFunc"), args);
-                host.Stop();
+                await host.StartAsync();
+                await host.CallAsync(typeof(ApiHubTableBindingTests).GetMethod("BindToTableAndAddEntityFunc"), args);
+                await host.StopAsync();
             }
 
             var entity = await adapter.GetEntityAsync<SampleEntity>("dataset1", "table1", "1");
@@ -114,7 +114,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
         }
 
         [Fact]
-        public async void BindToTableOfJObjectAndAddEntity()
+        public async Task BindToTableOfJObjectAndAddEntity()
         {
             var adapter = new FakeTabularConnectorAdapter();
             adapter.AddDataSet("default");
@@ -122,9 +122,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
             using (var host = CreateTestJobHost(adapter))
             {
-                host.Start();
-                host.Call(typeof(ApiHubTableBindingTests).GetMethod("BindToTableOfJObjectAndAddEntityFunc"));
-                host.Stop();
+                await host.StartAsync();
+                await host.CallAsync(typeof(ApiHubTableBindingTests).GetMethod("BindToTableOfJObjectAndAddEntityFunc"));
+                await host.StopAsync();
             }
 
             var entity = await adapter.GetEntityAsync<JObject>("default", "table1", "1");
@@ -144,7 +144,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
         }
 
         [Fact]
-        public async void BindToAsyncCollectorAndAddEntity()
+        public async Task BindToAsyncCollectorAndAddEntity()
         {
             var adapter = new FakeTabularConnectorAdapter();
             adapter.AddDataSet("default");
@@ -152,9 +152,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
             using (var host = CreateTestJobHost(adapter))
             {
-                host.Start();
-                host.Call(typeof(ApiHubTableBindingTests).GetMethod("BindToAsyncCollectorAndAddEntityFunc"));
-                host.Stop();
+                await host.StartAsync();
+                await host.CallAsync(typeof(ApiHubTableBindingTests).GetMethod("BindToAsyncCollectorAndAddEntityFunc"));
+                await host.StopAsync();
             }
 
             var entity = await adapter.GetEntityAsync<SampleEntity>("default", "table1", "1");
@@ -184,9 +184,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
             using (var host = CreateTestJobHost(adapter))
             {
-                host.Start();
-                host.Call(typeof(ApiHubTableBindingTests).GetMethod("BindToAsyncCollectorOfJObjectAndAddEntityFunc"));
-                host.Stop();
+                await host.StartAsync();
+                await host.CallAsync(typeof(ApiHubTableBindingTests).GetMethod("BindToAsyncCollectorOfJObjectAndAddEntityFunc"));
+                await host.StopAsync();
             }
 
             var entity = await adapter.GetEntityAsync<JObject>("default", "table1", "1");
@@ -222,9 +222,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
             using (var host = CreateTestJobHost(adapter))
             {
-                host.Start();
-                host.Call(typeof(ApiHubTableBindingTests).GetMethod("BindToEntityAndUpdateFunc"));
-                host.Stop();
+                await host.StartAsync();
+                await host.CallAsync(typeof(ApiHubTableBindingTests).GetMethod("BindToEntityAndUpdateFunc"));
+                await host.StopAsync();
             }
 
             var entity = await adapter.GetEntityAsync<SampleEntity>("default", "table1", "1");
@@ -268,9 +268,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
             using (var host = CreateTestJobHost(adapter))
             {
-                host.Start();
-                host.Call(typeof(ApiHubTableBindingTests).GetMethod("BindToEntityWithBindingParametersFunc"), args);
-                host.Stop();
+                await host.StartAsync();
+                await host.CallAsync(typeof(ApiHubTableBindingTests).GetMethod("BindToEntityWithBindingParametersFunc"), args);
+                await host.StopAsync();
             }
 
             var entity = await adapter.GetEntityAsync<SampleEntity>("default", "table1", "1");
@@ -302,9 +302,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
             using (var host = CreateTestJobHost(adapter))
             {
-                host.Start();
-                host.Call(typeof(ApiHubTableBindingTests).GetMethod("BindToJObjectAndUpdateFunc"));
-                host.Stop();
+                await host.StartAsync();
+                await host.CallAsync(typeof(ApiHubTableBindingTests).GetMethod("BindToJObjectAndUpdateFunc"));
+                await host.StopAsync();
             }
 
             var entity = await adapter.GetEntityAsync<JObject>("default", "table1", "1");
@@ -338,9 +338,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
             using (var host = CreateTestJobHost(adapter))
             {
-                host.Start();
-                host.Call(typeof(ApiHubTableBindingTests).GetMethod("BindToEntityNoUpdateFunc"));
-                host.Stop();
+                await host.StartAsync();
+                await host.CallAsync(typeof(ApiHubTableBindingTests).GetMethod("BindToEntityNoUpdateFunc"));
+                await host.StopAsync();
             }
 
             var entity = await adapter.GetEntityAsync<SampleEntity>("default", "table1", "1");
