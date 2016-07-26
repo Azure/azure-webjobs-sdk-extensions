@@ -38,11 +38,6 @@ namespace Microsoft.Azure.WebJobs
                 throw new ArgumentNullException("timersConfig");
             }
 
-            if (timersConfig.ScheduleMonitor == null)
-            {
-                timersConfig.ScheduleMonitor = new StorageScheduleMonitor(config);
-            }
-
             config.RegisterExtensionConfigProvider(new TimersExtensionConfig(timersConfig));
         }
 
@@ -60,6 +55,11 @@ namespace Microsoft.Azure.WebJobs
                 if (context == null)
                 {
                     throw new ArgumentNullException("context");
+                }
+
+                if (_config.ScheduleMonitor == null)
+                {
+                    _config.ScheduleMonitor = new StorageScheduleMonitor(context.Config, context.Trace);
                 }
 
                 context.Config.RegisterBindingExtension(new TimerTriggerAttributeBindingProvider(_config, context.Config.NameResolver, context.Trace));

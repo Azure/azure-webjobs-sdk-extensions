@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json;
@@ -19,14 +20,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         private readonly JobHostConfiguration _hostConfig;
         private readonly JsonSerializer _serializer;
         private CloudBlobDirectory _timerStatusDirectory;
+        private TraceWriter _trace;
 
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
         /// <param name="hostConfig">The <see cref="JobHostConfiguration"/>.</param>
-        public StorageScheduleMonitor(JobHostConfiguration hostConfig)
+        /// <param name="trace">The <see cref="TraceWriter"/>.</param>
+        public StorageScheduleMonitor(JobHostConfiguration hostConfig, TraceWriter trace)
         {
             _hostConfig = hostConfig;
+            _trace = trace;
 
             JsonSerializerSettings settings = new JsonSerializerSettings
             {
@@ -102,9 +106,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 CloudBlockBlob statusBlob = GetStatusBlobReference(timerName);
                 await statusBlob.UploadTextAsync(statusLine);
             }
-            catch
+            catch (Exception ex)
             {
                 // best effort
+                _trace.Error(string.Format("Function '{0}' failed to update the timer trigger status.", timerName), ex);
             }
         }
 

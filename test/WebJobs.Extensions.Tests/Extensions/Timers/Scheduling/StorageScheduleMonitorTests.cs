@@ -4,6 +4,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Xunit;
@@ -22,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         {
             _hostConfig = new JobHostConfiguration();
             _hostConfig.HostId = TestHostId;
-            _scheduleMonitor = new StorageScheduleMonitor(_hostConfig);
+            _scheduleMonitor = new StorageScheduleMonitor(_hostConfig, new TestTraceWriter());
 
             Cleanup();
         }
@@ -39,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         public void TimerStatusDirectory_HostIdNull_Throws()
         {
             JobHostConfiguration config = new JobHostConfiguration();
-            StorageScheduleMonitor localScheduleMonitor = new StorageScheduleMonitor(config);
+            StorageScheduleMonitor localScheduleMonitor = new StorageScheduleMonitor(config, new TestTraceWriter());
 
             CloudBlobDirectory directory = null;
             var ex = Assert.Throws<InvalidOperationException>(() =>
