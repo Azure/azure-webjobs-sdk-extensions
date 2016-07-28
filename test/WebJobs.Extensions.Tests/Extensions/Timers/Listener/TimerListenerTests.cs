@@ -35,18 +35,51 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             DateTime lastOccurrence = DateTime.Now;
             DateTime nextOccurrence = _schedule.GetNextOccurrence(lastOccurrence);
 
-            ScheduleStatus status = new ScheduleStatus
-            {
-                Last = lastOccurrence,
-                Next = nextOccurrence
-            };
-            _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName, 
+            _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName,
                 It.Is<ScheduleStatus>(q => q.Last == lastOccurrence && q.Next == nextOccurrence)))
                 .Returns(Task.FromResult(true));
 
             await _listener.InvokeJobFunction(lastOccurrence, false);
 
             _listener.Dispose();
+        }
+
+        [Theory]
+        [InlineData("0 0 0 * * *", true)]
+        [InlineData("0 0 0 * * *", false)]
+        [InlineData("1.00:00:00", true)]
+        public async Task InvokeJobFunction_UpdatesScheduleMonitor_AccountsForSkew(string schedule, bool useMonitor)
+        {
+            CreateTestListener(schedule, useMonitor);
+
+            var status = new ScheduleStatus
+            {
+                Last = new DateTime(2016, 3, 4),
+                Next = new DateTime(2016, 3, 5)
+            };
+
+            // Run the function 1 millisecond before it's next scheduled run.
+            DateTime invocationTime = status.Next.AddMilliseconds(-1);
+
+            // It should not use the same 'Next' value twice in a row.
+            DateTime expectedNextOccurrence = new DateTime(2016, 3, 6);
+
+            bool monitorCalled = false;
+            _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName,
+                It.Is<ScheduleStatus>(q => q.Last == invocationTime && q.Next == expectedNextOccurrence)))
+                .Callback(() => monitorCalled = true)
+                .Returns(Task.FromResult(true));
+
+            // Initialize the _scheduleStatus
+            _listener.ScheduleStatus = status;
+
+            await _listener.InvokeJobFunction(invocationTime, isPastDue: false, runOnStartup: false);
+
+            _listener.Dispose();
+
+            Assert.Equal(invocationTime, _listener.ScheduleStatus.Last);
+            Assert.Equal(expectedNextOccurrence, _listener.ScheduleStatus.Next);
+            Assert.Equal(monitorCalled, useMonitor);
         }
 
         [Fact]
@@ -114,7 +147,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public async Task StartAsync_ScheduleNotPastDue_DoesNotInvokeJobFunctionImmediately()
         {
-            ScheduleStatus status = new ScheduleStatus();
+            var now = DateTime.Now;
+            ScheduleStatus status = new ScheduleStatus
+            {
+                Last = now.AddHours(-1),
+                Next = now.AddHours(1)
+            };
             _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_testTimerName)).ReturnsAsync(status);
 
             TimeSpan pastDueAmount = TimeSpan.Zero;

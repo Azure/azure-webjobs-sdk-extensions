@@ -29,7 +29,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private string _timerName;
         private bool _disposed;
         private TimeSpan _remainingInterval;
-        private ScheduleStatus _scheduleStatus;
 
         public TimerListener(TimerTriggerAttribute attribute, TimerSchedule schedule, string timerName, TimersConfiguration config, ITriggeredFunctionExecutor executor, TraceWriter trace)
         {
@@ -43,7 +42,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             ScheduleMonitor = _attribute.UseMonitor ? _config.ScheduleMonitor : null;
         }
 
-        internal static TimeSpan MaxTimerInterval 
+        internal static TimeSpan MaxTimerInterval
         {
             get
             {
@@ -59,6 +58,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 return _timer;
             }
         }
+
+        internal ScheduleStatus ScheduleStatus { get; set; }
 
         internal ScheduleMonitor ScheduleMonitor { get; set; }
 
@@ -79,41 +80,43 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             {
                 // check to see if we've missed an occurrence since we last started.
                 // If we have, invoke it immediately.
-                _scheduleStatus = await ScheduleMonitor.GetStatusAsync(_timerName);
-                TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerName, now, _schedule, _scheduleStatus);
+                ScheduleStatus = await ScheduleMonitor.GetStatusAsync(_timerName);
+                TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerName, now, _schedule, ScheduleStatus);
                 isPastDue = pastDueDuration != TimeSpan.Zero;
+            }
 
-                if (_scheduleStatus == null)
+            if (ScheduleStatus == null)
+            {
+                // no schedule status has been stored yet, so initialize
+                ScheduleStatus = new ScheduleStatus
                 {
-                    // no schedule status has been stored yet, so initialize
-                    _scheduleStatus = new ScheduleStatus
-                    {
-                        Last = default(DateTime),
-                        Next = _schedule.GetNextOccurrence(now)
-                    };
-                }
+                    Last = default(DateTime),
+                    Next = _schedule.GetNextOccurrence(now)
+                };
             }
 
             if (isPastDue)
             {
                 _trace.Verbose(string.Format("Function '{0}' is past due on startup. Executing now.", _timerName));
-                await InvokeJobFunction(now, true);
+                await InvokeJobFunction(now, isPastDue: true);
             }
             else if (_attribute.RunOnStartup)
             {
                 // The job is configured to run immediately on startup
                 _trace.Verbose(string.Format("Function '{0}' is configured to run on startup. Executing now.", _timerName));
-                await InvokeJobFunction(now);
+                await InvokeJobFunction(now, runOnStartup: true);
             }
 
             // log the next several occurrences to console for visibility
             string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5);
             _trace.Verbose(nextOccurrences);
 
-            // start the timer
-            now = DateTime.Now;
-            DateTime nextOccurrence = _schedule.GetNextOccurrence(now);
-            TimeSpan nextInterval = nextOccurrence - now;
+            // Start the timer. We need to calculate the next interval based on the current
+            // time as we don't know how long the previous function invocation took.
+            // Example: if you have an hourly timer invoked at 12:00 and the invocation takes 1 minute,
+            // we want to calculate the interval for the next timer using 12:01 rather than at 12:00.
+            // Otherwise, you'd start a 1-hour timer at 12:01 when we really want it to be a 59-minute timer.
+            TimeSpan nextInterval = ScheduleStatus.Next - DateTime.Now;
             StartTimer(nextInterval);
         }
 
@@ -176,20 +179,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 return;
             }
 
-            DateTime now = DateTime.Now;
-            await InvokeJobFunction(now, false);
-
             // restart the timer with the next schedule occurrence
-            now = DateTime.Now;
-            DateTime nextOccurrence = _schedule.GetNextOccurrence(now);
-            TimeSpan nextInterval = nextOccurrence - now;
+            await InvokeJobFunction(DateTime.Now, false);
+            TimeSpan nextInterval = ScheduleStatus.Next - DateTime.Now;
             StartTimer(nextInterval);
         }
 
-        internal async Task InvokeJobFunction(DateTime lastOccurrence, bool isPastDue = false)
+        /// <summary>
+        /// Invokes the job function.
+        /// </summary>
+        /// <param name="invocationTime">The time of the invocation, likely DateTime.Now.</param>
+        /// <param name="isPastDue">True if the invocation is because the invocation is due to a past due timer.</param>
+        /// <param name="runOnStartup">True if the invocation is because the timer is configured to run on startup.</param>
+        internal async Task InvokeJobFunction(DateTime invocationTime, bool isPastDue = false, bool runOnStartup = false)
         {
             CancellationToken token = _cancellationTokenSource.Token;
-            TimerInfo timerInfo = new TimerInfo(_schedule, _scheduleStatus, isPastDue);
+            ScheduleStatus timerInfoStatus = null;
+            if (ScheduleMonitor != null)
+            {
+                timerInfoStatus = ScheduleStatus;
+            }
+            TimerInfo timerInfo = new TimerInfo(_schedule, timerInfoStatus, isPastDue);
             TriggeredFunctionData input = new TriggeredFunctionData
             {
                 TriggerValue = timerInfo
@@ -209,14 +219,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // schedule. Errors will be logged to Dashboard already.
             }
 
+            // If the trigger fired before it was officially scheduled (likely under 1 second due to clock skew),
+            // adjust the invocation time forward for the purposes of calculating the next occurrence.
+            // Without this, it's possible to set the 'Next' value to the same time twice in a row, 
+            // which results in duplicate triggers if the site restarts.
+            DateTime adjustedInvocationTime = invocationTime;
+            if (!isPastDue && !runOnStartup && ScheduleStatus?.Next > invocationTime)
+            {
+                adjustedInvocationTime = ScheduleStatus.Next;
+            }
+
+            ScheduleStatus = new ScheduleStatus
+            {
+                Last = invocationTime,
+                Next = _schedule.GetNextOccurrence(adjustedInvocationTime)
+            };
+
             if (ScheduleMonitor != null)
             {
-                _scheduleStatus = new ScheduleStatus
-                {
-                    Last = lastOccurrence,
-                    Next = _schedule.GetNextOccurrence(lastOccurrence)
-                };
-                await ScheduleMonitor.UpdateStatusAsync(_timerName, _scheduleStatus);
+                await ScheduleMonitor.UpdateStatusAsync(_timerName, ScheduleStatus);
             }
         }
 
