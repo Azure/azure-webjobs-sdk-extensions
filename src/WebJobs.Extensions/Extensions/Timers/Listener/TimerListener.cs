@@ -111,13 +111,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5);
             _trace.Verbose(nextOccurrences);
 
-            // Start the timer. We need to calculate the next interval based on the current
-            // time as we don't know how long the previous function invocation took.
-            // Example: if you have an hourly timer invoked at 12:00 and the invocation takes 1 minute,
-            // we want to calculate the interval for the next timer using 12:01 rather than at 12:00.
-            // Otherwise, you'd start a 1-hour timer at 12:01 when we really want it to be a 59-minute timer.
-            TimeSpan nextInterval = ScheduleStatus.Next - DateTime.Now;
-            StartTimer(nextInterval);
+            StartTimer(DateTime.Now);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
@@ -181,8 +175,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             // restart the timer with the next schedule occurrence
             await InvokeJobFunction(DateTime.Now, false);
-            TimeSpan nextInterval = ScheduleStatus.Next - DateTime.Now;
-            StartTimer(nextInterval);
+
+            StartTimer(DateTime.Now);
         }
 
         /// <summary>
@@ -239,6 +233,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             {
                 await ScheduleMonitor.UpdateStatusAsync(_timerName, ScheduleStatus);
             }
+        }
+
+        private void StartTimer(DateTime now)
+        {
+            // We need to calculate the next interval based on the current
+            // time as we don't know how long the previous function invocation took.
+            // Example: if you have an hourly timer invoked at 12:00 and the invocation takes 1 minute,
+            // we want to calculate the interval for the next timer using 12:01 rather than at 12:00.
+            // Otherwise, you'd start a 1-hour timer at 12:01 when we really want it to be a 59-minute timer.
+
+            // If the interval happens to be negative (due to slow storage, for example), adjust the
+            // interval back up 1 Tick (Zero is invalid for a timer) for an immediate invocation.
+            TimeSpan nextInterval = ScheduleStatus.Next - now;
+            if (nextInterval <= TimeSpan.Zero)
+            {
+                nextInterval = TimeSpan.FromTicks(1);
+            }
+            StartTimer(nextInterval);
         }
 
         private void StartTimer(TimeSpan interval)

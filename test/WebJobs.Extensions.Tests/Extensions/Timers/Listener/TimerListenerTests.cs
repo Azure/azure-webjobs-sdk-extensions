@@ -238,6 +238,38 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             Assert.Throws<ArgumentOutOfRangeException>(() => timer.Start());
         }
 
+        [Fact]
+        public async Task Timer_CannotHaveNegativeInterval()
+        {
+            CreateTestListener("* * * * * *", useMonitor: true);
+
+            ScheduleStatus status = new ScheduleStatus();
+            _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_testTimerName)).ReturnsAsync(status);
+
+            // Make sure we invoke b/c we're past due.
+            _mockScheduleMonitor.Setup(p => p.CheckPastDueAsync(_testTimerName, It.IsAny<DateTime>(), It.IsAny<TimerSchedule>(), status))
+                .ReturnsAsync(TimeSpan.FromMilliseconds(1));
+
+            // Use the monitor to sleep for a second. This ensures that we recalculate the Next value before
+            // starting the timer. Otherwise, you can end up with a negative interval.
+            bool updateCalled = false;
+            _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName, It.IsAny<ScheduleStatus>()))
+                .Callback(() =>
+                {
+                    // only sleep for the first call
+                    if (!updateCalled)
+                    {
+                        Thread.Sleep(1000);
+                    }
+                    updateCalled = true;
+                })
+                .Returns(Task.FromResult(true));
+
+            await _listener.StartAsync(CancellationToken.None);
+
+            Assert.True(updateCalled);
+        }
+
         private void CreateTestListener(string expression, bool useMonitor = true)
         {
             _attribute = new TimerTriggerAttribute(expression);
