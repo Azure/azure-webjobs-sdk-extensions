@@ -23,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
     {
         private readonly string testFileDir;
         private readonly string rootPath;
-        private readonly string attributeSubPath = @"webjobs_extensionstests\import";
+        private readonly string attributeSubPath = @"webjobs_extensionstests\filelistener_import";
 
         public FileListenerTests()
         {

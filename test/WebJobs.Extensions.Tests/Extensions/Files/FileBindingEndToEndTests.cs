@@ -20,8 +20,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
         private readonly string testInputDir;
         private readonly string testOutputDir;
         private readonly string rootPath;
-        private const string ImportTestPath = @"webjobs_extensionstests\import";
-        private const string OutputTestPath = @"webjobs_extensionstests\output";
+        private const string ImportTestPath = @"webjobs_extensionstests\filebindinge2e_import";
+        private const string OutputTestPath = @"webjobs_extensionstests\filebindinge2e_output";
 
         public FileBindingEndToEndTests()
         {

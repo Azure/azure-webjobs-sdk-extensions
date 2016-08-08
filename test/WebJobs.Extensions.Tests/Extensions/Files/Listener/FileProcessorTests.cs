@@ -19,7 +19,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
     public class FileProcessorTests
     {
         private const string InstanceId = "3b151065ae0740f5c4c278989981d9090cd27d8440cdd27ee155a9f0d0ef6bb9";
-        private const string AttributeSubPath = @"webjobs_extensionstests\import";
+        private const string AttributeSubPath = @"webjobs_extensionstests\fileprocessor_import";
 
         private readonly string combinedTestFilePath;
         private readonly string rootPath;
