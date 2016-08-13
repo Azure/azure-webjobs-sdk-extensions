@@ -15,7 +15,7 @@
     <tags>Microsoft Azure WebJobs Jobs Extensions MobileTable MobileApps Mobile Tables Apps windowsazureofficial Web</tags>
     <dependencies>
       <dependency id="Microsoft.Azure.WebJobs.Extensions" version="$WebJobsPackageVersion$" />
-      <dependency id="Microsoft.Azure.Mobile.Client" version="2.0.1" />
+      <dependency id="Microsoft.Azure.Mobile.Client" version="2.1.1" />
     </dependencies>
   </metadata>
 </package>

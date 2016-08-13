@@ -35,8 +35,8 @@
     <NuGetProject Include="..\WebJobs.Extensions.NotificationHubs.Nuget\WebJobs.Extensions.NotificationHubs.nuproj">
       <Link>WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.nuproj</Link>
     </NuGetProject>
-    <NuGetSpec Include="..\WebJobs.Extensions.NotificationHubs.Nuget\WebJobs.Extensions.NotificationHubs.nuspec">
-      <Link>WebJobs.Extensions.ApiHub\WebJobs.Extensions.NotificationHubs.nuspec</Link>
+    <NuGetSpec Include="..\WebJobs.Extensions.NotificationHubs.NuGet\WebJobs.Extensions.NotificationHubs.nuspec">
+      <Link>WebJobs.Extensions.NotificationHubs\WebJobs.Extensions.NotificationHubs.nuspec</Link>
     </NuGetSpec>
   </ItemGroup>
   <ItemGroup>
