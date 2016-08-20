@@ -4,6 +4,8 @@
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Reflection;
+using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Script.Extensibility;
 using Newtonsoft.Json.Linq;
@@ -15,6 +17,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
     /// </summary>
     public class DocumentDBScriptBindingProvider : ScriptBindingProvider
     {
+        private static readonly string DocumentDBAssemblyName = typeof(DocumentClient).Assembly.GetName().Name;
+
         /// <inheritdoc/>
         public DocumentDBScriptBindingProvider(JobHostConfiguration config, JObject hostMetadata, TraceWriter traceWriter) 
             : base(config, hostMetadata, traceWriter)
@@ -43,6 +47,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         public override void Initialize()
         {
             Config.UseDocumentDB();
+        }
+
+        /// <inheritdoc/>
+        public override bool TryResolveAssembly(string assemblyName, out Assembly assembly)
+        {
+            assembly = null;
+
+            if (string.Compare(assemblyName, DocumentDBAssemblyName, StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                assembly = typeof(DocumentClient).Assembly;
+            }
+
+            return assembly != null;
         }
 
         private class DocumentDBScriptBinding : ScriptBinding
