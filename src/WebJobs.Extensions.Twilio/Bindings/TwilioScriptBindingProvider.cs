@@ -26,33 +26,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
             _twilioAssemblyName = typeof(SMSMessage).Assembly.GetName().Name;
         }
 
-        internal static TwilioSmsConfiguration CreateConfiguration(JObject metadata)
-        {
-            var twilioConfig = new TwilioSmsConfiguration();
-
-            JObject configSection = (JObject)metadata.GetValue("twilioSMS", StringComparison.OrdinalIgnoreCase);
-            JToken value = null;
-            if (configSection != null)
-            {
-                if (configSection.TryGetValue("from", StringComparison.OrdinalIgnoreCase, out value))
-                {
-                    twilioConfig.From = value.ToString();
-                }
-
-                if (configSection.TryGetValue("to", StringComparison.OrdinalIgnoreCase, out value))
-                {
-                    twilioConfig.To = value.ToString();
-                }
-
-                if (configSection.TryGetValue("body", StringComparison.OrdinalIgnoreCase, out value))
-                {
-                    twilioConfig.Body = value.ToString();
-                }
-            }
-
-            return twilioConfig;
-        }
-
         /// <inheritdoc/>
         public override bool TryCreate(ScriptBindingContext context, out ScriptBinding binding)
         {
@@ -65,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
 
             if (string.Compare(context.Type, "twilioSMS", StringComparison.OrdinalIgnoreCase) == 0)
             {
-                binding = new TwilioBinding(context);
+                binding = new TwilioSmsBinding(context);
             }
 
             return binding != null;
@@ -74,11 +47,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
         /// <inheritdoc/>
         public override void Initialize()
         {
-            var twilioConfig = CreateConfiguration(Metadata);
-            if (!string.IsNullOrEmpty(twilioConfig.AccountSid) && !string.IsNullOrEmpty(twilioConfig.AuthToken))
-            {
-                Config.UseTwilioSms(twilioConfig);
-            }
+            Config.UseTwilioSms();
         }
 
         /// <inheritdoc/>
@@ -94,9 +63,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
             return assembly != null;
         }
 
-        private class TwilioBinding : ScriptBinding
+        private class TwilioSmsBinding : ScriptBinding
         {
-            public TwilioBinding(ScriptBindingContext context) : base(context)
+            public TwilioSmsBinding(ScriptBindingContext context) : base(context)
             {
             }
 
@@ -114,6 +83,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
                 {
                     new TwilioSmsAttribute
                     {
+                        AccountSidSetting = Context.GetMetadataValue<string>("accountSid"),
+                        AuthTokenSetting = Context.GetMetadataValue<string>("authToken"),
                         To = Context.GetMetadataValue<string>("to"),
                         From = Context.GetMetadataValue<string>("from"),
                         Body = Context.GetMetadataValue<string>("body")
