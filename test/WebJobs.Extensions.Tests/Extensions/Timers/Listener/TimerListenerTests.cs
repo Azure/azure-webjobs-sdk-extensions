@@ -270,7 +270,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             Assert.True(updateCalled);
         }
 
-        private void CreateTestListener(string expression, bool useMonitor = true)
+        [Fact]
+        public async Task StoppedListener_DoesNotContinueRunning()
+        {
+            // There was a bug where we would re-create a disposed _timer after a call to StopAsync(). This only
+            // happened if there was a function running when StopAsync() was called.
+            int count = 0;
+            CreateTestListener("* * * * * *", useMonitor: false, functionAction: () =>
+            {
+                count++;
+                _listener.StopAsync(CancellationToken.None).Wait();
+            });
+            await _listener.StartAsync(CancellationToken.None);
+            await Task.Delay(3000);
+            Assert.Equal(1, count);
+        }
+
+        private void CreateTestListener(string expression, bool useMonitor = true, Action functionAction = null)
         {
             _attribute = new TimerTriggerAttribute(expression);
             _schedule = TimerSchedule.Create(_attribute, new TestNameResolver());
@@ -284,6 +300,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 .Callback<TriggeredFunctionData, CancellationToken>((mockFunctionData, mockToken) =>
                 {
                     _triggeredFunctionData = mockFunctionData;
+                    functionAction?.Invoke();
                 })
                 .Returns(Task.FromResult(result));
             JobHostConfiguration hostConfig = new JobHostConfiguration();

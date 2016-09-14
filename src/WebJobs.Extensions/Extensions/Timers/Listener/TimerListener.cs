@@ -75,6 +75,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             // if schedule monitoring is enabled, record (or initialize)
             // the current schedule status
             bool isPastDue = false;
+
+            // we use DateTime.Now rather than DateTime.UtcNow to allow the local machine to set the time zone. In Azure this will be
+            // UTC by default, but can be configured to use any time zone if it makes scheduling easier.
             DateTime now = DateTime.Now;
             if (ScheduleMonitor != null)
             {
@@ -173,7 +176,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 return;
             }
 
-            // restart the timer with the next schedule occurrence
             await InvokeJobFunction(DateTime.Now, false);
 
             StartTimer(DateTime.Now);
@@ -255,6 +257,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
         private void StartTimer(TimeSpan interval)
         {
+            // Restart the timer with the next schedule occurrence, but only 
+            // if Cancel, Stop, and Dispose have not been called.
+            if (_cancellationTokenSource.IsCancellationRequested)
+            {
+                return;
+            }
+
             _timer = new System.Timers.Timer
             {
                 AutoReset = false
