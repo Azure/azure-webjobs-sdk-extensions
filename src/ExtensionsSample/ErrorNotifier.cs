@@ -4,11 +4,11 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Net.Mail;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 using SendGrid;
+using SendGrid.Helpers.Mail;
 
 namespace ExtensionsSample
 {
@@ -21,7 +21,7 @@ namespace ExtensionsSample
         private const string NotificationUriSettingName = "AzureWebJobsErrorNotificationUri";
         private readonly string _webNotificationUri;
         private readonly HttpClient _httpClient = new HttpClient();
-        private readonly Web _sendGrid;
+        private readonly SendGridAPIClient _sendGrid;
         private SendGridConfiguration _sendGridConfig;
 
         public ErrorNotifier(SendGridConfiguration sendGridConfig)
@@ -31,7 +31,7 @@ namespace ExtensionsSample
                 throw new ArgumentNullException("sendGridConfig");
             }
             _sendGridConfig = sendGridConfig;
-            _sendGrid = new Web(sendGridConfig.ApiKey);
+            _sendGrid = new SendGridAPIClient(sendGridConfig.ApiKey);
 
             // pull our IFTTT notification URL from app settings (since it contains a secret key)
             var nameResolver = new DefaultNameResolver();
@@ -71,15 +71,17 @@ namespace ExtensionsSample
         /// <param name="filter">The <see cref="TraceFilter"/> that triggered the notification.</param>
         public void EmailNotify(TraceFilter filter)
         {
-            SendGridMessage message = new SendGridMessage()
+            Mail message = new Mail()
             {
                 From = _sendGridConfig.FromAddress,
-                Subject = "WebJob Error Notification",
-                Text = filter.GetDetailedMessage(5)
+                Subject = "WebJob Error Notification"
             };
-            message.To = new MailAddress[] { _sendGridConfig.ToAddress };
+            message.AddContent(new Content("text/plain", filter.GetDetailedMessage(5)));
+            Personalization personalization = new Personalization();
+            personalization.AddTo(_sendGridConfig.ToAddress);
+            message.AddPersonalization(personalization);
 
-            _sendGrid.DeliverAsync(message);
+            _sendGrid.client.mail.send.post(requestBody: message.Get());
         }
     }
 }

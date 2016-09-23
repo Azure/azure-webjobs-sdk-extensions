@@ -3,28 +3,30 @@
 
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Client;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
-using SendGrid;
+using SendGrid.Helpers.Mail;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Bindings
 {
-    internal class SendGridMessageAsyncCollector : IAsyncCollector<SendGridMessage>
+    internal class SendGridMailAsyncCollector : IAsyncCollector<Mail>
     {
         private readonly SendGridConfiguration _config;
         private readonly SendGridAttribute _attribute;
-        private readonly Collection<SendGridMessage> _messages = new Collection<SendGridMessage>();
-        private readonly Web _sendGrid;
+        private readonly Collection<Mail> _messages = new Collection<Mail>();
+        private readonly ISendGridClient _sendGrid;
 
-        public SendGridMessageAsyncCollector(SendGridConfiguration config, SendGridAttribute attribute, Web sendGrid)
+        public SendGridMailAsyncCollector(SendGridConfiguration config, SendGridAttribute attribute, ISendGridClient sendGrid)
         {
             _config = config;
             _attribute = attribute;
             _sendGrid = sendGrid;
         }
 
-        public Task AddAsync(SendGridMessage item, CancellationToken cancellationToken = default(CancellationToken))
+        public Task AddAsync(Mail item, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (item == null)
             {
@@ -33,7 +35,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
 
             SendGridHelpers.DefaultMessageProperties(item, _config, _attribute);
 
-            if (item.To == null || item.To.Length == 0)
+            if (!SendGridHelpers.IsToValid(item))
             {
                 throw new InvalidOperationException("A 'To' address must be specified for the message.");
             }
@@ -51,8 +53,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
         {
             foreach (var message in _messages)
             {
-                await _sendGrid.DeliverAsync(message);
+                await _sendGrid.SendMessageAsync(message.Get());
             }
-        }
+        }        
     }
 }

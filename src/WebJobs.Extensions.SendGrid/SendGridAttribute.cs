@@ -13,6 +13,13 @@ namespace Microsoft.Azure.WebJobs
     public sealed class SendGridAttribute : Attribute
     {
         /// <summary>
+        /// Optional. A string value indicating the app setting to use as the SendGrid API key, 
+        /// if different than the one specified in the <see cref="Extensions.SendGrid.SendGridConfiguration"/>.
+        /// </summary>
+        [AutoResolve(AllowTokens = false)]
+        public string ApiKey { get; set; }
+
+        /// <summary>
         /// Gets or sets the message "To" field. May include binding parameters.
         /// </summary>
         [AutoResolve]

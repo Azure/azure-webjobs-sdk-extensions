@@ -2,17 +2,15 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Mail;
 using ExtensionsSample.Samples;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
-using Microsoft.Azure.WebJobs.Extensions.Twilio;
 using Microsoft.Azure.WebJobs.Host;
+using SendGrid.Helpers.Mail;
 using WebJobsSandbox;
 
 namespace ExtensionsSample
@@ -39,20 +37,18 @@ namespace ExtensionsSample
             config.UseCore();
             config.UseDocumentDB();
             config.UseNotificationHubs();
+
             var sendGridConfiguration = new SendGridConfiguration()
             {
-                ToAddress = new MailAddress("admin@webjobssamples.com", "WebJobs Extensions Samples"),
-                FromAddress = new MailAddress("samples@webjobssamples.com", "WebJobs Extensions Samples")
+                ToAddress = new Email("admin@webjobssamples.com", "WebJobs Extensions Samples"),
+                FromAddress = new Email("samples@webjobssamples.com", "WebJobs Extensions Samples")
             };
-            if (!string.IsNullOrEmpty(sendGridConfiguration.ApiKey))
-            {
-                config.UseSendGrid(sendGridConfiguration);
-            }
+            config.UseSendGrid(sendGridConfiguration);
 
             ConfigureTraceMonitor(config, sendGridConfiguration);
 
             config.UseTwilioSms();
-            
+
             EnsureSampleDirectoriesExist(filesConfig.RootPath);
 
             JobHost host = new JobHost(config);

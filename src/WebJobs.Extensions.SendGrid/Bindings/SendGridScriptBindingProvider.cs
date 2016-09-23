@@ -17,7 +17,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
     public class SendGridScriptBindingProvider : ScriptBindingProvider
     {
         /// <inheritdoc/>
-        public SendGridScriptBindingProvider(JobHostConfiguration config, JObject hostMetadata, TraceWriter traceWriter) 
+        public SendGridScriptBindingProvider(JobHostConfiguration config, JObject hostMetadata, TraceWriter traceWriter)
             : base(config, hostMetadata, traceWriter)
         {
         }
@@ -44,10 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
         public override void Initialize()
         {
             var sendGridConfig = SendGridHelpers.CreateConfiguration(Metadata);
-            if (!string.IsNullOrEmpty(sendGridConfig.ApiKey))
-            {
-                Config.UseSendGrid(sendGridConfig);
-            }
+            Config.UseSendGrid(sendGridConfig);
         }
 
         /// <inheritdoc/>
@@ -55,9 +52,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
         {
             assembly = null;
 
-            if (string.Compare(assemblyName, "SendGridMail", StringComparison.OrdinalIgnoreCase) == 0)
+            Assembly sendGridAssembly = typeof(SendGridAPIClient).Assembly;
+            if (string.Compare(assemblyName, sendGridAssembly.GetName().Name, StringComparison.OrdinalIgnoreCase) == 0)
             {
-                assembly = typeof(SendGridMessage).Assembly;
+                assembly = sendGridAssembly;
             }
 
             return assembly != null;
@@ -83,6 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
                 {
                     new SendGridAttribute
                     {
+                        ApiKey = Context.GetMetadataValue<string>("apiKey"),
                         To = Context.GetMetadataValue<string>("to"),
                         From = Context.GetMetadataValue<string>("from"),
                         Subject = Context.GetMetadataValue<string>("subject"),
