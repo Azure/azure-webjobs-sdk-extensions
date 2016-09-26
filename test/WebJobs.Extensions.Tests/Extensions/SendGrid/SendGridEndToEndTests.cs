@@ -81,7 +81,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.SendGrid
             clientMock.VerifyAll();
         }
 
-
         [Fact]
         public async Task OutputBindings_NoApiKey()
         {

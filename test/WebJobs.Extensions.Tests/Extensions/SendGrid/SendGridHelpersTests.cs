@@ -92,9 +92,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.SendGrid
               ]
             }";
 
-
-            JObject input = JObject.Parse(mail);
-
             Mail result = SendGridHelpers.CreateMessage(mail);
 
             Personalization p = result.Personalization.Single();
