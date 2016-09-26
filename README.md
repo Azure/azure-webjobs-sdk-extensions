@@ -98,7 +98,7 @@ public static void ProcessOrder(
         To = "{CustomerEmail}",
         Subject = "Thanks for your order (#{OrderId})!",
         Text = "{CustomerName}, we've received your order ({OrderId})!")]
-    SendGridMessage message)
+    Mail message)
 {
     // You can set additional message properties here
 }
@@ -110,7 +110,7 @@ Here's another example showing how you can easily send yourself notification mai
 public static void Purge(
     [QueueTrigger(@"purge-tasks")] PurgeTask task,
     [SendGrid(Subject = "Purge {Description} succeeded. Purged {Count} items")]
-    SendGridMessage message)
+    Mail message)
 {
     // Purge logic here
 }
