@@ -35,7 +35,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var serviceMock = new Mock<IDocumentDBService>(MockBehavior.Strict);
             serviceMock
                 .Setup(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()))
-                .ReturnsAsync(new Document());
+                .Returns<Uri, object>((uri, item) =>
+                {
+                    // Simulate what DocumentClient does. This will throw an error if a string
+                    // is directly passed as the item. We can't use DocumentClient directly for this
+                    // because it requires a real connection, but we're mocking here.
+                    JObject jObject = JObject.FromObject(item);
+
+                    return Task.FromResult(new Document());
+                });
 
             var factoryMock = new Mock<IDocumentDBServiceFactory>(MockBehavior.Strict);
             factoryMock
@@ -49,7 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 
             // Assert
             factoryMock.Verify(f => f.CreateService(ConfigConnStr), Times.Once());
-            serviceMock.Verify(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()), Times.Exactly(7));
+            serviceMock.Verify(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()), Times.Exactly(8));
             Assert.Equal("Outputs", testTrace.Events.Single().Message);
         }
 
@@ -81,10 +89,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             string item2Id = "docid2";
             string item3Id = "docid3";
             string item4Id = "docid4";
+            string item5Id = "docid5";
             Uri item1Uri = UriFactory.CreateDocumentUri(DatabaseName, CollectionName, item1Id);
             Uri item2Uri = UriFactory.CreateDocumentUri(DatabaseName, CollectionName, item2Id);
             Uri item3Uri = UriFactory.CreateDocumentUri(DatabaseName, CollectionName, item3Id);
             Uri item4Uri = UriFactory.CreateDocumentUri("ResolvedDatabase", "ResolvedCollection", item4Id);
+            Uri item5Uri = UriFactory.CreateDocumentUri(DatabaseName, CollectionName, item5Id);
 
             string options2 = string.Format("[\"{0}\"]", item1Id); // this comes from the trigger
             string options3 = "[\"partkey3\"]";
@@ -92,20 +102,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var serviceMock = new Mock<IDocumentDBService>(MockBehavior.Strict);
 
             serviceMock
-                .Setup(m => m.ReadDocumentAsync<object>(item1Uri, null))
+                .Setup(m => m.ReadDocumentAsync(item1Uri, null))
                 .ReturnsAsync(new Document { Id = item1Id });
 
             serviceMock
-               .Setup(m => m.ReadDocumentAsync<dynamic>(item2Uri, It.Is<RequestOptions>(r => r.PartitionKey.ToString() == options2)))
+               .Setup(m => m.ReadDocumentAsync(item2Uri, It.Is<RequestOptions>(r => r.PartitionKey.ToString() == options2)))
                .ReturnsAsync(new Document { Id = item2Id });
 
             serviceMock
-                .Setup(m => m.ReadDocumentAsync<dynamic>(item3Uri, It.Is<RequestOptions>(r => r.PartitionKey.ToString() == options3)))
+                .Setup(m => m.ReadDocumentAsync(item3Uri, It.Is<RequestOptions>(r => r.PartitionKey.ToString() == options3)))
                 .ReturnsAsync(new Document { Id = item3Id });
 
             serviceMock
-                .Setup(m => m.ReadDocumentAsync<dynamic>(item4Uri, null))
+                .Setup(m => m.ReadDocumentAsync(item4Uri, null))
                 .ReturnsAsync(new Document { Id = item4Id });
+
+            serviceMock
+                .Setup(m => m.ReadDocumentAsync(item5Uri, null))
+                .ReturnsAsync(new Document { Id = item5Id });
 
             // We only expect item2 to be updated
             serviceMock
@@ -126,6 +140,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             factoryMock.Verify(f => f.CreateService(It.IsAny<string>()), Times.Once());
             Assert.Equal(1, testTrace.Events.Count);
             Assert.Equal("Inputs", testTrace.Events[0].Message);
+            serviceMock.VerifyAll();
         }
 
         [Fact]
@@ -140,7 +155,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var serviceMock = new Mock<IDocumentDBService>(MockBehavior.Strict);
 
             serviceMock
-               .Setup(m => m.ReadDocumentAsync<dynamic>(itemUri, It.Is<RequestOptions>(r => r.PartitionKey.ToString() == key)))
+               .Setup(m => m.ReadDocumentAsync(itemUri, It.Is<RequestOptions>(r => r.PartitionKey.ToString() == key)))
                .ReturnsAsync(new Document { Id = itemId });
 
             var factoryMock = new Mock<IDocumentDBServiceFactory>(MockBehavior.Strict);
@@ -221,12 +236,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             [NoAutomaticTrigger]
             public static void Outputs(
                 [DocumentDB(DatabaseName, CollectionName)] out object newItem,
+                [DocumentDB(DatabaseName, CollectionName)] out string newItemString,
                 [DocumentDB(DatabaseName, CollectionName)] out object[] arrayItem,
                 [DocumentDB(DatabaseName, CollectionName)] IAsyncCollector<object> asyncCollector,
                 [DocumentDB(DatabaseName, CollectionName)] ICollector<object> collector,
                 TraceWriter trace)
             {
                 newItem = new { };
+
+                newItemString = "{}";
 
                 arrayItem = new Document[]
                 {
@@ -263,12 +281,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
                 [DocumentDB(DatabaseName, CollectionName, Id = "docid2", PartitionKey = "{QueueTrigger}")] dynamic item2,
                 [DocumentDB(DatabaseName, CollectionName, Id = "docid3", PartitionKey = "partkey3")] dynamic item3,
                 [DocumentDB("%Database%", "%Collection%", Id = "docid4")] dynamic item4,
+                [DocumentDB(DatabaseName, CollectionName, Id = "docid5")] string item5,
                 TraceWriter trace)
             {
                 Assert.NotNull(item1);
                 Assert.NotNull(item2);
                 Assert.NotNull(item3);
                 Assert.NotNull(item4);
+                Assert.NotNull(item5);
 
                 // add some value to item2
                 item2.text = "changed";

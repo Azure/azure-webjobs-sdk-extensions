@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 {
@@ -58,7 +59,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         internal static async Task UpsertDocument(DocumentDBContext context, T item)
         {
             Uri collectionUri = UriFactory.CreateDocumentCollectionUri(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName);
-            await DocumentDBUtility.RetryAsync(() => context.Service.UpsertDocumentAsync(collectionUri, item), context.MaxThrottleRetries);
+
+            // DocumentClient does not accept strings directly.
+            object convertedItem = item;
+            if (item is string)
+            {
+                convertedItem = JObject.Parse(item.ToString());
+            }
+
+            await DocumentDBUtility.RetryAsync(() => context.Service.UpsertDocumentAsync(collectionUri, convertedItem), context.MaxThrottleRetries);
         }
 
         internal static async Task CreateIfNotExistAsync(DocumentDBContext context)

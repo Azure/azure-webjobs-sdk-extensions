@@ -6,7 +6,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
-using Microsoft.Azure.Documents.Linq;
 using Microsoft.Azure.WebJobs.Extensions.DocumentDB.Config;
 
 namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
@@ -61,10 +60,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             return response.Resource;
         }
 
-        public async Task<T> ReadDocumentAsync<T>(Uri documentUri, RequestOptions options)
+        public async Task<Document> ReadDocumentAsync(Uri documentUri, RequestOptions options)
         {
             ResourceResponse<Document> response = await _client.ReadDocumentAsync(documentUri, options);
-            return (T)(dynamic)response.Resource;
+            return response.Resource;
         }
 
         public void Dispose()

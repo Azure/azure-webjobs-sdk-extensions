@@ -51,15 +51,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 };
             }
 
-            T document = DocumentDBUtility.RetryAsync(() => _context.Service.ReadDocumentAsync<T>(documentUri, options),
-                _context.MaxThrottleRetries, codesToIgnore: HttpStatusCode.NotFound).Result;
+            Document document = DocumentDBUtility.RetryAsync(() => _context.Service.ReadDocumentAsync(documentUri, options),
+                    _context.MaxThrottleRetries, codesToIgnore: HttpStatusCode.NotFound).Result;
 
-            if (document != null)
+            if (document == null)
             {
-                _originalItem = JObject.FromObject(document);
+                return document;
             }
 
-            return document;
+            T item = null;
+            _originalItem = JObject.FromObject(document);
+
+            // Strings need to be handled differently.
+            if (typeof(T) == typeof(string))
+            {
+                item = _originalItem.ToString(Formatting.None) as T;
+            }
+            else
+            {
+                item = (T)(dynamic)document;
+            }
+
+            return item;
         }
 
         public string ToInvokeString()
@@ -69,6 +82,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
         internal static async Task SetValueInternalAsync(JObject originalItem, T newItem, DocumentDBContext context)
         {
+            // We can short-circuit here as strings are immutable.
+            if (newItem is string)
+            {
+                return;
+            }
+
             JObject currentValue = JObject.FromObject(newItem);
 
             if (HasChanged(originalItem, currentValue))

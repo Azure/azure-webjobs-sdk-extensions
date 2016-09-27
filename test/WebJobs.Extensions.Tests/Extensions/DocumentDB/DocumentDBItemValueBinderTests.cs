@@ -32,11 +32,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
             Mock<IDocumentDBService> mockService;
             IValueBinder binder = CreateBinder<Item>(out mockService, partitionKey);
             mockService
-                .Setup(m => m.ReadDocumentAsync<Item>(_expectedUri, It.Is<RequestOptions>(r => r.PartitionKey.ToString() == partitionKeyValue)))
-                .ReturnsAsync(new Item());
+                .Setup(m => m.ReadDocumentAsync(_expectedUri, It.Is<RequestOptions>(r => r.PartitionKey.ToString() == partitionKeyValue)))
+                .ReturnsAsync(new Document());
 
             // Act
-            var value = binder.GetValue();
+            var value = binder.GetValue() as Item;
 
             // Assert
             mockService.VerifyAll();
@@ -50,11 +50,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
             Mock<IDocumentDBService> mockService;
             IValueBinder binder = CreateBinder<Item>(out mockService);
             mockService
-                .Setup(m => m.ReadDocumentAsync<Item>(_expectedUri, null))
-                .ReturnsAsync(new Item());
+                .Setup(m => m.ReadDocumentAsync(_expectedUri, null))
+                .ReturnsAsync(new Document());
 
             // Act
-            var value = binder.GetValue();
+            var value = binder.GetValue() as Item;
 
             // Assert
             mockService.VerifyAll();
@@ -68,7 +68,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
             Mock<IDocumentDBService> mockService;
             IValueBinder binder = CreateBinder<Item>(out mockService);
             mockService
-                .Setup(m => m.ReadDocumentAsync<Item>(_expectedUri, null))
+                .Setup(m => m.ReadDocumentAsync(_expectedUri, null))
                 .ThrowsAsync(DocumentDBTestUtility.CreateDocumentClientException(HttpStatusCode.NotFound));
 
             // Act
@@ -86,7 +86,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
             Mock<IDocumentDBService> mockService;
             IValueBinder binder = CreateBinder<Item>(out mockService);
             mockService
-                .Setup(m => m.ReadDocumentAsync<Item>(_expectedUri, null))
+                .Setup(m => m.ReadDocumentAsync(_expectedUri, null))
                 .ThrowsAsync(DocumentDBTestUtility.CreateDocumentClientException(HttpStatusCode.ServiceUnavailable));
 
             // Act
