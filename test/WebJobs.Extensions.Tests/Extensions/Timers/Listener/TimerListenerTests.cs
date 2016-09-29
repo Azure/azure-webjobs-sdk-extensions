@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
@@ -23,6 +25,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         private TimerSchedule _schedule;
         private Mock<ITriggeredFunctionExecutor> _mockTriggerExecutor;
         private TriggeredFunctionData _triggeredFunctionData;
+        private TestTraceWriter _traceWriter;
 
         public TimerListenerTests()
         {
@@ -209,9 +212,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             Assert.Equal(TimerListener.MaxTimerInterval.TotalMilliseconds, _listener.Timer.Interval);
 
             // simulate second timer event - expect the timer to continue without
-            // invoking the job function
+            // invoking the job function. It's possible this is slightly lower than the exact timestamp,
+            // so allow for a slight time difference.
             await _listener.HandleTimerEvent();
-            Assert.Equal(TimeSpan.FromDays(4).TotalMilliseconds, _listener.Timer.Interval);
+            double fourDays = TimeSpan.FromDays(4).TotalMilliseconds;
+            Assert.InRange(_listener.Timer.Interval, fourDays - 10, fourDays);
 
             // simulate final timer event for the interval - expect the job function to be executed now,
             // and the interval start from the beginning
@@ -286,6 +291,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             Assert.Equal(1, count);
         }
 
+        [Fact]
+        public async Task Listener_LogsSchedule_ByDefault()
+        {
+            CreateTestListener("* * * * * *", useMonitor: false);
+
+            await _listener.StartAsync(CancellationToken.None);
+            await _listener.StopAsync(CancellationToken.None);
+
+            Assert.True(_traceWriter.Events.Single(m => m.Level == TraceLevel.Info).Message.StartsWith("The next 5 occurrences of the schedule will be:"));
+        }
+
         private void CreateTestListener(string expression, bool useMonitor = true, Action functionAction = null)
         {
             _attribute = new TimerTriggerAttribute(expression);
@@ -305,7 +321,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 .Returns(Task.FromResult(result));
             JobHostConfiguration hostConfig = new JobHostConfiguration();
             hostConfig.HostId = "testhostid";
-            _listener = new TimerListener(_attribute, _schedule, _testTimerName, _config, _mockTriggerExecutor.Object, new TestTraceWriter());
+            _traceWriter = new TestTraceWriter();
+            _listener = new TimerListener(_attribute, _schedule, _testTimerName, _config, _mockTriggerExecutor.Object, _traceWriter);
         }
     }
 }

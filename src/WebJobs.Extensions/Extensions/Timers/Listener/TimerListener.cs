@@ -112,7 +112,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             // log the next several occurrences to console for visibility
             string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5);
-            _trace.Verbose(nextOccurrences);
+            _trace.Info(nextOccurrences);
 
             StartTimer(DateTime.Now);
         }
