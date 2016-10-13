@@ -95,7 +95,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
 
             if (lastPoll != null)
             {
-                Uri.TryCreate(lastPoll.PollUrl, UriKind.Absolute, out nextUri);
+                // This is to make sure the trigger connection or path is not updated after the initial setup and if so reset the polling point.
+                if ((lastPoll.Connection == null || string.Compare(lastPoll.Connection, this._connectionStringSetting, true) == 0) &&
+                    (lastPoll.FilePath == null || string.Compare(lastPoll.FilePath, this._folderSource.Path, true) == 0))
+                {
+                    Uri.TryCreate(lastPoll.PollUrl, UriKind.Absolute, out nextUri);
+                }
             }
 
             _poll = _folderSource.CreateFileWatcher(_fileWatcherType, OnFileWatcher, nextItem: nextUri, pollIntervalInSeconds: _pollIntervalInSeconds > 0 ? _pollIntervalInSeconds : DefaultPollIntervalInSeconds);
@@ -137,7 +142,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
                 // If function successfully completes then the next poll Uri will be logged in an Azure Blob.
                 var status = new ApiHubStatus
                 {
-                    PollUrl = pollStatus
+                    PollUrl = pollStatus,
+                    FilePath = Path.GetDirectoryName(apiHubFile.Path),
+                    Connection = this._connectionStringSetting
                 };
 
                 await SetNextPollStatusAsync(status);
@@ -148,7 +155,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
 
                 if (status == null)
                 {
-                    status = new ApiHubStatus();
+                    status = new ApiHubStatus
+                    {
+                        FilePath = Path.GetDirectoryName(apiHubFile.Path),
+                        Connection = this._connectionStringSetting
+                    };
                 }
 
                 if (status.RetryCount < this._apiHubConfig.MaxFunctionExecutionRetryCount)
@@ -269,6 +280,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
         private class ApiHubStatus
         {
             public string PollUrl { get; set; }
+
+            public string FilePath { get; set; }
+
+            public string Connection { get; set; }
 
             public int RetryCount { get; set; }
         }
