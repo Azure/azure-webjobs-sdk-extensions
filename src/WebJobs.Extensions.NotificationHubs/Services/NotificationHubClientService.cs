@@ -3,6 +3,7 @@
 
 using System.Threading.Tasks;
 using Microsoft.Azure.NotificationHubs;
+using Microsoft.Azure.WebJobs.Host;
 
 namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 {
@@ -12,11 +13,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
         private string _hubName;
         private NotificationHubClient _notificationHubClient;
 
-        public NotificationHubClientService(string connectionString, string hubName)
+        public NotificationHubClientService(string connectionString, string hubName, bool enableTestSend = false)
         {
             _connectionString = connectionString;
             _hubName = hubName;
-            _notificationHubClient = NotificationHubClient.CreateClientFromConnectionString(_connectionString, _hubName);
+            _notificationHubClient = NotificationHubClient.CreateClientFromConnectionString(_connectionString, _hubName, enableTestSend);
         }
 
         public Task<NotificationOutcome> SendNotificationAsync(Notification notification, string tagExpression)

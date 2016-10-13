@@ -81,6 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
                     new NotificationHubAttribute
                     {
                         TagExpression = Context.GetMetadataValue<string>("tagExpression"),
+                        EnableTestSend = Context.GetMetadataValue<bool>("enableTestSend"),
                         ConnectionStringSetting = Context.GetMetadataValue<string>("connection"),
                         HubName = Context.GetMetadataValue<string>("hubName"),
                         Platform = Context.GetMetadataEnumValue<NotificationPlatform>("platform")

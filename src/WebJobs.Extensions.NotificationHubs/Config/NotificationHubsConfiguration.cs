@@ -22,7 +22,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 
         private string _defaultConnectionString;
         private string _defaultHubName;
-
+        
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
@@ -62,32 +62,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
             var bindingFactory = new BindingFactory(nameResolver, converterManager);
             IBindingProvider clientProvider = bindingFactory.BindToExactType<NotificationHubAttribute, NotificationHubClient>(BindForNotificationHubClient);
 
-            var ruleOutput = bindingFactory.BindToAsyncCollector<NotificationHubAttribute, Notification>(BuildFromAttribute);
+            var ruleOutput = bindingFactory.BindToAsyncCollector<NotificationHubAttribute, Notification>((attribute) => BuildFromAttribute(attribute, context.Trace));
 
             extensions.RegisterBindingRules<NotificationHubAttribute>(ruleOutput, clientProvider);
         }
 
-        internal IAsyncCollector<Notification> BuildFromAttribute(NotificationHubAttribute attribute)
+        internal IAsyncCollector<Notification> BuildFromAttribute(NotificationHubAttribute attribute, TraceWriter trace)
         {
             string resolvedConnectionString = ResolveConnectionString(attribute.ConnectionStringSetting);
             string resolvedHubName = ResolveHubName(attribute.HubName);
+            bool enableTestSend = attribute.EnableTestSend;
 
-            INotificationHubClientService service = GetService(resolvedConnectionString, resolvedHubName);
-            return new NotificationHubAsyncCollector(service, attribute.TagExpression);
+            INotificationHubClientService service = GetService(resolvedConnectionString, resolvedHubName, enableTestSend);
+            return new NotificationHubAsyncCollector(service, attribute.TagExpression, attribute.EnableTestSend, trace);
         }
 
         internal NotificationHubClient BindForNotificationHubClient(NotificationHubAttribute attribute)
         {
             string resolvedConnectionString = ResolveConnectionString(attribute.ConnectionStringSetting);
             string resolvedHubName = ResolveHubName(attribute.HubName);
-            INotificationHubClientService service = GetService(resolvedConnectionString, resolvedHubName);
+            INotificationHubClientService service = GetService(resolvedConnectionString, resolvedHubName, attribute.EnableTestSend);
 
             return service.GetNotificationHubClient();
         }
 
-        internal INotificationHubClientService GetService(string connectionString, string hubName)
+        internal INotificationHubClientService GetService(string connectionString, string hubName, bool enableTestSend)
         {
-            return ClientCache.GetOrAdd(new Tuple<string, string>(connectionString, hubName.ToLowerInvariant()), (c) => NotificationHubClientServiceFactory.CreateService(c.Item1, c.Item2));
+            return ClientCache.GetOrAdd(new Tuple<string, string>(connectionString, hubName.ToLowerInvariant()), (c) => NotificationHubClientServiceFactory.CreateService(c.Item1, c.Item2, enableTestSend));
         }
 
         /// <summary>

@@ -53,7 +53,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
 
             var factoryMock = new Mock<INotificationHubClientServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(ConfigConnStr, AttributeHubName.ToLowerInvariant()))
+                .Setup(f => f.CreateService(ConfigConnStr, AttributeHubName.ToLowerInvariant(), It.IsAny<bool>()))
                 .Returns(serviceMock.Object);
 
             var jobject = JObject.FromObject(new QueueData { UserName = "TestUser", UserIdTag = UserIdTag });
@@ -64,7 +64,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             RunTest("TriggerObject", factoryMock.Object, testTrace, jobject.ToString());
 
             // Assert
-            factoryMock.Verify(f => f.CreateService(ConfigConnStr, AttributeHubName.ToLowerInvariant()), Times.Once());
+            factoryMock.Verify(f => f.CreateService(ConfigConnStr, AttributeHubName.ToLowerInvariant(), false), Times.Once());
             Assert.Equal(1, testTrace.Events.Count);
             Assert.Equal("TriggerObject", testTrace.Events[0].Message);
         }
@@ -74,16 +74,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
         {
             var factoryMock = new Mock<INotificationHubClientServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(DefaultConnStr, DefaultHubName))
+                .Setup(f => f.CreateService(DefaultConnStr, DefaultHubName, It.IsAny<bool>()))
                 .Returns(new NotificationHubClientService(DefaultConnStr, DefaultHubName));
 
             var testTrace = new TestTraceWriter(TraceLevel.Warning);
 
             // Act
             RunTest("Client", factoryMock.Object, testTrace, configConnectionString: null, configHubName: null);
-
             //Assert
-            factoryMock.Verify(f => f.CreateService(DefaultConnStr, DefaultHubName), Times.Once());
+            factoryMock.Verify(f => f.CreateService(DefaultConnStr, DefaultHubName, false), Times.Once());
             Assert.Equal("Client", testTrace.Events.Single().Message);
         }
 
@@ -118,7 +117,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
 
             var factoryMock = new Mock<INotificationHubClientServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(ConfigConnStr, ConfigHubName.ToLowerInvariant()))
+                .Setup(f => f.CreateService(ConfigConnStr, ConfigHubName.ToLowerInvariant(), It.IsAny<bool>()))
                 .Returns(serviceMock.Object);
 
             var testTrace = new TestTraceWriter(TraceLevel.Warning);
@@ -127,7 +126,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             RunTest(test, factoryMock.Object, testTrace);
 
             // Assert
-            factoryMock.Verify(f => f.CreateService(ConfigConnStr, ConfigHubName.ToLowerInvariant()), Times.Once());
+            factoryMock.Verify(f => f.CreateService(ConfigConnStr, ConfigHubName.ToLowerInvariant(), false), Times.Once());
             serviceMock.Verify(m => m.SendNotificationAsync(It.IsAny<Notification>(), It.IsAny<string>()), Times.Exactly(invokeSendNotificationTimes));
             Assert.Equal(test, testTrace.Events.Single().Message);
         }
@@ -144,7 +143,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             {
                 TypeLocator = locator,
             };
-
             config.Tracing.Tracers.Add(testTrace);
 
             var arguments = new Dictionary<string, object>();
@@ -174,7 +172,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             config.UseNotificationHubs(notificationHubConfig);
 
             JobHost host = new JobHost(config);
-
             host.Start();
             host.Call(testType.GetMethod(testName), arguments);
             host.Stop();

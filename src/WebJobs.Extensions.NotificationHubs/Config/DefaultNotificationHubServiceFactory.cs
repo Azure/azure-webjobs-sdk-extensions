@@ -5,9 +5,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 {
     internal class DefaultNotificationHubClientServiceFactory : INotificationHubClientServiceFactory
     {
-        public INotificationHubClientService CreateService(string connectionString, string hubName)
+        public INotificationHubClientService CreateService(string connectionString, string hubName, bool enableTestSend = false)
         {
-            return new NotificationHubClientService(connectionString, hubName);
+            return new NotificationHubClientService(connectionString, hubName, enableTestSend);
         }
     }
 }

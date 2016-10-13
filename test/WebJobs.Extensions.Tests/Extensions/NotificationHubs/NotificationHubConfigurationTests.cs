@@ -10,6 +10,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
 {
     public class NotificationHubConfigurationTests
     {
+        public static TestTraceWriter testTraceWriter = new TestTraceWriter();
+
         [Fact]
         public void Configuration_Caches_NotificationHubClients()
         {
@@ -23,14 +25,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             config.BindForNotificationHubClient(attribute);
 
             // Act
-            config.BuildFromAttribute(attribute);
+            config.BuildFromAttribute(attribute, testTraceWriter);
 
             // Assert
             Assert.Equal(1, config.ClientCache.Count);
 
             // Act
             attribute.HubName = "TestHub2";
-            config.BuildFromAttribute(attribute);
+            config.BuildFromAttribute(attribute, testTraceWriter);
 
             // Assert
             Assert.Equal(2, config.ClientCache.Count);
@@ -49,9 +51,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             config.BindForNotificationHubClient(attribute);
 
             // Act
-            config.BuildFromAttribute(attribute);
+            config.BuildFromAttribute(attribute, testTraceWriter);
             attribute.HubName = "testhub";
-            config.BuildFromAttribute(attribute);
+            config.BuildFromAttribute(attribute, testTraceWriter);
 
             // Assert
             Assert.Equal(1, config.ClientCache.Count);

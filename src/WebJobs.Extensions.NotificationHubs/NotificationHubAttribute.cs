@@ -47,5 +47,11 @@ namespace Microsoft.Azure.WebJobs
         /// <see cref="NotificationHubsConfiguration"/>.
         /// </summary>
         public string HubName { get; set; }
+
+        /// <summary>
+        /// Optional. Boolean value to enable debug send on NotificationHubClient
+        /// <see cref="NotificationHubClient"/>.
+        /// </summary>
+        public bool EnableTestSend { get; set; }
     }
 }

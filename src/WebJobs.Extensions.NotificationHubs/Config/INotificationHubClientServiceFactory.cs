@@ -5,6 +5,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 {
     internal interface INotificationHubClientServiceFactory
     {
-        INotificationHubClientService CreateService(string connectionString, string hubName);
+        INotificationHubClientService CreateService(string connectionString, string hubName, bool enableTestSend);
     }
 }
