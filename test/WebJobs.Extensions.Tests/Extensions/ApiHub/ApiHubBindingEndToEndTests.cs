@@ -52,6 +52,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
         }
 
         [Fact]
+        public async void PathsTemplateCheck()
+        {
+            var fileName = "pathstemplatestest.txt";
+
+            JobHost host = CreateTestJobHost();
+            await host.StartAsync();
+
+            // now write a file to trigger the job
+            string data = Guid.NewGuid().ToString();
+            string inputFileName = ApiHubTestFixture.PathsTestPath + "/" + fileName;
+
+            var inputFile = _fixture.RootFolder.GetFileReference(inputFileName, true);
+            await inputFile.WriteAsync(Encoding.UTF8.GetBytes(data));
+
+            // verifying both PathsTestJob1 and PathsTestJob2 get called. 
+            await VerifyOutputBinding(data, string.Format("{0}.path1", fileName));
+            await VerifyOutputBinding(data, string.Format("{0}.path2", fileName));
+
+            await host.StopAsync();
+        }
+
+        [Fact]
         public async void ChecksRelatedBlobsGettingUpdated()
         {
             JobHost host = CreateTestJobHost();
