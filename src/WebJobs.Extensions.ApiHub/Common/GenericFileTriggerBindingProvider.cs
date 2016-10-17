@@ -89,7 +89,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
                 MethodInfo methodInfo = (MethodInfo)parameter.Member;
                 _functionName = methodInfo.Name;
 
-                _bindingDataProvider = BindingDataProvider.FromTemplate(_attribute.Path, ignoreCase: true);
+                _bindingDataProvider = BindingDataProvider.FromTemplate(_attribute.Path.TrimStart('/'), ignoreCase: true);
                 _bindingContract = CreateBindingContract();
             }
 

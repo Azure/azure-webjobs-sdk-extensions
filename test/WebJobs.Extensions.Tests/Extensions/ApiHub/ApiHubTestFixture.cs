@@ -24,6 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
         public const string ImportTestPath = @"import";
         public const string OutputTestPath = @"output";
         public const string ExceptionPath = @"exceptionPath";
+        public const string PathsTestPath = @"paths";
 
         public ApiHubTestFixture()
         {
@@ -67,6 +68,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
 
             CreateFolder(ImportTestPath).Wait();
             CreateFolder(ExceptionPath).Wait();
+            CreateFolder(PathsTestPath).Wait();
 
             DeleteExistingArtifcats();
 
@@ -147,6 +149,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             EmptyFolder(ImportTestPath).Wait();
             EmptyFolder(OutputTestPath).Wait();
             EmptyFolder(ExceptionPath).Wait();
+            EmptyFolder(PathsTestPath).Wait();
 
             DeleteApiHubBlobs();
 

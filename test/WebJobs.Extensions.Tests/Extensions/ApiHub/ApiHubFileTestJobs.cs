@@ -27,6 +27,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.ApiHub
             Processed.Add(name);
         }
 
+        public static void PathsTestJob1(
+            [ApiHubFileTrigger("dropbox", ApiHubTestFixture.PathsTestPath + @"/{name}")] string input,
+            [ApiHubFile("dropbox", ApiHubTestFixture.OutputTestPath + @"/{name}.path1", FileAccess.Write)] out string outputString)
+        {
+            outputString = input;            
+        }
+
+        public static void PathsTestJob2(
+            [ApiHubFileTrigger("dropbox", "/" + ApiHubTestFixture.PathsTestPath + @"/{name}")] string input,
+            [ApiHubFile("dropbox", "/" + ApiHubTestFixture.OutputTestPath + @"/{name}.path2", FileAccess.Write)] out string outputString)
+        {
+            outputString = input;
+        }
+
         public static void ThrowException(
             [ApiHubFileTrigger("dropbox", ApiHubTestFixture.ExceptionPath + @"/{name}")] Stream sr,
             string name)
