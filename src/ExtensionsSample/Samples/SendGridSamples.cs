@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Newtonsoft.Json.Linq;
 using SendGrid.Helpers.Mail;
@@ -71,15 +72,16 @@ namespace ExtensionsSample
         /// <summary>
         /// Demonstrates the IAsyncCollector binding. This works with JObject
         /// or SendGridMessage. Using IAsyncCollector is also a way to conditionally
-        /// send messages from a function.
+        /// send messages from a function. If your function is not async, you can
+        /// use ICollector.
         /// </summary>
         [Disable]
-        public static void ProcessOrder_JObjectAsyncCollector(
+        public static async Task ProcessOrder_JObjectAsyncCollector(
             [QueueTrigger(@"samples-orders")] Order order,
             [SendGrid] IAsyncCollector<JObject> messages)
         {
             JObject message = JObject.Parse(GetEmailJson(order));
-            messages.AddAsync(message);
+            await messages.AddAsync(message);
         }
 
         private static string GetEmailJson(Order order)
