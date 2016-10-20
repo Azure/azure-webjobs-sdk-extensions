@@ -220,9 +220,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             // Without this, it's possible to set the 'Next' value to the same time twice in a row, 
             // which results in duplicate triggers if the site restarts.
             DateTime adjustedInvocationTime = invocationTime;
-            if (!isPastDue && !runOnStartup && ScheduleStatus?.Next > invocationTime)
+            if (!isPastDue && !runOnStartup && ScheduleStatus?.Next >= invocationTime)
             {
-                adjustedInvocationTime = ScheduleStatus.Next;
+                adjustedInvocationTime = ScheduleStatus.Next + TimeSpan.FromMilliseconds(1);
             }
 
             ScheduleStatus = new ScheduleStatus

@@ -65,11 +65,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             DateTime invocationTime = status.Next.AddMilliseconds(-1);
 
             // It should not use the same 'Next' value twice in a row.
-            DateTime expectedNextOccurrence = new DateTime(2016, 3, 6);
+            DateTime expectedMinimumNextOcurrence = new DateTime(2016, 3, 6);
 
             bool monitorCalled = false;
             _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName,
-                It.Is<ScheduleStatus>(q => q.Last == invocationTime && q.Next == expectedNextOccurrence)))
+                It.Is<ScheduleStatus>(q => q.Last == invocationTime && q.Next >= expectedMinimumNextOcurrence)))
                 .Callback(() => monitorCalled = true)
                 .Returns(Task.FromResult(true));
 
@@ -81,7 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _listener.Dispose();
 
             Assert.Equal(invocationTime, _listener.ScheduleStatus.Last);
-            Assert.Equal(expectedNextOccurrence, _listener.ScheduleStatus.Next);
+            Assert.True(_listener.ScheduleStatus.Next >= expectedMinimumNextOcurrence);
             Assert.Equal(monitorCalled, useMonitor);
         }
 
