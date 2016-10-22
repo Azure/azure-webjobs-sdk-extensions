@@ -45,7 +45,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             {
                 DateTime next = GetNextOccurrence(now.Value);
                 occurrences.Add(next);
-                now = next + TimeSpan.FromMilliseconds(1);
+                now = next;
             }
 
             return occurrences;

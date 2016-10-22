@@ -21,15 +21,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void GetNextOccurrence_SingleDaySchedule_MultipleScheduleIterations()
         {
-            // simple MWF schedule
             Tuple<DayOfWeek, TimeSpan>[] scheduleData = new Tuple<DayOfWeek, TimeSpan>[]
             {
                 new Tuple<DayOfWeek, TimeSpan>(DayOfWeek.Monday, new TimeSpan(9, 0, 0))
             };
 
+            var schedule = new WeeklySchedule();
+            foreach (var occurrence in scheduleData)
+            {
+                schedule.Add(occurrence.Item1, occurrence.Item2);
+            }
+
             // set now to be before the first occurrence
             DateTime now = new DateTime(2015, 5, 23, 7, 30, 0);
             VerifySchedule(scheduleData, now);
+        }
+
+        [Fact]
+        public void GetNextOccurrence_NowEqualToNext_ReturnsCorrectValue()
+        {
+            var schedule = new WeeklySchedule();
+            schedule.Add(DayOfWeek.Monday, new TimeSpan(9, 0, 0));
+            schedule.Add(DayOfWeek.Wednesday, new TimeSpan(18, 0, 0));
+            schedule.Add(DayOfWeek.Friday, new TimeSpan(18, 0, 0));
+
+            var now = schedule.GetNextOccurrence(DateTime.Now);
+            var next = schedule.GetNextOccurrence(now);
+
+            Assert.True(next > now);
         }
 
         [Fact]
@@ -40,7 +59,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             {
                 new Tuple<DayOfWeek, TimeSpan>(DayOfWeek.Monday, new TimeSpan(9, 0, 0)),
                 new Tuple<DayOfWeek, TimeSpan>(DayOfWeek.Wednesday, new TimeSpan(18, 0, 0)),
-                new Tuple<DayOfWeek, TimeSpan>(DayOfWeek.Friday, new TimeSpan(9, 30, 0))
+                new Tuple<DayOfWeek, TimeSpan>(DayOfWeek.Friday, new TimeSpan(18, 0, 0))
             };
 
             // set now to be before the first occurrence

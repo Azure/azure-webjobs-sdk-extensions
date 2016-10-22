@@ -10,6 +10,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
     public class CronScheduleTests
     {
         [Fact]
+        public void GetNextOccurrence_NowEqualToNext_ReturnsCorrectValue()
+        {
+            CronSchedule schedule = new CronSchedule("0 * * * * *");
+
+            var now = schedule.GetNextOccurrence(DateTime.Now);
+            var next = schedule.GetNextOccurrence(now);
+
+            Assert.True(next > now);
+        }
+
+        [Fact]
         public void GetNextOccurrence_ThreeDaySchedule_MultipleScheduleIterations()
         {
             // 11:59AM on Mondays, Tuesdays, Wednesdays, Thursdays and Fridays

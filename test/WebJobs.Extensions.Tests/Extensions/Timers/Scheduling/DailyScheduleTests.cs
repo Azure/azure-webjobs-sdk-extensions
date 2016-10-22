@@ -26,6 +26,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         }
 
         [Fact]
+        public void GetNextOccurrence_NowEqualToNext_ReturnsCorrectValue()
+        {
+            var scheduleData = new List<TimeSpan>
+            {
+                new TimeSpan(8, 0, 0),
+                new TimeSpan(11, 30, 0),
+                new TimeSpan(15, 0, 0),
+                new TimeSpan(19, 15, 0)
+            };
+            var schedule = new DailySchedule(scheduleData.ToArray());
+
+            var now = schedule.GetNextOccurrence(DateTime.Now);
+            var next = schedule.GetNextOccurrence(now);
+
+            Assert.True(next > now);
+        }
+
+        [Fact]
         public void Constructor_TimeStrings()
         {
             DailySchedule schedule = new DailySchedule("08:30:00", "12:00:00", "15:00:00");

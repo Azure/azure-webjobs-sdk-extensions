@@ -53,9 +53,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             int nextTimeIndex = -1;
             if (daySchedule != null)
             {
-                // we have a schedule for today
-                // determine the next time
-                nextTimeIndex = daySchedule.FindIndex(p => p.TotalMilliseconds >= now.TimeOfDay.TotalMilliseconds);
+                // We have a schedule for today. Determine the next time
+                // where the time is strictly greater than the current time
+                nextTimeIndex = daySchedule.FindIndex(p => p.TotalMilliseconds > now.TimeOfDay.TotalMilliseconds);
                 if (nextTimeIndex != -1)
                 {
                     nextTime = daySchedule[nextTimeIndex];

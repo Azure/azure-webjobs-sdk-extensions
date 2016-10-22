@@ -50,8 +50,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 throw new InvalidOperationException("The schedule is empty.");
             }
 
-            // find the next occurrence in the schedule
-            int idx = schedule.FindIndex(p => now.TimeOfDay <= p);
+            // find the next occurrence in the schedule where the time
+            // is strictly greater than now
+            int idx = schedule.FindIndex(p => now.TimeOfDay < p);
             if (idx == -1)
             {
                 // no more occurrences for today, so start back at the beginning of the
