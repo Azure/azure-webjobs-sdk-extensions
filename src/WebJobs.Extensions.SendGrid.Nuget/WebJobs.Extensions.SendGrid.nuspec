@@ -15,7 +15,7 @@
     <tags>Microsoft Azure WebJobs Jobs Extensions SendGrid Email windowsazureofficial Web</tags>
     <dependencies>
       <dependency id="Microsoft.Azure.WebJobs.Extensions" version="$WebJobsPackageVersion$" />
-      <dependency id="Sendgrid" version="8.0.4" />
+      <dependency id="Sendgrid" version="8.0.5" />
     </dependencies>
   </metadata>
 </package>
