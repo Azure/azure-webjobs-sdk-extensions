@@ -69,7 +69,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
             bool monitorCalled = false;
             _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName,
-                It.Is<ScheduleStatus>(q => q.Last == invocationTime && q.Next == expectedNextOccurrence)))
+                It.Is<ScheduleStatus>(q => q.Last == status.Next && q.Next == expectedNextOccurrence)))
                 .Callback(() => monitorCalled = true)
                 .Returns(Task.FromResult(true));
 
@@ -80,7 +80,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
             _listener.Dispose();
 
-            Assert.Equal(invocationTime, _listener.ScheduleStatus.Last);
+            Assert.Equal(status.Next, _listener.ScheduleStatus.Last);
             Assert.Equal(expectedNextOccurrence, _listener.ScheduleStatus.Next);
             Assert.Equal(monitorCalled, useMonitor);
         }
@@ -104,6 +104,38 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await _listener.InvokeJobFunction(DateTime.Now, false);
 
             _listener.Dispose();
+        }
+
+        [Fact]
+        public async Task ClockSkew_IsNotCalculatedPastDue()
+        {
+            // First, invoke a function with clock skew. This will store the next status back in the 
+            // 'updatedStatus' variable.
+            CreateTestListener("0 0 0 * * *");
+            var status = new ScheduleStatus
+            {
+                Last = new DateTime(2016, 3, 4),
+                Next = new DateTime(2016, 3, 5)
+            };
+            DateTime invocationTime = status.Next.AddMilliseconds(-1);
+            ScheduleStatus updatedStatus = null;
+            _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName, It.IsAny<ScheduleStatus>()))
+                .Callback<string, ScheduleStatus>((n, s) => updatedStatus = s)
+                .Returns(Task.FromResult(true));
+            _listener.ScheduleStatus = status;
+            await _listener.InvokeJobFunction(invocationTime, isPastDue: false, runOnStartup: false);
+            _listener.Dispose();
+
+            // Now, use that status variable to calculate past due (this ultimately calls the base class implementation).
+            // This ensures we do not consider clock skewed functions as past due -- this was previously a bug.
+            // Use a new mock monitor so we can CallBase on it without affecting the class-level one.
+            var mockMonitor = new Mock<ScheduleMonitor>();
+            mockMonitor.CallBase = true;
+            DateTime hostStartTime = new DateTime(2016, 3, 5, 1, 0, 0);
+            TimeSpan pastDue = await mockMonitor.Object.CheckPastDueAsync(_testTimerName, hostStartTime, _schedule, updatedStatus);
+
+            Assert.Equal(TimeSpan.Zero, pastDue);
+            _mockScheduleMonitor.VerifyAll();
         }
 
         [Fact]
@@ -300,6 +332,41 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await _listener.StopAsync(CancellationToken.None);
 
             Assert.True(_traceWriter.Events.Single(m => m.Level == TraceLevel.Info).Message.StartsWith("The next 5 occurrences of the schedule will be:"));
+        }
+
+        [Fact]
+        public async Task Listener_LogsInitialStatus_WhenUsingMonitor()
+        {
+            var status = new ScheduleStatus
+            {
+                Last = new DateTime(2016, 3, 4),
+                Next = new DateTime(2016, 3, 4, 0, 0, 1)
+            };
+
+            var expected = $"Function 'Program.TestTimerJob' initial status: Last='{status.Last.ToString("o")}', Next='{status.Next.ToString("o")}'";
+            await RunInitialStatusTestAsync(status, expected);
+        }
+
+        [Fact]
+        public async Task Listener_LogsInitialNullStatus_WhenUsingMonitor()
+        {
+            await RunInitialStatusTestAsync(null, "Function 'Program.TestTimerJob' initial status: Last='', Next=''");
+        }
+
+        public async Task RunInitialStatusTestAsync(ScheduleStatus initialStatus, string expected)
+        {
+            _mockScheduleMonitor
+                .Setup(m => m.GetStatusAsync(_testTimerName))
+                .ReturnsAsync(initialStatus);
+            _mockScheduleMonitor
+                .Setup(m => m.CheckPastDueAsync(_testTimerName, It.IsAny<DateTime>(), _schedule, It.IsAny<ScheduleStatus>()))
+                .ReturnsAsync(TimeSpan.Zero);
+
+            await _listener.StartAsync(CancellationToken.None);
+            await _listener.StopAsync(CancellationToken.None);
+            _listener.Dispose();
+
+            Assert.Equal(expected, _traceWriter.Events.Single(m => m.Level == TraceLevel.Verbose).Message);
         }
 
         private void CreateTestListener(string expression, bool useMonitor = true, Action functionAction = null)

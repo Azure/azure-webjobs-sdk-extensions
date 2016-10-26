@@ -84,6 +84,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // check to see if we've missed an occurrence since we last started.
                 // If we have, invoke it immediately.
                 ScheduleStatus = await ScheduleMonitor.GetStatusAsync(_timerName);
+                _trace.Verbose($"Function '{_timerName}' initial status: Last='{ScheduleStatus?.Last.ToString("o")}', Next='{ScheduleStatus?.Next.ToString("o")}'");
                 TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerName, now, _schedule, ScheduleStatus);
                 isPastDue = pastDueDuration != TimeSpan.Zero;
             }
@@ -225,15 +226,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 adjustedInvocationTime = ScheduleStatus.Next;
             }
 
+            // Create the Last value with the adjustedInvocationTime; otherwise, the listener will
+            // consider this a schedule change when the host next starts.
             ScheduleStatus = new ScheduleStatus
             {
-                Last = invocationTime,
+                Last = adjustedInvocationTime,
                 Next = _schedule.GetNextOccurrence(adjustedInvocationTime)
             };
 
             if (ScheduleMonitor != null)
             {
                 await ScheduleMonitor.UpdateStatusAsync(_timerName, ScheduleStatus);
+                _trace.Verbose($"Function '{_timerName}' updated status: Last='{ScheduleStatus.Last.ToString("o")}', Next='{ScheduleStatus.Next.ToString("o")}'");
             }
         }
 
