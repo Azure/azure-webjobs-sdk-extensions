@@ -433,20 +433,34 @@ NormalizeNuGetContent: Normalize NuGetContent items full path and destination fo
                   continue;
                 }
                 
+                // It's possible for version to include a range. If it does, we'll guarantee that:
+                //   - The range begins with '[', indicating an inclusive lower bound.
+                //   - The lower bound matches the packages.config value.
+                
+                var versionSplit = version.Split(',');
+                if (versionSplit.Length == 2)
+                {
+                  if (versionSplit[0][0] != '[')
+                  {
+                    throw new InvalidOperationException(string.Format("The package '{0}' includes a version range of '{1}'. This range must begin with '[' to indicate an inclusive lower bound.", nugetPackage, version));
+                  }
+                  version = versionSplit[0].Trim('[');                  
+                }                
+                
                 // check the packages.config for a matching id                
                 var matchingElement = packageConfigXml.Descendants(packageConfigNamespace + "package")
                   .Where(p => p.Attribute("id").Value == nugetPackage).SingleOrDefault();
                   
                 if (matchingElement == null)
                 {
-                  throw new InvalidOperationException(string.Format("The package {0} was defined in the nuspec file {1} but not found in the {2}", nugetPackage, nuspecFile, packagesFile));
+                  throw new InvalidOperationException(string.Format("The package '{0}' was defined in the nuspec file '{1}' but not found in the '{2}'", nugetPackage, nuspecFile, packagesFile));
                 }
                 
                 string packageConfigVersion = matchingElement.Attribute("version").Value;
                 
                 if (packageConfigVersion != version)
                 {
-                  throw new InvalidOperationException(string.Format("The file {0} declares a dependency {1} with a version of {2}. However the file {3} delcares the same package with a version {4}. Update the nuspec file to the correct version.",
+                  throw new InvalidOperationException(string.Format("The file '{0}' declares a dependency '{1}' with a version of '{2}'. However the file '{3}' delcares the same package with a version '{4}'. Update the nuspec file to the correct version.",
                     nuspecFile, nugetPackage, version, packagesFile, packageConfigVersion));
                 }
               }
