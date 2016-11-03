@@ -45,6 +45,7 @@
 
 
 *.proj text=auto
+*.csproj text=auto
 *.vbproj text=auto
 *.fsproj text=auto
 *.dbproj text=auto
