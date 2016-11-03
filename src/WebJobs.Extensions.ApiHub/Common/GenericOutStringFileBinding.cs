@@ -69,7 +69,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
             TFile nativeFile = await this._strategyBuilder(clone);
             var func = this._converterManager.GetConverter<TFile, IFileStreamProvider, TAttribute>();
-            IFileStreamProvider strategy = func(nativeFile, null);
+            IFileStreamProvider strategy = func(nativeFile, null, null);
             return strategy;
         }
 
