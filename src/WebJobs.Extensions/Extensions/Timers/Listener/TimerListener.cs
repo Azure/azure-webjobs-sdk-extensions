@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
@@ -18,7 +19,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private readonly TimersConfiguration _config;
         private readonly ITriggeredFunctionExecutor _executor;
         private readonly TraceWriter _trace;
-        private readonly CancellationTokenSource _cancellationTokenSource;
+
+        private CancellationTokenSource _cancellationTokenSource;
 
         // Since Timer uses an integer internally for it's interval,
         // it has a maximum interval of 24.8 days.
@@ -30,6 +32,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private bool _disposed;
         private TimeSpan _remainingInterval;
 
+        // for lock renewal monitoring
+        private DateTime _lastRenewal;
+        private TimeSpan _lockInterval;
+        private bool _stoppedBecauseStale;
+
         public TimerListener(TimerTriggerAttribute attribute, TimerSchedule schedule, string timerName, TimersConfiguration config, ITriggeredFunctionExecutor executor, TraceWriter trace)
         {
             _attribute = attribute;
@@ -37,7 +44,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             _config = config;
             _executor = executor;
             _trace = trace;
-            _cancellationTokenSource = new CancellationTokenSource();
             _schedule = schedule;
             ScheduleMonitor = _attribute.UseMonitor ? _config.ScheduleMonitor : null;
         }
@@ -67,6 +73,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         {
             ThrowIfDisposed();
 
+            _stoppedBecauseStale = false;
+            _cancellationTokenSource = new CancellationTokenSource();
+
             if (_timer != null && _timer.Enabled)
             {
                 throw new InvalidOperationException("The listener has already been started.");
@@ -84,7 +93,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // check to see if we've missed an occurrence since we last started.
                 // If we have, invoke it immediately.
                 ScheduleStatus = await ScheduleMonitor.GetStatusAsync(_timerName);
-                _trace.Verbose($"Function '{_timerName}' initial status: Last='{ScheduleStatus?.Last.ToString("o")}', Next='{ScheduleStatus?.Next.ToString("o")}'");
+                _trace.Verbose($"Function '{_timerName}' initial status: Last='{FormatDateTime(ScheduleStatus?.Last)}', Next='{FormatDateTime(ScheduleStatus?.Next)}'");
                 TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerName, now, _schedule, ScheduleStatus);
                 isPastDue = pastDueDuration != TimeSpan.Zero;
             }
@@ -101,13 +110,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             if (isPastDue)
             {
-                _trace.Verbose(string.Format("Function '{0}' is past due on startup. Executing now.", _timerName));
+                _trace.Verbose($"Function '{_timerName}' is past due on startup. Executing now.");
                 await InvokeJobFunction(now, isPastDue: true);
             }
             else if (_attribute.RunOnStartup)
             {
                 // The job is configured to run immediately on startup
-                _trace.Verbose(string.Format("Function '{0}' is configured to run on startup. Executing now.", _timerName));
+                _trace.Verbose($"Function '{_timerName}' is configured to run on startup. Executing now.");
                 await InvokeJobFunction(now, runOnStartup: true);
             }
 
@@ -122,15 +131,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         {
             ThrowIfDisposed();
 
-            if (_timer == null)
+            if (_timer != null)
             {
-                throw new InvalidOperationException("The listener has not yet been started or has already been stopped.");
+                _timer.Dispose();
+                _timer = null;
             }
 
             _cancellationTokenSource.Cancel();
-
-            _timer.Dispose();
-            _timer = null;
 
             return Task.FromResult<bool>(true);
         }
@@ -174,6 +181,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // Timer's max interval, continue the remaining interval w/o
                 // invoking the function
                 StartTimer(_remainingInterval);
+                return;
+            }
+
+            // if the singleton lock is stale, we do not want to invoke the function, as that
+            // could indicate that another host has taken the lock. we'll stop it here and
+            // if the renewal comes back, it will call Start again and invoke it as past due.
+            if (IsSingletonLockStale())
+            {
+                await StopAsync(CancellationToken.None);
+                _stoppedBecauseStale = true;
+
+                _trace.Warning($"The timer for function '{_timerName}' was triggered but will not run because the Singleton lock is stale. This function will be invoked by another host or when the lock is renewed. The lock was last renewed at {FormatDateTime(_lastRenewal)} ({(int)(DateTime.UtcNow - _lastRenewal).TotalMilliseconds} milliseconds ago) and the lock duration is {(int)_lockInterval.TotalMilliseconds} milliseconds.");
                 return;
             }
 
@@ -237,7 +256,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             if (ScheduleMonitor != null)
             {
                 await ScheduleMonitor.UpdateStatusAsync(_timerName, ScheduleStatus);
-                _trace.Verbose($"Function '{_timerName}' updated status: Last='{ScheduleStatus.Last.ToString("o")}', Next='{ScheduleStatus.Next.ToString("o")}'");
+                _trace.Verbose($"Function '{_timerName}' updated status: Last='{FormatDateTime(ScheduleStatus.Last)}', Next='{FormatDateTime(ScheduleStatus.Next)}'");
             }
         }
 
@@ -296,6 +315,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             if (_disposed)
             {
                 throw new ObjectDisposedException(null);
+            }
+        }
+
+        private static string FormatDateTime(DateTime? date)
+        {
+            return date?.ToString("yyyy-MM-ddTHH:mm:ss.FFFZ", CultureInfo.InvariantCulture);
+        }
+
+        private static bool IsSingletonLockStale()
+        {
+            return false;
+            //return (DateTime.Now - _lastRenewal) > _lockInterval;
+        }
+
+        public async Task OnRenewalAsync(DateTime renewalTime, TimeSpan lockPeriod, CancellationToken cancellationToken)
+        {
+            _lastRenewal = renewalTime;
+            _lockInterval = lockPeriod;
+
+            if (_stoppedBecauseStale)
+            {
+                _trace.Verbose($"Singleton lock renewed. Restarting timer listener for function '{_timerName}'.");
+                await StartAsync(cancellationToken);
             }
         }
     }
