@@ -20,7 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
     public class MobileTableItemValueBinderTests
     {
         [Fact]
-        public void GetValue_JObject_QueriesItem()
+        public async Task GetValueAsync_JObject_QueriesItem()
         {
             // Arrange
             var parameter = MobileAppTestHelper.GetInputParameter<JObject>();
@@ -33,7 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
                 .Returns(Task.FromResult(response));
 
             // Act
-            var value = binder.GetValue();
+            var value = await binder.GetValueAsync();
 
             // Assert
             Assert.Same(response, value);
@@ -42,7 +42,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
         }
 
         [Fact]
-        public void GetValue_Poco_QueriesItem()
+        public async Task GetValueAsync_Poco_QueriesItem()
         {
             // Arrange
             var parameter = MobileAppTestHelper.GetInputParameter<TodoItem>();
@@ -55,7 +55,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
                 .Returns(Task.FromResult(response));
 
             // Act
-            var value = binder.GetValue();
+            var value = await binder.GetValueAsync();
 
             // Assert
             Assert.Same(response, value);
@@ -64,7 +64,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
         }
 
         [Fact]
-        public void GetValue_Poco_QueriesCorrectTable()
+        public async Task GetValueAsync_Poco_QueriesCorrectTable()
         {
             // Arrange                        
             var handler = new TestHandler("{}");
@@ -80,7 +80,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
             var binder = new MobileTableItemValueBinder<TodoItem>(context);
 
             // Act
-            var value = binder.GetValue();
+            var value = await binder.GetValueAsync();
 
             // Assert
             Assert.NotNull(value);
@@ -88,7 +88,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
         }
 
         [Fact]
-        public void GetValue_PocoWithTable_QueriesCorrectTable()
+        public async Task GetValueAsync_PocoWithTable_QueriesCorrectTable()
         {
             // Arrange                        
             var handler = new TestHandler("{}");
@@ -108,7 +108,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
             var binder = new MobileTableItemValueBinder<TodoItem>(context);
 
             // Act
-            var value = binder.GetValue();
+            var value = await binder.GetValueAsync();
 
             // Assert          
             Assert.NotNull(value);
@@ -116,7 +116,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
         }
 
         [Fact]
-        public void GetValue_JObject_DoesNotThrow_WhenResponseIsNotFound()
+        public async Task GetValueAsync_JObject_DoesNotThrow_WhenResponseIsNotFound()
         {
             // Arrange
             var parameter = MobileAppTestHelper.GetInputParameter<JObject>();
@@ -128,7 +128,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
                 .ThrowsAsync(new MobileServiceInvalidOperationException(string.Empty, null, new HttpResponseMessage(HttpStatusCode.NotFound)));
 
             // Act
-            var value = binder.GetValue();
+            var value = await binder.GetValueAsync();
 
             // Assert
             Assert.Null(value);
@@ -137,7 +137,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
         }
 
         [Fact]
-        public void GetValue_Poco_DoesNotThrow_WhenResponseIsNotFound()
+        public async Task GetValueAsync_Poco_DoesNotThrow_WhenResponseIsNotFound()
         {
             // Arrange
             var parameter = MobileAppTestHelper.GetInputParameter<TodoItem>();
@@ -149,7 +149,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
                 .ThrowsAsync(new MobileServiceInvalidOperationException(string.Empty, null, new HttpResponseMessage(HttpStatusCode.NotFound)));
 
             // Act
-            var value = binder.GetValue();
+            var value = await binder.GetValueAsync();
 
             // Assert
             Assert.Null(value);
@@ -158,7 +158,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
         }
 
         [Fact]
-        public void GetValue_Poco_Throws_WhenErrorResponse()
+        public async Task GetValueAsync_Poco_Throws_WhenErrorResponse()
         {
             // Arrange
             var parameter = MobileAppTestHelper.GetInputParameter<TodoItem>();
@@ -170,14 +170,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
                 .Throws(new MobileServiceInvalidOperationException(string.Empty, null, new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)));
 
             // Act
-            var ex = Assert.Throws<MobileServiceInvalidOperationException>(() => binder.GetValue());
+            var ex = await Assert.ThrowsAsync<MobileServiceInvalidOperationException>(() => binder.GetValueAsync());
 
             // Assert
             Assert.Equal(HttpStatusCode.ServiceUnavailable, ex.Response.StatusCode);
         }
 
         [Fact]
-        public void GetValue_JObject_Throws_WhenErrorResponse()
+        public async Task GetValueAsync_JObject_Throws_WhenErrorResponse()
         {
             // Arrange
             var parameter = MobileAppTestHelper.GetInputParameter<JObject>();
@@ -189,7 +189,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
                 .Throws(new MobileServiceInvalidOperationException(string.Empty, null, new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)));
 
             // Act
-            var ex = Assert.Throws<MobileServiceInvalidOperationException>(() => binder.GetValue());
+            var ex = await Assert.ThrowsAsync<MobileServiceInvalidOperationException>(() => binder.GetValueAsync());
 
             // Assert
             Assert.Equal(HttpStatusCode.ServiceUnavailable, ex.Response.StatusCode);

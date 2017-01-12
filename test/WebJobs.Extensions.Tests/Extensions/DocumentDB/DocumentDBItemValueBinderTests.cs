@@ -24,7 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
         private readonly Uri _expectedUri = UriFactory.CreateDocumentUri(DatabaseName, CollectionName, Id);
 
         [Fact]
-        public void GetValue_JObject_QueriesItem_WithPartitionKey()
+        public async Task GetValueAsync_JObject_QueriesItem_WithPartitionKey()
         {
             // Arrange           
             string partitionKey = "partitionKey";
@@ -36,7 +36,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
                 .ReturnsAsync(new Document());
 
             // Act
-            var value = binder.GetValue() as Item;
+            var value = (await binder.GetValueAsync()) as Item;
 
             // Assert
             mockService.VerifyAll();
@@ -44,7 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
         }
 
         [Fact]
-        public void GetValue_JObject_QueriesItem()
+        public async Task GetValueAsync_JObject_QueriesItem()
         {
             // Arrange            
             Mock<IDocumentDBService> mockService;
@@ -54,7 +54,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
                 .ReturnsAsync(new Document());
 
             // Act
-            var value = binder.GetValue() as Item;
+            var value = (await binder.GetValueAsync()) as Item;
 
             // Assert
             mockService.VerifyAll();
@@ -62,7 +62,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
         }
 
         [Fact]
-        public void GetValue_DoesNotThrow_WhenResponseIsNotFound()
+        public async Task GetValueAsync_DoesNotThrow_WhenResponseIsNotFound()
         {
             // Arrange
             Mock<IDocumentDBService> mockService;
@@ -72,7 +72,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
                 .ThrowsAsync(DocumentDBTestUtility.CreateDocumentClientException(HttpStatusCode.NotFound));
 
             // Act
-            var value = binder.GetValue();
+            var value = await binder.GetValueAsync();
 
             // Assert
             Assert.Null(value);
@@ -80,7 +80,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
         }
 
         [Fact]
-        public void GetValue_Throws_WhenErrorResponse()
+        public async Task GetValueAsync_Throws_WhenErrorResponse()
         {
             // Arrange
             Mock<IDocumentDBService> mockService;
@@ -91,10 +91,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
 
             // Act
             // TODO: Fix this up so it exposes the real exception
-            var ex = Assert.Throws<AggregateException>(() => binder.GetValue());
+            var ex = await Assert.ThrowsAsync<DocumentClientException>(() => binder.GetValueAsync());
 
             // Assert
-            Assert.Equal(HttpStatusCode.ServiceUnavailable, ((DocumentClientException)ex.InnerException).StatusCode);
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, ex.StatusCode);
         }
 
         [Theory]

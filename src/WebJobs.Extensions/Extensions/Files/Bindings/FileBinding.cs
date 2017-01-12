@@ -95,13 +95,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 return _fileInfo.Open(_attribute.Mode, _attribute.Access);
             }
 
-            public override object GetValue()
+            public override Task<object> GetValueAsync()
             {
                 if (_parameter.ParameterType == typeof(FileInfo))
                 {
-                    return _fileInfo;
+                    return Task.FromResult<object>(_fileInfo);
                 }
-                return base.GetValue();
+                return base.GetValueAsync();
             }
 
             public override string ToInvokeString()

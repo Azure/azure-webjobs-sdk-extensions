@@ -36,16 +36,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
             await SetValueInternalAsync(_originalItem, value, _context);
         }
 
-        public object GetValue()
+        public async Task<object> GetValueAsync()
         {
             object item = null;
 
             if (typeof(T) == typeof(JObject))
             {
                 IMobileServiceTable table = _context.Client.GetTable(_context.ResolvedAttribute.TableName);
-                IgnoreNotFoundException(() =>
+                await IgnoreNotFoundExceptionAsync(async () =>
                 {
-                    item = table.LookupAsync(_context.ResolvedAttribute.Id).Result;
+                    item = await table.LookupAsync(_context.ResolvedAttribute.Id);
                     _originalItem = CloneItem(item);
                 });
             }
@@ -59,9 +59,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
                 }
 
                 IMobileServiceTable<T> table = _context.Client.GetTable<T>();
-                IgnoreNotFoundException(() =>
+                await IgnoreNotFoundExceptionAsync(async () =>
                 {
-                    item = table.LookupAsync(_context.ResolvedAttribute.Id).Result;
+                    item = await table.LookupAsync(_context.ResolvedAttribute.Id);
                     _originalItem = CloneItem(item);
                 });
             }
@@ -132,23 +132,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
             return JObject.Parse(serializedItem);
         }
 
-        private static void IgnoreNotFoundException(Action action)
+        private static async Task IgnoreNotFoundExceptionAsync(Func<Task> action)
         {
             try
             {
-                action();
+                await action();
             }
-            catch (AggregateException ex)
+            catch (MobileServiceInvalidOperationException ex)
             {
-                foreach (Exception innerEx in ex.InnerExceptions)
+                if (ex.Response.StatusCode != System.Net.HttpStatusCode.NotFound)
                 {
-                    MobileServiceInvalidOperationException mobileEx =
-                        innerEx as MobileServiceInvalidOperationException;
-                    if (mobileEx == null ||
-                        mobileEx.Response.StatusCode != System.Net.HttpStatusCode.NotFound)
-                    {
-                        throw innerEx;
-                    }
+                    throw ex;
                 }
             }
         }

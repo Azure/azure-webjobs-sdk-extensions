@@ -156,7 +156,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 _fileEvent = fileEvent;
             }
 
-            public override object GetValue()
+            public override async Task<object> GetValueAsync()
             {
                 if (_parameter.ParameterType == typeof(FileSystemEventArgs))
                 {
@@ -166,7 +166,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 {
                     return new FileInfo(_fileEvent.FullPath);
                 }
-                return base.GetValue();
+                return await base.GetValueAsync();
             }
 
             protected override Stream GetStream()

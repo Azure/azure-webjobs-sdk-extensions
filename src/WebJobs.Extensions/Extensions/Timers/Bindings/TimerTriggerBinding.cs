@@ -121,9 +121,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
                 get { return typeof(TimerInfo); }
             }
 
-            public object GetValue()
+            public Task<object> GetValueAsync()
             {
-                return _value;
+                return Task.FromResult(_value);
             }
 
             public string ToInvokeString()

@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
         }
 
         /// <inheritdoc/>
-        public abstract object GetValue();
+        public abstract Task<object> GetValueAsync();
 
         /// <inheritdoc/>
         public abstract string ToInvokeString();

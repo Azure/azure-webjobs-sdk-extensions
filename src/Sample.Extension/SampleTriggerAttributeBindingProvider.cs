@@ -37,7 +37,7 @@ namespace Sample.Extension
             if (parameter.ParameterType != typeof(SampleTriggerValue) &&
                 parameter.ParameterType != typeof(string))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 
+                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture,
                     "Can't bind SampleTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
@@ -134,14 +134,14 @@ namespace Sample.Extension
                     _value = value;
                 }
 
-                public override object GetValue()
+                public override Task<object> GetValueAsync()
                 {
                     // TODO: Perform any required conversions
                     if (Type == typeof(string))
                     {
-                        return _value.ToString();
+                        return Task.FromResult<object>(_value.ToString());
                     }
-                    return _value;
+                    return Task.FromResult(_value);
                 }
 
                 public override string ToInvokeString()

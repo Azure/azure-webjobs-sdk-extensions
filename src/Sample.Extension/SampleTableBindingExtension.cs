@@ -74,9 +74,9 @@ namespace Sample.Extension
                     get { return typeof(Table<TElement>); }
                 }
 
-                public object GetValue()
+                public Task<object> GetValueAsync()
                 {
-                    return new Table<TElement>(_table);
+                    return Task.FromResult<object>(new Table<TElement>(_table));
                 }
 
                 public Task SetValueAsync(object value, CancellationToken cancellationToken)

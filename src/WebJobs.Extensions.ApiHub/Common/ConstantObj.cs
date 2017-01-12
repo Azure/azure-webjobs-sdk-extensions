@@ -17,15 +17,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
         public Func<object, Task> OnCompleted { get; set; }
 
-        public object GetValue()
+        public Task<object> GetValueAsync()
         {
             if ((Type == typeof(byte[]) || Type == typeof(byte[]).MakeByRefType()) && Value is MemoryStream)
             {
-                return ((MemoryStream)Value).ToArray();
+                return Task.FromResult<object>(((MemoryStream)Value).ToArray());
             }
             else
             {
-                return Value;
+                return Task.FromResult(Value);
             }
         }
 

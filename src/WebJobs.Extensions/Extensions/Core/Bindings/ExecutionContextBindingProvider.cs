@@ -100,9 +100,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core
                     get { return typeof(ExecutionContext); }
                 }
 
-                public object GetValue()
+                public Task<object> GetValueAsync()
                 {
-                    return _context;
+                    return Task.FromResult<object>(_context);
                 }
 
                 public string ToInvokeString()

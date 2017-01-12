@@ -40,11 +40,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core
                 return Task.FromResult<ITriggerBinding>(null);
             }
 
-            if (parameter.ParameterType != typeof(TraceFilter) && 
+            if (parameter.ParameterType != typeof(TraceFilter) &&
                 parameter.ParameterType != typeof(TraceEvent) &&
                 parameter.ParameterType != typeof(IEnumerable<TraceEvent>))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 
+                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture,
                     "Can't bind ErrorTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
@@ -147,17 +147,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core
                     _value = value;
                 }
 
-                public override object GetValue()
+                public override Task<object> GetValueAsync()
                 {
                     if (_parameter.ParameterType == typeof(TraceEvent))
                     {
-                        return _value.Events.Last();
+                        return Task.FromResult<object>(_value.Events.Last());
                     }
                     else if (_parameter.ParameterType == typeof(IEnumerable<TraceEvent>))
                     {
-                        return _value.Events.AsEnumerable();
+                        return Task.FromResult<object>(_value.Events.AsEnumerable());
                     }
-                    return _value;
+                    return Task.FromResult<object>(_value);
                 }
 
                 public override string ToInvokeString()

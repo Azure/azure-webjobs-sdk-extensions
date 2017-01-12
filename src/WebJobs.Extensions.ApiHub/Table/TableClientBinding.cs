@@ -13,7 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
     internal class TableClientBinding : IBinding
     {
         public TableClientBinding(
-            ParameterInfo parameter, 
+            ParameterInfo parameter,
             TableConfigContext configContext)
         {
             ValidateParameter(parameter);
@@ -66,7 +66,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
             if (parameterType != typeof(ITableClient))
             {
                 throw new InvalidOperationException(string.Format(
-                    "The attribute {0} indicates a table client binding. " + 
+                    "The attribute {0} indicates a table client binding. " +
                     "The parameter type must be {1}. " +
                     "To bind to a table specify the table name. " +
                     "To bind to an entity specify the table name and the entity identifier.",
@@ -93,12 +93,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
                 get { return Parameter.ParameterType; }
             }
 
-            public object GetValue()
+            public Task<object> GetValueAsync()
             {
                 var attribute = Parameter.GetTableAttribute();
                 var tableClient = attribute.GetTableClient(ConfigContext);
 
-                return tableClient;
+                return Task.FromResult<object>(tableClient);
             }
 
             public string ToInvokeString()

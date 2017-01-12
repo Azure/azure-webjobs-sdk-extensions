@@ -19,7 +19,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
         private readonly BindingTemplate _tableNameBindingTemplate;
 
         public TableBinding(
-            ParameterInfo parameter, 
+            ParameterInfo parameter,
             TableConfigContext configContext)
         {
             ValidateParameter(parameter);
@@ -153,7 +153,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
                 get { return Parameter.ParameterType; }
             }
 
-            public object GetValue()
+            public Task<object> GetValueAsync()
             {
                 var table = ResolvedAttribute.GetTableReference<TEntity>(ConfigContext);
                 var parameterType = Parameter.ParameterType;
@@ -161,10 +161,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
 
                 if (genericTypeDefinition == typeof(IAsyncCollector<>))
                 {
-                    return new TableAsyncCollector<TEntity>(table);
+                    return Task.FromResult<object>(new TableAsyncCollector<TEntity>(table));
                 }
 
-                return table;
+                return Task.FromResult<object>(table);
             }
 
             public string ToInvokeString()

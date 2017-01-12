@@ -80,7 +80,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
         protected abstract Stream GetStream();
 
         /// <inheritdoc/>
-        public override object GetValue()
+        public override async Task<object> GetValueAsync()
         {
             if (_parameter.IsOut)
             {
@@ -103,14 +103,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
             {
                 using (StreamReader reader = new StreamReader(stream))
                 {
-                    return reader.ReadToEnd();
+                    string value = await reader.ReadToEndAsync();
+                    return value;
                 }
             }
             else if (_parameter.ParameterType == typeof(byte[]))
             {
                 using (var ms = new MemoryStream())
                 {
-                    stream.CopyTo(ms);
+                    await stream.CopyToAsync(ms);
                     return ms.ToArray();
                 }
             }
@@ -161,7 +162,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
                     {
                         stream.Write(bytes, 0, bytes.Length);
                     }
-                }  
+                }
             }
 
             return Task.FromResult(true);

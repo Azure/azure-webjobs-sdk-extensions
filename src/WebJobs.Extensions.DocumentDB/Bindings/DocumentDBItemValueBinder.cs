@@ -38,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             await SetValueInternalAsync(_originalItem, value as T, _context);
         }
 
-        public object GetValue()
+        public async Task<object> GetValueAsync()
         {
             Uri documentUri = UriFactory.CreateDocumentUri(_context.ResolvedAttribute.DatabaseName, _context.ResolvedAttribute.CollectionName, _context.ResolvedAttribute.Id);
             RequestOptions options = null;
@@ -51,8 +51,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 };
             }
 
-            Document document = DocumentDBUtility.RetryAsync(() => _context.Service.ReadDocumentAsync(documentUri, options),
-                    _context.MaxThrottleRetries, codesToIgnore: HttpStatusCode.NotFound).Result;
+            Document document = await DocumentDBUtility.RetryAsync(() => _context.Service.ReadDocumentAsync(documentUri, options),
+                    _context.MaxThrottleRetries, codesToIgnore: HttpStatusCode.NotFound);
 
             if (document == null)
             {

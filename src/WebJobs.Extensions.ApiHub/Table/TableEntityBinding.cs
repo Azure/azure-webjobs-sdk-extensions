@@ -42,7 +42,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
                 _entityIdBindingTemplate = BindingTemplate.FromString(attribute.EntityId, ignoreCase: true);
             }
         }
-        
+
         private ParameterInfo Parameter { get; set; }
         private TableConfigContext ConfigContext { get; set; }
 
@@ -163,7 +163,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
                 get { return Parameter.ParameterType; }
             }
 
-            public object GetValue()
+            public async Task<object> GetValueAsync()
             {
                 if (string.IsNullOrEmpty(ResolvedAttribute.EntityId))
                 {
@@ -173,7 +173,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
 
                 var table = ResolvedAttribute.GetTableReference<TEntity>(ConfigContext);
                 var entityId = ResolvedAttribute.GetEntityId(ConfigContext);
-                var entity = table.GetEntityAsync(entityId).Result;
+                var entity = await table.GetEntityAsync(entityId);
 
                 if (entity == null)
                 {

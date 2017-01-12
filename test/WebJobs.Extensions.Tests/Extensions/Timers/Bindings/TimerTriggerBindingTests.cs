@@ -41,13 +41,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Bindings
             FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, trace);
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             TriggerData triggerData = (TriggerData)(await binding.BindAsync(string.Empty, context));
-            TimerInfo timerInfo = (TimerInfo)triggerData.ValueProvider.GetValue();
+            TimerInfo timerInfo = (TimerInfo)(await triggerData.ValueProvider.GetValueAsync());
             Assert.Same(status, timerInfo.ScheduleStatus);
 
             // when we pass in a TimerInfo that is used
             TimerInfo expected = new TimerInfo(schedule, status);
             triggerData = (TriggerData)(await binding.BindAsync(expected, context));
-            timerInfo = (TimerInfo)triggerData.ValueProvider.GetValue();
+            timerInfo = (TimerInfo)(await triggerData.ValueProvider.GetValueAsync());
             Assert.Same(expected, timerInfo);
         }
 
