@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
@@ -62,16 +63,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             Assert.Equal("One or more WebJob errors have occurred.", traceFilter.Message);
 
             int notification = 0;
-            traceMonitor.Subscribe(p => notification++);
-
-            Assert.Equal(0, traceFilter.Events.Count);
+            traceMonitor.Subscribe(p => notification++);            
+            Assert.Equal(0, traceFilter.GetEvents().Count());
             traceMonitor.Trace(new TraceEvent(TraceLevel.Error, "Error1"));
-            Assert.Equal(1, traceFilter.Events.Count);
-            Assert.Equal("Error1", traceFilter.Events.Single().Message);
+            IEnumerable<TraceEvent> traceEvents = traceFilter.GetEvents();
+            Assert.Equal(1, traceEvents.Count());
+            Assert.Equal("Error1", traceEvents.Single().Message);
 
             traceMonitor.Trace(new TraceEvent(TraceLevel.Error, "Error2"));
-            Assert.Equal(1, traceFilter.Events.Count);
-            Assert.Equal("Error2", traceFilter.Events.Single().Message);
+            traceEvents = traceFilter.GetEvents();
+            Assert.Equal(1, traceEvents.Count());
+            Assert.Equal("Error2", traceEvents.Single().Message);
             Assert.Equal(2, notification);
         }
 
@@ -89,14 +91,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             int notification = 0;
             traceMonitor.Subscribe(p => notification++);
 
-            Assert.Equal(0, traceFilter.Events.Count);
+            Assert.Equal(0, traceFilter.GetEvents().Count());
             traceMonitor.Trace(new TraceEvent(TraceLevel.Error, "Error1"));
-            Assert.Equal(1, traceFilter.Events.Count);
-            Assert.Equal("Error1", traceFilter.Events.Single().Message);
+            Assert.Equal(1, traceFilter.GetEvents().Count());
+            Assert.Equal("Error1", traceFilter.GetEvents().Single().Message);
 
             traceMonitor.Trace(new TraceEvent(TraceLevel.Error, "Error2"));
-            Assert.Equal(1, traceFilter.Events.Count);
-            Assert.Equal("Error2", traceFilter.Events.Single().Message);
+            Assert.Equal(1, traceFilter.GetEvents().Count());
+            Assert.Equal("Error2", traceFilter.GetEvents().Single().Message);
 
             // expect second notification to be ignored due to throttle
             Assert.Equal(1, notification);
@@ -120,7 +122,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             };
             TraceEvent traceEvent = new TraceEvent(TraceLevel.Error, "Kaboom!", null, functionException);
             traceMonitor.Trace(traceEvent);
-            Assert.Equal(0, traceFilter.Events.Count);
+            Assert.Equal(0, traceFilter.GetEvents().Count());
 
             functionException = new FunctionInvocationException("Function failed", new Exception("Kaboom!"))
             {
@@ -128,8 +130,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             };
             traceEvent = new TraceEvent(TraceLevel.Error, "Kaboom!", null, functionException);
             traceMonitor.Trace(traceEvent);
-            Assert.Equal(1, traceFilter.Events.Count);
-            Assert.Same(functionException, traceFilter.Events.Single().Exception);
+            Assert.Equal(1, traceFilter.GetEvents().Count());
+            Assert.Same(functionException, traceFilter.GetEvents().Single().Exception);
         }
 
         [Fact]
@@ -163,7 +165,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             };
             TraceEvent traceEvent = new TraceEvent(TraceLevel.Error, "Kaboom!", null, functionException);
             traceMonitor.Trace(traceEvent);
-            Assert.Equal(0, traceFilter.Events.Count);
+            Assert.Equal(0, traceFilter.GetEvents().Count());
 
             functionException = new FunctionInvocationException("Function failed", new Exception("Kaboom!"))
             {
@@ -171,8 +173,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             };
             traceEvent = new TraceEvent(TraceLevel.Error, "Kaboom!", null, functionException);
             traceMonitor.Trace(traceEvent);
-            Assert.Equal(1, traceFilter.Events.Count);
-            Assert.Same(functionException, traceFilter.Events.Single().Exception);
+            Assert.Equal(1, traceFilter.GetEvents().Count());
+            Assert.Same(functionException, traceFilter.GetEvents().Single().Exception);
         }
 
         internal static class Functions
@@ -220,6 +222,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             internal class CustomTraceFilter : TraceFilter
             {
                 private readonly Collection<TraceEvent> _traceEvents = new Collection<TraceEvent>();
+                private readonly object _eventsLock = new object();
 
                 public override string Message
                 {
@@ -229,11 +232,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
                     }
                 }
 
-                public override Collection<TraceEvent> Events
+                public override IEnumerable<TraceEvent> GetEvents()
                 {
-                    get
+                    lock (_eventsLock)
                     {
-                        return _traceEvents;
+                        return _traceEvents.ToArray<TraceEvent>();
                     }
                 }
 

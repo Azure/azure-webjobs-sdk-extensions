@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using Microsoft.Azure.WebJobs.Host;
 using Xunit;
+using System.Collections.Generic;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
 {
@@ -31,9 +32,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
 
             DateTime now = DateTime.Now - TimeSpan.FromMinutes(10);
 
-            Assert.Equal(0, filter.Events.Count);
+            Assert.Equal(0, filter.GetEvents().Count());
             filter.RemoveOldEvents(now);
-            Assert.Equal(0, filter.Events.Count);
+            Assert.Equal(0, filter.GetEvents().Count());
 
             // add some events over a few minutes
             for (int i = 0; i < 10; i++)
@@ -43,33 +44,36 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
                 {
                     Timestamp = now
                 };
-                filter.Events.Add(traceEvent);
+                filter.AddEvent(traceEvent);
             }
 
-            Assert.Equal(10, filter.Events.Count);
+            Assert.Equal(10, filter.GetEvents().Count());
             filter.RemoveOldEvents(now);
-            Assert.Equal(10, filter.Events.Count);
-            Assert.Equal("Error 0", filter.Events.First().Message);
-            Assert.Equal("Error 9", filter.Events.Last().Message);
+            IEnumerable<TraceEvent> traceEvents = filter.GetEvents();
+            Assert.Equal(10, traceEvents.Count());
+            Assert.Equal("Error 0", traceEvents.First().Message);
+            Assert.Equal("Error 9", traceEvents.Last().Message);
 
             // now advance forward a minute
             now += TimeSpan.FromMinutes(1);
             filter.RemoveOldEvents(now);
-            Assert.Equal(9, filter.Events.Count);
-            Assert.Equal("Error 1", filter.Events.First().Message);
-            Assert.Equal("Error 9", filter.Events.Last().Message);
+            traceEvents = filter.GetEvents();
+            Assert.Equal(9, traceEvents.Count());
+            Assert.Equal("Error 1", traceEvents.First().Message);
+            Assert.Equal("Error 9", traceEvents.Last().Message);
 
             // now advance forward a few more minutes
             now += TimeSpan.FromMinutes(5);
             filter.RemoveOldEvents(now);
-            Assert.Equal(4, filter.Events.Count);
-            Assert.Equal("Error 6", filter.Events.First().Message);
-            Assert.Equal("Error 9", filter.Events.Last().Message);
+            traceEvents = filter.GetEvents();
+            Assert.Equal(4, traceEvents.Count());
+            Assert.Equal("Error 6", traceEvents.First().Message);
+            Assert.Equal("Error 9", traceEvents.Last().Message);
 
             // finally advance forward past all existing events
             now += TimeSpan.FromMinutes(5);
             filter.RemoveOldEvents(now);
-            Assert.Equal(0, filter.Events.Count);
+            Assert.Equal(0, filter.GetEvents().Count());
         }
 
         [Fact]
@@ -82,10 +86,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             Assert.False(filter.Filter(new TraceEvent(TraceLevel.Info, "Error 3")));  // expect this to be ignored based on Level
             Assert.True(filter.Filter(new TraceEvent(TraceLevel.Error, "Error 4")));
 
-            Assert.Equal(3, filter.Events.Count);
-            Assert.Equal("Error 1", filter.Events[0].Message);
-            Assert.Equal("Error 2", filter.Events[1].Message);
-            Assert.Equal("Error 4", filter.Events[2].Message);
+            Assert.Equal(3, filter.GetEvents().Count());
+            TraceEvent[] events = filter.GetEvents().ToArray<TraceEvent>();
+            Assert.Equal("Error 1", events[0].Message);
+            Assert.Equal("Error 2", events[1].Message);
+            Assert.Equal("Error 4", events[2].Message);
         }
 
         [Fact]
@@ -101,10 +106,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             Assert.False(filter.Filter(new TraceEvent(TraceLevel.Info, "Error 4 (Ignore)")));  // expect this to be ignored based inner filter
             Assert.True(filter.Filter(new TraceEvent(TraceLevel.Error, "Error 5")));
 
-            Assert.Equal(3, filter.Events.Count);
-            Assert.Equal("Error 1", filter.Events[0].Message);
-            Assert.Equal("Error 2", filter.Events[1].Message);
-            Assert.Equal("Error 5", filter.Events[2].Message);
+            TraceEvent[] events = filter.GetEvents().ToArray<TraceEvent>();
+            Assert.Equal(3, events.Length);            
+            Assert.Equal("Error 1", events[0].Message);
+            Assert.Equal("Error 2", events[1].Message);
+            Assert.Equal("Error 5", events[2].Message);
         }
     }
 }
