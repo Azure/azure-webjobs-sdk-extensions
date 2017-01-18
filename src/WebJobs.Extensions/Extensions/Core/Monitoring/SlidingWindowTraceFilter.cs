@@ -2,8 +2,10 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.Azure.WebJobs.Host;
 
 namespace Microsoft.Azure.WebJobs.Extensions
@@ -56,11 +58,11 @@ namespace Microsoft.Azure.WebJobs.Extensions
         public int Threshold { get; private set; }
 
         /// <inheritdoc/>
-        public override Collection<TraceEvent> Events
+        public override IEnumerable<TraceEvent> GetEvents()
         {
-            get
+            lock (_syncLock)
             {
-                return _events;
+                return _events.ToArray<TraceEvent>();
             }
         }
 
@@ -108,6 +110,14 @@ namespace Microsoft.Azure.WebJobs.Extensions
             }
 
             return passesFilter;
+        }
+
+        internal void AddEvent(TraceEvent traceEvent)
+        {
+            lock (_syncLock)
+            {
+                _events.Add(traceEvent);
+            }
         }
 
         internal void RemoveOldEvents(DateTime now)

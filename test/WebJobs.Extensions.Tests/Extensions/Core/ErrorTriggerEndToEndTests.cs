@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -37,9 +38,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             await CallSafe(host, method);
             Assert.NotNull(instance.TraceFilter);
 
+            IEnumerable<TraceEvent> events = instance.TraceFilter.GetEvents();
             Assert.Equal("3 events at level 'Error' or lower have occurred within time window 00:05:00.", instance.TraceFilter.Message);
-            Assert.Equal(3, instance.TraceFilter.Events.Count);
-            foreach (TraceEvent traceEvent in instance.TraceFilter.Events)
+            Assert.Equal(3, events.Count());
+            foreach (TraceEvent traceEvent in events)
             {
                 FunctionInvocationException functionException = (FunctionInvocationException)traceEvent.Exception;
                 Assert.Equal("Kaboom!", functionException.InnerException.Message);
@@ -66,7 +68,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             Assert.NotNull(instance.TraceFilter);
 
             Assert.Equal("One or more WebJob errors have occurred.", instance.TraceFilter.Message);
-            Assert.Equal(1, instance.TraceFilter.Events.Count);
+            Assert.Equal(1, instance.TraceFilter.GetEvents().Count());
         }
 
         [Fact]
@@ -92,7 +94,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             await CallSafe(host, method);
 
             Assert.Equal("Function 'ErrorTriggerProgram_FunctionLevelHandler.ThrowB' failed.", instance.TraceFilter.Message);
-            Assert.Equal(1, instance.TraceFilter.Events.Count);
+            Assert.Equal(1, instance.TraceFilter.GetEvents().Count());
         }
 
         [Fact]
@@ -116,9 +118,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
 
             await CallSafe(host, method);
 
-            Assert.Equal(3, instance.TraceFilter.Events.Count);
+            IEnumerable<TraceEvent> events = instance.TraceFilter.GetEvents();
+            Assert.Equal(3, events.Count());
             Assert.Equal("3 events at level 'Error' or lower have occurred within time window 00:10:00.", instance.TraceFilter.Message);
-            Assert.True(instance.TraceFilter.Events.All(p => p.Message == "Exception while executing function: ErrorTriggerProgram_FunctionLevelHandler_SlidingWindow.Throw"));
+            Assert.True(events.All(p => p.Message == "Exception while executing function: ErrorTriggerProgram_FunctionLevelHandler_SlidingWindow.Throw"));
         }
 
         [Fact]
@@ -258,7 +261,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             {
                 TraceFilter = traceFilter;
 
-                foreach (TraceEvent error in traceFilter.Events)
+                foreach (TraceEvent error in traceFilter.GetEvents())
                 {
                     Errors.Add(error);
                 }

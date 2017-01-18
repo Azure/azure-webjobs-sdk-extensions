@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Microsoft.Azure.WebJobs.Host;
@@ -39,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             Assert.Equal(11, messageLines.Length);
 
             // test with no events
-            filter.Events.Clear();
+            filter = new TestTraceFilter("WebJob failures detected.");
             message = filter.GetDetailedMessage(3);
             messageLines = message.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
             Assert.Equal(2, messageLines.Length);
@@ -65,12 +66,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
                 }
             }
 
-            public override Collection<TraceEvent> Events
+            public override IEnumerable<TraceEvent> GetEvents()
             {
-                get
-                {
-                    return _events;
-                }
+                return _events;
             }
 
             public override bool Filter(TraceEvent traceEvent)

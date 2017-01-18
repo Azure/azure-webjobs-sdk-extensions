@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
@@ -21,10 +22,10 @@ namespace Microsoft.Azure.WebJobs.Extensions
         public abstract string Message { get; }
 
         /// <summary>
-        /// Gets the current accumulated collection of <see cref="TraceEvent"/>s that have
+        /// Gets a snapshot of the current accumulated collection of <see cref="TraceEvent"/>s that have
         /// passed the filter.
         /// </summary>
-        public abstract Collection<TraceEvent> Events { get; }
+        public abstract IEnumerable<TraceEvent> GetEvents();
 
         /// <summary>
         /// Inspects the specified <see cref="TraceEvent"/> and accumulates it
@@ -63,15 +64,16 @@ namespace Microsoft.Azure.WebJobs.Extensions
             StringBuilder builder = new StringBuilder();
             builder.AppendLine(Message);
 
-            if (Events.Count > 0)
+            IEnumerable<TraceEvent> events = GetEvents();
+            if (events.Count() > 0)
             {
-                foreach (TraceEvent traceEvent in Events.Reverse().Take(count))
+                foreach (TraceEvent traceEvent in events.Reverse().Take(count))
                 {
                     builder.AppendLine();
-                    builder.AppendLine(traceEvent.ToString()); 
+                    builder.AppendLine(traceEvent.ToString());
                 }
             }
-            
+
             return builder.ToString();
         }
 
@@ -79,8 +81,8 @@ namespace Microsoft.Azure.WebJobs.Extensions
         {
             private readonly string _message;
             private readonly Func<TraceEvent, bool> _predicate;
-            private Collection<TraceEvent> _events = new Collection<TraceEvent>();
-            
+            private TraceEvent _event;
+
             public AnonymousTraceFilter(Func<TraceEvent, bool> predicate, string message = null)
             {
                 _predicate = predicate;
@@ -95,12 +97,13 @@ namespace Microsoft.Azure.WebJobs.Extensions
                 }
             }
 
-            public override Collection<TraceEvent> Events
+            public override IEnumerable<TraceEvent> GetEvents()
             {
-                get
+                if (_event == null)
                 {
-                    return _events;
+                    return Enumerable.Empty<TraceEvent>();
                 }
+                return new TraceEvent[] { _event };
             }
 
             public override bool Filter(TraceEvent traceEvent)
@@ -109,9 +112,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
                 {
                     // this filter does not accumulate - it only keeps track
                     // of the last event, so we reset the collection each time.
-                    _events.Clear();
-                    _events.Add(traceEvent);
-
+                    _event = traceEvent;
                     return true;
                 }
 
