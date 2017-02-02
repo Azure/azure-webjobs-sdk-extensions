@@ -46,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
             return binding != null;
         }
 
-        private class TimerTriggerScriptBinding : ScriptBinding
+        internal class TimerTriggerScriptBinding : ScriptBinding
         {
             public TimerTriggerScriptBinding(ScriptBindingContext context) : base(context)
             {
@@ -67,13 +67,20 @@ namespace Microsoft.Azure.WebJobs.Extensions
                 string schedule = Context.GetMetadataValue<string>("schedule");
                 bool runOnStartup = Context.GetMetadataValue<bool>("runOnStartup");
 
-                CrontabSchedule.ParseOptions options = new CrontabSchedule.ParseOptions()
+                if (Utility.IsDynamic)
                 {
-                    IncludingSeconds = true
-                };
-                if (CrontabSchedule.TryParse(schedule, options) == null)
-                {
-                    throw new ArgumentException(string.Format("'{0}' is not a valid CRON expression.", schedule));
+                    // pre-resolve app setting specifiers
+                    var resolver = new DefaultNameResolver();
+                    schedule = resolver.ResolveWholeString(schedule);
+
+                    var options = new CrontabSchedule.ParseOptions()
+                    {
+                        IncludingSeconds = true
+                    };
+                    if (CrontabSchedule.TryParse(schedule, options) == null)
+                    {
+                        throw new ArgumentException(string.Format("'{0}' is not a valid CRON expression.", schedule));
+                    }
                 }
 
                 attributes.Add(new TimerTriggerAttribute(schedule)

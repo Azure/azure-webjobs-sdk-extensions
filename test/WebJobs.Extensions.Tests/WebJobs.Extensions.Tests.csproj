@@ -193,6 +193,7 @@
     <Compile Include="Common\TypeExtensionsTests.cs" />
     <Compile Include="Extensions\Core\CoreBindingEndToEndTests.cs" />
     <Compile Include="Extensions\ApiHub\ApiHubBindingEndToEndTests.cs" />
+    <Compile Include="Extensions\Core\CoreExtensionsScriptBindingProvider.cs" />
     <Compile Include="Extensions\Core\ErrorTriggerAttributeTests.cs" />
     <Compile Include="Extensions\Core\SlidingWindowTraceFilterTests.cs" />
     <Compile Include="Extensions\Core\TraceFilterTests.cs" />
