@@ -10,6 +10,7 @@ using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
+using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Models;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Indexers;
 using Moq;
@@ -134,7 +135,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var testTrace = new TestTraceWriter(TraceLevel.Warning);
 
             // Act
-            await RunTestAsync("Inputs", factoryMock.Object, testTrace, item1Id);
+            await RunTestAsync(nameof(DocumentDBEndToEndFunctions.Inputs), factoryMock.Object, testTrace, item1Id);
 
             // Assert
             factoryMock.Verify(f => f.CreateService(It.IsAny<string>()), Times.Once());
@@ -168,7 +169,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var testTrace = new TestTraceWriter(TraceLevel.Warning);
 
             // Act
-            await RunTestAsync("TriggerObject", factoryMock.Object, testTrace, jobject.ToString());
+            await RunTestAsync(nameof(DocumentDBEndToEndFunctions.TriggerObject), factoryMock.Object, testTrace, jobject.ToString());
 
             // Assert
             factoryMock.Verify(f => f.CreateService(AttributeConnStr), Times.Once());

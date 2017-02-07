@@ -3,8 +3,8 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Globalization;
 using Microsoft.Azure.NotificationHubs;
+using Microsoft.Azure.WebJobs.Extensions.NotificationHubs.Bindings;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
@@ -22,7 +22,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 
         private string _defaultConnectionString;
         private string _defaultHubName;
-        
+
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
@@ -60,7 +60,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
             converterManager.AddNotificationHubConverters();
 
             var bindingFactory = new BindingFactory(nameResolver, converterManager);
-            IBindingProvider clientProvider = bindingFactory.BindToExactType<NotificationHubAttribute, NotificationHubClient>(BindForNotificationHubClient);
+            IBindingProvider clientProvider = bindingFactory.BindToInput<NotificationHubAttribute, NotificationHubClient>(new NotificationHubClientBuilder(this));
 
             var ruleOutput = bindingFactory.BindToAsyncCollector<NotificationHubAttribute, Notification>((attribute) => BuildFromAttribute(attribute, context.Trace));
 

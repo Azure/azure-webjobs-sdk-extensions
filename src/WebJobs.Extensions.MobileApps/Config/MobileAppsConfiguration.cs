@@ -6,8 +6,8 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
-using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.MobileApps.Bindings;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
@@ -69,14 +69,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
 
             IBindingProvider outputProvider = factory.BindToGenericAsyncCollector<MobileTableAttribute>(BindForOutput, ThrowIfInvalidOutputItemType);
 
-            IBindingProvider clientProvider = factory.BindToExactType<MobileTableAttribute, IMobileServiceClient>(BindForClient);
+            IBindingProvider clientProvider = factory.BindToInput<MobileTableAttribute, IMobileServiceClient>(new MobileTableClientBuilder(this));
 
-            IBindingProvider queryProvider = factory.BindToGenericItem<MobileTableAttribute>(BindForQueryAsync);
+            IBindingProvider queryProvider = factory.BindToInput<MobileTableAttribute, IMobileServiceTableQuery<OpenType>>(typeof(MobileTableQueryBuilder<>), this);
             queryProvider = factory.AddFilter<MobileTableAttribute>(IsQueryType, queryProvider);
 
-            IBindingProvider jObjectTableProvider = factory.BindToExactType<MobileTableAttribute, IMobileServiceTable>(BindForTable);
+            IBindingProvider jObjectTableProvider = factory.BindToInput<MobileTableAttribute, IMobileServiceTable>(new MobileTableJObjectTableBuilder(this));
 
-            IBindingProvider tableProvider = factory.BindToGenericItem<MobileTableAttribute>(BindForTableAsync);
+            IBindingProvider tableProvider = factory.BindToInput<MobileTableAttribute, IMobileServiceTable<OpenType>>(typeof(MobileTablePocoTableBuilder<>), this);
             tableProvider = factory.AddFilter<MobileTableAttribute>(IsTableType, tableProvider);
 
             IBindingProvider itemProvider = factory.BindToGenericValueProvider<MobileTableAttribute>(BindForItemAsync);
@@ -181,52 +181,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
             IValueBinder binder = (IValueBinder)Activator.CreateInstance(genericType, context);
 
             return Task.FromResult(binder);
-        }
-
-        internal IMobileServiceTable BindForTable(MobileTableAttribute attribute)
-        {
-            MobileTableContext context = CreateContext(attribute);
-            return context.Client.GetTable(context.ResolvedAttribute.TableName);
-        }
-
-        internal async Task<object> BindForQueryAsync(MobileTableAttribute attribute, Type paramType)
-        {
-            object table = await BindForTableAsync(attribute, paramType);
-            MethodInfo createQueryMethod = table.GetType().GetMethod("CreateQuery");
-
-            return createQueryMethod.Invoke(table, null);
-        }
-
-        internal Task<object> BindForTableAsync(MobileTableAttribute attribute, Type paramType)
-        {
-            MobileTableContext context = CreateContext(attribute);
-
-            // Assume that the Filter has already run.
-            Type tableType = paramType.GetGenericArguments().Single();
-
-            // If TableName is specified, add it to the internal table cache. Now items of this type
-            // will operate on the specified TableName.
-            if (!string.IsNullOrEmpty(context.ResolvedAttribute.TableName))
-            {
-                context.Client.AddToTableNameCache(tableType, context.ResolvedAttribute.TableName);
-            }
-
-            MethodInfo getTableMethod = GetGenericTableMethod();
-            MethodInfo getTableGenericMethod = getTableMethod.MakeGenericMethod(tableType);
-
-            return Task.FromResult(getTableGenericMethod.Invoke(context.Client, null));
-        }
-
-        private static MethodInfo GetGenericTableMethod()
-        {
-            return typeof(IMobileServiceClient).GetMethods()
-                .Where(m => m.IsGenericMethod && m.Name == "GetTable").Single();
-        }
-
-        internal IMobileServiceClient BindForClient(MobileTableAttribute attribute)
-        {
-            MobileTableContext context = CreateContext(attribute);
-            return context.Client;
         }
 
         internal object BindForOutput(MobileTableAttribute attribute, Type paramType)

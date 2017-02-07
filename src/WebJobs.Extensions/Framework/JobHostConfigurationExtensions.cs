@@ -5,7 +5,6 @@ using System;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
-using Microsoft.Azure.WebJobs.Host.Tables;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 
 namespace Microsoft.Azure.WebJobs
@@ -30,25 +29,6 @@ namespace Microsoft.Azure.WebJobs
 
             IExtensionRegistry extensions = config.GetService<IExtensionRegistry>();
             extensions.RegisterExtension<TExtension>(extension);
-        }
-
-        /// <summary>
-        /// Registers the specified Table binding extension
-        /// </summary>
-        /// <param name="config">The <see cref="JobHostConfiguration"/> to register the extension with.</param>
-        /// <param name="extension">The extension to register.</param>
-        public static void RegisterTableBindingExtension(this JobHostConfiguration config, IArgumentBindingProvider<ITableArgumentBinding> extension)
-        {
-            if (config == null)
-            {
-                throw new ArgumentNullException("config");
-            }
-            if (extension == null)
-            {
-                throw new ArgumentNullException("extension");
-            }
-
-            config.RegisterExtension<IArgumentBindingProvider<ITableArgumentBinding>>(extension);
         }
 
         /// <summary>

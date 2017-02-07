@@ -29,7 +29,7 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
     <DocumentationFile>bin\Debug\Microsoft.Azure.WebJobs.Extensions.MobileApps.xml</DocumentationFile>
-    <LangVersion>5</LangVersion>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -47,11 +47,11 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.WebJobs, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.Core.2.0.0-beta2-10503\lib\net45\Microsoft.Azure.WebJobs.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.Core.2.0.0-beta2-10510\lib\net45\Microsoft.Azure.WebJobs.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.WebJobs.Host, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.2.0.0-beta2-10503\lib\net45\Microsoft.Azure.WebJobs.Host.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.2.0.0-beta2-10510\lib\net45\Microsoft.Azure.WebJobs.Host.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Azure.WebJobs.Script.Extensibility, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -119,6 +119,10 @@
       <SubType>Designer</SubType>
     </CodeAnalysisDictionary>
     <Compile Include="Bindings\MobileTableAsyncCollector.cs" />
+    <Compile Include="Bindings\MobileTableJObjectTableBuilder.cs" />
+    <Compile Include="Bindings\MobileTablePocoTableBuilder.cs" />
+    <Compile Include="Bindings\MobileTableQueryBuilder.cs" />
+    <Compile Include="Bindings\MobileTableClientBuilder.cs" />
     <Compile Include="Config\DefaultMobileServiceClientFactory.cs" />
     <Compile Include="Config\IMobileServiceClientFactory.cs" />
     <Compile Include="Config\MobileServiceApiKeyHandler.cs" />

@@ -23,8 +23,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var attribute = new DocumentDBAttribute();
 
             // Act
-            var client = config.BindForClient(attribute);
-            var context = config.BindForOutput(attribute, typeof(Item), null);
+            var context1 = config.CreateContext(attribute, null);
+            var context2 = config.BindForOutput(attribute, typeof(Item), null);
             var binder = await config.BindForItemAsync(attribute, typeof(Item), null);
 
             // Assert

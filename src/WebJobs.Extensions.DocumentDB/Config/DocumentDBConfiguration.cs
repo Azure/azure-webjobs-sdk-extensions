@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.WebJobs.Extensions.DocumentDB.Bindings;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
@@ -54,7 +55,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
             IBindingProvider outputProvider = factory.BindToGenericAsyncCollector<DocumentDBAttribute>((attr, t) => BindForOutput(attr, t, context.Trace));
 
-            IBindingProvider clientProvider = factory.BindToExactType<DocumentDBAttribute, DocumentClient>(BindForClient);
+            IBindingProvider clientProvider = factory.BindToInput<DocumentDBAttribute, DocumentClient>(new DocumentDBClientBuilder(this));
 
             IBindingProvider itemProvider = factory.BindToGenericValueProvider<DocumentDBAttribute>((attr, t) => BindForItemAsync(attr, t, context.Trace));
 
@@ -82,14 +83,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             Type collectorType = typeof(DocumentDBAsyncCollector<>).MakeGenericType(parameterType);
 
             return Activator.CreateInstance(collectorType, context);
-        }
-
-        internal DocumentClient BindForClient(DocumentDBAttribute attribute)
-        {
-            string resolvedConnectionString = ResolveConnectionString(attribute.ConnectionStringSetting);
-            IDocumentDBService service = GetService(resolvedConnectionString);
-
-            return service.GetClient();
         }
 
         internal Task<IValueBinder> BindForItemAsync(DocumentDBAttribute attribute, Type type, TraceWriter trace)

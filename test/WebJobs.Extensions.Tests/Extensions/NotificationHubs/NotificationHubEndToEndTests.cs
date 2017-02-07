@@ -211,7 +211,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             }
 
             [NoAutomaticTrigger]
-            public static async void OutputsAsyncCollector(
+            public static async Task OutputsAsyncCollector(
                            [NotificationHub] IAsyncCollector<TemplateNotification> asyncCollector,
                            [NotificationHub] IAsyncCollector<string> asyncCollectorString,
                TraceWriter trace)

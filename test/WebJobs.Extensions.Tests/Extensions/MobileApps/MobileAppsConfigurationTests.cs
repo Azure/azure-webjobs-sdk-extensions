@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.MobileApps;
+using Microsoft.Azure.WebJobs.Extensions.MobileApps.Bindings;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps;
 using Microsoft.Azure.WebJobs.Host.Config;
@@ -195,7 +196,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         }
 
         [Fact]
-        public async Task BindForQuery_ReturnsCorrectType()
+        public void BindForQuery_ReturnsCorrectType()
         {
             var attribute = new MobileTableAttribute();
             var config = new MobileAppsConfiguration
@@ -203,13 +204,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
                 MobileAppUri = new Uri("https://someuri/")
             };
 
-            var query = await config.BindForQueryAsync(attribute, typeof(IMobileServiceTableQuery<TodoItem>));
+            var queryBuilder = new MobileTableQueryBuilder<TodoItem>(config);
+            var query = queryBuilder.Convert(attribute);
 
             Assert.True(typeof(IMobileServiceTableQuery<TodoItem>).IsAssignableFrom(query.GetType()));
         }
 
         [Fact]
-        public async Task BindForQuery_WithTableName_ReturnsCorrectType()
+        public void BindForQuery_WithTableName_ReturnsCorrectType()
         {
             var attribute = new MobileTableAttribute
             {
@@ -221,7 +223,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
                 MobileAppUri = new Uri("https://someuri/")
             };
 
-            var query = await config.BindForQueryAsync(attribute, typeof(IMobileServiceTableQuery<TodoItem>)) as IMobileServiceTableQuery<TodoItem>;
+            var queryBuilder = new MobileTableQueryBuilder<TodoItem>(config);
+            var query = queryBuilder.Convert(attribute);
 
             Assert.NotNull(query);
             Assert.Equal("SomeOtherTable", query.Table.TableName);
@@ -241,7 +244,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             };
 
             // Act
-            var table = config.BindForTable(attribute);
+            var tableBuilder = new MobileTableJObjectTableBuilder(config);
+            var table = tableBuilder.Convert(attribute);
 
             // Assert
             Assert.NotNull(table);
@@ -249,7 +253,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         }
 
         [Fact]
-        public async Task BindForTable_Poco_ReturnsCorrectTable()
+        public void BindForTable_Poco_ReturnsCorrectTable()
         {
             // Arrange
             var attribute = new MobileTableAttribute();
@@ -259,7 +263,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             };
 
             // Act
-            var table = await config.BindForTableAsync(attribute, typeof(IMobileServiceTable<TodoItem>)) as IMobileServiceTable<TodoItem>;
+            var tableBuilder = new MobileTablePocoTableBuilder<TodoItem>(config);
+            var table = tableBuilder.Convert(attribute);
 
             // Assert
             Assert.NotNull(table);
@@ -267,7 +272,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         }
 
         [Fact]
-        public async Task GetValue_PocoWithTableName_ReturnsCorrectTable()
+        public void GetValue_PocoWithTableName_ReturnsCorrectTable()
         {
             // Arrange
             var attribute = new MobileTableAttribute
@@ -279,7 +284,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
                 MobileAppUri = new Uri("https://someuri/")
             };
             // Act
-            var table = await config.BindForTableAsync(attribute, typeof(IMobileServiceTable<TodoItem>)) as IMobileServiceTable<TodoItem>;
+            var tableBuilder = new MobileTablePocoTableBuilder<TodoItem>(config);
+            var table = tableBuilder.Convert(attribute);
 
             // Assert
             Assert.NotNull(table);
