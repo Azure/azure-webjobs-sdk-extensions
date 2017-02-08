@@ -21,6 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         internal const string AzureWebJobsDocumentDBConnectionStringName = "AzureWebJobsDocumentDBConnectionString";
         internal readonly ConcurrentDictionary<string, IDocumentDBService> ClientCache = new ConcurrentDictionary<string, IDocumentDBService>();
         private string _defaultConnectionString;
+        private TraceWriter _trace;
 
         /// <summary>
         /// Constructs a new instance.
@@ -45,6 +46,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 throw new ArgumentNullException("context");
             }
 
+            _trace = context.Trace;
+
             INameResolver nameResolver = context.Config.GetService<INameResolver>();
             IConverterManager converterManager = context.Config.GetService<IConverterManager>();
 
@@ -53,11 +56,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
             BindingFactory factory = new BindingFactory(nameResolver, converterManager);
 
-            IBindingProvider outputProvider = factory.BindToGenericAsyncCollector<DocumentDBAttribute>((attr, t) => BindForOutput(attr, t, context.Trace));
+            IBindingProvider outputProvider = factory.BindToCollector<DocumentDBAttribute, OpenType>(typeof(DocumentDBCollectorBuilder<>), this);
 
             IBindingProvider clientProvider = factory.BindToInput<DocumentDBAttribute, DocumentClient>(new DocumentDBClientBuilder(this));
 
-            IBindingProvider itemProvider = factory.BindToGenericValueProvider<DocumentDBAttribute>((attr, t) => BindForItemAsync(attr, t, context.Trace));
+            IBindingProvider itemProvider = factory.BindToGenericValueProvider<DocumentDBAttribute>((attr, t) => BindForItemAsync(attr, t));
 
             IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
             extensions.RegisterBindingRules<DocumentDBAttribute>(ValidateConnection, nameResolver, outputProvider, clientProvider, itemProvider);
@@ -76,18 +79,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             }
         }
 
-        internal object BindForOutput(DocumentDBAttribute attribute, Type parameterType, TraceWriter trace)
+        internal Task<IValueBinder> BindForItemAsync(DocumentDBAttribute attribute, Type type)
         {
-            DocumentDBContext context = CreateContext(attribute, trace);
-
-            Type collectorType = typeof(DocumentDBAsyncCollector<>).MakeGenericType(parameterType);
-
-            return Activator.CreateInstance(collectorType, context);
-        }
-
-        internal Task<IValueBinder> BindForItemAsync(DocumentDBAttribute attribute, Type type, TraceWriter trace)
-        {
-            DocumentDBContext context = CreateContext(attribute, trace);
+            DocumentDBContext context = CreateContext(attribute);
 
             Type genericType = typeof(DocumentDBItemValueBinder<>).MakeGenericType(type);
             IValueBinder binder = (IValueBinder)Activator.CreateInstance(genericType, context);
@@ -118,7 +112,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             return ClientCache.GetOrAdd(connectionString, (c) => DocumentDBServiceFactory.CreateService(c));
         }
 
-        internal DocumentDBContext CreateContext(DocumentDBAttribute attribute, TraceWriter trace)
+        internal DocumentDBContext CreateContext(DocumentDBAttribute attribute)
         {
             string resolvedConnectionString = ResolveConnectionString(attribute.ConnectionStringSetting);
 
@@ -127,7 +121,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             return new DocumentDBContext
             {
                 Service = service,
-                Trace = trace,
+                Trace = _trace,
                 ResolvedAttribute = attribute
             };
         }

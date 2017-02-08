@@ -67,7 +67,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
 
             BindingFactory factory = new BindingFactory(_nameResolver, converterManager);
 
-            IBindingProvider outputProvider = factory.BindToGenericAsyncCollector<MobileTableAttribute>(BindForOutput, ThrowIfInvalidOutputItemType);
+            IBindingProvider outputProvider = factory.BindToCollector<MobileTableAttribute, OpenType>(typeof(MobileTableCollectorBuilder<>), this);
 
             IBindingProvider clientProvider = factory.BindToInput<MobileTableAttribute, IMobileServiceClient>(new MobileTableClientBuilder(this));
 
@@ -134,22 +134,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
             ThrowIfInvalidItemType(attribute, argumentType);
         }
 
-        internal static bool ThrowIfInvalidOutputItemType(MobileTableAttribute attribute, Type paramType)
-        {
-            // We explicitly allow object as a type to enable anonymous types, but TableName must be specified.
-            if (paramType == typeof(object))
-            {
-                if (string.IsNullOrEmpty(attribute.TableName))
-                {
-                    throw new InvalidOperationException("A parameter of type 'object' must have table name specified.");
-                }
-
-                return true;
-            }
-
-            return ThrowIfInvalidItemType(attribute, paramType);
-        }
-
         internal static bool ThrowIfInvalidItemType(MobileTableAttribute attribute, Type paramType)
         {
             if (!MobileAppUtility.IsValidItemType(paramType, attribute.TableName))
@@ -181,15 +165,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
             IValueBinder binder = (IValueBinder)Activator.CreateInstance(genericType, context);
 
             return Task.FromResult(binder);
-        }
-
-        internal object BindForOutput(MobileTableAttribute attribute, Type paramType)
-        {
-            MobileTableContext context = CreateContext(attribute);
-
-            Type collectorType = typeof(MobileTableAsyncCollector<>).MakeGenericType(paramType);
-
-            return Activator.CreateInstance(collectorType, context);
         }
 
         internal Uri ResolveMobileAppUri(string attributeUriString)

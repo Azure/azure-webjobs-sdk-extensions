@@ -23,9 +23,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var attribute = new DocumentDBAttribute();
 
             // Act
-            var context1 = config.CreateContext(attribute, null);
-            var context2 = config.BindForOutput(attribute, typeof(Item), null);
-            var binder = await config.BindForItemAsync(attribute, typeof(Item), null);
+            var context1 = config.CreateContext(attribute);
+            var context2 = config.CreateContext(attribute);
+            var binder = await config.BindForItemAsync(attribute, typeof(Item));
 
             // Assert
             Assert.Equal(1, config.ClientCache.Count);
@@ -80,7 +80,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             var config = new DocumentDBConfiguration();
 
             // Act
-            var context = config.CreateContext(attribute, new TestTraceWriter());
+            var context = config.CreateContext(attribute);
 
             // Assert
             Assert.Equal(DocumentDBContext.DefaultMaxThrottleRetries, context.MaxThrottleRetries);

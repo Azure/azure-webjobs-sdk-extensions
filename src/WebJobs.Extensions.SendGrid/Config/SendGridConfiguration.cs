@@ -76,7 +76,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
             converterManager.AddConverter<JObject, Mail>(SendGridHelpers.CreateMessage);
 
             BindingFactory factory = new BindingFactory(nameResolver, converterManager);
-            IBindingProvider outputProvider = factory.BindToAsyncCollector<SendGridAttribute, Mail>((attr) =>
+            IBindingProvider outputProvider = factory.BindToCollector<SendGridAttribute, Mail>((attr) =>
             {
                 string apiKey = FirstOrDefault(attr.ApiKey, ApiKey, _defaultApiKey);
                 ISendGridClient sendGrid = _sendGridClientCache.GetOrAdd(apiKey, a => ClientFactory.Create(a));

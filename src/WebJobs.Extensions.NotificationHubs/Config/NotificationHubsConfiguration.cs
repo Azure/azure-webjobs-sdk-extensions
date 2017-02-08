@@ -62,7 +62,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
             var bindingFactory = new BindingFactory(nameResolver, converterManager);
             IBindingProvider clientProvider = bindingFactory.BindToInput<NotificationHubAttribute, NotificationHubClient>(new NotificationHubClientBuilder(this));
 
-            var ruleOutput = bindingFactory.BindToAsyncCollector<NotificationHubAttribute, Notification>((attribute) => BuildFromAttribute(attribute, context.Trace));
+            var ruleOutput = bindingFactory.BindToCollector<NotificationHubAttribute, Notification>((attribute) => BuildFromAttribute(attribute, context.Trace));
 
             extensions.RegisterBindingRules<NotificationHubAttribute>(ruleOutput, clientProvider);
         }

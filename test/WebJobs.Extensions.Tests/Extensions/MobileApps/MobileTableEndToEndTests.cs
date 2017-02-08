@@ -248,8 +248,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         [Fact]
         public async Task ObjectWithNoTable()
         {
-            var ex = await Assert.ThrowsAsync<FunctionIndexingException>(() => IndexBindings(typeof(MobileTableObjectNoTable)));
-            Assert.IsType<InvalidOperationException>(ex.InnerException);
+            TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Warning);
+
+            // Verify that we pick up from the config correctly
+            var factoryMock = CreateMockFactory(new Uri(ConfigUri), ConfigKey);
+
+            var exception = await Assert.ThrowsAsync<FunctionInvocationException>(
+                () => RunTestAsync(nameof(MobileTableEndToEndFunctions.NoTable), factoryMock.Object, testTrace, configUri: new Uri(ConfigUri), configKey: ConfigKey));
+
+            Assert.IsType<InvalidOperationException>(exception.InnerException.InnerException);
+            Assert.Equal("The table name must be specified.", exception.InnerException.InnerException.Message);
+            factoryMock.VerifyAll();
         }
 
         private async Task IndexBindings(Type testType, bool includeDefaultUri = true)
@@ -277,9 +286,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         }
 
         private async Task RunTestAsync(string testName, IMobileServiceClientFactory factory, TraceWriter testTrace, object argument = null,
-            Uri configUri = null, string configKey = null, bool includeDefaultKey = true, bool includeDefaultUri = true)
+            Uri configUri = null, string configKey = null, bool includeDefaultKey = true, bool includeDefaultUri = true, Type testType = null)
         {
-            Type testType = typeof(MobileTableEndToEndFunctions);
+            testType = testType ?? typeof(MobileTableEndToEndFunctions);
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
             JobHostConfiguration config = new JobHostConfiguration
             {
@@ -448,6 +457,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
                 [MobileTable(ApiKeySetting = "MyKey")] IMobileServiceClient client3)
             {
             }
+
+            // This will fail on invocation because TableName is not specified
+            [NoAutomaticTrigger]
+            public static void NoTable(
+                [MobileTable] out object item)
+            {
+                item = new { Text = "hello!" };
+            }
         }
 
         private class MobileTableBrokenTable
@@ -487,16 +504,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             public static void Broken(
                 [MobileTable] TodoItem item)
             {
-            }
-        }
-
-        private class MobileTableObjectNoTable
-        {
-            // object should be treated like JObject and fail indexing if no TableName is specified
-            public static void Broken(
-                [MobileTable] out object item)
-            {
-                item = null;
             }
         }
 

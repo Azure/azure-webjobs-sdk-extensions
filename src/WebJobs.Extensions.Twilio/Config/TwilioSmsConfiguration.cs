@@ -18,7 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
         internal const string AzureWebJobsTwilioAccountAuthTokenName = "AzureWebJobsTwilioAuthToken";
 
         private readonly ConcurrentDictionary<Tuple<string, string>, TwilioRestClient> _twilioClientCache = new ConcurrentDictionary<Tuple<string, string>, TwilioRestClient>();
-        
+
         private string _defaultAccountSid;
         private string _defaultAuthToken;
 
@@ -48,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
             converterManager.AddConverter<JObject, SMSMessage>(CreateSmsMessage);
 
             BindingFactory factory = new BindingFactory(nameResolver, converterManager);
-            IBindingProvider outputProvider = factory.BindToAsyncCollector<TwilioSmsAttribute, SMSMessage>((attr) =>
+            IBindingProvider outputProvider = factory.BindToCollector<TwilioSmsAttribute, SMSMessage>((attr) =>
             {
                 return new TwilioSmsMessageAsyncCollector(CreateContext(attr));
             });
