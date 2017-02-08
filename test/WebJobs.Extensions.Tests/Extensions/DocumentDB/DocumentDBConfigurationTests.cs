@@ -18,7 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             // Arrange            
             var config = new DocumentDBConfiguration
             {
-                ConnectionString = "AccountEndpoint=https://someuri;AccountKey=some_key",
+                ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;",
             };
             var attribute = new DocumentDBAttribute();
 
@@ -75,7 +75,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             // Arrange            
             var attribute = new DocumentDBAttribute
             {
-                ConnectionStringSetting = "AccountEndpoint=https://someuri;AccountKey=some_key"
+                ConnectionStringSetting = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;"
             };
             var config = new DocumentDBConfiguration();
 

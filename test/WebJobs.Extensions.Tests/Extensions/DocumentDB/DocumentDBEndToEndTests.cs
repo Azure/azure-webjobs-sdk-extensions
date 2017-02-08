@@ -25,9 +25,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         private const string DatabaseName = "TestDatabase";
         private const string CollectionName = "TestCollection";
 
-        private const string AttributeConnStr = "AccountEndpoint=https://attribute;AccountKey=attribute";
-        private const string ConfigConnStr = "AccountEndpoint=https://config;AccountKey=config";
-        private const string DefaultConnStr = "AccountEndpoint=https://default;AccountKey=default";
+        private const string AttributeConnStr = "AccountEndpoint=https://attribute;AccountKey=YXR0cmlidXRl;";
+        private const string ConfigConnStr = "AccountEndpoint=https://config;AccountKey=Y29uZmln;";
+        private const string DefaultConnStr = "AccountEndpoint=https://default;AccountKey=ZGVmYXVsdA==;";
 
         [Fact]
         public async Task OutputBindings()
