@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using System.Globalization;
+using System.Collections.Generic;
 
 namespace Microsoft.Azure.WebJobs.Extensions.IoTHub
 {
@@ -38,14 +39,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.IoTHub
             _defaultConnectionString = nameResolver.Resolve(IoTHubConnectionStringName);
 
             var bf = context.Config.BindingFactory;
-            var outputProvider = bf.BindToCollector<IoTHubAttribute, Message>(this);
+            var messageProvider = bf.BindToCollector<IoTHubAttribute, Message>(this);
 
             var cm = context.Config.ConverterManager;
             cm.AddConverter<byte[], Message, IoTHubAttribute>(this);
             cm.AddConverter<string, Message, IoTHubAttribute>(this);
             cm.AddConverter<JObject, Message, IoTHubAttribute>(this);
 
-            context.RegisterBindingRules<IoTHubAttribute>(ValidateConnection, outputProvider);
+            context.RegisterBindingRules<IoTHubAttribute>(ValidateConnection, messageProvider);
         }
 
         /// <inheritdoc/>
@@ -70,7 +71,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.IoTHub
         /// <inheritdoc/>
         public Message Convert(JObject input)
         {
-            return input.ToObject<Message>();
+            JToken body = null;
+            var message = input.ToObject<Message>();
+
+            // by convention, use a 'body' property to initialize method
+            if (input.TryGetValue("body", StringComparison.OrdinalIgnoreCase, out body))
+            {
+                // can only set body through constructor
+                var messageWithBody = new Message(Encoding.UTF8.GetBytes((string)body));
+                messageWithBody.Ack = message.Ack;
+                messageWithBody.CorrelationId = message.CorrelationId;
+                messageWithBody.ExpiryTimeUtc = message.ExpiryTimeUtc;
+                messageWithBody.MessageId = message.MessageId;
+                foreach (KeyValuePair<string, string> pair in message.Properties)
+                {
+                    messageWithBody.Properties.Add(pair);
+                }
+                messageWithBody.To = message.To;
+                messageWithBody.UserId = message.UserId;
+                message.Dispose();
+                return messageWithBody;
+            }
+            return message;
         }
 
         internal void ValidateConnection(IoTHubAttribute attribute, Type paramType)
