@@ -2,15 +2,14 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.Azure.Devices;
-using Microsoft.Azure.WebJobs.Host.Config;
 using System.Collections.Concurrent;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Text;
-using Newtonsoft.Json.Linq;
-using System.Globalization;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
+using Microsoft.Azure.Devices;
+using Microsoft.Azure.WebJobs.Host.Bindings;
+using Microsoft.Azure.WebJobs.Host.Config;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.IoTHub
 {
@@ -21,7 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.IoTHub
         IConverter<byte[], Message>,
         IConverter<string, Message>,
         IConverter<JObject, Message>,
-        IConverter<IoTHubAttribute, IAsyncCollector<Message>>
+        IConverter<IoTHubAttribute, ServiceClient>
     {
         internal const string IoTHubConnectionStringName = "AzureWebJobsIoTHub";
         internal readonly ConcurrentDictionary<string, ServiceClient> ClientCache = new ConcurrentDictionary<string, ServiceClient>();
@@ -38,22 +37,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.IoTHub
             INameResolver nameResolver = context.Config.GetService<INameResolver>();
             _defaultConnectionString = nameResolver.Resolve(IoTHubConnectionStringName);
 
-            var bf = context.Config.BindingFactory;
-            var messageProvider = bf.BindToCollector<IoTHubAttribute, Message>(this);
+            BindingFactory bf = context.Config.BindingFactory;
+            IBindingProvider messageProvider = bf.BindToCollector<IoTHubAttribute, Message>(AttributeToMessageConverter);
+            IBindingProvider clientProvider = bf.BindToInput<IoTHubAttribute, ServiceClient>(this);
 
-            var cm = context.Config.ConverterManager;
+            IConverterManager cm = context.Config.ConverterManager;
             cm.AddConverter<byte[], Message, IoTHubAttribute>(this);
             cm.AddConverter<string, Message, IoTHubAttribute>(this);
             cm.AddConverter<JObject, Message, IoTHubAttribute>(this);
 
-            context.RegisterBindingRules<IoTHubAttribute>(ValidateConnection, messageProvider);
+            context.RegisterBindingRules<IoTHubAttribute>(ValidateConnection, messageProvider, clientProvider);
         }
 
-        /// <inheritdoc/>
-        public IAsyncCollector<Message> Convert(IoTHubAttribute input)
+        internal IAsyncCollector<Message> AttributeToMessageConverter(IoTHubAttribute input)
         {
-            ServiceClient client = GetService(ResolveConnectionString(input.ConnectionString));
-            return new MessageAsyncCollector(client, input.DeviceId);
+            return new MessageAsyncCollector(Convert(input), input.DeviceId);
         }
 
         /// <inheritdoc/>
@@ -95,6 +93,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.IoTHub
             return message;
         }
 
+        /// <inheritdoc/>
+        public ServiceClient Convert(IoTHubAttribute input)
+        {
+            return ClientCache.GetOrAdd(ResolveConnectionString(input.ConnectionString), (cs) => ServiceClient.CreateFromConnectionString(cs));
+        }
+
         internal void ValidateConnection(IoTHubAttribute attribute, Type paramType)
         {
             if (string.IsNullOrEmpty(ResolveConnectionString(attribute.ConnectionString)))
@@ -116,15 +120,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.IoTHub
             else if (!string.IsNullOrEmpty(ConnectionString))
             {
                 return ConnectionString;
-            } else
+            }
+            else
             {
                 return _defaultConnectionString;
             }
-        }
-
-        internal ServiceClient GetService(string connectionString)
-        {
-            return ClientCache.GetOrAdd(connectionString, (cs) => ServiceClient.CreateFromConnectionString(cs));
         }
     }
 }
