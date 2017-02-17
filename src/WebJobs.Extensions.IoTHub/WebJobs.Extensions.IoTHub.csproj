@@ -126,6 +126,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Converters\StringToMessage.cs" />
+    <Compile Include="Converters\JObjectToMessage.cs" />
+    <Compile Include="StringToMessage.cs" />
+    <Compile Include="Converters\ByteArrayToMessage.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IoTHubAttribute.cs" />
     <Compile Include="IoTHubConfigProvider.cs" />

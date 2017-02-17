@@ -3,10 +3,9 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Text;
 using Microsoft.Azure.Devices;
+using Microsoft.Azure.WebJobs.Extensions.IoTHub.Converters;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Newtonsoft.Json.Linq;
@@ -17,9 +16,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.IoTHub
     /// Binding provider for IoTHub
     /// </summary>
     public class IoTHubConfigProvider : IExtensionConfigProvider,
-        IConverter<byte[], Message>,
-        IConverter<string, Message>,
-        IConverter<JObject, Message>,
         IConverter<IoTHubAttribute, ServiceClient>
     {
         internal const string IoTHubConnectionStringName = "AzureWebJobsIoTHub";
@@ -39,12 +35,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.IoTHub
 
             BindingFactory bf = context.Config.BindingFactory;
             IBindingProvider messageProvider = bf.BindToCollector<IoTHubAttribute, Message>(AttributeToMessageConverter);
-            IBindingProvider clientProvider = bf.BindToInput<IoTHubAttribute, ServiceClient>(this);
+            IBindingProvider clientProvider = bf.BindToInput(this);
 
             IConverterManager cm = context.Config.ConverterManager;
-            cm.AddConverter<byte[], Message, IoTHubAttribute>(this);
-            cm.AddConverter<string, Message, IoTHubAttribute>(this);
-            cm.AddConverter<JObject, Message, IoTHubAttribute>(this);
+            cm.AddConverter<byte[], Message, IoTHubAttribute>(typeof(ByteArrayToMessage));
+            cm.AddConverter<string, Message, IoTHubAttribute>(typeof(StringToMessage));
+            cm.AddConverter<JObject, Message, IoTHubAttribute>(typeof(JObjectToMessage));
 
             context.RegisterBindingRules<IoTHubAttribute>(ValidateConnection, messageProvider, clientProvider);
         }
@@ -52,45 +48,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.IoTHub
         internal IAsyncCollector<Message> AttributeToMessageConverter(IoTHubAttribute input)
         {
             return new MessageAsyncCollector(Convert(input), input.DeviceId);
-        }
-
-        /// <inheritdoc/>
-        public Message Convert(byte[] input)
-        {
-            return new Message(input);
-        }
-
-        /// <inheritdoc/>
-        public Message Convert(string input)
-        {
-            return new Message(Encoding.UTF8.GetBytes(input));
-        }
-
-        /// <inheritdoc/>
-        public Message Convert(JObject input)
-        {
-            JToken body = null;
-            var message = input.ToObject<Message>();
-
-            // by convention, use a 'body' property to initialize method
-            if (input.TryGetValue("body", StringComparison.OrdinalIgnoreCase, out body))
-            {
-                // can only set body through constructor
-                var messageWithBody = new Message(Encoding.UTF8.GetBytes((string)body));
-                messageWithBody.Ack = message.Ack;
-                messageWithBody.CorrelationId = message.CorrelationId;
-                messageWithBody.ExpiryTimeUtc = message.ExpiryTimeUtc;
-                messageWithBody.MessageId = message.MessageId;
-                foreach (KeyValuePair<string, string> pair in message.Properties)
-                {
-                    messageWithBody.Properties.Add(pair);
-                }
-                messageWithBody.To = message.To;
-                messageWithBody.UserId = message.UserId;
-                message.Dispose();
-                return messageWithBody;
-            }
-            return message;
         }
 
         /// <inheritdoc/>
