@@ -56,7 +56,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 lastStatus = new ScheduleStatus
                 {
                     Last = default(DateTime),
-                    Next = nextOccurrence
+                    Next = nextOccurrence,
+                    LastUpdated = now
                 };
                 await UpdateStatusAsync(timerName, lastStatus);
                 recordedNextOccurrence = nextOccurrence;
@@ -64,24 +65,48 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             else
             {
                 DateTime expectedNextOccurrence;
-                if (lastStatus.Last == default(DateTime))
+
+                // Track the time that was used to create 'expectedNextOccurrence'.
+                DateTime lastUpdated;
+
+                if (lastStatus.Last != default(DateTime))
                 {
-                    // there have been no executions of the function yet, so compute
-                    // from now
-                    expectedNextOccurrence = schedule.GetNextOccurrence(now);
+                    // If we have a 'Last' value, we know that we used this to calculate 'Next'
+                    // in a previous invocation. 
+                    expectedNextOccurrence = schedule.GetNextOccurrence(lastStatus.Last);
+                    lastUpdated = lastStatus.Last;
+                }
+                else if (lastStatus.LastUpdated != default(DateTime))
+                {
+                    // If the trigger has never fired, we won't have 'Last', but we will have
+                    // 'LastUpdated', which tells us the last time that we used to calculate 'Next'.
+                    expectedNextOccurrence = schedule.GetNextOccurrence(lastStatus.LastUpdated);
+                    lastUpdated = lastStatus.LastUpdated;
                 }
                 else
                 {
-                    // compute the next occurrence from the last
-                    expectedNextOccurrence = schedule.GetNextOccurrence(lastStatus.Last);
+                    // If we do not have 'LastUpdated' or 'Last', we don't have enough information to 
+                    // properly calculate 'Next', so we'll calculate it from the current time.
+                    expectedNextOccurrence = schedule.GetNextOccurrence(now);
+                    lastUpdated = now;
                 }
 
                 // ensure that the schedule hasn't been updated since the last
                 // time we checked, and if it has, update the status to use the new schedule
                 if (lastStatus.Next != expectedNextOccurrence)
                 {
+                    // if the schedule has changed and the next occurrence is in the past,
+                    // recalculate it based on the current time as we don't want it to register
+                    // immediately as 'past due'.
+                    if (now > expectedNextOccurrence)
+                    {
+                        expectedNextOccurrence = schedule.GetNextOccurrence(now);
+                        lastUpdated = now;
+                    }
+
                     lastStatus.Last = default(DateTime);
                     lastStatus.Next = expectedNextOccurrence;
+                    lastStatus.LastUpdated = lastUpdated;
                     await UpdateStatusAsync(timerName, lastStatus);
                 }
                 recordedNextOccurrence = lastStatus.Next;

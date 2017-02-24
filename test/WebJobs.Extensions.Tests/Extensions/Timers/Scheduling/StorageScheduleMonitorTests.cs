@@ -61,8 +61,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             // update the status
             ScheduleStatus expected = new ScheduleStatus
             {
-                Last = DateTime.Now.Subtract(TimeSpan.FromMinutes(5)),
-                Next = DateTime.Now.AddMinutes(5)
+                Last = DateTime.Now.AddMinutes(-5),
+                Next = DateTime.Now.AddMinutes(5),
+                LastUpdated = DateTime.Now.AddMinutes(-5),
             };
             await _scheduleMonitor.UpdateStatusAsync(TestTimerName, expected);
 
@@ -70,6 +71,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             status = await _scheduleMonitor.GetStatusAsync(TestTimerName);
             Assert.Equal(expected.Last, status.Last);
             Assert.Equal(expected.Next, status.Next);
+            Assert.Equal(expected.LastUpdated, status.LastUpdated);
         }
 
         [Fact]

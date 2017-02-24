@@ -74,7 +74,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             Assert.False(Directory.Exists(invalidPath));
 
             FileSystemScheduleMonitor localMonitor = new FileSystemScheduleMonitor();
-            ArgumentException expectedException = 
+            ArgumentException expectedException =
                 Assert.Throws<ArgumentException>(() => localMonitor.StatusFilePath = invalidPath);
             Assert.Equal("value", expectedException.ParamName);
             Assert.Equal("The specified path does not exist.\r\nParameter name: value", expectedException.Message);
@@ -92,22 +92,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             ScheduleStatus status = new ScheduleStatus
             {
                 Last = now,
-                Next = expectedNext
+                Next = expectedNext,
+                LastUpdated = now
             };
             await _monitor.UpdateStatusAsync(_testTimerName, status);
 
             Assert.True(File.Exists(_statusFile));
-            VerifyScheduleStatus(now, expectedNext);
-            
+            VerifyScheduleStatus(now, expectedNext, now);
+
             now = expectedNext;
             expectedNext = now + TimeSpan.FromMinutes(1);
             status = new ScheduleStatus
             {
                 Last = now,
-                Next = expectedNext
+                Next = expectedNext,
+                LastUpdated = now
             };
             await _monitor.UpdateStatusAsync(_testTimerName, status);
-            VerifyScheduleStatus(now, expectedNext);
+            VerifyScheduleStatus(now, expectedNext, now);
         }
 
         [Fact]
@@ -123,7 +125,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
 
             TimeSpan pastDueAmount = await _monitor.CheckPastDueAsync(_testTimerName, now, mockSchedule.Object, null);
             Assert.True(File.Exists(_statusFile));
-            VerifyScheduleStatus(default(DateTime), next);
+            VerifyScheduleStatus(default(DateTime), next, now);
             Assert.Equal(TimeSpan.Zero, pastDueAmount);
         }
 
@@ -165,7 +167,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             ScheduleStatus status = new ScheduleStatus
             {
                 Last = now,
-                Next = next
+                Next = next,
+                LastUpdated = now
             };
             await _monitor.UpdateStatusAsync(_testTimerName, status);
 
@@ -181,6 +184,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             ScheduleStatus updatedStatus = await _monitor.GetStatusAsync(_testTimerName);
             Assert.Equal(default(DateTime), updatedStatus.Last);
             Assert.Equal(adjustedNext, updatedStatus.Next);
+            Assert.Equal(now, updatedStatus.LastUpdated);
 
             now = now + TimeSpan.FromHours(23);
             pastDueAmount = await _monitor.CheckPastDueAsync(_testTimerName, now, mockSchedule.Object, status);
@@ -195,15 +199,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             Assert.Equal(TimeSpan.FromHours(1), pastDueAmount);
         }
 
-        private void VerifyScheduleStatus(DateTime expectedLast, DateTime expectedNext)
+        private void VerifyScheduleStatus(DateTime expectedLast, DateTime expectedNext, DateTime expectedLastUpdated)
         {
             string statusFile = _monitor.GetStatusFileName(_testTimerName);
             string statusLine = File.ReadAllText(statusFile);
             JObject status = JObject.Parse(statusLine);
             DateTime lastOccurrence = (DateTime)status["Last"];
             DateTime nextOccurrence = (DateTime)status["Next"];
+            DateTime lastUpdated = (DateTime)status["LastUpdated"];
             Assert.Equal(expectedLast, lastOccurrence);
             Assert.Equal(expectedNext, nextOccurrence);
+            Assert.Equal(expectedLastUpdated, lastUpdated);
         }
 
         private void CleanStatusFiles()

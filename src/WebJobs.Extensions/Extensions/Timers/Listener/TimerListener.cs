@@ -84,7 +84,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // check to see if we've missed an occurrence since we last started.
                 // If we have, invoke it immediately.
                 ScheduleStatus = await ScheduleMonitor.GetStatusAsync(_timerName);
-                _trace.Verbose($"Function '{_timerName}' initial status: Last='{ScheduleStatus?.Last.ToString("o")}', Next='{ScheduleStatus?.Next.ToString("o")}'");
+                _trace.Verbose($"Function '{_timerName}' initial status: Last='{ScheduleStatus?.Last.ToString("o")}', Next='{ScheduleStatus?.Next.ToString("o")}', LastUpdated='{ScheduleStatus?.LastUpdated.ToString("o")}'");
                 TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerName, now, _schedule, ScheduleStatus);
                 isPastDue = pastDueDuration != TimeSpan.Zero;
             }
@@ -231,13 +231,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             ScheduleStatus = new ScheduleStatus
             {
                 Last = adjustedInvocationTime,
-                Next = _schedule.GetNextOccurrence(adjustedInvocationTime)
+                Next = _schedule.GetNextOccurrence(adjustedInvocationTime),
+                LastUpdated = adjustedInvocationTime
             };
 
             if (ScheduleMonitor != null)
             {
                 await ScheduleMonitor.UpdateStatusAsync(_timerName, ScheduleStatus);
-                _trace.Verbose($"Function '{_timerName}' updated status: Last='{ScheduleStatus.Last.ToString("o")}', Next='{ScheduleStatus.Next.ToString("o")}'");
+                _trace.Verbose($"Function '{_timerName}' updated status: Last='{ScheduleStatus.Last.ToString("o")}', Next='{ScheduleStatus.Next.ToString("o")}', LastUpdated='{ScheduleStatus.LastUpdated}'");
             }
         }
 

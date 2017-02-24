@@ -227,6 +227,7 @@
     <Compile Include="Extensions\SendGrid\SendGridEndToEndTests.cs" />
     <Compile Include="Extensions\SendGrid\SendGridHelpersTests.cs" />
     <Compile Include="Extensions\Timers\Bindings\TimerTriggerBindingTests.cs" />
+    <Compile Include="Extensions\Timers\Scheduling\ScheduleMonitorTests.cs" />
     <Compile Include="Extensions\Timers\Scheduling\StorageScheduleMonitorTests.cs" />
     <Compile Include="Extensions\Timers\Scheduling\TimerScheduleTests.cs" />
     <Compile Include="Extensions\Twilio\TwilioSmsMessageAsyncCollectorTests.cs" />

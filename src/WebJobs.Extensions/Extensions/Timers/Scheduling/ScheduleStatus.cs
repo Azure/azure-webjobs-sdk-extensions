@@ -19,5 +19,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// The expected next schedule occurrence
         /// </summary>
         public DateTime Next { get; set; }
+
+        /// <summary>
+        /// The last time this record was updated. This is used to re-calculate Next
+        /// with the current Schedule after a host restart.
+        /// </summary>
+        public DateTime LastUpdated { get; set; }
     }
 }

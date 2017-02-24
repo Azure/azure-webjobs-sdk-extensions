@@ -115,7 +115,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             var status = new ScheduleStatus
             {
                 Last = new DateTime(2016, 3, 4),
-                Next = new DateTime(2016, 3, 5)
+                Next = new DateTime(2016, 3, 5),
+                LastUpdated = new DateTime(2016, 3, 4)
             };
             DateTime invocationTime = status.Next.AddMilliseconds(-1);
             ScheduleStatus updatedStatus = null;
@@ -340,17 +341,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             var status = new ScheduleStatus
             {
                 Last = new DateTime(2016, 3, 4),
-                Next = new DateTime(2016, 3, 4, 0, 0, 1)
+                Next = new DateTime(2016, 3, 4, 0, 0, 1),
+                LastUpdated = new DateTime(2016, 3, 3, 23, 59, 59)
             };
 
-            var expected = $"Function 'Program.TestTimerJob' initial status: Last='{status.Last.ToString("o")}', Next='{status.Next.ToString("o")}'";
+            var expected = $"Function 'Program.TestTimerJob' initial status: Last='{status.Last.ToString("o")}', Next='{status.Next.ToString("o")}', LastUpdated='{status.LastUpdated.ToString("o")}'";
             await RunInitialStatusTestAsync(status, expected);
         }
 
         [Fact]
         public async Task Listener_LogsInitialNullStatus_WhenUsingMonitor()
         {
-            await RunInitialStatusTestAsync(null, "Function 'Program.TestTimerJob' initial status: Last='', Next=''");
+            await RunInitialStatusTestAsync(null, "Function 'Program.TestTimerJob' initial status: Last='', Next='', LastUpdated=''");
         }
 
         public async Task RunInitialStatusTestAsync(ScheduleStatus initialStatus, string expected)
