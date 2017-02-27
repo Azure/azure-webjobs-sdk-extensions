@@ -65,10 +65,6 @@
       <HintPath>..\..\packages\Microsoft.Azure.WebJobs.2.0.0\lib\net45\Microsoft.Azure.WebJobs.Host.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Azure.WebJobs.Script.Extensibility, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Microsoft.Azure.WebJobs.Script.Extensibility.1.0.0-beta2-10765\lib\net45\Microsoft.Azure.WebJobs.Script.Extensibility.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Microsoft.Data.Edm, Version=5.8.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.Data.Edm.5.8.2\lib\net40\Microsoft.Data.Edm.dll</HintPath>
       <Private>True</Private>
@@ -193,7 +189,6 @@
     <Compile Include="Common\TypeExtensionsTests.cs" />
     <Compile Include="Extensions\Core\CoreBindingEndToEndTests.cs" />
     <Compile Include="Extensions\ApiHub\ApiHubBindingEndToEndTests.cs" />
-    <Compile Include="Extensions\Core\CoreExtensionsScriptBindingProvider.cs" />
     <Compile Include="Extensions\Core\ErrorTriggerAttributeTests.cs" />
     <Compile Include="Extensions\Core\SlidingWindowTraceFilterTests.cs" />
     <Compile Include="Extensions\Core\TraceFilterTests.cs" />
@@ -230,11 +225,9 @@
     <Compile Include="Extensions\NotificationHubs\NotificationHubEndToEndTests.cs" />
     <Compile Include="Extensions\SendGrid\SendGridEndToEndTests.cs" />
     <Compile Include="Extensions\SendGrid\SendGridHelpersTests.cs" />
-    <Compile Include="Extensions\SendGrid\SendGridScriptBindingProviderTests.cs" />
     <Compile Include="Extensions\Timers\Bindings\TimerTriggerBindingTests.cs" />
     <Compile Include="Extensions\Timers\Scheduling\StorageScheduleMonitorTests.cs" />
     <Compile Include="Extensions\Timers\Scheduling\TimerScheduleTests.cs" />
-    <Compile Include="Extensions\Twilio\TwilioScriptBindingProviderTests.cs" />
     <Compile Include="Extensions\Twilio\TwilioSmsMessageAsyncCollectorTests.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Extensions\Core\ErrorTriggerEndToEndTests.cs" />
