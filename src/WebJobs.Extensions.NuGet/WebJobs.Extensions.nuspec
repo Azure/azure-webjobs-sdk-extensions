@@ -16,7 +16,6 @@
     <dependencies>
       <dependency id="Microsoft.Azure.WebJobs" version="2.0.0" />
       <dependency id="ncrontab" version="3.3.0" />
-      <dependency id="Microsoft.Azure.WebJobs.Script.Extensibility" version="1.0.0-beta2-10765" />
       <dependency id="Microsoft.Tpl.Dataflow" version="4.5.24" />
     </dependencies>
   </metadata>

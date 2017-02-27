@@ -46,8 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
                 "TraceFilter",
                 "TraceMonitor",
                 "ValueBinder",
-                "WeeklySchedule",
-                "CoreExtensionsScriptBindingProvider"
+                "WeeklySchedule"
             };
 
             AssertPublicTypes(expected, assembly);
@@ -62,8 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
             {
                 "SendGridAttribute",
                 "SendGridConfiguration",
-                "SampleJobHostConfigurationExtensions",
-                "SendGridScriptBindingProvider"
+                "SendGridJobHostConfigurationExtensions"
             };
 
             AssertPublicTypes(expected, assembly);
@@ -78,8 +76,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
             {
                 "MobileTableAttribute",
                 "MobileAppsConfiguration",
-                "MobileAppsJobHostConfigurationExtensions",
-                "MobileAppsScriptBindingProvider"
+                "MobileAppsJobHostConfigurationExtensions"
             };
 
             AssertPublicTypes(expected, assembly);
@@ -94,8 +91,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
             {
                 "DocumentDBAttribute",
                 "DocumentDBConfiguration",
-                "DocumentDBJobHostConfigurationExtensions",
-                "DocumentDBScriptBindingProvider"
+                "DocumentDBJobHostConfigurationExtensions"
             };
 
             AssertPublicTypes(expected, assembly);
@@ -110,8 +106,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
             {
                 "NotificationHubAttribute",
                 "NotificationHubsConfiguration",
-                "NotificationHubJobHostConfigurationExtensions",
-                "NotificationHubScriptBindingProvider"
+                "NotificationHubJobHostConfigurationExtensions"
             };
 
             AssertPublicTypes(expected, assembly);
@@ -129,8 +124,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
                 "ApiHubConfiguration",
                 "ApiHubJobHostConfigurationExtensions",
                 "ApiHubTableAttribute",
-                "ConnectionFactory",
-                "ApiHubScriptBindingProvider"
+                "ConnectionFactory"
             };
 
             AssertPublicTypes(expected, assembly);

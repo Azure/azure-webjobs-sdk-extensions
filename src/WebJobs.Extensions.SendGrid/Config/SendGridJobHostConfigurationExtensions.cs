@@ -9,7 +9,7 @@ namespace Microsoft.Azure.WebJobs
     /// <summary>
     /// Extension methods for SendGrid integration
     /// </summary>
-    public static class SampleJobHostConfigurationExtensions
+    public static class SendGridJobHostConfigurationExtensions
     {
         /// <summary>
         /// Enables use of the SendGrid extensions
