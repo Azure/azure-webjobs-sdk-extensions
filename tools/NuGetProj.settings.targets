@@ -5,7 +5,7 @@
     <WebJobsToolsPath>$(MSBuildThisFileDirectory)</WebJobsToolsPath>
     <WebJobsPackageEULA>http://www.microsoft.com/web/webpi/eula/aspnetcomponent_rtw_enu.htm</WebJobsPackageEULA>
     <Version>2.0.0</Version>
-    <PrereleaseTag>-beta2</PrereleaseTag>
+    <PrereleaseTag></PrereleaseTag>
   </PropertyGroup>
   <Choose>
     <When Condition=" '$(IncludeBuildNumberInVersion)' == '1'">
@@ -14,7 +14,7 @@
         <MobileAppsPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</MobileAppsPackageVersion>
         <DocDBPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</DocDBPackageVersion>
         <NotificationHubsPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</NotificationHubsPackageVersion>
-        <ApiHubPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</ApiHubPackageVersion>
+        <ApiHubPackageVersion>1.0.0-beta2-$(BUILD_NUMBER)</ApiHubPackageVersion>
         <TwilioPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</TwilioPackageVersion>
     </PropertyGroup>
     </When>
@@ -24,7 +24,7 @@
         <MobileAppsPackageVersion>1.0.0$(PrereleaseTag)</MobileAppsPackageVersion>
         <DocDBPackageVersion>1.0.0$(PrereleaseTag)</DocDBPackageVersion>
         <NotificationHubsPackageVersion>1.0.0$(PrereleaseTag)</NotificationHubsPackageVersion>
-        <ApiHubPackageVersion>1.0.0$(PrereleaseTag)</ApiHubPackageVersion>
+        <ApiHubPackageVersion>1.0.0-beta2</ApiHubPackageVersion>
         <TwilioPackageVersion>1.0.0$(PrereleaseTag)</TwilioPackageVersion>
       </PropertyGroup>
     </Otherwise>
