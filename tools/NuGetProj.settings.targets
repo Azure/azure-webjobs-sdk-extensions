@@ -4,28 +4,34 @@
     <WebJobsRootPath>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\'))</WebJobsRootPath>
     <WebJobsToolsPath>$(MSBuildThisFileDirectory)</WebJobsToolsPath>
     <WebJobsPackageEULA>http://www.microsoft.com/web/webpi/eula/aspnetcomponent_rtw_enu.htm</WebJobsPackageEULA>
-    <Version>2.0.0</Version>
-    <PrereleaseTag></PrereleaseTag>
+    <Version>2.0.1</Version>
+    <MobileAppsVersion>1.0.1</MobileAppsVersion>
+    <DocDBVersion>1.0.1</DocDBVersion>
+    <NotificationHubsVersion>1.0.1</NotificationHubsVersion>
+    <TwilioVersion>1.0.1</TwilioVersion>
+    <ApiHubsVersion>1.0.0</ApiHubsVersion>
+    <ApiHubsPrereleaseTag>-beta3</ApiHubsPrereleaseTag>
+    <PrereleaseTag>-alpha1</PrereleaseTag>
   </PropertyGroup>
   <Choose>
     <When Condition=" '$(IncludeBuildNumberInVersion)' == '1'">
       <PropertyGroup>
         <WebJobsPackageVersion>$(Version)$(PrereleaseTag)-$(BUILD_NUMBER)</WebJobsPackageVersion>
-        <MobileAppsPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</MobileAppsPackageVersion>
-        <DocDBPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</DocDBPackageVersion>
-        <NotificationHubsPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</NotificationHubsPackageVersion>
-        <ApiHubPackageVersion>1.0.0-beta3-$(BUILD_NUMBER)</ApiHubPackageVersion>
-        <TwilioPackageVersion>1.0.0$(PrereleaseTag)-$(BUILD_NUMBER)</TwilioPackageVersion>
+        <MobileAppsPackageVersion>$(MobileAppsVersion)$(PrereleaseTag)-$(BUILD_NUMBER)</MobileAppsPackageVersion>
+        <DocDBPackageVersion>$(DocDBVersion)$(PrereleaseTag)-$(BUILD_NUMBER)</DocDBPackageVersion>
+        <NotificationHubsPackageVersion>$(NotificationHubsVersion)$(PrereleaseTag)-$(BUILD_NUMBER)</NotificationHubsPackageVersion>
+        <ApiHubPackageVersion>$(ApiHubsVersion)$(ApiHubsPrereleaseTag)-$(BUILD_NUMBER)</ApiHubPackageVersion>
+        <TwilioPackageVersion>$(TwilioVersion)$(PrereleaseTag)-$(BUILD_NUMBER)</TwilioPackageVersion>
     </PropertyGroup>
     </When>
     <Otherwise>
       <PropertyGroup>
         <WebJobsPackageVersion>$(Version)$(PrereleaseTag)</WebJobsPackageVersion>
-        <MobileAppsPackageVersion>1.0.0$(PrereleaseTag)</MobileAppsPackageVersion>
-        <DocDBPackageVersion>1.0.0$(PrereleaseTag)</DocDBPackageVersion>
-        <NotificationHubsPackageVersion>1.0.0$(PrereleaseTag)</NotificationHubsPackageVersion>
-        <ApiHubPackageVersion>1.0.0-beta3</ApiHubPackageVersion>
-        <TwilioPackageVersion>1.0.0$(PrereleaseTag)</TwilioPackageVersion>
+        <MobileAppsPackageVersion>$(MobileAppsVersion)$(PrereleaseTag)</MobileAppsPackageVersion>
+        <DocDBPackageVersion>$(DocDBVersion)$(PrereleaseTag)</DocDBPackageVersion>
+        <NotificationHubsPackageVersion>$(NotificationHubsVersion)$(PrereleaseTag)</NotificationHubsPackageVersion>
+        <ApiHubPackageVersion>$(ApiHubsVersion)$(ApiHubsPrereleaseTag)</ApiHubPackageVersion>
+        <TwilioPackageVersion>$(TwilioVersion)$(PrereleaseTag)</TwilioPackageVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>
