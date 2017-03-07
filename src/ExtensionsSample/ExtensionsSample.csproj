@@ -163,6 +163,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Models\CustomQueueInput.cs" />
     <Compile Include="Models\Item.cs" />
     <Compile Include="Models\ItemDoc.cs" />
     <Compile Include="SamplesTypeLocator.cs" />

@@ -196,6 +196,7 @@
     <Compile Include="Extensions\DocumentDB\DocumentDBConnectionStringTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBContextTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBEndToEndTests.cs" />
+    <Compile Include="Extensions\DocumentDB\DocumentDBEnumerableBuilderTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBItemValueBinderTests.cs" />
     <Compile Include="Extensions\DocumentDB\TestDocumentDBServiceFactory.cs" />
     <Compile Include="Extensions\MobileApps\MobileTableAsyncCollectorTests.cs" />

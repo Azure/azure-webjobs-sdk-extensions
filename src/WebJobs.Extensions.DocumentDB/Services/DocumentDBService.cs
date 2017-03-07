@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Documents.Linq;
 using Microsoft.Azure.WebJobs.Extensions.DocumentDB.Config;
 
 namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
@@ -64,6 +65,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         {
             ResourceResponse<Document> response = await _client.ReadDocumentAsync(documentUri, options);
             return response.Resource;
+        }
+
+        public async Task<DocumentQueryResponse<T>> ExecuteNextAsync<T>(Uri documentCollectionUri, SqlQuerySpec sqlSpec, string continuation)
+        {
+            FeedOptions feedOptions = new FeedOptions { RequestContinuation = continuation, EnableCrossPartitionQuery = true };
+
+            IDocumentQuery<T> query = null;
+            if (sqlSpec?.QueryText == null)
+            {
+                query = _client.CreateDocumentQuery<T>(documentCollectionUri, feedOptions).AsDocumentQuery();
+            }
+            else
+            {
+                query = _client.CreateDocumentQuery<T>(documentCollectionUri, sqlSpec, feedOptions).AsDocumentQuery();
+            }
+
+            FeedResponse<T> response = await query.ExecuteNextAsync<T>();
+
+            return new DocumentQueryResponse<T>
+            {
+                Results = response,
+                ResponseContinuation = response.ResponseContinuation
+            };
         }
 
         public void Dispose()

@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using ExtensionsSample.Models;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
@@ -25,14 +26,15 @@ namespace ExtensionsSample
         // Other supported types:
         //   out T[]
         //   IAsyncCollector<T>
-        //   ICollector<T>
+        //   ICollector<T>        
         public static void InsertDocument(
             [TimerTrigger("00:01")] TimerInfo timer,
             [DocumentDB("ItemDb", "ItemCollection")] out ItemDoc newItem)
         {
             newItem = new ItemDoc()
             {
-                Text = new Random().Next().ToString()
+                Text = new Random().Next().ToString(),
+                IsCompleted = new Random().Next() % 2 == 0
             };
         }
 
@@ -50,6 +52,24 @@ namespace ExtensionsSample
             [DocumentDB("ItemDb", "ItemCollection", Id = "{QueueTrigger}")] JObject item)
         {
             item["text"] = "Text changed!";
+        }
+
+        // Document query input binding
+        //   This binding requires the 'SqlQuery' property to be specified. The binding uses
+        //   that string to issue a query against the specified collection. The resulting collection is passed to the 
+        //   function parameter.
+        //
+        // This example uses the binding template "{IsCompleted}" to specify that the value of 'c.isCompleted' should come
+        // from the IsCompleted proparty of the queued JSON message.
+        public static void QueryDocument(
+            [QueueTrigger("samples-documentdb-csharp")] CustomQueueInput input,
+            [DocumentDB("ItemDb", "ItemCollection", SqlQuery = "SELECT c.id, c.text FROM c where c.isCompleted = {IsCompleted}")] IEnumerable<string> items,
+            TraceWriter log)
+        {
+            foreach (var doc in items)
+            {
+                log.Info($"Text: {doc}");
+            }
         }
 
         // DocumentClient input binding

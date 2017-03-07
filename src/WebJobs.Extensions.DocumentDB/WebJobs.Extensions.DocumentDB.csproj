@@ -98,7 +98,9 @@
     <Compile Include="Bindings\DocumentDBAsyncCollector.cs" />
     <Compile Include="Bindings\DocumentDBClientBuilder.cs" />
     <Compile Include="Bindings\DocumentDBCollectorBuilder.cs" />
+    <Compile Include="Bindings\DocumentDBEnumerableBuilder.cs" />
     <Compile Include="Bindings\DocumentDBItemValueBinder.cs" />
+    <Compile Include="Bindings\DocumentDBJArrayBuilder.cs" />
     <Compile Include="Config\DefaultDocumentDBServiceFactory.cs" />
     <Compile Include="Config\DocumentDBConfiguration.cs" />
     <Compile Include="Config\DocumentDBConnectionString.cs" />
@@ -106,10 +108,12 @@
     <Compile Include="Config\IDocumentDBServiceFactory.cs" />
     <Compile Include="DocumentDBAttribute.cs" />
     <Compile Include="DocumentDBContext.cs" />
+    <Compile Include="DocumentDBSqlResolutionPolicy.cs" />
     <Compile Include="DocumentDBUtility.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\DocumentDBService.cs" />
+    <Compile Include="Services\DocumentQueryResponse.cs" />
     <Compile Include="Services\IDocumentDBService.cs" />
   </ItemGroup>
   <ItemGroup>

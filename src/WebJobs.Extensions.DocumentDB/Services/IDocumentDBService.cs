@@ -59,6 +59,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         Task<Document> ReplaceDocumentAsync(Uri documentUri, object document);
 
         /// <summary>
+        /// Queries a collection.
+        /// </summary>
+        /// <param name="documentCollectionUri">The self-link of the collection to query.</param>
+        /// <param name="sqlSpec">The SQL expression to query.</param>
+        /// <param name="continuation">The continuation token.</param>
+        /// <returns>The response from the call to DocumentDB</returns>
+        Task<DocumentQueryResponse<T>> ExecuteNextAsync<T>(Uri documentCollectionUri, SqlQuerySpec sqlSpec, string continuation);
+
+        /// <summary>
         /// Returns the underlying <see cref="DocumentClient"/>.
         /// </summary>
         /// <returns></returns>

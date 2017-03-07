@@ -15,5 +15,8 @@ namespace ExtensionsSample.Models
 
         [JsonProperty("text")]
         public string Text { get; set; }
+
+        [JsonProperty("isCompleted")]
+        public bool IsCompleted { get; set; }
     }
 }

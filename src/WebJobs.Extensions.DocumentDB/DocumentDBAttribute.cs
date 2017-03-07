@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
+using Microsoft.Azure.Documents;
 using Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 
 namespace Microsoft.Azure.WebJobs
@@ -90,5 +92,15 @@ namespace Microsoft.Azure.WebJobs
         /// collection.
         /// </summary>
         public int CollectionThroughput { get; set; }
+
+        /// <summary>
+        /// Optional.
+        /// When specified on an input binding using an <see cref="IEnumerable{T}"/>, defines the query to run against the collection. 
+        /// May include binding parameters.
+        /// </summary>
+        [AutoResolve(ResolutionPolicyType = typeof(DocumentDBSqlResolutionPolicy))]
+        public string SqlQuery { get; set; }
+
+        internal SqlParameterCollection SqlQueryParameters { get; set; }
     }
 }

@@ -63,6 +63,8 @@
       <Word>ConnectionStringSetting</Word>
       <Word>MobileAppUriSetting</Word>
       <Word>Twilio</Word>
+      <Word>IEnumerable</Word>
+      <Word>sqlquery</Word>
     </Recognized>
     <Deprecated/>
     <Compound>
@@ -70,6 +72,7 @@
       <Term CompoundAlternate="TableName">tableName</Term>
       <Term CompoundAlternate="ETag">etag</Term>
       <Term CompoundAlternate="ETag">eTag</Term>
+      <Term CompoundAlternate="SqlQuery">sqlquery</Term>
     </Compound>
     <DiscreteExceptions>
       <Term>WebJobs</Term>

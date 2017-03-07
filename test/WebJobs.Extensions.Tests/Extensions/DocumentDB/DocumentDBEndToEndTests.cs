@@ -10,7 +10,6 @@ using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
-using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Models;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Indexers;
 using Moq;
@@ -96,6 +95,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             Uri item3Uri = UriFactory.CreateDocumentUri(DatabaseName, CollectionName, item3Id);
             Uri item4Uri = UriFactory.CreateDocumentUri("ResolvedDatabase", "ResolvedCollection", item4Id);
             Uri item5Uri = UriFactory.CreateDocumentUri(DatabaseName, CollectionName, item5Id);
+            Uri collectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseName, CollectionName);
 
             string options2 = string.Format("[\"{0}\"]", item1Id); // this comes from the trigger
             string options3 = "[\"partkey3\"]";
@@ -121,6 +121,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             serviceMock
                 .Setup(m => m.ReadDocumentAsync(item5Uri, null))
                 .ReturnsAsync(new Document { Id = item5Id });
+
+            serviceMock
+                .Setup(m => m.ExecuteNextAsync<JObject>(
+                    collectionUri,
+                    It.Is<SqlQuerySpec>((s) =>
+                        s.QueryText == "some query" &&
+                        s.Parameters.Count() == 0),
+                    null))
+                .ReturnsAsync(new DocumentQueryResponse<JObject>());
+
+            serviceMock
+                .Setup(m => m.ExecuteNextAsync<JObject>(
+                    collectionUri,
+                    It.Is<SqlQuerySpec>((s) =>
+                        s.QueryText == "some ResolvedQuery with '@QueueTrigger' replacements" &&
+                        s.Parameters.Count() == 1 &&
+                        s.Parameters[0].Name == "@QueueTrigger" &&
+                        s.Parameters[0].Value.ToString() == "docid1"),
+                    null))
+                .ReturnsAsync(new DocumentQueryResponse<JObject>());
+
+            serviceMock
+                .Setup(m => m.ExecuteNextAsync<JObject>(
+                    collectionUri,
+                    It.Is<SqlQuerySpec>((s) =>
+                        s.QueryText == null &&
+                        s.Parameters.Count() == 0),
+                        null))
+                .ReturnsAsync(new DocumentQueryResponse<JObject>());
 
             // We only expect item2 to be updated
             serviceMock
@@ -188,6 +217,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             Assert.IsType<InvalidOperationException>(ex.InnerException);
         }
 
+        [Fact]
+        public async Task InvalidEnumerableBindings()
+        {
+            // Verify that the validator is properly wired up. Unit tests already check all other permutations.
+
+            // Act
+            var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
+                () => RunTestAsync(typeof(DocumentDBInvalidEnumerableBindingFunctions), "BrokenEnumerable", new DefaultDocumentDBServiceFactory(), new TestTraceWriter()));
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex.InnerException);
+            Assert.Equal("'Id' cannot be specified when binding to an IEnumerable property.", ex.InnerException.Message);
+        }
+
+        [Fact]
+        public async Task InvalidItemBindings()
+        {
+            // Verify that the validator is properly wired up. Unit tests already check all other permutations.
+
+            // Act
+            var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
+                () => RunTestAsync(typeof(DocumentDBInvalidItemBindingFunctions), "BrokenItem", new DefaultDocumentDBServiceFactory(), new TestTraceWriter()));
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex.InnerException);
+            Assert.Equal("'Id' is required when binding to a JObject property.", ex.InnerException.Message);
+        }
+
         private Task RunTestAsync(string testName, IDocumentDBServiceFactory factory, TraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr)
         {
             return RunTestAsync(typeof(DocumentDBEndToEndFunctions), testName, factory, testTrace, argument, configConnectionString);
@@ -216,6 +273,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             resolver.Values.Add("Database", "ResolvedDatabase");
             resolver.Values.Add("Collection", "ResolvedCollection");
             resolver.Values.Add("MyConnectionString", AttributeConnStr);
+            resolver.Values.Add("Query", "ResolvedQuery");
             if (includeDefaultConnectionString)
             {
                 resolver.Values.Add(DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName, DefaultConnStr);
@@ -283,6 +341,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
                 [DocumentDB(DatabaseName, CollectionName, Id = "docid3", PartitionKey = "partkey3")] dynamic item3,
                 [DocumentDB("%Database%", "%Collection%", Id = "docid4")] dynamic item4,
                 [DocumentDB(DatabaseName, CollectionName, Id = "docid5")] string item5,
+                [DocumentDB(DatabaseName, CollectionName, SqlQuery = "some query")] IEnumerable<JObject> query1,
+                [DocumentDB(DatabaseName, CollectionName, SqlQuery = "some %Query% with '{QueueTrigger}' replacements")] IEnumerable<JObject> query2,
+                [DocumentDB(DatabaseName, CollectionName)] JArray query3,
                 TraceWriter trace)
             {
                 Assert.NotNull(item1);
@@ -290,6 +351,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
                 Assert.NotNull(item3);
                 Assert.NotNull(item4);
                 Assert.NotNull(item5);
+                Assert.NotNull(query1);
+                Assert.NotNull(query2);
+                Assert.NotNull(query3);
 
                 // add some value to item2
                 item2.text = "changed";
@@ -314,6 +378,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             [NoAutomaticTrigger]
             public static void Broken(
                 [DocumentDB] DocumentClient client)
+            {
+            }
+        }
+
+        private class DocumentDBInvalidEnumerableBindingFunctions
+        {
+            [NoAutomaticTrigger]
+            public static void BrokenEnumerable(
+                [DocumentDB(Id = "Some_Id")] IEnumerable<JObject> inputs)
+            {
+            }
+        }
+
+        private class DocumentDBInvalidItemBindingFunctions
+        {
+            [NoAutomaticTrigger]
+            public static void BrokenItem(
+                [DocumentDB(SqlQuery = "some query")] JObject item)
             {
             }
         }

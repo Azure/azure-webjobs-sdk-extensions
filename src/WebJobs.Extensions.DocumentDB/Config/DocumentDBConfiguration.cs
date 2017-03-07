@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents.Client;
@@ -10,6 +11,7 @@ using Microsoft.Azure.WebJobs.Extensions.DocumentDB.Bindings;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 {
@@ -49,6 +51,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             _trace = context.Trace;
 
             INameResolver nameResolver = context.Config.GetService<INameResolver>();
+
             IConverterManager converterManager = context.Config.GetService<IConverterManager>();
 
             // Use this if there is no other connection string set.
@@ -60,10 +63,39 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
             IBindingProvider clientProvider = factory.BindToInput<DocumentDBAttribute, DocumentClient>(new DocumentDBClientBuilder(this));
 
-            IBindingProvider itemProvider = factory.BindToGenericValueProvider<DocumentDBAttribute>((attr, t) => BindForItemAsync(attr, t));
+            IBindingProvider jArrayProvider = factory.BindToInput<DocumentDBAttribute, JArray>(typeof(DocumentDBJArrayBuilder), this);
+
+            IBindingProvider enumerableProvider = factory.BindToInput<DocumentDBAttribute, IEnumerable<OpenType>>(typeof(DocumentDBEnumerableBuilder<>), this);
+            enumerableProvider = factory.AddValidator<DocumentDBAttribute>(ValidateInputBinding, enumerableProvider);
+
+            IBindingProvider inputProvider = factory.BindToGenericValueProvider<DocumentDBAttribute>((attr, t) => BindForItemAsync(attr, t));
+            inputProvider = factory.AddValidator<DocumentDBAttribute>(ValidateInputBinding, inputProvider);
 
             IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
-            extensions.RegisterBindingRules<DocumentDBAttribute>(ValidateConnection, nameResolver, outputProvider, clientProvider, itemProvider);
+            extensions.RegisterBindingRules<DocumentDBAttribute>(ValidateConnection, nameResolver, outputProvider, clientProvider, jArrayProvider, enumerableProvider, inputProvider);
+        }
+
+        internal static void ValidateInputBinding(DocumentDBAttribute attribute, Type parameterType)
+        {
+            bool hasSqlQuery = !string.IsNullOrEmpty(attribute.SqlQuery);
+            bool hasId = !string.IsNullOrEmpty(attribute.Id);
+
+            if (hasSqlQuery && hasId)
+            {
+                throw new InvalidOperationException($"Only one of 'SqlQuery' and '{nameof(DocumentDBAttribute.Id)}' can be specified.");
+            }
+
+            if (IsSupportedEnumerable(parameterType))
+            {
+                if (hasId)
+                {
+                    throw new InvalidOperationException($"'{nameof(DocumentDBAttribute.Id)}' cannot be specified when binding to an IEnumerable property.");
+                }
+            }
+            else if (!hasId)
+            {
+                throw new InvalidOperationException($"'{nameof(DocumentDBAttribute.Id)}' is required when binding to a {parameterType.Name} property.");
+            }
         }
 
         internal void ValidateConnection(DocumentDBAttribute attribute, Type paramType)
@@ -79,8 +111,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             }
         }
 
+        internal DocumentClient BindForClient(DocumentDBAttribute attribute)
+        {
+            string resolvedConnectionString = ResolveConnectionString(attribute.ConnectionStringSetting);
+            IDocumentDBService service = GetService(resolvedConnectionString);
+
+            return service.GetClient();
+        }
+
         internal Task<IValueBinder> BindForItemAsync(DocumentDBAttribute attribute, Type type)
         {
+            if (string.IsNullOrEmpty(attribute.Id))
+            {
+                throw new InvalidOperationException("The 'Id' property of a DocumentDB single-item input binding cannot be null or empty.");
+            }
+
             DocumentDBContext context = CreateContext(attribute);
 
             Type genericType = typeof(DocumentDBItemValueBinder<>).MakeGenericType(type);
@@ -122,8 +167,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             {
                 Service = service,
                 Trace = _trace,
-                ResolvedAttribute = attribute
+                ResolvedAttribute = attribute,
             };
+        }
+
+        internal static bool IsSupportedEnumerable(Type type)
+        {
+            if (type.IsGenericType
+                && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }
