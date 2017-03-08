@@ -262,6 +262,20 @@ public static void ReadDocument(
 }
 ```
 
+If you need to make a query to return many Documents from Document DB, use the `SqlQuery` property on the `DocumentDBAttribute`. This property supports runtime binding, so the example below will replace `{QueueTrigger}` with the value from the queue message. In order to prevent injection attacks, any binding string used in the `SqlQuery` property is replaced with a [`SqlParameter`](https://azure.microsoft.com/en-us/blog/announcing-sql-parameterization-in-documentdb/) before being sent to your Document DB database. Queries must be of type `JArray` or `IEnumerable<T>`, where `T` is a type supported by Document DB (such as `Document`, `JObject`, or your own custom type). If you want to return all documents in a collection, you can remove the `SqlQuery` property and use `JArray` or `IEnumerable<T>` as your parameter type.
+```csharp
+public static void ReadDocument(
+    [QueueTrigger("sample")] string trigger,
+    [DocumentDB("ItemDb", "ItemCollection", SqlQuery = "SELECT c.id, c.fullName, c.department FROM c where c.department = {QueueTrigger}")] IEnumerable<JObject> documents)
+{
+    foreach(JObject doc in documents)
+    {
+        // do something
+    }
+}
+```
+
+
 If you need more control, you can also specify a parameter of type `DocumentClient`. The following example uses DocumentClient to query for all documents in `ItemCollection` and log their ids.
 
 ```csharp
