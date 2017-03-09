@@ -10,6 +10,7 @@ using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
+using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Models;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Indexers;
 using Moq;
@@ -338,8 +339,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
                 [QueueTrigger("fakequeue1")] string triggerData,
                 [DocumentDB(DatabaseName, CollectionName, Id = "{QueueTrigger}")] dynamic item1,
                 [DocumentDB(DatabaseName, CollectionName, Id = "docid2", PartitionKey = "{QueueTrigger}")] dynamic item2,
-                [DocumentDB(DatabaseName, CollectionName, Id = "docid3", PartitionKey = "partkey3")] dynamic item3,
-                [DocumentDB("%Database%", "%Collection%", Id = "docid4")] dynamic item4,
+                [DocumentDB(DatabaseName, CollectionName, Id = "docid3", PartitionKey = "partkey3")] Item item3,
+                [DocumentDB("%Database%", "%Collection%", Id = "docid4")] JObject item4,
                 [DocumentDB(DatabaseName, CollectionName, Id = "docid5")] string item5,
                 [DocumentDB(DatabaseName, CollectionName, SqlQuery = "some query")] IEnumerable<JObject> query1,
                 [DocumentDB(DatabaseName, CollectionName, SqlQuery = "some %Query% with '{QueueTrigger}' replacements")] IEnumerable<JObject> query2,

@@ -3,6 +3,7 @@
 
 using System;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
@@ -240,6 +241,61 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.DocumentDB
 
             // Assert
             Assert.Equal("Cannot update the 'Id' property.", ex.Message);
+            mockService.Verify();
+        }
+
+        [Fact]
+        public async Task GetAsync_SetAsync_DoesNotUpdate_IfUnchanged_Poco()
+        {
+            await TestGetThenSet<Item>();
+        }
+
+        [Fact]
+        public async Task GetAsync_SetAsync_DoesNotUpdate_IfUnchanged_JObject()
+        {
+            await TestGetThenSet<JObject>();
+        }
+
+        [Fact]
+        public async Task GetAsync_SetAsync_DoesNotUpdate_IfUnchanged_Document()
+        {
+            await TestGetThenSet<Document>();
+        }
+
+
+        [Fact]
+        public async Task GetAsync_SetAsync_DoesNotUpdate_IfUnchanged_String()
+        {
+            await TestGetThenSet<string>();
+        }
+
+
+        [Fact]
+        public async Task GetAsync_SetAsync_DoesNotUpdate_IfUnchanged_Dynamic()
+        {
+            await TestGetThenSet<dynamic>();
+        }
+
+        private async Task TestGetThenSet<T>() where T : class
+        {
+            // Arrange
+            Document newDocument = new Document();
+            newDocument.Id = Guid.NewGuid().ToString();
+            newDocument.SetPropertyValue("text", "some text");
+
+            Mock<IDocumentDBService> mockService;
+            IValueBinder binder = CreateBinder<T>(out mockService);
+            mockService
+                .Setup(m => m.ReadDocumentAsync(_expectedUri, null))
+                .ReturnsAsync(newDocument);
+
+            // Act
+            // get, then immediately set with no changes
+            var value = await binder.GetValueAsync() as T;
+            await binder.SetValueAsync(value, CancellationToken.None);
+
+            // Assert
+            // There should be no call to ReplaceDocumentAsync
             mockService.Verify();
         }
 

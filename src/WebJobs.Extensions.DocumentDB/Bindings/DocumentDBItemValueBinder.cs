@@ -60,16 +60,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             }
 
             T item = null;
-            _originalItem = JObject.FromObject(document);
 
             // Strings need to be handled differently.
             if (typeof(T) == typeof(string))
             {
+                _originalItem = JObject.FromObject(document);
                 item = _originalItem.ToString(Formatting.None) as T;
             }
             else
             {
                 item = (T)(dynamic)document;
+                _originalItem = JObject.FromObject(item);
             }
 
             return item;

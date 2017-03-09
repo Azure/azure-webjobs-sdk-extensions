@@ -62,7 +62,7 @@ namespace ExtensionsSample
         // This example uses the binding template "{IsCompleted}" to specify that the value of 'c.isCompleted' should come
         // from the IsCompleted proparty of the queued JSON message.
         public static void QueryDocument(
-            [QueueTrigger("samples-documentdb-csharp")] CustomQueueInput input,
+            [QueueTrigger("samples-documentdb-csharp-query")] CustomQueueInput input,
             [DocumentDB("ItemDb", "ItemCollection", SqlQuery = "SELECT c.id, c.text FROM c where c.isCompleted = {IsCompleted}")] IEnumerable<string> items,
             TraceWriter log)
         {
