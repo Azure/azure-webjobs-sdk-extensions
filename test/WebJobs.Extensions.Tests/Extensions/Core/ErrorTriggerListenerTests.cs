@@ -63,7 +63,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             Assert.Equal("One or more WebJob errors have occurred.", traceFilter.Message);
 
             int notification = 0;
-            traceMonitor.Subscribe(p => notification++);            
+            traceMonitor.Subscribe(p => notification++);
             Assert.Equal(0, traceFilter.GetEvents().Count());
             traceMonitor.Trace(new TraceEvent(TraceLevel.Error, "Error1"));
             IEnumerable<TraceEvent> traceEvents = traceFilter.GetEvents();
@@ -116,18 +116,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
 
             // first log a function exception for a *different* function
             // don't expect it to pass filter
-            FunctionInvocationException functionException = new FunctionInvocationException("Function failed", new Exception("Kaboom!"))
-            {
-                MethodName = "Microsoft.Azure.WebJobs.Extensions.Tests.Core.ErrorTriggerListenerTests+Functions.Foo"
-            };
+            FunctionInvocationException functionException = new FunctionInvocationException("Function failed", Guid.Empty,
+                "Microsoft.Azure.WebJobs.Extensions.Tests.Core.ErrorTriggerListenerTests+Functions.Foo", new Exception("Kaboom!"));
+
             TraceEvent traceEvent = new TraceEvent(TraceLevel.Error, "Kaboom!", null, functionException);
             traceMonitor.Trace(traceEvent);
             Assert.Equal(0, traceFilter.GetEvents().Count());
 
-            functionException = new FunctionInvocationException("Function failed", new Exception("Kaboom!"))
-            {
-                MethodName = "Microsoft.Azure.WebJobs.Extensions.Tests.Core.ErrorTriggerListenerTests+Functions.Test"
-            };
+            functionException = new FunctionInvocationException("Function failed", Guid.Empty,
+                "Microsoft.Azure.WebJobs.Extensions.Tests.Core.ErrorTriggerListenerTests+Functions.Test", new Exception("Kaboom!"));
+
             traceEvent = new TraceEvent(TraceLevel.Error, "Kaboom!", null, functionException);
             traceMonitor.Trace(traceEvent);
             Assert.Equal(1, traceFilter.GetEvents().Count());
@@ -159,18 +157,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
 
             // first log a function exception for a *different* function
             // don't expect it to pass filter
-            FunctionInvocationException functionException = new FunctionInvocationException("Function failed", new Exception("Kaboom!"))
-            {
-                MethodName = "Microsoft.Azure.WebJobs.Extensions.Tests.Core.ErrorTriggerListenerTests+Functions.Foo"
-            };
+            FunctionInvocationException functionException = new FunctionInvocationException("Function failed", Guid.Empty,
+                "Microsoft.Azure.WebJobs.Extensions.Tests.Core.ErrorTriggerListenerTests+Functions.Foo", new Exception("Kaboom!"));
+
             TraceEvent traceEvent = new TraceEvent(TraceLevel.Error, "Kaboom!", null, functionException);
             traceMonitor.Trace(traceEvent);
             Assert.Equal(0, traceFilter.GetEvents().Count());
 
-            functionException = new FunctionInvocationException("Function failed", new Exception("Kaboom!"))
-            {
-                MethodName = "Microsoft.Azure.WebJobs.Extensions.Tests.Core.ErrorTriggerListenerTests+Functions.Test2"
-            };
+            functionException = new FunctionInvocationException("Function failed", Guid.Empty,
+                "Microsoft.Azure.WebJobs.Extensions.Tests.Core.ErrorTriggerListenerTests+Functions.Test2", new Exception("Kaboom!"));
+
             traceEvent = new TraceEvent(TraceLevel.Error, "Kaboom!", null, functionException);
             traceMonitor.Trace(traceEvent);
             Assert.Equal(1, traceFilter.GetEvents().Count());
