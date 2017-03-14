@@ -27,7 +27,7 @@ JobHost host = new JobHost(config);
 host.RunAndBlock();
 ```
 
-##Extensions
+## Extensions
 
 The extensions included in this repo include the following. This is not an exhaustive list - see the **ExtensionsSample** project in this repo for more information extension samples.
 
@@ -68,7 +68,7 @@ The first example above uses a [cron expression](http://en.wikipedia.org/wiki/Cr
 
 To register the Timer extensions, call `config.UseTimers()` in your startup code. For more information, see the [TimerTrigger wiki page](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/TimerTrigger), and also the [Timer samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/TimerSamples.cs).
 
-###FileTrigger / File
+### FileTrigger / File
 
 A trigger that monitors for file additions/changes to a particular directory, and triggers a job function when they occur. Here's an example that monitors for any *.dat files added to a particular directory, uploads them to blob storage, and deletes the files automatically after successful processing. The FileTrigger also handles multi-instance scale out automatically - only a single instance will process a particular file event. Also included is a non-trigger File binding allowing you to bind to input/output files.
 
@@ -87,7 +87,7 @@ public static void ImportFile(
 
 To register the File extensions, call `config.UseFiles()` in your startup code. For more information, see the [File samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/FileSamples.cs).
 
-###SendGrid
+### SendGrid
 
 A [SendGrid](https://sendgrid.com) binding that allows you to easily send emails after your job functions complete. This extension lives in the **Microsoft.Azure.WebJobs.Extensions.SendGrid** package. Simply add your SendGrid ApiKey as an app setting or environment variable (use setting name `AzureWebJobsSendGridApiKey`), and you can write functions like the below which demonstrates full route binding for message fields. In this scenario, an email is sent each time a new order is successfully placed. The message fields are automatically bound to the `CustomerEmail/CustomerName/OrderId` properties of the Order object that triggered the function.
 
@@ -120,7 +120,7 @@ The above messages are fully declarative, but you can also set the message prope
 
 To register the SendGrid extensions, call `config.UseSendGrid()` in your startup code. For more information on the SendGrid binding, see the [SendGrid samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/SendGridSamples.cs).
 
-###ErrorTrigger
+### ErrorTrigger
 
 An **error trigger** that allows you to annotate functions to be automatically called by the runtime when errors occur. This allows you to set up email/text/etc. notifications to alert you when things are going wrong with your jobs.  Here's an example function that will be called whenever 10 errors occur within a 30 minute sliding window (throttled at a maximum of 1 notification per hour):
 
@@ -165,7 +165,7 @@ public static void ImportErrorHandler(
 
 To register the Error extensions, call `config.UseCore()` in your startup code. For more information see the [Error Monitoring](http://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Error-Monitoring) wiki page, as well as the the [Error Monitoring Sample](http://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/ErrorMonitoringSamples.cs).
 
-###Core Extensions
+### Core Extensions
 
 There are a set of triggers/bindings that can be registered by calling `config.UseCore()`. The Core extensions contain a set of general purpose bindings. For example, the **ErrorTrigger** binding discussed in its own section above is part of the Core extension. There is also a binding for `ExecutionContext` which allows you to access invocation specific system information in your function. Here's an example showing how to access the function **Invocation ID** for the function:
 
@@ -181,7 +181,7 @@ public static void ProcessOrder(
 
 The invocation ID is used in the Dashboard logs, so having access to this programatically allows you to correlate an invocation to those logs. This might be useful if you're also logging to your own external system. To register the Core extensions, call `config.Core()` in your startup code.
 
-###Azure Mobile Apps
+### Azure Mobile Apps
 
 A binding that allows you to easily create, read, and update records from an [Azure Mobile App](https://azure.microsoft.com/en-us/services/app-service/mobile/). This extension lives in **Microsoft.Azure.WebJobs.Extensions.MobileApps** nuget package. To configure the binding, add the Mobile App's URI (like `https://{yourapp}.azurewebsites.net`) as an app setting or environment variable using the setting name `AzureWebJobsMobileAppUri`. 
 
@@ -231,7 +231,7 @@ public static void MobileTableSample(
     }
 }
 ```
-###DocumentDB
+### DocumentDB
 
 Use an [Azure DocumentDB](https://azure.microsoft.com/en-us/services/documentdb/) binding to easily create, read, and update JSON documents from a WebJob. This extension lives in **Microsoft.Azure.WebJobs.Extensions.DocumentDB** nuget package. To configure the binding, add the DocumentDB connection string as an app setting or environment variable using the setting name `AzureWebJobsDocumentDBConnectionString`.
 
@@ -262,7 +262,7 @@ public static void ReadDocument(
 }
 ```
 
-##Sql Query Support
+#### Sql Query Support
 
 If you need to make a query to return many Documents from Document DB, use the `SqlQuery` property on the `DocumentDBAttribute`. This property supports runtime binding, so the example below will replace `{QueueTrigger}` with the value from the queue message. In order to prevent injection attacks, any binding string used in the `SqlQuery` property is replaced with a [`SqlParameter`](https://azure.microsoft.com/en-us/blog/announcing-sql-parameterization-in-documentdb/) before being sent to your Document DB database. Queries must be of type `JArray` or `IEnumerable<T>`, where `T` is a type supported by Document DB (such as `Document`, `JObject`, or your own custom type). If you want to return all documents in a collection, you can remove the `SqlQuery` property and use `JArray` or `IEnumerable<T>` as your parameter type.
 ```csharp
@@ -296,7 +296,7 @@ public static void DocumentClient(
 }
 ```
 
-###Azure Notification Hubs
+### Azure Notification Hubs
 
 An [Azure Notification Hub](https://azure.microsoft.com/en-us/services/notification-hubs/) binding allows you to easily send push notifications to any platform. This extension lives in **Microsoft.Azure.WebJobs.Extensions.NotificationHubs** nuget package. To configure the binding, add the NotificationHubs namespace connection string as an app setting or environment variable using the setting name `AzureWebJobsNotificationHubsConnectionString` and add the name of the NotificationHub as an app setting or environment variable using the setting name `AzureWebJobsNotificationHubName`.
 
@@ -326,7 +326,7 @@ public static void SendTemplateNotification(
 }
 ```
 
-###Twilio SMS
+### Twilio SMS
 
 A [Twilio](https://twilio.com) binding that allows you to easily send SMS messages from your job functions. This extension lives in the **Microsoft.Azure.WebJobs.Extensions.Twilio** package. Simply add your Twilio Account SID and Auth Token as app settings or environment variables (with settings named `AzureWebJobsTwilioAccountSid` and `AzureWebJobsTwilioAuthToken`, respectively), and you can write functions like the below which demonstrates full route binding for message fields. In this scenario, an SMS message is sent each time a new order is successfully placed. The message fields are automatically bound to the `CustomerPhoneNumber/StorePhoneNumber/CustomerName/OrderId` properties of the Order object that triggered the function.
 
