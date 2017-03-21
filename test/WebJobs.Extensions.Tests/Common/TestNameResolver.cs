@@ -32,9 +32,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
                 throw new NotImplementedException("INameResolver must be supplied to resolve '%" + name + "%'.");
             }
 
-            string value;
+            string value = null;
 
-            Values.TryGetValue(name, out value);
+            if (!string.IsNullOrEmpty(name))
+            {
+                Values.TryGetValue(name, out value);
+            }
 
             return value;
         }
