@@ -16,7 +16,7 @@ namespace Microsoft.Azure.WebJobs
         /// Optional. A string value indicating the app setting to use as the SendGrid API key, 
         /// if different than the one specified in the <see cref="Extensions.SendGrid.SendGridConfiguration"/>.
         /// </summary>
-        [AutoResolve(AllowTokens = false)]
+        [AppSetting]
         public string ApiKey { get; set; }
 
         /// <summary>
