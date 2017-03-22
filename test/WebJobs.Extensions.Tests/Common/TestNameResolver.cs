@@ -33,12 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
             }
 
             string value = null;
-
-            if (!string.IsNullOrEmpty(name))
-            {
-                Values.TryGetValue(name, out value);
-            }
-
+            Values.TryGetValue(name, out value);
             return value;
         }
     }
