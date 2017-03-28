@@ -31,7 +31,7 @@ host.RunAndBlock();
 
 The extensions included in this repo include the following. This is not an exhaustive list - see the **ExtensionsSample** project in this repo for more information extension samples.
 
-###TimerTrigger
+### TimerTrigger
 
 A fully featured Timer trigger for scheduled jobs that supports cron expressions, as well as other schedule expressions. A couple of examples:
 
