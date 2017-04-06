@@ -13,6 +13,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
 {
     internal class SendGridHelpers
     {
+        internal static Email Apply(Email current, string value)
+        {      
+            Email mail;
+            if (TryParseAddress(value, out mail))
+            {
+                return mail;
+            }
+            return current;
+        }
+
         internal static bool TryParseAddress(string value, out Email email)
         {
             email = null;

@@ -7,9 +7,8 @@ using System.Linq;
 using Microsoft.Azure.WebJobs.Extensions.Bindings;
 using Microsoft.Azure.WebJobs.Extensions.Client;
 using Microsoft.Azure.WebJobs.Extensions.Config;
-using Microsoft.Azure.WebJobs.Host;
-using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SendGrid.Helpers.Mail;
 
@@ -23,7 +22,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
         internal const string AzureWebJobsSendGridApiKeyName = "AzureWebJobsSendGridApiKey";
 
         private ConcurrentDictionary<string, ISendGridClient> _sendGridClientCache = new ConcurrentDictionary<string, ISendGridClient>();
-        private string _defaultApiKey;
 
         /// <summary>
         /// Creates a new instance.
@@ -68,28 +66,40 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
                 throw new ArgumentNullException("context");
             }
 
-            INameResolver nameResolver = context.Config.NameResolver;
-            _defaultApiKey = nameResolver.Resolve(AzureWebJobsSendGridApiKeyName);
+            var metadata = new ConfigMetadata();
+            context.ApplyConfig(metadata, "sendgrid");
+            this.ToAddress = SendGridHelpers.Apply(this.ToAddress, metadata.To);
+            this.FromAddress = SendGridHelpers.Apply(this.FromAddress, metadata.From);
 
-            IConverterManager converterManager = context.Config.GetService<IConverterManager>();
-            converterManager.AddConverter<string, Mail>(SendGridHelpers.CreateMessage);
-            converterManager.AddConverter<JObject, Mail>(SendGridHelpers.CreateMessage);
-
-            BindingFactory factory = new BindingFactory(nameResolver, converterManager);
-            IBindingProvider outputProvider = factory.BindToCollector<SendGridAttribute, Mail>((attr) =>
+            if (string.IsNullOrEmpty(this.ApiKey))
             {
-                string apiKey = FirstOrDefault(attr.ApiKey, ApiKey, _defaultApiKey);
-                ISendGridClient sendGrid = _sendGridClientCache.GetOrAdd(apiKey, a => ClientFactory.Create(a));
-                return new SendGridMailAsyncCollector(this, attr, sendGrid);
-            });
+                INameResolver nameResolver = context.Config.NameResolver;
+                this.ApiKey = nameResolver.Resolve(AzureWebJobsSendGridApiKeyName);
+            }
 
-            IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
-            extensions.RegisterBindingRules<SendGridAttribute>(ValidateBinding, nameResolver, outputProvider);
+            context                
+                .AddConverter<string, Mail>(SendGridHelpers.CreateMessage)
+                .AddConverter<JObject, Mail>(SendGridHelpers.CreateMessage)
+                .AddBindingRule<SendGridAttribute>()
+                .AddValidator(ValidateBinding)
+                    .BindToCollector<Mail>(CreateCollector);
+        }
+
+        private IAsyncCollector<Mail> CreateCollector(SendGridAttribute attr)
+        {
+            string apiKey = FirstOrDefault(attr.ApiKey, ApiKey);
+            ISendGridClient sendGrid = _sendGridClientCache.GetOrAdd(apiKey, a => ClientFactory.Create(a));
+            return new SendGridMailAsyncCollector(this, attr, sendGrid);
         }
 
         private void ValidateBinding(SendGridAttribute attribute, Type type)
         {
-            string apiKey = FirstOrDefault(attribute.ApiKey, ApiKey, _defaultApiKey);
+            ValidateBinding(attribute);
+        }
+
+        private void ValidateBinding(SendGridAttribute attribute)
+        {
+            string apiKey = FirstOrDefault(attribute.ApiKey, ApiKey);
 
             if (string.IsNullOrEmpty(apiKey))
             {
@@ -101,6 +111,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
         private static string FirstOrDefault(params string[] values)
         {
             return values.FirstOrDefault(v => !string.IsNullOrEmpty(v));
+        }
+
+        // Schema for host.json 
+        private class ConfigMetadata
+        {
+            [JsonProperty("to")]
+            public string To { get; set; }
+
+            [JsonProperty("from")]
+            public string From { get; set; }
         }
     }
 }

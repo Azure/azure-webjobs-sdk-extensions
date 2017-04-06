@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Azure.WebJobs.Description;
 
 namespace Microsoft.Azure.WebJobs
 {
@@ -10,6 +11,7 @@ namespace Microsoft.Azure.WebJobs
     /// sent when the function completes.
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter)]
+    [Binding]
     public sealed class SendGridAttribute : Attribute
     {
         /// <summary>
