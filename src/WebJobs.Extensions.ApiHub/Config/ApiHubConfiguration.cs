@@ -26,6 +26,7 @@ namespace Microsoft.Azure.WebJobs
         // Map of saas names (ie, "Dropbox") to their underlying root folder. 
         private Dictionary<string, IFolderItem> _map = new Dictionary<string, IFolderItem>(StringComparer.OrdinalIgnoreCase);
         private ApiHubLogger _logger;
+        private INameResolver _nameResolver;
 
         private int _maxFunctionExecutionRetryCount = DefaultMaxFunctionExecutionRetryCount;
         
@@ -98,7 +99,7 @@ namespace Microsoft.Azure.WebJobs
             var config = context.Config;
             var extensions = config.GetService<IExtensionRegistry>();
             var converterManager = config.GetService<IConverterManager>();
-            var nameResolver = context.Config.NameResolver;
+            _nameResolver = config.GetService<INameResolver>();
 
             var bindingProvider = new GenericStreamBindingProvider<ApiHubFileAttribute, ApiHubFile>(
                 BuildFromAttribute, converterManager, context.Trace);
@@ -112,7 +113,7 @@ namespace Microsoft.Azure.WebJobs
                 new TableBindingProvider(
                     new TableConfigContext(
                         ConnectionFactory, 
-                        nameResolver)));
+                        _nameResolver)));
         }
 
         private Task<IListener> BuildListener(JobHostConfiguration config, ApiHubFileTriggerAttribute attribute, string functionName, ITriggeredFunctionExecutor executor, TraceWriter trace)
@@ -154,7 +155,25 @@ namespace Microsoft.Azure.WebJobs
 
         private IFolderItem GetFileSource(string key)
         {
-            return _map[key];
+            if (_map.ContainsKey(key))
+            {
+                return _map[key];
+            }
+            else
+            {
+                // If the key doesn't exist, see if it is available as an environment variable.
+                // This might be the case for imperative binding scenarios.
+                var connectionString = _nameResolver.Resolve(key);
+                if (!string.IsNullOrWhiteSpace(connectionString))
+                {
+                    AddConnection(key, connectionString);
+                    return _map[key];
+                }
+                else
+                {
+                    throw new ArgumentException($"The App setting or Environment variable {key} does not exist.");
+                }
+            }
         }
 
         /// <summary>
