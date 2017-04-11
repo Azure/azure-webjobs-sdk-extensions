@@ -129,7 +129,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
                 }
                 else
                 {
-                    throw new InvalidOperationException("Unspported type:" + targetType.FullName);
+                    throw new InvalidOperationException("Unsupported type:" + targetType.FullName);
                 }
             }
                         
