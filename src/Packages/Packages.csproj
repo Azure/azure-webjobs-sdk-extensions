@@ -62,7 +62,6 @@
       <Link>WebJobs.Extensions.ApiHub\WebJobs.Extensions.ApiHub.nuspec</Link>
     </NuGetSpec>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="Build">
     <MSBuild Projects="@(NuGetProject)" Targets="Build" />
