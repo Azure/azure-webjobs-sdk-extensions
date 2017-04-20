@@ -14,5 +14,15 @@ namespace Microsoft.Azure.WebJobs
         /// The job function invocation ID
         /// </summary>
         public Guid InvocationId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the function being invoked
+        /// </summary>
+        public string FunctionName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the function directory
+        /// </summary>
+        public string FunctionDirectory { get; set; }
     }
 }

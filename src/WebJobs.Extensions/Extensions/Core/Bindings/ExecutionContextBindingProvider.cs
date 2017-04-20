@@ -50,10 +50,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core
                     throw new ArgumentNullException("context");
                 }
 
-                return BindInternalAsync(new ExecutionContext
-                {
-                    InvocationId = context.FunctionInstanceId
-                });
+                return BindInternalAsync(CreateContext(context.FunctionInstanceId));
             }
 
             public Task<IValueProvider> BindAsync(object value, ValueBindingContext context)
@@ -63,10 +60,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core
                     throw new ArgumentNullException("context");
                 }
 
-                return BindInternalAsync(new ExecutionContext
+                return BindInternalAsync(CreateContext(context.FunctionInstanceId));
+            }
+
+            private ExecutionContext CreateContext(Guid invocationId)
+            {
+                return new ExecutionContext
                 {
-                    InvocationId = context.FunctionInstanceId
-                });
+                    InvocationId = invocationId,
+                    FunctionName = _parameter.Member.Name,
+                    FunctionDirectory = Environment.CurrentDirectory
+                };
             }
 
             private static Task<IValueProvider> BindInternalAsync(ExecutionContext executionContext)
