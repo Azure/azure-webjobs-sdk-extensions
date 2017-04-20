@@ -130,6 +130,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
             AssertPublicTypes(expected, assembly);
         }
 
+        [Fact]
+        public void HttpPublicSurface_LimitedToSpecificTypes()
+        {
+            var assembly = typeof(HttpTriggerAttribute).Assembly;
+
+            var expected = new[]
+            {
+                "HttpExtensionConfiguration",
+                "HttpExtensionConstants",
+                "HttpJobHostConfigurationExtensions",
+                "AuthorizationLevel",
+                "HttpRouteFactory",
+                "HttpRequestManager",
+                "HttpTriggerAttribute"
+            };
+
+            AssertPublicTypes(expected, assembly);
+        }
+
         private static List<string> GetAssemblyReferences(Assembly assembly)
         {
             var assemblyRefs = assembly.GetReferencedAssemblies();

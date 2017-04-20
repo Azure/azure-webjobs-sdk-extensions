@@ -199,6 +199,10 @@
     <Compile Include="Extensions\DocumentDB\DocumentDBEnumerableBuilderTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBItemValueBinderTests.cs" />
     <Compile Include="Extensions\DocumentDB\TestDocumentDBServiceFactory.cs" />
+    <Compile Include="Extensions\Http\HttpRequestManagerTests.cs" />
+    <Compile Include="Extensions\Http\HttpRouteFactoryTests.cs" />
+    <Compile Include="Extensions\Http\HttpTriggerAttributeBindingProviderTests.cs" />
+    <Compile Include="Extensions\Http\HttpTriggerBindingTests.cs" />
     <Compile Include="Extensions\MobileApps\MobileTableAsyncCollectorTests.cs" />
     <Compile Include="Extensions\MobileApps\MobileAppsConfigurationTests.cs" />
     <Compile Include="Extensions\MobileApps\MobileTableEndToEndTests.cs" />
@@ -257,6 +261,10 @@
       <Project>{38372e3c-70c9-4678-892d-7295a4615561}</Project>
       <Name>WebJobs.Extensions.DocumentDB</Name>
       <Aliases>global</Aliases>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.Http\WebJobs.Extensions.Http.csproj">
+      <Project>{df43fc36-fdfc-42c4-9a40-233e247d4a24}</Project>
+      <Name>WebJobs.Extensions.Http</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\src\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj">
       <Project>{c4d2e330-8fb9-4d2b-9db5-274fbfb69d69}</Project>

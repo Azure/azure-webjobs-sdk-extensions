@@ -24,6 +24,10 @@
       <PublishType>Assembly</PublishType>
       <PublishPath>$(PublishPath)\Binaries</PublishPath>
     </Build>
+    <Build Include="src\WebJobs.Extensions.Http\WebJobs.Extensions.Http.csproj">
+      <PublishType>Assembly</PublishType>
+      <PublishPath>$(PublishPath)\Binaries</PublishPath>
+    </Build>
     <Build Include="src\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj">
       <PublishType>Assembly</PublishType>
       <PublishPath>$(PublishPath)\Binaries</PublishPath>
@@ -49,6 +53,10 @@
       <PublishPath>$(PublishPath)\Packages</PublishPath>
     </Build>
     <Build Include="src\WebJobs.Extensions.SendGrid.NuGet\WebJobs.Extensions.SendGrid.nuproj">
+      <PublishType>File</PublishType>
+      <PublishPath>$(PublishPath)\Packages</PublishPath>
+    </Build>
+    <Build Include="src\WebJobs.Extensions.Http.NuGet\WebJobs.Extensions.Http.nuproj">
       <PublishType>File</PublishType>
       <PublishPath>$(PublishPath)\Packages</PublishPath>
     </Build>

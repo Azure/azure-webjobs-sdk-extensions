@@ -10,6 +10,7 @@
     <NotificationHubsVersion>1.0.1</NotificationHubsVersion>
     <TwilioVersion>1.0.1</TwilioVersion>
     <ApiHubsVersion>1.0.0</ApiHubsVersion>
+    <HttpVersion>1.0.0</HttpVersion>
     <ApiHubsPrereleaseTag>-beta3</ApiHubsPrereleaseTag>
     <PrereleaseTag>-alpha1</PrereleaseTag>
   </PropertyGroup>
@@ -22,6 +23,7 @@
         <NotificationHubsPackageVersion>$(NotificationHubsVersion)$(PrereleaseTag)-$(BUILD_NUMBER)</NotificationHubsPackageVersion>
         <ApiHubPackageVersion>$(ApiHubsVersion)$(ApiHubsPrereleaseTag)-$(BUILD_NUMBER)</ApiHubPackageVersion>
         <TwilioPackageVersion>$(TwilioVersion)$(PrereleaseTag)-$(BUILD_NUMBER)</TwilioPackageVersion>
+        <HttpPackageVersion>$(HttpVersion)$(PrereleaseTag)-$(BUILD_NUMBER)</HttpPackageVersion>
     </PropertyGroup>
     </When>
     <Otherwise>
@@ -32,6 +34,7 @@
         <NotificationHubsPackageVersion>$(NotificationHubsVersion)$(PrereleaseTag)</NotificationHubsPackageVersion>
         <ApiHubPackageVersion>$(ApiHubsVersion)$(ApiHubsPrereleaseTag)</ApiHubPackageVersion>
         <TwilioPackageVersion>$(TwilioVersion)$(PrereleaseTag)</TwilioPackageVersion>
+        <HttpPackageVersion>$(HttpVersion)$(PrereleaseTag)</HttpPackageVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>

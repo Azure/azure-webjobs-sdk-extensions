@@ -1,0 +1,28 @@
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using System.Net.Http;
+
+namespace Microsoft.Azure.WebJobs.Extensions.Http
+{
+    /// <summary>
+    /// Constants used by the http extension.
+    /// </summary>
+    public static class HttpExtensionConstants
+    {
+        /// <summary>
+        /// The default route prefix used by <see cref="HttpRouteFactory"/>.
+        /// </summary>
+        public const string DefaultRoutePrefix = "api";
+
+        /// <summary>
+        /// Key used for storing route data in <see cref="HttpRequestMessage.Properties"/>.
+        /// </summary>
+        public const string AzureWebJobsHttpRouteDataKey = "MS_AzureWebJobs_HttpRouteData";
+
+        /// <summary>
+        /// Key used for storing WebHook payload data in <see cref="HttpRequestMessage.Properties"/>.
+        /// </summary>
+        public const string AzureWebJobsWebHookDataKey = "MS_AzureWebJobs_WebHookData";
+    }
+}
