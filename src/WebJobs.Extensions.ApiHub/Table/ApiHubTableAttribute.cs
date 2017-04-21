@@ -9,7 +9,7 @@ namespace Microsoft.Azure.WebJobs
     /// <summary>
     /// Attribute used to bind a parameter to an ApiHub table or entity.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Parameter)]
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
     [Binding]
     public sealed class ApiHubTableAttribute : Attribute
     {

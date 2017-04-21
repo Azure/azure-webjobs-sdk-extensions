@@ -21,7 +21,7 @@ namespace Microsoft.Azure.WebJobs
     /// <item><description>out T[]</description></item>
     /// </list>
     /// </remarks>
-    [AttributeUsage(AttributeTargets.Parameter)]
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
     [Binding]
     public sealed class DocumentDBAttribute : Attribute
     {
