@@ -14,7 +14,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         /// Applies any additional binding data from the input value to the specified binding data.
         /// This binding data then becomes available to the binding process (in the case of late bound bindings)
         /// </summary>
-        internal static void ApplyBindingData(object value, Dictionary<string, object> bindingData)
+        /// <remarks>Return the body as an object that can be passed to binding data as a single structured object.</remarks>
+        internal static JObject ApplyBindingData(object value, Dictionary<string, object> bindingData)
         {
             try
             {
@@ -41,6 +42,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                             }
                         }
                     }
+
+                    return parsed;
                 }
             }
             catch
@@ -49,6 +52,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 // there are cases where there will be output binding parameters
                 // that don't bind to JSON properties
             }
+            return null;
         }
 
         public static bool IsJson(string input)

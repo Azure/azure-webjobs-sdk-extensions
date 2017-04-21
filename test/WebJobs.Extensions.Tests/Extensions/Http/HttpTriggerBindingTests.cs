@@ -15,6 +15,7 @@ using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Newtonsoft.Json.Linq;
 using Xunit;
+using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 {
@@ -28,9 +29,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             request.Content = new StringContent(input);
             var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
 
-            Assert.Equal(2, bindingData.Count);
+            Assert.Equal(3, bindingData.Count);
             Assert.Equal("testing", bindingData["test"]);
             Assert.Equal("123", bindingData["baz"]);
+
+            TestBindingData(bindingData,
+                "{test}", "testing", // body still added as top-level 
+                "{baz}", "123", // body still added as top-level 
+                "{request.body.test}", "testing",
+                "{request.body.baz}", "123",
+                "{request.body.nestedobject.b}", "456"
+            // arrays syntax not supported 
+            );            
+        }
+
+        static void TestBindingData(IReadOnlyDictionary<string, object> bindingData, params string[] values)
+        {
+            for (int i = 0; i < values.Length; i += 2)
+            {
+                var expression = values[i];
+                var expectedResult = values[i+1];
+                BindingTemplate t = BindingTemplate.FromString(expression);
+                var result = t.Bind(bindingData);
+                Assert.Equal(expectedResult, result);
+            }
         }
 
         [Fact]
@@ -40,7 +62,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
             var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
 
-            Assert.Equal(2, bindingData.Count);
+            Assert.Equal(3, bindingData.Count);
             Assert.Equal("Mathew Charles", bindingData["name"]);
             Assert.Equal("Seattle", bindingData["location"]);
 
@@ -48,7 +70,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             request.Content = new StringContent(string.Empty);
             bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
 
-            Assert.Equal(0, bindingData.Count);
+            Assert.Equal(1, bindingData.Count);
+
+            TestBindingData(bindingData,
+                "{name}", "Mathew Charles",
+                "{location}", "Seattle",
+                "{request.query.name}", "Mathew Charles");
         }
 
         [Fact]
@@ -65,10 +92,59 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
             var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
 
-            Assert.Equal(2, bindingData.Count);
+            Assert.Equal(3, bindingData.Count);
             Assert.Equal("Mathew Charles", bindingData["Name"]);
             Assert.Equal("Seattle", bindingData["Location"]);
+
+            TestBindingData(bindingData,
+                "{request.path.name}", "Mathew Charles"
+                );
         }
+
+        // When we have the same name in multiple places, ensure that we can access it unambiguously via the dot sytnax.
+        [Fact]
+        public async Task GetRequestBindingDataAsync_ReadsFrom_Duplicates()
+        {
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "http://functions/test?name=query");
+            string input = "{ name: 'body1', nestedObject: { name: 'body2' } }";            
+            request.Content = new StringContent(input);
+            request.Headers.Add("name", "header");
+
+            Dictionary<string, object> routeData = new Dictionary<string, object>
+            {
+                { "Name", "path" }
+            };
+            request.Properties.Add(HttpExtensionConstants.AzureWebJobsHttpRouteDataKey, routeData);
+
+            var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
+
+            TestBindingData(bindingData,
+                "{request.headers.name}", "header",
+                "{request.path.name}", "path",
+                "{request.query.name}", "query",
+                "{request.body.name}", "body1",
+                "{request.body.nestedObject.name}", "body2"
+                );
+        }
+
+
+        // Ensure specifically we can bind to the authorization headers 
+        // Other bindings may rely on this. 
+        [Fact]
+        public async Task GetRequestBindingDataAsync_Auth_Header()
+        {
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "http://functions/test");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "ey123");
+            request.Headers.Add("x-ms-id-aad", "ey456");
+            
+            var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
+
+            TestBindingData(bindingData,
+                "{request.headers.authorization}", "Bearer ey123",
+                "{request.headers.x-ms-id-aad}", "ey456"
+                );
+        }
+
 
         [Fact]
         public async Task BindAsync_Poco_FromRequestBody()
@@ -90,7 +166,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
-            Assert.Equal(2, triggerData.BindingData.Count);
+            Assert.Equal(3, triggerData.BindingData.Count);
             Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
             Assert.Equal("Seattle", triggerData.BindingData["Location"]);
 
@@ -117,7 +193,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
-            Assert.Equal(2, triggerData.BindingData.Count);
+            Assert.Equal(3, triggerData.BindingData.Count);
             Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
             Assert.Equal("Seattle", triggerData.BindingData["Location"]);
 
@@ -137,7 +213,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
-            Assert.Equal(2, triggerData.BindingData.Count);
+            Assert.Equal(3, triggerData.BindingData.Count);
             Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
             Assert.Equal("Seattle", triggerData.BindingData["Location"]);
 
@@ -165,7 +241,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
-            Assert.Equal(2, triggerData.BindingData.Count);
+            Assert.Equal(3, triggerData.BindingData.Count);
             Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
             Assert.Equal("Seattle", triggerData.BindingData["Location"]);
 
@@ -200,7 +276,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
-            Assert.Equal(6, triggerData.BindingData.Count);
+            Assert.Equal(7, triggerData.BindingData.Count);
             Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
             Assert.Equal("Seattle", triggerData.BindingData["Location"]);
             Assert.Equal("(425) 555-6666", triggerData.BindingData["Phone"]);
@@ -233,7 +309,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
-            Assert.Equal(2, triggerData.BindingData.Count);
+            Assert.Equal(3, triggerData.BindingData.Count);
             Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
             Assert.Equal("Seattle", triggerData.BindingData["Location"]);
 
@@ -253,7 +329,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
-            Assert.Equal(2, triggerData.BindingData.Count);
+            Assert.Equal(3, triggerData.BindingData.Count);
             Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
             Assert.Equal("Seattle", triggerData.BindingData["Location"]);
 
@@ -275,7 +351,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
-            Assert.Equal(0, triggerData.BindingData.Count);
+            Assert.Equal(1, triggerData.BindingData.Count);
 
             string result = (string)(await triggerData.ValueProvider.GetValueAsync());
             Assert.Equal("This is a test", result);

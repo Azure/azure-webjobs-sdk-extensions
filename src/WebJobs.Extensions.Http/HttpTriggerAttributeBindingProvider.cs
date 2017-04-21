@@ -15,6 +15,7 @@ using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Http
 {
@@ -66,6 +67,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             private readonly Dictionary<string, Type> _bindingDataContract;
             private readonly HttpRouteFactory _httpRouteFactory = new HttpRouteFactory();
 
+            private const string RequestBindingName = "request";
+
             public HttpTriggerBinding(HttpTriggerAttribute attribute, ParameterInfo parameter, bool isUserTypeBinding)
             {
                 _parameter = parameter;
@@ -106,6 +109,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                         }
                     }
                 }
+
+                aggregateDataContract[RequestBindingName] = typeof(JObject);
 
                 _bindingDataContract = aggregateDataContract;
             }
@@ -215,12 +220,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
             internal static async Task<IReadOnlyDictionary<string, object>> GetRequestBindingDataAsync(HttpRequestMessage request, Dictionary<string, Type> bindingDataContract = null)
             {
+                var requestBinding = new JObject();
+                var requestHeaders = new JObject();
+                var requestQuery = new JObject();
+                var requestPath = new JObject();
+                requestBinding["headers"] = requestHeaders;
+                requestBinding["query"] = requestQuery;
+                requestBinding["path"] = requestPath;
+
                 Dictionary<string, object> bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+
+                bindingData[RequestBindingName] = requestBinding;
+
                 if (request.Content != null && request.Content.Headers.ContentLength > 0)
                 {
                     // pull binding data from the body
                     string body = await request.Content.ReadAsStringAsync();
-                    Utility.ApplyBindingData(body, bindingData);
+                    var jobjBody = Utility.ApplyBindingData(body, bindingData);
+                    if (jobjBody != null)
+                    {
+                        requestBinding["body"] = jobjBody;
+                    }
+                }
+
+                // Headers
+                foreach (var header in request.Headers)
+                {
+                    requestHeaders[header.Key] = header.Value.FirstOrDefault();
                 }
 
                 // pull binding data from the query string
@@ -233,6 +259,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                         continue;
                     }
 
+                    requestQuery[pair.Key] = pair.Value;
                     bindingData[pair.Key] = pair.Value;
                 }
 
@@ -254,10 +281,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                             value = ConvertValueIfNecessary(value, type);
                         }
 
+                        requestPath[pair.Key] = value.ToString();
                         bindingData[pair.Key] = value;
                     }
                 }
-
+                
                 return bindingData;
             }
 
