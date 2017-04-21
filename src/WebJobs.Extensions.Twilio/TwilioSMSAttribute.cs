@@ -10,7 +10,7 @@ namespace Microsoft.Azure.WebJobs
     /// Attribute used to bind a parameter to a Twilio SMSMessage that will automatically be
     /// sent when the function completes.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Parameter)]
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
     [Binding]
     public sealed class TwilioSmsAttribute : Attribute
     {

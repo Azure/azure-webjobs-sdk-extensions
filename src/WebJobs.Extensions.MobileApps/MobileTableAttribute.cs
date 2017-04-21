@@ -23,7 +23,7 @@ namespace Microsoft.Azure.WebJobs
     /// <item><description>out T[], where T is any Type with a public string Id property</description></item>
     /// </list>
     /// </remarks>
-    [AttributeUsage(AttributeTargets.Parameter)]
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
     [Binding]
     public sealed class MobileTableAttribute : Attribute
     {

@@ -22,7 +22,7 @@ namespace Microsoft.Azure.WebJobs
     /// <item><description>out IDictionary, string key value pairs of templateProperties to build <see cref="TemplateNotification"/></description></item>
     /// </list>
     /// </remarks>
-    [AttributeUsage(AttributeTargets.Parameter)]
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
     [Binding]
     public sealed class NotificationHubAttribute : Attribute
     {

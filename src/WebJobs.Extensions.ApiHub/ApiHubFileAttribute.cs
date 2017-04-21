@@ -11,7 +11,7 @@ namespace Microsoft.Azure.WebJobs
     /// <summary>
     /// Attribute that points to the file on SAAS file provider
     /// </summary>
-    [AttributeUsage(AttributeTargets.Parameter)]
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
     [Binding]
     public class ApiHubFileAttribute : Attribute, IFileAttribute
     {
