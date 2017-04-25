@@ -3,6 +3,7 @@
 
 using System;
 using Microsoft.Azure.NotificationHubs;
+using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.NotificationHubs;
 
 namespace Microsoft.Azure.WebJobs
@@ -22,6 +23,7 @@ namespace Microsoft.Azure.WebJobs
     /// </list>
     /// </remarks>
     [AttributeUsage(AttributeTargets.Parameter)]
+    [Binding]
     public sealed class NotificationHubAttribute : Attribute
     {
         /// <summary>

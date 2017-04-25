@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Azure.WebJobs.Description;
 
 namespace Microsoft.Azure.WebJobs
 {
@@ -9,6 +10,7 @@ namespace Microsoft.Azure.WebJobs
     /// Attribute used to bind a parameter to an ApiHub table or entity.
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter)]
+    [Binding]
     public sealed class ApiHubTableAttribute : Attribute
     {
         /// <summary>

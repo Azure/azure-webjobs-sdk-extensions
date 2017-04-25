@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Azure.Documents;
+using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 
 namespace Microsoft.Azure.WebJobs
@@ -21,6 +22,7 @@ namespace Microsoft.Azure.WebJobs
     /// </list>
     /// </remarks>
     [AttributeUsage(AttributeTargets.Parameter)]
+    [Binding]
     public sealed class DocumentDBAttribute : Attribute
     {
         /// <summary>
