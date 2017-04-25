@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.ApiHub.Common;
 
 namespace Microsoft.Azure.WebJobs
@@ -11,6 +12,7 @@ namespace Microsoft.Azure.WebJobs
     /// Attribute that points to the file on SAAS file provider
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter)]
+    [Binding]
     public class ApiHubFileAttribute : Attribute, IFileAttribute
     {
         /// <summary>

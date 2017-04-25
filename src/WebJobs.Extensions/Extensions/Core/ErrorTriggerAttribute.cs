@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Host;
 
@@ -21,6 +22,7 @@ namespace Microsoft.Azure.WebJobs
     /// </list>
     /// </remarks>
     [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Class)]
+    [Binding]
     public sealed class ErrorTriggerAttribute : Attribute
     {
         private string _throttle;

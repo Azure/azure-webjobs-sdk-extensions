@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 
 namespace Microsoft.Azure.WebJobs
@@ -11,6 +12,7 @@ namespace Microsoft.Azure.WebJobs
     /// a timer schedule. The trigger parameter type must be <see cref="TimerInfo"/>.
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter)]
+    [Binding]
     public sealed class TimerTriggerAttribute : Attribute
     {
         /// <summary>

@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.MobileApps;
 using Microsoft.WindowsAzure.MobileServices;
 using Newtonsoft.Json.Linq;
@@ -23,6 +24,7 @@ namespace Microsoft.Azure.WebJobs
     /// </list>
     /// </remarks>
     [AttributeUsage(AttributeTargets.Parameter)]
+    [Binding]
     public sealed class MobileTableAttribute : Attribute
     {
         /// <summary>

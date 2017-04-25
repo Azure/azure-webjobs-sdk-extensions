@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using Microsoft.Azure.WebJobs.Description;
 
 namespace Microsoft.Azure.WebJobs
 {
@@ -25,6 +26,7 @@ namespace Microsoft.Azure.WebJobs
     /// </list>
     /// </remarks>
     [AttributeUsage(AttributeTargets.Parameter)]
+    [Binding]
     public sealed class FileTriggerAttribute : Attribute
     {
         /// <summary>
