@@ -275,6 +275,7 @@
     <Compile Include="Extensions\Http\HttpRouteFactoryTests.cs" />
     <Compile Include="Extensions\Http\HttpTriggerAttributeBindingProviderTests.cs" />
     <Compile Include="Extensions\Http\HttpTriggerBindingTests.cs" />
+    <Compile Include="Extensions\Http\HttpTriggerEndToEndTests.cs" />
     <Compile Include="Extensions\MobileApps\MobileTableAsyncCollectorTests.cs" />
     <Compile Include="Extensions\MobileApps\MobileAppsConfigurationTests.cs" />
     <Compile Include="Extensions\MobileApps\MobileTableEndToEndTests.cs" />
