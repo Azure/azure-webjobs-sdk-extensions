@@ -20,6 +20,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 {
     internal class HttpTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
+        internal const string HttpQueryKey = "Query";
+        internal const string HttpHeadersKey = "Headers";
+
         public HttpTriggerAttributeBindingProvider()
         {
         }
@@ -71,7 +74,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 _parameter = parameter;
                 _isUserTypeBinding = isUserTypeBinding;
 
-                Dictionary<string, Type> aggregateDataContract = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
                 if (_isUserTypeBinding)
                 {
                     // Create the BindingDataProvider from the user Type. The BindingDataProvider
@@ -79,35 +81,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     // bindings (i.e. the properties of the POCO can be bound to by other bindings).
                     // It is also used to extract the binding data from an instance of the Type.
                     _bindingDataProvider = BindingDataProvider.FromType(parameter.ParameterType);
-                    if (_bindingDataProvider.Contract != null)
-                    {
-                        aggregateDataContract.AddRange(_bindingDataProvider.Contract);
-                    }
                 }
 
-                // add any route parameters to the contract
-                if (!string.IsNullOrEmpty(attribute.Route))
-                {
-                    var routeParameters = _httpRouteFactory.GetRouteParameters(attribute.Route);
-                    var parameters = ((MethodInfo)parameter.Member).GetParameters().ToDictionary(p => p.Name, p => p.ParameterType, StringComparer.OrdinalIgnoreCase);
-                    foreach (string parameterName in routeParameters)
-                    {
-                        // don't override if the contract already includes a name
-                        if (!aggregateDataContract.ContainsKey(parameterName))
-                        {
-                            // if there is a method parameter mapped to this parameter
-                            // derive the Type from that
-                            Type type;
-                            if (!parameters.TryGetValue(parameterName, out type))
-                            {
-                                type = typeof(string);
-                            }
-                            aggregateDataContract[parameterName] = type;
-                        }
-                    }
-                }
-
-                _bindingDataContract = aggregateDataContract;
+                _bindingDataContract = GetBindingDataContract(attribute, parameter);
             }
 
             public IReadOnlyDictionary<string, Type> BindingDataContract
@@ -213,17 +189,66 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 }
             }
 
+            /// <summary>
+            /// Gets the static strongly typed binding data contract
+            /// </summary>
+            internal Dictionary<string, Type> GetBindingDataContract(HttpTriggerAttribute attribute, ParameterInfo parameter)
+            {
+                // add contract members for POCO binding properties if binding to a POCO
+                var aggregateDataContract = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+                if (_isUserTypeBinding && _bindingDataProvider?.Contract != null)
+                {
+                    aggregateDataContract.AddRange(_bindingDataProvider.Contract);
+                }
+
+                // add contract members for any route parameters
+                if (!string.IsNullOrEmpty(attribute.Route))
+                {
+                    var routeParameters = _httpRouteFactory.GetRouteParameters(attribute.Route);
+                    var parameters = ((MethodInfo)parameter.Member).GetParameters().ToDictionary(p => p.Name, p => p.ParameterType, StringComparer.OrdinalIgnoreCase);
+                    foreach (string parameterName in routeParameters)
+                    {
+                        // don't override if the contract already includes a name
+                        if (!aggregateDataContract.ContainsKey(parameterName))
+                        {
+                            // if there is a method parameter mapped to this parameter
+                            // derive the Type from that
+                            Type type;
+                            if (!parameters.TryGetValue(parameterName, out type))
+                            {
+                                type = typeof(string);
+                            }
+                            aggregateDataContract[parameterName] = type;
+                        }
+                    }
+                }
+
+                // add headers collection to the contract
+                if (!aggregateDataContract.ContainsKey(HttpHeadersKey))
+                {
+                    aggregateDataContract.Add(HttpHeadersKey, typeof(IDictionary<string, string>));
+                }
+
+                // add query parameter collection to binding contract
+                if (!aggregateDataContract.ContainsKey(HttpQueryKey))
+                {
+                    aggregateDataContract.Add(HttpQueryKey, typeof(IDictionary<string, string>));
+                }
+
+                return aggregateDataContract;
+            }
+
             internal static async Task<IReadOnlyDictionary<string, object>> GetRequestBindingDataAsync(HttpRequestMessage request, Dictionary<string, Type> bindingDataContract = null)
             {
-                Dictionary<string, object> bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                // apply binding data from request body if present
+                var bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
                 if (request.Content != null && request.Content.Headers.ContentLength > 0)
                 {
-                    // pull binding data from the body
                     string body = await request.Content.ReadAsStringAsync();
                     Utility.ApplyBindingData(body, bindingData);
                 }
 
-                // pull binding data from the query string
+                // apply binding data from the query string
                 var queryParameters = request.GetQueryNameValuePairs();
                 foreach (var pair in queryParameters)
                 {
@@ -232,15 +257,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                         // skip any system parameters that should not be bound to
                         continue;
                     }
-
                     bindingData[pair.Key] = pair.Value;
                 }
 
-                // apply any request route binding values
+                // apply binding data from route parameters
                 object value = null;
                 if (request.Properties.TryGetValue(HttpExtensionConstants.AzureWebJobsHttpRouteDataKey, out value))
                 {
-                    Dictionary<string, object> routeBindingData = (Dictionary<string, object>)value;
+                    var routeBindingData = (Dictionary<string, object>)value;
                     foreach (var pair in routeBindingData)
                     {
                         // if we have a static binding contract that maps to this parameter
@@ -256,6 +280,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
                         bindingData[pair.Key] = value;
                     }
+                }
+
+                // add query parameter collection to binding data
+                if (!bindingData.ContainsKey(HttpQueryKey))
+                {
+                    bindingData[HttpQueryKey] = request.GetQueryParameterDictionary();
+                }
+
+                // add headers collection to binding data
+                if (!bindingData.ContainsKey(HttpHeadersKey))
+                {
+                    bindingData[HttpHeadersKey] = request.GetRawHeaders();
                 }
 
                 return bindingData;
