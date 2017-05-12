@@ -29,9 +29,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             request.Content = new StringContent(input);
             var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
 
-            Assert.Equal(4, bindingData.Count);
+            Assert.Equal(5, bindingData.Count);
             Assert.Equal("testing", bindingData["test"]);
             Assert.Equal("123", bindingData["baz"]);
+
+            JObject nestedObject = (JObject)bindingData["nestedObject"];
+            Assert.Equal(123, (int)nestedObject["a"]);
         }
 
         [Fact]

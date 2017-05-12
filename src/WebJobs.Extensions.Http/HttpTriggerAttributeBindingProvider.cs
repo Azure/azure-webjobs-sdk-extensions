@@ -15,6 +15,8 @@ using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Http
 {
@@ -324,10 +326,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             {
                 if (value != null && !targetType.IsAssignableFrom(value.GetType()))
                 {
-                    // if the type is nullable, we only need to convert to the
-                    // correct underlying type
-                    targetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
-                    value = Convert.ChangeType(value, targetType);
+                    var jObject = value as JObject;
+                    if (jObject != null)
+                    {
+                        value = jObject.ToObject(targetType);
+                    }
+                    else
+                    {
+                        // if the type is nullable, we only need to convert to the
+                        // correct underlying type
+                        targetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+                        value = Convert.ChangeType(value, targetType);
+                    }
                 }
 
                 return value;
