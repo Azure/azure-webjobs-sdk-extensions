@@ -28,9 +28,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             string result = policy.TemplateBind(propInfo, resolvedAttribute, bindingTemplate, bindingData);
 
             // Assert
-            Assert.Contains(resolvedAttribute.SqlQueryParameters, p => p.Name == "@foo" && p.Value.ToString() == "1234");
-            Assert.Contains(resolvedAttribute.SqlQueryParameters, p => p.Name == "@bar" && p.Value.ToString() == "5678");
+            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@foo" && p.Value.ToString() == "1234");
+            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@bar" && p.Value.ToString() == "5678");
             Assert.Equal("SELECT * FROM c WHERE c.id = @foo AND c.value = @bar", result);
+        }
+
+        [Fact]
+        public void TemplateBind_DuplicateParameters()
+        {
+            // Arrange
+            PropertyInfo propInfo = null;
+            DocumentDBAttribute resolvedAttribute = new DocumentDBAttribute();
+            BindingTemplate bindingTemplate =
+                BindingTemplate.FromString("SELECT * FROM c WHERE c.id = {foo} AND c.value = {foo}");
+            Dictionary<string, object> bindingData = new Dictionary<string, object>();
+            bindingData.Add("foo", "1234");
+            DocumentDBSqlResolutionPolicy policy = new DocumentDBSqlResolutionPolicy();
+
+            // Act
+            string result = policy.TemplateBind(propInfo, resolvedAttribute, bindingTemplate, bindingData);
+
+            // Assert
+            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@foo" && p.Value.ToString() == "1234");
+            Assert.Equal("SELECT * FROM c WHERE c.id = @foo AND c.value = @foo", result);
         }
     }
 }
