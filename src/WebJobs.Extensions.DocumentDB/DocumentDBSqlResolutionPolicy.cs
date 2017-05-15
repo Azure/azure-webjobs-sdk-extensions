@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reflection;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -35,7 +36,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             SqlParameterCollection paramCollection = new SqlParameterCollection();
             // also build up a dictionary replacing '{token}' with '@token' 
             IDictionary<string, string> replacements = new Dictionary<string, string>();
-            foreach (var token in bindingTemplate.ParameterNames)
+            foreach (var token in bindingTemplate.ParameterNames.Distinct())
             {
                 string sqlToken = $"@{token}";
                 paramCollection.Add(new SqlParameter(sqlToken, bindingData[token]));
