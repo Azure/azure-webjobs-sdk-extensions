@@ -14,6 +14,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 {
+    [Trait("Category", "E2E")]
     public class HttpTriggerEndToEndTests
     {
         private JobHostConfiguration _config;
@@ -91,9 +92,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         public static class TestFunctions
         {
             public static void TestFunction1(
-                [HttpTrigger("get", "post", Route = "{r1:int}/{r2:alpha}/test")] HttpRequestMessage req, 
-                int r1, 
-                string r2, 
+                [HttpTrigger("get", "post", Route = "{r1:int}/{r2:alpha}/test")] HttpRequestMessage req,
+                int r1,
+                string r2,
                 IDictionary<string, string> headers,
                 IDictionary<string, string> query)
             {
@@ -104,7 +105,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 Assert.Equal("two", query["q2"]);
 
                 Assert.Equal("value1", headers["h1"]);
-                Assert.Equal("value2", headers["h2"]); 
+                Assert.Equal("value2", headers["h2"]);
             }
 
             public static void TestFunction2(

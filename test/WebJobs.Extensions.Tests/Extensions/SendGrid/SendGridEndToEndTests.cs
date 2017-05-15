@@ -18,6 +18,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.SendGrid
 {
+    [Trait("Category", "E2E")]
     public class SendGridEndToEndTests
     {
         private const string DefaultApiKey = "Default";
