@@ -270,6 +270,7 @@
     <Compile Include="Extensions\DocumentDB\DocumentDBEndToEndTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBEnumerableBuilderTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBItemValueBinderTests.cs" />
+    <Compile Include="Extensions\DocumentDB\DocumentDBSqlResolutionPolicyTests.cs" />
     <Compile Include="Extensions\DocumentDB\TestDocumentDBServiceFactory.cs" />
     <Compile Include="Extensions\Http\HttpRequestManagerTests.cs" />
     <Compile Include="Extensions\Http\HttpRouteFactoryTests.cs" />
