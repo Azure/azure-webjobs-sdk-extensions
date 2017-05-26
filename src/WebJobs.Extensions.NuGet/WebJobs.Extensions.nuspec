@@ -14,7 +14,7 @@
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <tags>Microsoft Azure WebJobs Jobs Extensions Files Scheduler Cron Storage Table Blob Queue windowsazureofficial Web</tags>
     <dependencies>
-      <dependency id="Microsoft.Azure.WebJobs" version="2.1.0-beta1-10729" />
+      <dependency id="Microsoft.Azure.WebJobs" version="2.1.0-beta1-10783" />
       <dependency id="ncrontab" version="3.3.0" />
       <dependency id="Microsoft.Tpl.Dataflow" version="4.5.24" />
     </dependencies>
