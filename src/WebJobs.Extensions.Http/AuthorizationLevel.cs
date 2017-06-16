@@ -14,7 +14,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         Anonymous = 0,
 
         /// <summary>
-        /// Allow access to requests that include a valid authentication token
+        /// Allow access to requests that include a valid user authentication token
         /// </summary>
         User,
 

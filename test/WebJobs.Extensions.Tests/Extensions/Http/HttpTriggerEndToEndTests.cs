@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
@@ -105,6 +106,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         }
 
         [Fact]
+        public void ClaimsPrincipalBinding()
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, "http://functions.com/api/TestIdentityBindings");
+
+            var method = typeof(TestFunctions).GetMethod("TestIdentityBindings");
+            _host.Call(method, new { req = request });
+        }
+
+        [Fact]
         public async Task QueryHeaderBindingParameters()
         {
             string testId = Guid.NewGuid().ToString();
@@ -173,12 +183,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             {
                 blob = headers["testValue"];
             }
-                        
+
             public static Task<string> TestResponse(
                 [HttpTrigger("get", "post")] HttpRequestMessage req)
             {
                 // Return value becomes the HttpResponseMessage.
-                return Task.FromResult("test-response"); 
+                return Task.FromResult("test-response");
+            }
+
+            public static void TestIdentityBindings(
+                [HttpTrigger("get")] HttpRequestMessage req,
+                ClaimsPrincipal principal,
+                ClaimsIdentity identity)
+            {
+                Assert.Same(ClaimsPrincipal.Current, principal);
+                Assert.Same(principal.Identity, identity);
             }
 
             // Test that we can bind to both a Poco and the direct request message

@@ -165,9 +165,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthorizationLevel.cs" />
+    <Compile Include="ClaimsIdentityBindingProvider.cs" />
+    <Compile Include="ClaimsPrincipalBindingProvider.cs" />
     <Compile Include="Config\HttpExtensionConfiguration.cs" />
     <Compile Include="Config\HttpJobHostConfigurationExtensions.cs" />
     <Compile Include="Extensions\HttpRequestMessageExtensions.cs" />
+    <Compile Include="HttpConstants.cs" />
     <Compile Include="HttpDirectRequestBindingProvider.cs" />
     <Compile Include="HttpExtensionConstants.cs" />
     <Compile Include="Extensions\IDictionaryExtensions.cs" />
