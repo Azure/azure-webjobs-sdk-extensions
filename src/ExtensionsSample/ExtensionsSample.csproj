@@ -300,10 +300,6 @@
       <Project>{65563c23-75b9-4f48-93e0-9a9fa2141cf9}</Project>
       <Name>WebJobs.Extensions.Twilio</Name>
     </ProjectReference>
-    <ProjectReference Include="..\WebJobs.Extensions\WebJobs.Extensions.csproj">
-      <Project>{e6f59990-f3a1-469f-a9d8-6d529121d385}</Project>
-      <Name>WebJobs.Extensions</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5">

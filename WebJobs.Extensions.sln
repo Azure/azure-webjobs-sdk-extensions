@@ -1,13 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26228.12
+VisualStudioVersion = 15.0.26510.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1118E0AD-83C8-4B67-859B-FCDEF54338C1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{6D6CF06F-EFCF-4E01-99F1-CB7991C279D8}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions", "src\WebJobs.Extensions\WebJobs.Extensions.csproj", "{E6F59990-F3A1-469F-A9D8-6D529121D385}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExtensionsSample", "src\ExtensionsSample\ExtensionsSample.csproj", "{1CFEAA1A-F726-482E-ACD1-96D21DB10837}"
 EndProject
@@ -37,16 +35,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.Twilio",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.Http", "src\WebJobs.Extensions.Http\WebJobs.Extensions.Http.csproj", "{DF43FC36-FDFC-42C4-9A40-233E247D4A24}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.Core", "src\WebJobs.Extensions\WebJobs.Extensions.Core.csproj", "{7719584E-9863-405A-9D26-2CC02AFC2427}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E6F59990-F3A1-469F-A9D8-6D529121D385}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E6F59990-F3A1-469F-A9D8-6D529121D385}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E6F59990-F3A1-469F-A9D8-6D529121D385}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E6F59990-F3A1-469F-A9D8-6D529121D385}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1CFEAA1A-F726-482E-ACD1-96D21DB10837}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1CFEAA1A-F726-482E-ACD1-96D21DB10837}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1CFEAA1A-F726-482E-ACD1-96D21DB10837}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -91,12 +87,15 @@ Global
 		{DF43FC36-FDFC-42C4-9A40-233E247D4A24}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DF43FC36-FDFC-42C4-9A40-233E247D4A24}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DF43FC36-FDFC-42C4-9A40-233E247D4A24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7719584E-9863-405A-9D26-2CC02AFC2427}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7719584E-9863-405A-9D26-2CC02AFC2427}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7719584E-9863-405A-9D26-2CC02AFC2427}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7719584E-9863-405A-9D26-2CC02AFC2427}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{E6F59990-F3A1-469F-A9D8-6D529121D385} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{1CFEAA1A-F726-482E-ACD1-96D21DB10837} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{1729561F-D598-4208-9154-3A5497523D54} = {6D6CF06F-EFCF-4E01-99F1-CB7991C279D8}
 		{34AB8F63-18DE-4E0D-B21C-15E33B091634} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
@@ -108,5 +107,6 @@ Global
 		{C4D2E330-8FB9-4D2B-9DB5-274FBFB69D69} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{65563C23-75B9-4F48-93E0-9A9FA2141CF9} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{DF43FC36-FDFC-42C4-9A40-233E247D4A24} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
+		{7719584E-9863-405A-9D26-2CC02AFC2427} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 	EndGlobalSection
 EndGlobal

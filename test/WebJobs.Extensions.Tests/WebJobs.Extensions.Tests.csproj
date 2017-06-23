@@ -352,10 +352,6 @@
       <Project>{65563C23-75B9-4F48-93E0-9A9FA2141CF9}</Project>
       <Name>WebJobs.Extensions.Twilio</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\src\WebJobs.Extensions\WebJobs.Extensions.csproj">
-      <Project>{e6f59990-f3a1-469f-a9d8-6d529121d385}</Project>
-      <Name>WebJobs.Extensions</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\src\WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.csproj">
       <Project>{6eab68d8-ebf7-4bc2-89f9-30e6e3bb4423}</Project>
       <Name>WebJobs.Extensions.SendGrid</Name>
