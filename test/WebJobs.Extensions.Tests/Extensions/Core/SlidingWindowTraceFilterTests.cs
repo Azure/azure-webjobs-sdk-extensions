@@ -2,11 +2,11 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.Azure.WebJobs.Host;
 using Xunit;
-using System.Collections.Generic;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
 {

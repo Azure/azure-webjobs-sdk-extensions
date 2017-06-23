@@ -7,16 +7,29 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Internal;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.Mvc.Internal;
+using Microsoft.AspNetCore.Mvc.WebApiCompatShim;
+using Microsoft.AspNetCore.Routing.Template;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Azure.WebJobs.Extensions.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using ModelBinding = Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Http
 {
@@ -25,9 +38,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         internal const string HttpQueryKey = "Query";
         internal const string HttpHeadersKey = "Headers";
 
-        private readonly Action<HttpRequestMessage, object> _responseHook;
+        private readonly Action<HttpRequest, object> _responseHook;
 
-        public HttpTriggerAttributeBindingProvider(Action<HttpRequestMessage, object> responseHook)
+        public HttpTriggerAttributeBindingProvider(Action<HttpRequest, object> responseHook)
         {
             _responseHook = responseHook;
         }
@@ -49,7 +62,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             // Can bind to user types, HttpRequestMessage, object (for dynamic binding support) and all the Read
             // Types supported by StreamValueBinder
             IEnumerable<Type> supportedTypes = StreamValueBinder.GetSupportedTypes(FileAccess.Read)
-                .Union(new Type[] { typeof(HttpRequestMessage), typeof(object) });
+                .Union(new Type[] { typeof(HttpRequest), typeof(object), typeof(HttpRequestMessage) });
             bool isSupportedTypeBinding = ValueBinder.MatchParameterType(parameter, supportedTypes);
             bool isUserTypeBinding = !isSupportedTypeBinding && IsValidUserType(parameter.ParameterType);
             if (!isSupportedTypeBinding && !isUserTypeBinding)
@@ -72,10 +85,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             private readonly IBindingDataProvider _bindingDataProvider;
             private readonly bool _isUserTypeBinding;
             private readonly Dictionary<string, Type> _bindingDataContract;
-            private readonly HttpRouteFactory _httpRouteFactory = new HttpRouteFactory();
-            private readonly Action<HttpRequestMessage, object> _responseHook;
+            private readonly Action<HttpRequest, object> _responseHook;
 
-            public HttpTriggerBinding(HttpTriggerAttribute attribute, ParameterInfo parameter, bool isUserTypeBinding, Action<HttpRequestMessage, object> responseHook = null)
+            public HttpTriggerBinding(HttpTriggerAttribute attribute, ParameterInfo parameter, bool isUserTypeBinding, Action<HttpRequest, object> responseHook = null)
             {
                 _responseHook = responseHook;
                 _parameter = parameter;
@@ -108,10 +120,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
             public async Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
             {
-                HttpRequestMessage request = value as HttpRequestMessage;
+                HttpRequest request = value as HttpRequest;
                 if (request == null)
                 {
-                    throw new NotSupportedException("An HttpRequestMessage is required");
+                    throw new NotSupportedException("An HttpRequest is required");
                 }
 
                 IValueProvider valueProvider = null;
@@ -154,13 +166,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 return new TriggerData(valueProvider, aggregateBindingData) { ReturnValueProvider = returnProvider };
             }
 
-            public static string ToInvokeString(HttpRequestMessage request)
+            public static string ToInvokeString(HttpRequest request)
             {
                 // For display in the Dashboard, we want to be sure we don't log
                 // any sensitive portions of the URI (e.g. query params, headers, etc.)
-                string uri = request.RequestUri?.GetLeftPart(UriPartial.Path);
+                var builder = new UriBuilder
+                {
+                    Host = request.Host.Host,
+                    Path = request.Path,
+                    Scheme = request.Scheme
+                };
 
-                return $"Method: {request.Method}, Uri: {uri}";
+                if (request.Host.Port.HasValue)
+                {
+                    builder.Port = request.Host.Port.Value;
+                }
+
+                return $"Method: {request.Method}, Uri: {builder.Uri.GetLeftPart(UriPartial.Path)}";
             }
 
             public Task<IListener> CreateListenerAsync(ListenerFactoryContext context)
@@ -215,21 +237,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 // add contract members for any route parameters
                 if (!string.IsNullOrEmpty(attribute.Route))
                 {
-                    var routeParameters = _httpRouteFactory.GetRouteParameters(attribute.Route);
+                    var routeParameters = TemplateParser.Parse(attribute.Route).Parameters;
                     var parameters = ((MethodInfo)parameter.Member).GetParameters().ToDictionary(p => p.Name, p => p.ParameterType, StringComparer.OrdinalIgnoreCase);
-                    foreach (string parameterName in routeParameters)
+                    foreach (TemplatePart routeParameter in routeParameters)
                     {
                         // don't override if the contract already includes a name
-                        if (!aggregateDataContract.ContainsKey(parameterName))
+                        if (!aggregateDataContract.ContainsKey(routeParameter.Name))
                         {
                             // if there is a method parameter mapped to this parameter
                             // derive the Type from that
                             Type type;
-                            if (!parameters.TryGetValue(parameterName, out type))
+                            if (!parameters.TryGetValue(routeParameter.Name, out type))
                             {
                                 type = typeof(string);
                             }
-                            aggregateDataContract[parameterName] = type;
+                            aggregateDataContract[routeParameter.Name] = type;
                         }
                     }
                 }
@@ -249,31 +271,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 return aggregateDataContract;
             }
 
-            internal static async Task<IReadOnlyDictionary<string, object>> GetRequestBindingDataAsync(HttpRequestMessage request, Dictionary<string, Type> bindingDataContract = null)
+            internal static async Task<IReadOnlyDictionary<string, object>> GetRequestBindingDataAsync(HttpRequest request, Dictionary<string, Type> bindingDataContract = null)
             {
                 // apply binding data from request body if present
                 var bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                if (request.Content != null && request.Content.Headers.ContentLength > 0)
+                if (request.ContentLength != null && request.ContentLength > 0)
                 {
-                    string body = await request.Content.ReadAsStringAsync();
+                    string body = await request.ReadAsStringAsync();
                     Utility.ApplyBindingData(body, bindingData);
                 }
 
                 // apply binding data from the query string
-                var queryParameters = request.GetQueryNameValuePairs();
-                foreach (var pair in queryParameters)
+                foreach (var pair in request.Query)
                 {
                     if (string.Compare("code", pair.Key, StringComparison.OrdinalIgnoreCase) == 0)
                     {
                         // skip any system parameters that should not be bound to
                         continue;
                     }
-                    bindingData[pair.Key] = pair.Value;
+                    bindingData[pair.Key] = pair.Value.ToString();
                 }
 
                 // apply binding data from route parameters
                 object value = null;
-                if (request.Properties.TryGetValue(HttpExtensionConstants.AzureWebJobsHttpRouteDataKey, out value))
+                if (request.HttpContext.Items.TryGetValue(HttpExtensionConstants.AzureWebJobsHttpRouteDataKey, out value))
                 {
                     var routeBindingData = (Dictionary<string, object>)value;
                     foreach (var pair in routeBindingData)
@@ -302,29 +323,60 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 // add headers collection to binding data
                 if (!bindingData.ContainsKey(HttpHeadersKey))
                 {
-                    bindingData[HttpHeadersKey] = request.GetRawHeaders();
+                    bindingData[HttpHeadersKey] = request.Headers.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString(), StringComparer.OrdinalIgnoreCase);
                 }
 
                 return bindingData;
             }
 
-            private async Task<IValueProvider> CreateUserTypeValueProvider(HttpRequestMessage request, string invokeString)
+            private async Task<IValueProvider> CreateUserTypeValueProvider(HttpRequest request, string invokeString)
             {
                 // First check to see if the WebHook data has already been deserialized,
                 // otherwise read from the request body if present
-                object value = null;
-                if (!request.Properties.TryGetValue(HttpExtensionConstants.AzureWebJobsWebHookDataKey, out value))
+                if (!request.HttpContext.Items.TryGetValue(HttpExtensionConstants.AzureWebJobsWebHookDataKey, out object value))
                 {
-                    if (request.Content != null && request.Content.Headers.ContentLength > 0)
+                    if (request.Body != null && request.ContentLength > 0)
                     {
-                        // deserialize from message body
-                        value = await request.Content.ReadAsAsync(_parameter.ParameterType);
+                        IServiceProvider requestServices = request.HttpContext.RequestServices;
+                        var metadata = requestServices
+                            .GetService<ModelBinding.IModelMetadataProvider>()?
+                            .GetMetadataForType(_parameter.ParameterType);
+
+                        if (metadata != null)
+                        {
+                            var mvcOptions = requestServices.GetService<IOptions<MvcOptions>>()?.Value;
+                            var streamReaderFactory = requestServices.GetService<IHttpRequestStreamReaderFactory>();
+
+                            Func<Stream, Encoding, TextReader> readerFactory = null;
+                            if (streamReaderFactory != null)
+                            {
+                                readerFactory = streamReaderFactory.CreateReader;
+                            }
+                            else
+                            {
+                                readerFactory = (s, e) => new HttpRequestStreamReader(s, e);
+                            }
+
+                            var context = new InputFormatterContext(request.HttpContext,
+                                modelName: string.Empty,
+                                modelState: new ModelBinding.ModelStateDictionary(),
+                                metadata: metadata,
+                                readerFactory: readerFactory);
+
+                            var formatter = mvcOptions.InputFormatters.FirstOrDefault(f => f.CanRead(context));
+
+                            if (formatter != null)
+                            {
+                                var result = await formatter.ReadAsync(context);
+
+                                value = result.Model;
+                            }
+                        }
                     }
                 }
 
                 if (value == null)
                 {
-                    // create an empty object
                     value = Activator.CreateInstance(_parameter.ParameterType);
                 }
 
@@ -358,10 +410,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             private class HttpRequestValueBinder : StreamValueBinder
             {
                 private readonly ParameterInfo _parameter;
-                private readonly HttpRequestMessage _request;
+                private readonly HttpRequest _request;
                 private readonly string _invokeString;
 
-                public HttpRequestValueBinder(ParameterInfo parameter, HttpRequestMessage request, string invokeString)
+                public HttpRequestValueBinder(ParameterInfo parameter, HttpRequest request, string invokeString)
                     : base(parameter)
                 {
                     _parameter = parameter;
@@ -371,15 +423,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
                 public override async Task<object> GetValueAsync()
                 {
-                    if (_parameter.ParameterType == typeof(HttpRequestMessage))
+                    if (_parameter.ParameterType == typeof(HttpRequest))
                     {
                         return _request;
+                    }
+                    else if (_parameter.ParameterType == typeof(HttpRequestMessage))
+                    {
+                        return new HttpRequestMessageFeature(_request.HttpContext).HttpRequestMessage;
                     }
                     else if (_parameter.ParameterType == typeof(object))
                     {
                         // for dynamic, we read as an object, which will actually return
                         // a JObject which is dynamic
-                        return await _request.Content.ReadAsAsync<object>();
+
+                        // Only supported for JSON payloads
+                        if (MediaTypeHeaderValue.TryParse(_request.ContentType, out MediaTypeHeaderValue value) &&
+                            string.Equals(value.MediaType, "application/json", StringComparison.OrdinalIgnoreCase))
+                        {
+                            using (var reader = new StreamReader(_request.Body))
+                            {
+                                var serializer = JsonSerializer.CreateDefault();
+                                return serializer.Deserialize(reader, typeof(object));
+                            }
+                        }
                     }
 
                     return await base.GetValueAsync();
@@ -387,9 +453,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
                 protected override Stream GetStream()
                 {
-                    Task<Stream> task = _request.Content.ReadAsStreamAsync();
-                    task.Wait();
-                    Stream stream = task.Result;
+                    _request.EnableRewind();
+
+                    Stream stream = _request.Body;
 
                     if (stream.Position > 0 && stream.CanSeek)
                     {
@@ -410,10 +476,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
             private class ResponseHandler : IValueBinder
             {
-                private readonly HttpRequestMessage _request;
-                private readonly Action<HttpRequestMessage, object> _responseHook;
+                private readonly HttpRequest _request;
+                private readonly Action<HttpRequest, object> _responseHook;
 
-                public ResponseHandler(HttpRequestMessage request, Action<HttpRequestMessage, object> responseHook)
+                public ResponseHandler(HttpRequest request, Action<HttpRequest, object> responseHook)
                 {
                     _request = request;
                     _responseHook = responseHook;

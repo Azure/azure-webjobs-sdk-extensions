@@ -1,5 +1,5 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
 using System.Collections.Concurrent;
@@ -62,7 +62,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         public PropertyInfo Property { get; }
 
         /// <summary>
-        /// Gets (or sets in derived types) the property name.
+        /// Gets or sets (or sets in derived types) the property name.
         /// </summary>
         public virtual string Name { get; protected set; }
 

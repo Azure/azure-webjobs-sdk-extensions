@@ -39,6 +39,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
             typeof(string),
             typeof(byte[])
         };
+
         private readonly ParameterInfo _parameter;
 
         /// <summary>

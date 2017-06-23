@@ -19,6 +19,30 @@
     <Rule Id="CA1303" Action="None" />
     <Rule Id="CA1305" Action="None" />
     <Rule Id="CA1014" Action="None" />
-	<Rule Id="CS0618" Action="None" /> <!-- Ignore Obsolete attributes for 2.0 release -->
+    <Rule Id="CS0618" Action="None" />
+    <!-- Ignore Obsolete attributes for 2.0 release -->
+  </Rules>
+  <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
+    <Rule Id="SA1101" Action="None" />
+    <Rule Id="SA1005" Action="None" />
+    <Rule Id="SA1309" Action="None" />
+    <Rule Id="SA1413" Action="None" />
+    <Rule Id="SA1513" Action="None" />
+    <Rule Id="SA1404" Action="None" />
+    <Rule Id="SA1116" Action="None" />
+    <Rule Id="SA1128" Action="None" />
+    <Rule Id="SA1405" Action="None" />
+    <Rule Id="SA1117" Action="None" />
+    <Rule Id="SA1028" Action="None" />
+    <Rule Id="SA1614" Action="None" />
+    <Rule Id="SA1642" Action="None" />
+    <Rule Id="SA0001" Action="None" />
+    <Rule Id="SA1204" Action="None" />
+    <Rule Id="SA1202" Action="None" />
+    <Rule Id="SA1616" Action="None" />
+  </Rules>
+  <Rules AnalyzerId="xunit.analyzers" RuleNamespace="xunit.analyzers">
+    <Rule Id="xUnit2009" Action="None" />
+    <Rule Id="xUnit1013" Action="None" />
   </Rules>
 </RuleSet>

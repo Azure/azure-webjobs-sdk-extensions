@@ -132,7 +132,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             else
             {
                 // Legacy behavior -- before 'LastUpdated' was added.
-
                 Assert.Equal(now, monitor.CurrentStatus.LastUpdated);
             }
         }
