@@ -19,21 +19,9 @@ namespace Microsoft.Azure.WebJobs.Extensions
         {
             get
             {
-                string value = GetSettingFromConfigOrEnvironment(AzureWebsiteSku);
+                string value = Environment.GetEnvironmentVariable(AzureWebsiteSku);
                 return string.Compare(value, DynamicSku, StringComparison.OrdinalIgnoreCase) == 0;
             }
-        }
-
-        public static string GetSettingFromConfigOrEnvironment(string settingName)
-        {
-            string configValue = ConfigurationManager.AppSettings[settingName];
-            if (!string.IsNullOrEmpty(configValue))
-            {
-                // config values take precedence over environment values
-                return configValue;
-            }
-
-            return Environment.GetEnvironmentVariable(settingName) ?? configValue;
         }
     }
 }

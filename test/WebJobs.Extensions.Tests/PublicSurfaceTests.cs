@@ -53,85 +53,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
         }
 
         [Fact]
-        public void SendGridPublicSurface_LimitedToSpecificTypes()
-        {
-            var assembly = typeof(SendGridAttribute).Assembly;
-
-            var expected = new[]
-            {
-                "SendGridAttribute",
-                "SendGridConfiguration",
-                "SendGridJobHostConfigurationExtensions"
-            };
-
-            AssertPublicTypes(expected, assembly);
-        }
-
-        [Fact]
-        public void MobileTablesPublicSurface_LimitedToSpecificTypes()
-        {
-            var assembly = typeof(MobileTableAttribute).Assembly;
-
-            var expected = new[]
-            {
-                "MobileTableAttribute",
-                "MobileAppsConfiguration",
-                "MobileAppsJobHostConfigurationExtensions"
-            };
-
-            AssertPublicTypes(expected, assembly);
-        }
-
-        [Fact]
-        public void DocumentDBPublicSurface_LimitedToSpecificTypes()
-        {
-            var assembly = typeof(DocumentDBAttribute).Assembly;
-
-            var expected = new[]
-            {
-                "DocumentDBAttribute",
-                "DocumentDBConfiguration",
-                "DocumentDBJobHostConfigurationExtensions",
-                "CosmosDBTriggerAttribute"
-            };
-
-            AssertPublicTypes(expected, assembly);
-        }
-
-        [Fact]
-        public void NotificationHubsPublicSurface_LimitedToSpecificTypes()
-        {
-            var assembly = typeof(NotificationHubAttribute).Assembly;
-
-            var expected = new[]
-            {
-                "NotificationHubAttribute",
-                "NotificationHubsConfiguration",
-                "NotificationHubJobHostConfigurationExtensions"
-            };
-
-            AssertPublicTypes(expected, assembly);
-        }
-
-        [Fact]
-        public void ApiHubPublicSurface_LimitedToSpecificTypes()
-        {
-            var assembly = typeof(ApiHubFileAttribute).Assembly;
-
-            var expected = new[]
-            {
-                "ApiHubFileAttribute",
-                "ApiHubFileTriggerAttribute",
-                "ApiHubConfiguration",
-                "ApiHubJobHostConfigurationExtensions",
-                "ApiHubTableAttribute",
-                "ConnectionFactory"
-            };
-
-            AssertPublicTypes(expected, assembly);
-        }
-
-        [Fact]
         public void HttpPublicSurface_LimitedToSpecificTypes()
         {
             var assembly = typeof(HttpTriggerAttribute).Assembly;
@@ -142,9 +63,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
                 "HttpExtensionConstants",
                 "HttpJobHostConfigurationExtensions",
                 "AuthorizationLevel",
-                "HttpRouteFactory",
                 "HttpRequestManager",
-                "HttpTriggerAttribute"
+                "HttpTriggerAttribute",
+                "HttpBindingApplicationBuilderExtension",
+                "HttpBindingServiceCollectionExtensions",
+                "HttpRequestExtensions",
+                "IWebJobsRouteHandler",
+                "IWebJobsRouter",
+                "WebJobsRouteBuilder",
+                "WebJobsRouter"
             };
 
             AssertPublicTypes(expected, assembly);
@@ -174,7 +101,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
 
             if (newlyIntroducedPublicTypes.Length > 0)
             {
-                string message = String.Format("Found {0} unexpected public type{1}: \r\n{2}",
+                string message = string.Format("Found {0} unexpected public type{1}: \r\n{2}",
                     newlyIntroducedPublicTypes.Length,
                     newlyIntroducedPublicTypes.Length == 1 ? string.Empty : "s",
                     string.Join("\r\n", newlyIntroducedPublicTypes));
@@ -185,7 +112,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
 
             if (missingPublicTypes.Length > 0)
             {
-                string message = String.Format("missing {0} public type{1}: \r\n{2}",
+                string message = string.Format("missing {0} public type{1}: \r\n{2}",
                     missingPublicTypes.Length,
                     missingPublicTypes.Length == 1 ? string.Empty : "s",
                     string.Join("\r\n", missingPublicTypes));

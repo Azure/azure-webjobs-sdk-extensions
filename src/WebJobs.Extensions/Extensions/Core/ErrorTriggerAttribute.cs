@@ -90,7 +90,7 @@ namespace Microsoft.Azure.WebJobs
         public int Threshold { get; private set; }
 
         /// <summary>
-        /// Gets the notification throttle window. The function will be triggered at most once
+        /// Gets or sets the notification throttle window. The function will be triggered at most once
         /// within this window. Should be expressed as a <see cref="TimeSpan"/> value (e.g. "00:30:00").
         /// </summary>
         public string Throttle
@@ -99,6 +99,7 @@ namespace Microsoft.Azure.WebJobs
             {
                 return _throttle;
             }
+
             set
             {
                 TimeSpan timeSpan;
@@ -111,7 +112,7 @@ namespace Microsoft.Azure.WebJobs
         }
 
         /// <summary>
-        /// Gets the error message that should be used for notifications.
+        /// Gets or sets the error message that should be used for notifications.
         /// </summary>
         public string Message { get; set; }
     }

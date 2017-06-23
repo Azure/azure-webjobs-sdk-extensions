@@ -3,9 +3,11 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
+using Microsoft.Azure.WebJobs.Host.Timers;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
@@ -68,6 +70,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             {
                 TypeLocator = locator
             };
+            config.AddService<IWebJobsExceptionHandler>(new TestExceptionHandler());
             config.UseTimers();
             config.Tracing.Tracers.Add(testTrace);
             JobHost host = new JobHost(config);

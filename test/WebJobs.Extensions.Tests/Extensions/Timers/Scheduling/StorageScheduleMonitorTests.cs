@@ -88,7 +88,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
                 await _scheduleMonitor.UpdateStatusAsync(TestTimerName + i.ToString(), expected);
             }
 
-            CloudBlockBlob[] statuses = _scheduleMonitor.TimerStatusDirectory.ListBlobs(useFlatBlobListing: true).Cast<CloudBlockBlob>().ToArray();
+            var segments = await _scheduleMonitor.TimerStatusDirectory.ListBlobsSegmentedAsync(
+                useFlatBlobListing: true,
+                blobListingDetails: BlobListingDetails.None,
+                maxResults: null,
+                currentToken: null,
+                options: null,
+                operationContext: null);
+            
+            var statuses = segments.Results.Cast<CloudBlockBlob>().ToArray();
             Assert.Equal(3, statuses.Length);
             Assert.Equal("timers/testhostid/TestProgram.TestTimer0/status", statuses[0].Name);
             Assert.Equal("timers/testhostid/TestProgram.TestTimer1/status", statuses[1].Name);
@@ -98,9 +106,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         private void Cleanup()
         {
             CloudBlobDirectory directory = _scheduleMonitor.TimerStatusDirectory;
-            foreach (CloudBlockBlob blob in directory.ListBlobs(useFlatBlobListing: true))
+            foreach (CloudBlockBlob blob in directory.ListBlobsSegmentedAsync(
+                useFlatBlobListing: true,
+                blobListingDetails: BlobListingDetails.None,
+                maxResults: null,
+                currentToken: null,
+                options: null,
+                operationContext: null).Result.Results)
             {
-                blob.Delete();
+                blob.DeleteAsync().Wait();
             }
         }
 

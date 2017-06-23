@@ -4,7 +4,6 @@
 using System.IO;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions;
-using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 
 namespace ExtensionsSample.Samples
 {
@@ -15,7 +14,7 @@ namespace ExtensionsSample.Samples
     /// </summary>
     public static class ErrorMonitoringSamples
     {
-        private static ErrorNotifier _notifier = new ErrorNotifier(new SendGridConfiguration());
+        private static ErrorNotifier _notifier = new ErrorNotifier();
 
         /// <summary>
         /// Global error monitor function that will be triggered whenever errors

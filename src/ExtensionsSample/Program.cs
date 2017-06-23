@@ -8,9 +8,7 @@ using ExtensionsSample.Samples;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Extensions.Files;
-using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 using Microsoft.Azure.WebJobs.Host;
-using SendGrid.Helpers.Mail;
 using WebJobsSandbox;
 
 namespace ExtensionsSample
@@ -33,21 +31,9 @@ namespace ExtensionsSample
             config.UseFiles(filesConfig);
             config.UseTimers();
             config.UseSample();
-            config.UseMobileApps();
             config.UseCore();
-            config.UseDocumentDB();
-            config.UseNotificationHubs();
-
-            var sendGridConfiguration = new SendGridConfiguration()
-            {
-                ToAddress = new Email("admin@webjobssamples.com", "WebJobs Extensions Samples"),
-                FromAddress = new Email("samples@webjobssamples.com", "WebJobs Extensions Samples")
-            };
-            config.UseSendGrid(sendGridConfiguration);
-
-            ConfigureTraceMonitor(config, sendGridConfiguration);
-
-            config.UseTwilioSms();
+            
+            ConfigureTraceMonitor(config);
 
             EnsureSampleDirectoriesExist(filesConfig.RootPath);
 
@@ -77,9 +63,9 @@ namespace ExtensionsSample
         /// manually on startup. You can also use <see cref="ErrorTriggerAttribute"/> to designate
         /// error handler functions.
         /// </summary>
-        private static void ConfigureTraceMonitor(JobHostConfiguration config, SendGridConfiguration sendGridConfiguration)
+        private static void ConfigureTraceMonitor(JobHostConfiguration config)
         {
-            var notifier = new ErrorNotifier(sendGridConfiguration);
+            var notifier = new ErrorNotifier();
 
             var traceMonitor = new TraceMonitor()
                 .Filter(new SlidingWindowTraceFilter(TimeSpan.FromMinutes(5), 3))
@@ -89,7 +75,7 @@ namespace ExtensionsSample
                     return p.Level == TraceLevel.Error && functionException != null &&
                            functionException.MethodName == "ExtensionsSample.FileSamples.ImportFile";
                 }, "ImportFile Job Failed")
-                .Subscribe(notifier.WebNotify, notifier.EmailNotify)
+                .Subscribe(notifier.WebNotify)
                 .Throttle(TimeSpan.FromMinutes(30));
 
             config.Tracing.Tracers.Add(traceMonitor);

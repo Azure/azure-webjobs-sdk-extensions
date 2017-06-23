@@ -101,7 +101,6 @@ namespace Sample.Extension
                 bindingData.Add("SampleTrigger", value);
 
                 // TODO: Add any additional binding data
-
                 return bindingData;
             }
 
@@ -111,7 +110,6 @@ namespace Sample.Extension
                 contract.Add("SampleTrigger", typeof(SampleTriggerValue));
 
                 // TODO: Add any additional binding contract members
-
                 return contract;
             }
 

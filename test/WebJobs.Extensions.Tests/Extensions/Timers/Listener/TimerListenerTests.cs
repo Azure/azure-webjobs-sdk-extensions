@@ -168,7 +168,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                     })
                 .Returns(Task.FromResult(true));
 
-            CancellationToken cancellationToken = new CancellationToken();
+            CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
 
             TimerInfo timerInfo = (TimerInfo)_triggeredFunctionData.TriggerValue;
@@ -195,7 +195,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _mockScheduleMonitor.Setup(p => p.CheckPastDueAsync(_testTimerName, It.IsAny<DateTime>(), It.IsAny<TimerSchedule>(), status))
                 .ReturnsAsync(pastDueAmount);
 
-            CancellationToken cancellationToken = new CancellationToken();
+            CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
 
             _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Never());
@@ -209,7 +209,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _listener.ScheduleMonitor = null;
             _attribute.RunOnStartup = true;
 
-            CancellationToken cancellationToken = new CancellationToken();
+            CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
 
             _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Once());
@@ -222,7 +222,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         {
             _listener.ScheduleMonitor = null;
 
-            CancellationToken cancellationToken = new CancellationToken();
+            CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
 
             _listener.Dispose();
@@ -235,7 +235,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             TimeSpan interval = TimerListener.MaxTimerInterval + TimerListener.MaxTimerInterval + TimeSpan.FromDays(4);
             CreateTestListener(interval.ToString(), useMonitor: false);
 
-            CancellationToken cancellationToken = new CancellationToken();
+            CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
             Assert.Equal(TimerListener.MaxTimerInterval.TotalMilliseconds, _listener.Timer.Interval);
 

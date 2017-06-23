@@ -4,6 +4,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
+using Microsoft.Azure.WebJobs.Host.Timers;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
@@ -19,6 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
                 TypeLocator = new ExplicitTypeLocator(typeof(CoreTestJobs))
             };
             config.UseCore();
+            config.AddService<IWebJobsExceptionHandler>(new TestExceptionHandler());
             JobHost host = new JobHost(config);
 
             string methodName = nameof(CoreTestJobs.ExecutionContext);
@@ -29,24 +31,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             Assert.NotEqual(Guid.Empty, result.InvocationId);
             Assert.Equal(methodName, result.FunctionName);
             Assert.Equal(Environment.CurrentDirectory, result.FunctionDirectory);
-        }
-
-        public static class CoreTestJobs
-        {
-            public static ExecutionContext Context { get; set; }
-
-            [NoAutomaticTrigger]
-            public static void ExecutionContext(ExecutionContext context)
-            {
-                Context = context;
-            }
-
-            [NoAutomaticTrigger]
-            [FunctionName("myfunc")] 
-            public static void ExecutionContext2(ExecutionContext context)
-            {
-                Context = context;
-            }
         }
 
         [Fact]
@@ -67,6 +51,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             Assert.Equal("myfunc", result.FunctionName);
             Assert.Equal(@"z:\home\myfunc", result.FunctionDirectory);
             Assert.Equal(@"z:\home", result.FunctionAppDirectory);
+        }
+
+        public static class CoreTestJobs
+        {
+            public static ExecutionContext Context { get; set; }
+
+            [NoAutomaticTrigger]
+            public static void ExecutionContext(ExecutionContext context)
+            {
+                Context = context;
+            }
+
+            [NoAutomaticTrigger]
+            [FunctionName("myfunc")]
+            public static void ExecutionContext2(ExecutionContext context)
+            {
+                Context = context;
+            }
         }
     }
 }

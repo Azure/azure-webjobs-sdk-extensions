@@ -4,6 +4,7 @@
 using System;
 using System.Net.Http;
 using System.Threading.Tasks.Dataflow;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Newtonsoft.Json;
 
@@ -55,7 +56,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         /// Hook to enable a host to receive the response
         /// </summary>
         [JsonIgnore]
-        public Action<HttpRequestMessage, object> SetResponse { get; set; }
+        public Action<HttpRequest, object> SetResponse { get; set; }
 
         /// <summary>
         /// Initializes the extension.
@@ -68,7 +69,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 throw new ArgumentNullException(nameof(context));
             }
 
-            context.Config.RegisterBindingExtension(new HttpTriggerAttributeBindingProvider(this.SetResponse));
+            context.Config.RegisterBindingExtension(new HttpTriggerAttributeBindingProvider(SetResponse));
         }
     }
 }

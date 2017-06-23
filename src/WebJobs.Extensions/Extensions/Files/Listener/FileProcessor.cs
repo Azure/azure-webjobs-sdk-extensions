@@ -274,6 +274,65 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
                 statusEntry.ProcessCount < MaxProcessCount);
         }
 
+        /// <summary>
+        /// Clean up any files that have been fully processed
+        /// </summary>
+        public virtual void CleanupProcessedFiles()
+        {
+            int filesDeleted = 0;
+            string[] statusFiles = Directory.GetFiles(_filePath, GetStatusFile("*"));
+            foreach (string statusFilePath in statusFiles)
+            {
+                try
+                {
+                    // verify that the file has been fully processed
+                    // if we're unable to get the last status or the file
+                    // is not Processed, skip it
+                    StatusFileEntry statusEntry = null;
+                    if (!GetLastStatus(statusFilePath, out statusEntry) ||
+                        statusEntry.State != ProcessingState.Processed)
+                    {
+                        continue;
+                    }
+
+                    // get all files starting with that file name. For example, for
+                    // status file input.dat.status, this might return input.dat and
+                    // input.dat.meta (if the file has other companion files)
+                    string targetFileName = Path.GetFileNameWithoutExtension(statusFilePath);
+                    string[] files = Directory.GetFiles(_filePath, targetFileName + "*");
+
+                    // first delete the non status file(s)
+                    foreach (string filePath in files)
+                    {
+                        if (IsStatusFile(filePath))
+                        {
+                            continue;
+                        }
+
+                        if (TryDelete(filePath))
+                        {
+                            filesDeleted++;
+                        }
+                    }
+
+                    // then delete the status file
+                    if (TryDelete(statusFilePath))
+                    {
+                        filesDeleted++;
+                    }
+                }
+                catch
+                {
+                    // ignore any delete failures
+                }
+            }
+
+            if (filesDeleted > 0)
+            {
+                _trace.Verbose(string.Format("File Cleanup ({0}): {1} files deleted", _filePath, filesDeleted));
+            }
+        }
+
         internal StreamWriter AcquireStatusFileLock(string filePath, WatcherChangeTypes changeType, out StatusFileEntry statusEntry)
         {
             Stream stream = null;
@@ -373,65 +432,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         internal bool IsStatusFile(string file)
         {
             return string.Compare(Path.GetExtension(file).Trim('.'), StatusFileExtension, StringComparison.OrdinalIgnoreCase) == 0;
-        }
-
-        /// <summary>
-        /// Clean up any files that have been fully processed
-        /// </summary>
-        public virtual void CleanupProcessedFiles()
-        {
-            int filesDeleted = 0;
-            string[] statusFiles = Directory.GetFiles(_filePath, GetStatusFile("*"));
-            foreach (string statusFilePath in statusFiles)
-            {
-                try
-                {
-                    // verify that the file has been fully processed
-                    // if we're unable to get the last status or the file
-                    // is not Processed, skip it
-                    StatusFileEntry statusEntry = null;
-                    if (!GetLastStatus(statusFilePath, out statusEntry) ||
-                        statusEntry.State != ProcessingState.Processed)
-                    {
-                        continue;
-                    }
-
-                    // get all files starting with that file name. For example, for
-                    // status file input.dat.status, this might return input.dat and
-                    // input.dat.meta (if the file has other companion files)
-                    string targetFileName = Path.GetFileNameWithoutExtension(statusFilePath);
-                    string[] files = Directory.GetFiles(_filePath, targetFileName + "*");
-
-                    // first delete the non status file(s)
-                    foreach (string filePath in files)
-                    {
-                        if (IsStatusFile(filePath))
-                        {
-                            continue;
-                        }
-
-                        if (TryDelete(filePath))
-                        {
-                            filesDeleted++;
-                        }
-                    }
-
-                    // then delete the status file
-                    if (TryDelete(statusFilePath))
-                    {
-                        filesDeleted++;
-                    }
-                }
-                catch
-                {
-                    // ignore any delete failures
-                }
-            }
-
-            if (filesDeleted > 0)
-            {
-                _trace.Verbose(string.Format("File Cleanup ({0}): {1} files deleted", _filePath, filesDeleted));
-            }
         }
 
         private static bool TryDelete(string filePath)
