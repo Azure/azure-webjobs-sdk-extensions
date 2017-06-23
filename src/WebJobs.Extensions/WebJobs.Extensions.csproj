@@ -9,7 +9,7 @@
     <Company>Microsoft</Company>
     <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
     <Product>Microsoft.Azure.WebJobs</Product>
-    <Version>3.0.0-beta1</Version>
+    <Version>3.0.0-beta1$(VersionSuffix)</Version>
   </PropertyGroup>
 
   <ItemGroup>
