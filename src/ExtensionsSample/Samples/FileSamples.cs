@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
@@ -15,13 +16,13 @@ namespace ExtensionsSample
     {
         // When new files arrive in the "import" directory, they are uploaded to a blob
         // container then deleted.
-        public static void ImportFile(
+        public async static Task ImportFile(
             [FileTrigger(@"import/{name}", "*.dat", autoDelete: true)] Stream file,
             [Blob(@"processed/{name}")] CloudBlockBlob output,
             string name,
             TextWriter log)
         {
-            output.UploadFromStream(file);
+            await output.UploadFromStreamAsync(file);
             file.Close();
 
             log.WriteLine(string.Format("Processed input file '{0}'!", name));

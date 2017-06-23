@@ -91,7 +91,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             CloudBlobClient client = account.CreateCloudBlobClient();
             CloudBlobContainer container = client.GetContainerReference("test-output");
             var blobRef = await container.GetBlobReferenceFromServerAsync(blobName);
-            await TestHelpers.Await(() => blobRef.Exists());
+            await TestHelpers.Await(() => blobRef.ExistsAsync());
 
             MemoryStream stream = new MemoryStream();
             await blobRef.DownloadToStreamAsync(stream);
