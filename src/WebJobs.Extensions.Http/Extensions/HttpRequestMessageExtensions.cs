@@ -26,14 +26,5 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
             return headers;
         }
-
-        public static IDictionary<string, string> GetQueryParameterDictionary(this HttpRequestMessage request)
-        {
-            var keyValuePairs = request.GetQueryNameValuePairs();
-
-            // last one wins for any duplicate query parameters
-            return keyValuePairs.GroupBy(p => p.Key, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(p => p.Key, s => s.Last().Value, StringComparer.OrdinalIgnoreCase);
-        }
     }
 }

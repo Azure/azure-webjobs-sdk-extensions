@@ -336,10 +336,6 @@
       <Name>WebJobs.Extensions.DocumentDB</Name>
       <Aliases>global</Aliases>
     </ProjectReference>
-    <ProjectReference Include="..\..\src\WebJobs.Extensions.Http\WebJobs.Extensions.Http.csproj">
-      <Project>{df43fc36-fdfc-42c4-9a40-233e247d4a24}</Project>
-      <Name>WebJobs.Extensions.Http</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\src\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj">
       <Project>{c4d2e330-8fb9-4d2b-9db5-274fbfb69d69}</Project>
       <Name>WebJobs.Extensions.MobileApps</Name>
