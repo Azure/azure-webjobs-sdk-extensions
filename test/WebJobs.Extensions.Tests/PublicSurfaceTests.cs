@@ -91,7 +91,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
             {
                 "DocumentDBAttribute",
                 "DocumentDBConfiguration",
-                "DocumentDBJobHostConfigurationExtensions"
+                "DocumentDBJobHostConfigurationExtensions",
+                "CosmosDBTriggerAttribute"
             };
 
             AssertPublicTypes(expected, assembly);

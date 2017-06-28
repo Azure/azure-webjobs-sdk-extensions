@@ -65,6 +65,9 @@
       <Word>Twilio</Word>
       <Word>IEnumerable</Word>
       <Word>sqlquery</Word>
+      <Word>DocumentDB</Word>
+      <Word>AccountEndpoint</Word>
+      <Word>AccountKey</Word>
     </Recognized>
     <Deprecated/>
     <Compound>
