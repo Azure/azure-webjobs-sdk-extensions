@@ -68,7 +68,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
 
             if (string.IsNullOrEmpty(authToken))
             {
-                ThrowMissingSettingException("AuthToken", AzureWebJobsTwilioAccountSidKeyName, "AuthToken");
+                ThrowMissingSettingException("AuthToken", AzureWebJobsTwilioAccountAuthTokenName, "AuthToken");
             }
         }
 
