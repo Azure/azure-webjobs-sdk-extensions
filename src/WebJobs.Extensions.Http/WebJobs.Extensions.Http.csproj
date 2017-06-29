@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyName>Microsoft.Azure.WebJobs.Extensions</AssemblyName>
-    <RootNamespace>Microsoft.Azure.WebJobs.Extensions</RootNamespace>
+    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Http</AssemblyName>
+    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Http</RootNamespace>
     <PackageId>Microsoft.Azure.WebJobs.Extensions.Http</PackageId>
     <Authors>Microsoft</Authors>
     <Company>Microsoft</Company>
