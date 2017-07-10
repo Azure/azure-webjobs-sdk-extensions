@@ -17,7 +17,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             // Arrange
             PropertyInfo propInfo = null;
             DocumentDBAttribute resolvedAttribute = new DocumentDBAttribute();
-            BindingTemplate bindingTemplate = 
+            BindingTemplate bindingTemplate =
                 BindingTemplate.FromString("SELECT * FROM c WHERE c.id = {foo} AND c.value = {bar}");
             Dictionary<string, object> bindingData = new Dictionary<string, object>();
             bindingData.Add("foo", "1234");
@@ -51,6 +51,49 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             // Assert
             Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@foo" && p.Value.ToString() == "1234");
             Assert.Equal("SELECT * FROM c WHERE c.id = @foo AND c.value = @foo", result);
+        }
+
+        [Fact]
+        public void TemplateBind_StringListParameters()
+        {
+            // Arrange
+            PropertyInfo propInfo = null;
+            DocumentDBAttribute resolvedAttribute = new DocumentDBAttribute();
+            BindingTemplate bindingTemplate =
+                BindingTemplate.FromString("SELECT * FROM c WHERE c.id = {foo.name}");
+            Dictionary<string, object> bindingData = new Dictionary<string, object>();
+            bindingData.Add("foo", new Dictionary<string, string>() { { "name", "bar" } });
+            DocumentDBSqlResolutionPolicy policy = new DocumentDBSqlResolutionPolicy();
+
+            // Act
+            string result = policy.TemplateBind(propInfo, resolvedAttribute, bindingTemplate, bindingData);
+
+            // Assert
+            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@fooname" && p.Value.ToString() == "bar");
+            Assert.Equal("SELECT * FROM c WHERE c.id = @fooname", result);
+        }
+
+        [Fact]
+        public void TemplateBind_MultipleStringListParameters()
+        {
+            // Arrange
+            PropertyInfo propInfo = null;
+            DocumentDBAttribute resolvedAttribute = new DocumentDBAttribute();
+            BindingTemplate bindingTemplate =
+                BindingTemplate.FromString("SELECT * FROM c WHERE c.id = {foo.name} AND c.val1 = {foo.age} AND c.val2 = {fizz.buzz}");
+            Dictionary<string, object> bindingData = new Dictionary<string, object>();
+            bindingData.Add("foo", new Dictionary<string, string>() { { "name", "bar" }, { "age", "13" } });
+            bindingData.Add("fizz", new Dictionary<string, string>() { { "buzz", "hello" } });
+            DocumentDBSqlResolutionPolicy policy = new DocumentDBSqlResolutionPolicy();
+
+            // Act
+            string result = policy.TemplateBind(propInfo, resolvedAttribute, bindingTemplate, bindingData);
+
+            // Assert
+            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@fooname" && p.Value.ToString() == "bar");
+            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@fooage" && p.Value.ToString() == "13");
+            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@fizzbuzz" && p.Value.ToString() == "hello");
+            Assert.Equal("SELECT * FROM c WHERE c.id = @fooname AND c.val1 = @fooage AND c.val2 = @fizzbuzz", result);
         }
     }
 }
