@@ -17,7 +17,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             // Arrange
             PropertyInfo propInfo = null;
             DocumentDBAttribute resolvedAttribute = new DocumentDBAttribute();
-            BindingTemplate bindingTemplate =
+            BindingTemplate bindingTemplate = 
                 BindingTemplate.FromString("SELECT * FROM c WHERE c.id = {foo} AND c.value = {bar}");
             Dictionary<string, object> bindingData = new Dictionary<string, object>();
             bindingData.Add("foo", "1234");
