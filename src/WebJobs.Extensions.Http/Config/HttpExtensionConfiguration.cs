@@ -2,8 +2,10 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Net.Http;
 using System.Threading.Tasks.Dataflow;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Newtonsoft.Json;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Http
 {
@@ -50,6 +52,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         public bool DynamicThrottlesEnabled { get; set; }
 
         /// <summary>
+        /// Hook to enable a host to receive the response
+        /// </summary>
+        [JsonIgnore]
+        public Action<HttpRequestMessage, object> SetResponse { get; set; }
+
+        /// <summary>
         /// Initializes the extension.
         /// </summary>
         /// <param name="context">The <see cref="ExtensionConfigContext"/>.</param>
@@ -60,7 +68,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 throw new ArgumentNullException(nameof(context));
             }
 
-            context.Config.RegisterBindingExtension(new HttpTriggerAttributeBindingProvider());
+            context.Config.RegisterBindingExtension(new HttpTriggerAttributeBindingProvider(this.SetResponse));
         }
     }
 }

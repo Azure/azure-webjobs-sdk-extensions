@@ -25,8 +25,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         internal const string HttpQueryKey = "Query";
         internal const string HttpHeadersKey = "Headers";
 
-        public HttpTriggerAttributeBindingProvider()
+        private readonly Action<HttpRequestMessage, object> _responseHook;
+
+        public HttpTriggerAttributeBindingProvider(Action<HttpRequestMessage, object> responseHook)
         {
+            _responseHook = responseHook;
         }
 
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
@@ -55,7 +58,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     "Can't bind HttpTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            return Task.FromResult<ITriggerBinding>(new HttpTriggerBinding(attribute, context.Parameter, isUserTypeBinding));
+            return Task.FromResult<ITriggerBinding>(new HttpTriggerBinding(attribute, context.Parameter, isUserTypeBinding, _responseHook));
         }
 
         private static bool IsValidUserType(Type type)
@@ -70,9 +73,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             private readonly bool _isUserTypeBinding;
             private readonly Dictionary<string, Type> _bindingDataContract;
             private readonly HttpRouteFactory _httpRouteFactory = new HttpRouteFactory();
+            private readonly Action<HttpRequestMessage, object> _responseHook;
 
-            public HttpTriggerBinding(HttpTriggerAttribute attribute, ParameterInfo parameter, bool isUserTypeBinding)
+            public HttpTriggerBinding(HttpTriggerAttribute attribute, ParameterInfo parameter, bool isUserTypeBinding, Action<HttpRequestMessage, object> responseHook = null)
             {
+                _responseHook = responseHook;
                 _parameter = parameter;
                 _isUserTypeBinding = isUserTypeBinding;
 
@@ -145,7 +150,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     ApplyBindingData(poco, aggregateBindingData);
                 }
 
-                return new TriggerData(valueProvider, aggregateBindingData);
+                IValueBinder returnProvider = new ResponseHandler(request, _responseHook);
+                return new TriggerData(valueProvider, aggregateBindingData) { ReturnValueProvider = returnProvider };
             }
 
             public static string ToInvokeString(HttpRequestMessage request)
@@ -396,6 +402,39 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 public override string ToInvokeString()
                 {
                     return _invokeString;
+                }
+            }
+
+            private class ResponseHandler : IValueBinder
+            {
+                private readonly HttpRequestMessage _request;
+                private readonly Action<HttpRequestMessage, object> _responseHook;
+
+                public ResponseHandler(HttpRequestMessage request, Action<HttpRequestMessage, object> responseHook)
+                {
+                    _request = request;
+                    _responseHook = responseHook;
+                }
+
+                public Type Type => typeof(object).MakeByRefType();
+
+                public Task<object> GetValueAsync()
+                {
+                    return null;
+                }
+
+                public Task SetValueAsync(object result, CancellationToken cancellationToken)
+                {
+                    if (_responseHook != null)
+                    {
+                        _responseHook(_request, result);
+                    }
+                    return Task.CompletedTask;
+                }
+
+                public string ToInvokeString()
+                {
+                    return "response";
                 }
             }
 
