@@ -209,6 +209,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     aggregateDataContract.AddRange(_bindingDataProvider.Contract);
                 }
 
+                // Mark that HttpTrigger accepts a return value. 
+                aggregateDataContract["$return"] = typeof(object).MakeByRefType();
+
                 // add contract members for any route parameters
                 if (!string.IsNullOrEmpty(attribute.Route))
                 {
