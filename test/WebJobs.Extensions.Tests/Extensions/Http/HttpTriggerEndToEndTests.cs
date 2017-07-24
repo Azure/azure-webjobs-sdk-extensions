@@ -22,12 +22,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
         public HttpTriggerEndToEndTests()
         {
+            var httpConfig = new HttpExtensionConfiguration();
+            httpConfig.SetResponse = SetResultHook;
             _config = new JobHostConfiguration
             {
                 TypeLocator = new ExplicitTypeLocator(typeof(TestFunctions))
             };
-            _config.UseHttp();
+            _config.UseHttp(httpConfig);
             _host = new JobHost(_config);
+        }
+
+        private void SetResultHook(HttpRequestMessage request, object result)
+        {
+            request.Properties["$ret"] = result;
         }
 
         [Fact]
@@ -45,6 +52,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
             var method = typeof(TestFunctions).GetMethod("TestFunction1");
             _host.Call(method, new { req = request });
+        }
+
+        [Fact]
+        public void BasicResponse()
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, "http://functions.com/api/abc");
+            var method = typeof(TestFunctions).GetMethod("TestResponse");
+            _host.Call(method, new { req = request });
+
+            Assert.Equal(request.Properties["$ret"], "test-response"); // Verify resposne was set
         }
 
         [Fact]
@@ -115,6 +132,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 IDictionary<string, string> query)
             {
                 blob = headers["testValue"];
+            }
+                        
+            public static Task<string> TestResponse(
+                [HttpTrigger("get", "post")] HttpRequestMessage req)
+            {
+                // Return value becomes the HttpResponseMessage.
+                return Task.FromResult("test-response"); 
             }
         }
     }
