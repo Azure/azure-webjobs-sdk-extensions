@@ -52,83 +52,83 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
             AssertPublicTypes(expected, assembly);
         }
 
-        [Fact]
-        public void SendGridPublicSurface_LimitedToSpecificTypes()
-        {
-            var assembly = typeof(SendGridAttribute).Assembly;
+        //[Fact]
+        //public void SendGridPublicSurface_LimitedToSpecificTypes()
+        //{
+        //    var assembly = typeof(SendGridAttribute).Assembly;
 
-            var expected = new[]
-            {
-                "SendGridAttribute",
-                "SendGridConfiguration",
-                "SendGridJobHostConfigurationExtensions"
-            };
+        //    var expected = new[]
+        //    {
+        //        "SendGridAttribute",
+        //        "SendGridConfiguration",
+        //        "SendGridJobHostConfigurationExtensions"
+        //    };
 
-            AssertPublicTypes(expected, assembly);
-        }
+        //    AssertPublicTypes(expected, assembly);
+        //}
 
-        [Fact]
-        public void MobileTablesPublicSurface_LimitedToSpecificTypes()
-        {
-            var assembly = typeof(MobileTableAttribute).Assembly;
+        //[Fact]
+        //public void MobileTablesPublicSurface_LimitedToSpecificTypes()
+        //{
+        //    var assembly = typeof(MobileTableAttribute).Assembly;
 
-            var expected = new[]
-            {
-                "MobileTableAttribute",
-                "MobileAppsConfiguration",
-                "MobileAppsJobHostConfigurationExtensions"
-            };
+        //    var expected = new[]
+        //    {
+        //        "MobileTableAttribute",
+        //        "MobileAppsConfiguration",
+        //        "MobileAppsJobHostConfigurationExtensions"
+        //    };
 
-            AssertPublicTypes(expected, assembly);
-        }
+        //    AssertPublicTypes(expected, assembly);
+        //}
 
-        [Fact]
-        public void DocumentDBPublicSurface_LimitedToSpecificTypes()
-        {
-            var assembly = typeof(DocumentDBAttribute).Assembly;
+        //[Fact]
+        //public void DocumentDBPublicSurface_LimitedToSpecificTypes()
+        //{
+        //    var assembly = typeof(DocumentDBAttribute).Assembly;
 
-            var expected = new[]
-            {
-                "DocumentDBAttribute",
-                "DocumentDBConfiguration",
-                "DocumentDBJobHostConfigurationExtensions"
-            };
+        //    var expected = new[]
+        //    {
+        //        "DocumentDBAttribute",
+        //        "DocumentDBConfiguration",
+        //        "DocumentDBJobHostConfigurationExtensions"
+        //    };
 
-            AssertPublicTypes(expected, assembly);
-        }
+        //    AssertPublicTypes(expected, assembly);
+        //}
 
-        [Fact]
-        public void NotificationHubsPublicSurface_LimitedToSpecificTypes()
-        {
-            var assembly = typeof(NotificationHubAttribute).Assembly;
+        //[Fact]
+        //public void NotificationHubsPublicSurface_LimitedToSpecificTypes()
+        //{
+        //    var assembly = typeof(NotificationHubAttribute).Assembly;
 
-            var expected = new[]
-            {
-                "NotificationHubAttribute",
-                "NotificationHubsConfiguration",
-                "NotificationHubJobHostConfigurationExtensions"
-            };
+        //    var expected = new[]
+        //    {
+        //        "NotificationHubAttribute",
+        //        "NotificationHubsConfiguration",
+        //        "NotificationHubJobHostConfigurationExtensions"
+        //    };
 
-            AssertPublicTypes(expected, assembly);
-        }
+        //    AssertPublicTypes(expected, assembly);
+        //}
 
-        [Fact]
-        public void ApiHubPublicSurface_LimitedToSpecificTypes()
-        {
-            var assembly = typeof(ApiHubFileAttribute).Assembly;
+        //[Fact]
+        //public void ApiHubPublicSurface_LimitedToSpecificTypes()
+        //{
+        //    var assembly = typeof(ApiHubFileAttribute).Assembly;
 
-            var expected = new[]
-            {
-                "ApiHubFileAttribute",
-                "ApiHubFileTriggerAttribute",
-                "ApiHubConfiguration",
-                "ApiHubJobHostConfigurationExtensions",
-                "ApiHubTableAttribute",
-                "ConnectionFactory"
-            };
+        //    var expected = new[]
+        //    {
+        //        "ApiHubFileAttribute",
+        //        "ApiHubFileTriggerAttribute",
+        //        "ApiHubConfiguration",
+        //        "ApiHubJobHostConfigurationExtensions",
+        //        "ApiHubTableAttribute",
+        //        "ConnectionFactory"
+        //    };
 
-            AssertPublicTypes(expected, assembly);
-        }
+        //    AssertPublicTypes(expected, assembly);
+        //}
 
         [Fact]
         public void HttpPublicSurface_LimitedToSpecificTypes()

@@ -12,6 +12,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
+using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing.Template;
 using Microsoft.Azure.WebJobs.Extensions.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -48,7 +50,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             // Can bind to user types, HttpRequestMessage, object (for dynamic binding support) and all the Read
             // Types supported by StreamValueBinder
             IEnumerable<Type> supportedTypes = StreamValueBinder.GetSupportedTypes(FileAccess.Read)
-                .Union(new Type[] { typeof(HttpRequestMessage), typeof(object) });
+                .Union(new Type[] { typeof(HttpRequest), typeof(object), typeof(HttpRequestMessage) });
             bool isSupportedTypeBinding = ValueBinder.MatchParameterType(parameter, supportedTypes);
             bool isUserTypeBinding = !isSupportedTypeBinding && IsValidUserType(parameter.ParameterType);
             if (!isSupportedTypeBinding && !isUserTypeBinding)
@@ -153,9 +155,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             {
                 // For display in the Dashboard, we want to be sure we don't log
                 // any sensitive portions of the URI (e.g. query params, headers, etc.)
-                string uri = request.Path;
+                var builder = new UriBuilder
+                {
+                    Host = request.Host.Host,
+                    Path = request.Path,
+                    Scheme = request.Scheme
+                };
 
-                return $"Method: {request.Method}, Uri: {uri}";
+                if (request.Host.Port.HasValue)
+                {
+                    builder.Port = request.Host.Port.Value;
+                }
+                
+
+                return $"Method: {request.Method}, Uri: {builder.Uri.GetLeftPart(UriPartial.Path)}";
             }
 
             public Task<IListener> CreateListenerAsync(ListenerFactoryContext context)
@@ -300,29 +313,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 return bindingData;
             }
 
-            private async Task<IValueProvider> CreateUserTypeValueProvider(HttpRequest request, string invokeString)
+            private Task<IValueProvider> CreateUserTypeValueProvider(HttpRequest request, string invokeString)
             {
                 // First check to see if the WebHook data has already been deserialized,
                 // otherwise read from the request body if present
-                object value = null;
-                if (!request.HttpContext.Items.TryGetValue(HttpExtensionConstants.AzureWebJobsWebHookDataKey, out value))
-                {
-                    // TODO: FACAVAL
-                    //if (request.ReadAsAsync() .re.Content != null && request.Content.Headers.ContentLength > 0)
-                    if (false)
-                    {
-                        // deserialize from message body
-                        //value = await request.ReadAsAsync(_parameter.ParameterType);
-                    }
-                }
+                // TODO: FACAVAL - Pending WebHooks support
+                //object value = null;
+                //if (!request.HttpContext.Items.TryGetValue(HttpExtensionConstants.AzureWebJobsWebHookDataKey, out value))
+                //{
+                //    //if (request.ReadAsAsync() .re.Content != null && request.Content.Headers.ContentLength > 0)
+                //    if (false)
+                //    {
+                //        // deserialize from message body
+                //        //value = await request.ReadAsAsync(_parameter.ParameterType);
+                //    }
+                //}
 
-                if (value == null)
-                {
-                    // create an empty object
-                    value = Activator.CreateInstance(_parameter.ParameterType);
-                }
+                //if (value == null)
+                //{
+                //    // create an empty object
+                //    
+                //}
 
-                return new SimpleValueProvider(_parameter.ParameterType, value, invokeString);
+                object value = Activator.CreateInstance(_parameter.ParameterType);
+                return Task.FromResult<IValueProvider>(new SimpleValueProvider(_parameter.ParameterType, value, invokeString));
             }
 
             private static object ConvertValueIfNecessary(object value, Type targetType)
@@ -365,7 +379,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
                 public override async Task<object> GetValueAsync()
                 {
-                    if (_parameter.ParameterType == typeof(HttpRequestMessage))
+                    if (_parameter.ParameterType == typeof(HttpRequest))
                     {
                         return _request;
                     }
