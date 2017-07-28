@@ -272,7 +272,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                         // skip any system parameters that should not be bound to
                         continue;
                     }
-                    bindingData[pair.Key] = pair.Value;
+                    bindingData[pair.Key] = pair.Value.ToString();
                 }
 
                 // apply binding data from route parameters
@@ -383,11 +383,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     {
                         return _request;
                     }
+                    // TODO: FACAVAL support HttpRequestMessage
                     else if (_parameter.ParameterType == typeof(object))
                     {
                         // for dynamic, we read as an object, which will actually return
                         // a JObject which is dynamic
-                        // TODO: FACACAL
+                        // TODO: FACAVAL
                       //  return await _request.Content.ReadAsAsync<object>();
                     }
 

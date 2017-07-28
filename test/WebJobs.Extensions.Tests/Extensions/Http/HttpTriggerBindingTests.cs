@@ -284,7 +284,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
             Assert.Equal("Seattle", triggerData.BindingData["Location"]);
 
-            HttpRequestMessage result = (HttpRequestMessage)(await triggerData.ValueProvider.GetValueAsync());
+            HttpRequest result = (HttpRequest)(await triggerData.ValueProvider.GetValueAsync());
             Assert.Same(request, result);
         }
 
@@ -304,7 +304,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
             Assert.Equal("Seattle", triggerData.BindingData["Location"]);
 
-            HttpRequestMessage result = (HttpRequestMessage)(await triggerData.ValueProvider.GetValueAsync());
+            HttpRequest result = (HttpRequest)(await triggerData.ValueProvider.GetValueAsync());
             Assert.Same(request, result);
         }
 
@@ -380,7 +380,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         {
         }
 
-        public void TestHttpRequestMessageFunction(HttpRequestMessage req)
+        public void TestHttpRequestMessageFunction(HttpRequest req)
         {
         }
 
