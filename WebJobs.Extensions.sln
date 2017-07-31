@@ -7,26 +7,26 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1118E0AD-83C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{6D6CF06F-EFCF-4E01-99F1-CB7991C279D8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExtensionsSample", "src\ExtensionsSample\ExtensionsSample.csproj", "{1CFEAA1A-F726-482E-ACD1-96D21DB10837}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.Tests", "test\WebJobs.Extensions.Tests\WebJobs.Extensions.Tests.csproj", "{1729561F-D598-4208-9154-3A5497523D54}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{28647E2E-EF79-47A7-85EC-10F2F67AEAFE}"
 	ProjectSection(SolutionItems) = preProject
 		.nuget\NuGet.Config = .nuget\NuGet.Config
 		.nuget\packages.config = .nuget\packages.config
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{9C98036B-0901-45FA-A18B-0D8E226B6A61}"
+	ProjectSection(SolutionItems) = preProject
+		build\common.props = build\common.props
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExtensionsSample", "src\ExtensionsSample\ExtensionsSample.csproj", "{1CFEAA1A-F726-482E-ACD1-96D21DB10837}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.Tests", "test\WebJobs.Extensions.Tests\WebJobs.Extensions.Tests.csproj", "{1729561F-D598-4208-9154-3A5497523D54}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Extension", "src\Sample.Extension\Sample.Extension.csproj", "{55EDABA0-8D31-43C9-AB3C-2A40D0EFF28A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions", "src\WebJobs.Extensions\WebJobs.Extensions.csproj", "{7719584E-9863-405A-9D26-2CC02AFC2427}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.Http", "src\WebJobs.Extensions.Http\WebJobs.Extensions.Http.csproj", "{47B3ECC3-DDDB-4C80-8A13-E6279A2EB835}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{9C98036B-0901-45FA-A18B-0D8E226B6A61}"
-	ProjectSection(SolutionItems) = preProject
-		build\common.props = build\common.props
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
