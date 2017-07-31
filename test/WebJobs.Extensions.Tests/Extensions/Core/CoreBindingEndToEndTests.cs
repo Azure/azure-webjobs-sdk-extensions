@@ -40,6 +40,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             {
                 Context = context;
             }
+
+            [NoAutomaticTrigger]
+            [FunctionName("myfunc")] 
+            public static void ExecutionContext2(ExecutionContext context)
+            {
+                Context = context;
+            }
+        }
+
+        [Fact]
+        public async Task SetAppDirectory()
+        {
+            JobHostConfiguration config = new JobHostConfiguration
+            {
+                TypeLocator = new ExplicitTypeLocator(typeof(CoreTestJobs))
+            };
+            config.UseCore(@"z:\home");
+            JobHost host = new JobHost(config);
+
+            await host.CallAsync("myfunc");
+
+            ExecutionContext result = CoreTestJobs.Context;
+            Assert.NotNull(result);
+            Assert.NotEqual(Guid.Empty, result.InvocationId);
+            Assert.Equal("myfunc", result.FunctionName);
+            Assert.Equal(@"z:\home\myfunc", result.FunctionDirectory);
+            Assert.Equal(@"z:\home", result.FunctionAppDirectory);
         }
     }
 }

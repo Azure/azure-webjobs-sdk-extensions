@@ -19,18 +19,21 @@ namespace Microsoft.Azure.WebJobs
         /// Registers the Core extensions
         /// </summary>
         /// <param name="config"></param>
-        public static void UseCore(this JobHostConfiguration config)
+        /// <param name="appDirectory"></param>
+        public static void UseCore(this JobHostConfiguration config, string appDirectory = null)
         {
             if (config == null)
             {
                 throw new ArgumentNullException("config");
             }
 
-            config.RegisterExtensionConfigProvider(new CoreExtensionConfig());
+            config.RegisterExtensionConfigProvider(new CoreExtensionConfig { AppDirectory = appDirectory });
         }
 
-        private class CoreExtensionConfig : IExtensionConfigProvider
+        internal class CoreExtensionConfig : IExtensionConfigProvider
         {
+            public string AppDirectory { get; set; }
+
             public void Initialize(ExtensionConfigContext context)
             {
                 if (context == null)
@@ -39,7 +42,7 @@ namespace Microsoft.Azure.WebJobs
                 }
 
                 context.Config.RegisterBindingExtensions(
-                    new ExecutionContextBindingProvider(),
+                    new ExecutionContextBindingProvider(this),
                     new ErrorTriggerAttributeBindingProvider(context.Config));
             }
         }

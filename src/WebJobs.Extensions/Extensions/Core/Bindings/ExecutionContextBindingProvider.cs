@@ -2,10 +2,12 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Protocols;
+using static Microsoft.Azure.WebJobs.CoreJobHostConfigurationExtensions;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Core
 {
@@ -14,6 +16,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core
     /// </summary>
     internal class ExecutionContextBindingProvider : IBindingProvider
     {
+        private readonly CoreExtensionConfig _config;
+
+        public ExecutionContextBindingProvider(CoreExtensionConfig config)
+        {
+            _config = config;
+        }
+
         public Task<IBinding> TryCreateAsync(BindingProviderContext context)
         {
             if (context == null)
@@ -26,16 +35,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core
                 return Task.FromResult<IBinding>(null);
             }
 
-            return Task.FromResult<IBinding>(new ExecutionContextBinding(context.Parameter));
+            return Task.FromResult<IBinding>(new ExecutionContextBinding(context.Parameter, _config));
         }
 
         private class ExecutionContextBinding : IBinding
         {
             private readonly ParameterInfo _parameter;
+            private readonly CoreExtensionConfig _config;
 
-            public ExecutionContextBinding(ParameterInfo parameter)
+            public ExecutionContextBinding(ParameterInfo parameter, CoreExtensionConfig config)
             {
                 _parameter = parameter;
+                _config = config;
             }
 
             public bool FromAttribute
@@ -50,7 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core
                     throw new ArgumentNullException("context");
                 }
 
-                return BindInternalAsync(CreateContext(context.FunctionInstanceId));
+                return BindInternalAsync(CreateContext(context.ValueContext));
             }
 
             public Task<IValueProvider> BindAsync(object value, ValueBindingContext context)
@@ -60,17 +71,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core
                     throw new ArgumentNullException("context");
                 }
 
-                return BindInternalAsync(CreateContext(context.FunctionInstanceId));
+                return BindInternalAsync(CreateContext(context));
             }
 
-            private ExecutionContext CreateContext(Guid invocationId)
+            private ExecutionContext CreateContext(ValueBindingContext context)
             {
-                return new ExecutionContext
+                var result = new ExecutionContext
                 {
-                    InvocationId = invocationId,
-                    FunctionName = _parameter.Member.Name,
-                    FunctionDirectory = Environment.CurrentDirectory
+                    InvocationId = context.FunctionInstanceId,
+                    FunctionName = context.FunctionContext.MethodName,
+                    FunctionDirectory = Environment.CurrentDirectory,
+                    FunctionAppDirectory = _config.AppDirectory
                 };
+
+                if (result.FunctionAppDirectory  != null)
+                {
+                    result.FunctionDirectory = Path.Combine(result.FunctionAppDirectory, result.FunctionName);
+                }
+                return result;
             }
 
             private static Task<IValueProvider> BindInternalAsync(ExecutionContext executionContext)
