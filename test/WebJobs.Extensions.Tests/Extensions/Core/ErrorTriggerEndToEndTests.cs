@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host;
 using Xunit;
+using Microsoft.Azure.WebJobs.Host.Timers;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
 {
@@ -27,6 +28,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
                 JobActivator = new ExplicitJobActivator(instance)
             };
             config.UseCore();
+            config.AddService<IWebJobsExceptionHandler>(new TestExceptionHandler());
             JobHost host = new JobHost(config);
             await host.StartAsync();
 
@@ -60,6 +62,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
                 JobActivator = new ExplicitJobActivator(instance)
             };
             config.UseCore();
+            config.AddService<IWebJobsExceptionHandler>(new TestExceptionHandler());
             JobHost host = new JobHost(config);
             await host.StartAsync();
 
@@ -82,6 +85,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
                 JobActivator = new ExplicitJobActivator(instance)
             };
             config.UseCore();
+            config.AddService<IWebJobsExceptionHandler>(new TestExceptionHandler());
             JobHost host = new JobHost(config);
             await host.StartAsync();
 
@@ -108,6 +112,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
                 JobActivator = new ExplicitJobActivator(instance)
             };
             config.UseCore();
+            config.AddService<IWebJobsExceptionHandler>(new TestExceptionHandler());
             JobHost host = new JobHost(config);
             await host.StartAsync();
 
@@ -135,6 +140,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
                 JobActivator = new ExplicitJobActivator(instance)
             };
             config.UseCore();
+            config.AddService<IWebJobsExceptionHandler>(new TestExceptionHandler());
             JobHost host = new JobHost(config);
             await host.StartAsync();
 
@@ -170,7 +176,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
                 TypeLocator = new ExplicitTypeLocator(typeof(ErrorProgram))
             };
             config.UseCore();
-
+            config.AddService<IWebJobsExceptionHandler>(new TestExceptionHandler());
             int notificationCount = 0;
             var traceMonitor = new TraceMonitor()
                 .Filter(p => { return true; })

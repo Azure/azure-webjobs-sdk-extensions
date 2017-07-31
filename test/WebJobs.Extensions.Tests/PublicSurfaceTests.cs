@@ -141,9 +141,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
                 "HttpExtensionConstants",
                 "HttpJobHostConfigurationExtensions",
                 "AuthorizationLevel",
-                "HttpRouteFactory",
                 "HttpRequestManager",
-                "HttpTriggerAttribute"
+                "HttpTriggerAttribute",
+                "DefaultWebJobsRouteHandler",
+                "HttpBindingApplicationBuilderExtension",
+                "HttpBindingServiceCollectionExtensions",
+                "HttpRequestExtensions",
+                "IWebJobsRouteHandler",
+                "IWebJobsRouter",
+                "WebJobsRouteBuilder",
+                "WebJobsRouter"
             };
 
             AssertPublicTypes(expected, assembly);

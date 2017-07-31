@@ -21,21 +21,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             requestFeature.PathBase = "/";
             requestFeature.QueryString = uri.GetComponents(UriComponents.KeepDelimiter | UriComponents.Query, UriFormat.Unescaped);
 
-            if (body != null)
-            {
-                requestFeature.Body = new MemoryStream(Encoding.UTF8.GetBytes(body));
-            }
+            headers = headers ?? new HeaderDictionary();
 
             if (!string.IsNullOrEmpty(uri.Host))
-            {
-                headers = headers ?? new HeaderDictionary();
+            {    
                 headers.Add("Host", uri.Host);
             }
 
-            if (headers != null)
+            if (body != null)
             {
-                requestFeature.Headers = headers;
+                requestFeature.Body = new MemoryStream(Encoding.UTF8.GetBytes(body));
+                request.ContentLength = request.Body.Length;
+                headers.Add("Content-Length", request.Body.Length.ToString());
             }
+
+            requestFeature.Headers = headers;
 
             return request;
         }

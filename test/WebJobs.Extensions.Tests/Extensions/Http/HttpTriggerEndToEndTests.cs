@@ -6,8 +6,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
+using Microsoft.Azure.WebJobs.Host.Timers;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Xunit;
@@ -29,6 +31,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 TypeLocator = new ExplicitTypeLocator(typeof(TestFunctions))
             };
             _config.UseHttp(httpConfig);
+            _config.UseHttp();
+            _config.AddService<IWebJobsExceptionHandler>(new TestExceptionHandler());
             _host = new JobHost(_config);
         }
 
@@ -40,7 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         [Fact]
         public void BasicInvoke()
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, "http://functions.com/api/123/two/test?q1=123&q2=two");
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions.com/api/123/two/test?q1=123&q2=two");
             request.Headers.Add("h1", "value1");
             request.Headers.Add("h2", "value2");
             var routeDataValues = new Dictionary<string, object>
@@ -48,7 +52,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 { "r1", 123 },
                 { "r2",  "two" }
             };
-            request.Properties[HttpExtensionConstants.AzureWebJobsHttpRouteDataKey] = routeDataValues;
+            request.HttpContext.Items[HttpExtensionConstants.AzureWebJobsHttpRouteDataKey] = routeDataValues;
 
             var method = typeof(TestFunctions).GetMethod("TestFunction1");
             _host.Call(method, new { req = request });
@@ -70,7 +74,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             string testId = Guid.NewGuid().ToString();
             string testValue = Guid.NewGuid().ToString();
             string testSuffix = Guid.NewGuid().ToString();
-            var request = new HttpRequestMessage(HttpMethod.Get, $"http://functions.com/api/test?testId={testId}");
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", $"http://functions.com/api/test?testId={testId}");
             request.Headers.Add("h1", "value1");
             request.Headers.Add("h2", "value2");
             request.Headers.Add("testSuffix", testSuffix);
@@ -80,9 +84,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 { "r1", 123 },
                 { "r2",  "two" }
             };
-            request.Properties[HttpExtensionConstants.AzureWebJobsHttpRouteDataKey] = routeDataValues;
+            request.HttpContext.Items[HttpExtensionConstants.AzureWebJobsHttpRouteDataKey] = routeDataValues;
 
-            var method = typeof(TestFunctions).GetMethod("TestFunction2");
+            var method = typeof(TestFunctions).GetMethod(nameof(TestFunctions.TestFunction2));
             await _host.CallAsync(method, new { req = request });
 
             // verify blob was written
@@ -109,7 +113,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         public static class TestFunctions
         {
             public static void TestFunction1(
-                [HttpTrigger("get", "post", Route = "{r1:int}/{r2:alpha}/test")] HttpRequestMessage req,
+                [HttpTrigger("get", "post", Route = "{r1:int}/{r2:alpha}/test")] HttpRequest req,
                 int r1,
                 string r2,
                 IDictionary<string, string> headers,
@@ -126,7 +130,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             }
 
             public static void TestFunction2(
-                [HttpTrigger("post")] HttpRequestMessage req,
+                [HttpTrigger("post")] HttpRequest req,
                 [Blob("test-output/test-{query.testId}-{headers.testSuffix}")] out string blob,
                 IDictionary<string, string> headers,
                 IDictionary<string, string> query)

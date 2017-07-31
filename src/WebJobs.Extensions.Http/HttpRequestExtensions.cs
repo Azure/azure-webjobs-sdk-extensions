@@ -12,12 +12,19 @@ namespace Microsoft.Azure.WebJobs.Extensions
 {
     public static class HttpRequestExtensions
     {
+        private const int DefaultBufferSize = 1024;
+
         public async static Task<string> ReadAsStringAsync(this HttpRequest request)
         {
             request.EnableRewind();
 
             string result = null;
-            using (var reader = new StreamReader(request.Body))
+            using (var reader = new StreamReader(
+                request.Body,
+                encoding: Encoding.UTF8,
+                detectEncodingFromByteOrderMarks: true,
+                bufferSize: DefaultBufferSize,
+                leaveOpen: true))
             {
                 result = await reader.ReadToEndAsync();
             }

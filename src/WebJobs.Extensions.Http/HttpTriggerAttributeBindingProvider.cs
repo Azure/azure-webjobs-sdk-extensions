@@ -11,9 +11,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Internal;
-using Microsoft.AspNetCore.Http.Extensions;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Routing.Template;
 using Microsoft.Azure.WebJobs.Extensions.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -21,6 +19,14 @@ using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Newtonsoft.Json.Linq;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.AspNetCore.Mvc;
+using ModelBinding = Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Internal;
+using System.Text;
+using Microsoft.AspNetCore.Http.Internal;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Http
 {
@@ -115,7 +121,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 HttpRequest request = value as HttpRequest;
                 if (request == null)
                 {
-                    throw new NotSupportedException("An HttpRequestMessage is required");
+                    throw new NotSupportedException("An HttpRequest is required");
                 }
 
                 IValueProvider valueProvider = null;
@@ -316,37 +322,65 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 // add headers collection to binding data
                 if (!bindingData.ContainsKey(HttpHeadersKey))
                 {
-                    
-                    bindingData[HttpHeadersKey] = request.Headers.Select(h => string.Format("{0} : {1}", h.Key, h.Value));
+
+                    bindingData[HttpHeadersKey] = request.Headers.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString(), StringComparer.OrdinalIgnoreCase);
                 }
 
                 return bindingData;
             }
 
-            private Task<IValueProvider> CreateUserTypeValueProvider(HttpRequest request, string invokeString)
+            private async Task<IValueProvider> CreateUserTypeValueProvider(HttpRequest request, string invokeString)
             {
                 // First check to see if the WebHook data has already been deserialized,
                 // otherwise read from the request body if present
-                // TODO: FACAVAL - Pending WebHooks support
-                //object value = null;
-                //if (!request.HttpContext.Items.TryGetValue(HttpExtensionConstants.AzureWebJobsWebHookDataKey, out value))
-                //{
-                //    //if (request.ReadAsAsync() .re.Content != null && request.Content.Headers.ContentLength > 0)
-                //    if (false)
-                //    {
-                //        // deserialize from message body
-                //        //value = await request.ReadAsAsync(_parameter.ParameterType);
-                //    }
-                //}
+                if (!request.HttpContext.Items.TryGetValue(HttpExtensionConstants.AzureWebJobsWebHookDataKey, out object value))
+                {
+                    if (request.Body != null && request.ContentLength > 0)
+                    {
+                        IServiceProvider requestServices = request.HttpContext.RequestServices;
+                        var metadata = requestServices
+                            .GetService<ModelBinding.IModelMetadataProvider>()?
+                            .GetMetadataForType(_parameter.ParameterType);
 
-                //if (value == null)
-                //{
-                //    // create an empty object
-                //    
-                //}
+                        if (metadata != null)
+                        {
+                            var mvcOptions = requestServices.GetService<IOptions<MvcOptions>>()?.Value;
+                            var streamReaderFactory = requestServices.GetService<IHttpRequestStreamReaderFactory>();
 
-                object value = Activator.CreateInstance(_parameter.ParameterType);
-                return Task.FromResult<IValueProvider>(new SimpleValueProvider(_parameter.ParameterType, value, invokeString));
+                            Func<Stream, Encoding, TextReader> readerFactory = null;
+                            if (streamReaderFactory != null)
+                            {
+                                readerFactory = streamReaderFactory.CreateReader;
+                            }
+                            else
+                            {
+                                readerFactory = (s, e) => new HttpRequestStreamReader(s, e);
+                            }
+
+                            var context = new InputFormatterContext(request.HttpContext,
+                                modelName: string.Empty,
+                                modelState: new ModelBinding.ModelStateDictionary(),
+                                metadata: metadata,
+                                readerFactory: readerFactory);
+
+                            var formatter = mvcOptions.InputFormatters.FirstOrDefault(f => f.CanRead(context));
+
+                            if (formatter != null)
+                            {
+                                var result = await formatter.ReadAsync(context);
+
+                                value = result.Model;
+                            }
+                        }
+                    }
+                }
+
+                if (value == null)
+                {
+                    value = Activator.CreateInstance(_parameter.ParameterType);
+                }
+
+                return new SimpleValueProvider(_parameter.ParameterType, value, invokeString);
             }
 
             private static object ConvertValueIfNecessary(object value, Type targetType)

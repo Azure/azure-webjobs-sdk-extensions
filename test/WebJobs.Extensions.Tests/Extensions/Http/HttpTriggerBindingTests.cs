@@ -12,13 +12,23 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.ObjectPool;
+using Microsoft.Extensions.Options;
+using Moq;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
+using Level = System.Diagnostics.TraceLevel;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 {
@@ -108,6 +118,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             var headers = new HeaderDictionary();
 
             headers.Add("Authorization", "Bearer ey123");
+            headers.Add("x-ms-id-aad", "ey456");
+
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/test", headers);
 
             var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
@@ -131,9 +143,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
             var headers = new HeaderDictionary();
             headers.Add("Content-Type", "application/json");
-            HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/myfunc?code=abc123", null, requestBody.ToString());
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/myfunc?code=abc123", headers, requestBody.ToString());
 
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(TraceLevel.Verbose));
+            IServiceCollection services = new ServiceCollection();
+            services.AddMvc();
+            services.AddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();
+
+            request.HttpContext.RequestServices = services.BuildServiceProvider();
+
+            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(Level.Verbose));
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
@@ -160,7 +178,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             };
             request.HttpContext.Items.Add(HttpExtensionConstants.AzureWebJobsWebHookDataKey, testPoco);
 
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(TraceLevel.Verbose));
+            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(Level.Verbose));
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
@@ -180,7 +198,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET",  "http://functions/myfunc?code=abc123&Name=Mathew%20Charles&Location=Seattle");
 
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(TraceLevel.Verbose));
+            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(Level.Verbose));
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
@@ -208,7 +226,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             };
             request.HttpContext.Items.Add(HttpExtensionConstants.AzureWebJobsHttpRouteDataKey, routeData);
 
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(TraceLevel.Verbose));
+            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(Level.Verbose));
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
@@ -237,6 +255,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             headers.Add("Content-Type", "application/json");
 
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET",  "http://functions/myfunc?code=abc123&Age=25", headers, requestBody.ToString());
+            var services = new ServiceCollection();
+            services.AddOptions();
+            services.AddSingleton(Options.Create(new MvcOptions()));
+            var formatter = new Mock<IInputFormatter>();
+            formatter.Setup(f => f.ReadAsync(It.IsAny<InputFormatterContext>()))
+                .ReturnsAsync((InputFormatterContext c) =>
+                {
+                    TextReader reader = c.ReaderFactory(c.HttpContext.Request.Body, Encoding.UTF8);
+                    JsonSerializer serializer = new JsonSerializer();
+                    object result = serializer.Deserialize(reader, c.Metadata.ModelType);
+
+                    return InputFormatterResult.Success(result);
+                });
+
+            services.AddMvcCore(o => o.InputFormatters.Add(formatter.Object));
+            request.HttpContext.RequestServices = services.BuildServiceProvider();
 
             Dictionary<string, object> routeData = new Dictionary<string, object>
             {
@@ -244,7 +278,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             };
             request.HttpContext.Items.Add(HttpExtensionConstants.AzureWebJobsHttpRouteDataKey, routeData);
 
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(TraceLevel.Verbose));
+            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(Level.Verbose));
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
@@ -276,7 +310,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             };
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST",  "http://functions/myfunc?code=abc123", null, requestBody.ToString());
             
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(TraceLevel.Verbose));
+            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(Level.Verbose));
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
@@ -296,7 +330,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET",  "http://functions/myfunc?code=abc123&Name=Mathew%20Charles&Location=Seattle");
 
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(TraceLevel.Verbose));
+            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(Level.Verbose));
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
@@ -318,7 +352,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             headers.Add("Content-Type", "application/text");
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/myfunc?code=abc123", headers, "This is a test");
      
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(TraceLevel.Verbose));
+            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(Level.Verbose));
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 

@@ -4,6 +4,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
+using Microsoft.Azure.WebJobs.Host.Timers;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
@@ -19,6 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
                 TypeLocator = new ExplicitTypeLocator(typeof(CoreTestJobs))
             };
             config.UseCore();
+            config.AddService<IWebJobsExceptionHandler>(new TestExceptionHandler());
             JobHost host = new JobHost(config);
 
             string methodName = nameof(CoreTestJobs.ExecutionContext);
