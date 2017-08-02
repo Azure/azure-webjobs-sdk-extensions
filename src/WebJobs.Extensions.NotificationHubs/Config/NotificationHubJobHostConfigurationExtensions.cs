@@ -27,6 +27,7 @@ namespace Microsoft.Azure.WebJobs
             {
                 notificationHubsConfig = new NotificationHubsConfiguration();
             }
+
             config.RegisterExtensionConfigProvider(notificationHubsConfig);
         }
     }
