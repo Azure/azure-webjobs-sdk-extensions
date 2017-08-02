@@ -18,6 +18,7 @@
     <TargetFrameworkProfile />
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <SyncToOfflineSchemaModel>True</SyncToOfflineSchemaModel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -40,14 +41,18 @@
     <DocumentationFile>bin\Release\Microsoft.Azure.WebJobs.Extensions.NotificationHubs.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Bindings\NotificationHubDirectSendAsyncCollector.cs" />
     <Compile Include="Bindings\NotificationHubAsyncCollector.cs" />
+    <Compile Include="Bindings\NotificationHubDirectSendClientBuilder.cs" />
     <Compile Include="Bindings\NotificationHubClientBuilder.cs" />
     <Compile Include="Config\Converter.cs" />
     <Compile Include="Config\DefaultNotificationHubServiceFactory.cs" />
     <Compile Include="Config\INotificationHubClientServiceFactory.cs" />
     <Compile Include="Config\NotificationHubsConfiguration.cs" />
     <Compile Include="Config\NotificationHubJobHostConfigurationExtensions.cs" />
+    <Compile Include="DirectNotification.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="NotificationHubDirectSendAttribute.cs" />
     <Compile Include="NotificationHubAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\INotificationHubClientService.cs" />
@@ -180,6 +185,7 @@
       <HintPath>..\..\packages\System.Spatial.5.8.2\lib\net40\System.Spatial.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Xml.ReaderWriter, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
@@ -188,15 +194,15 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <CodeAnalysisDictionary Include="..\..\CustomDictionary.xml">
+      <Link>CustomDictionary.xml</Link>
+    </CodeAnalysisDictionary>
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\WebJobs.Extensions\WebJobs.Extensions.csproj">
       <Project>{e6f59990-f3a1-469f-a9d8-6d529121d385}</Project>
       <Name>WebJobs.Extensions</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <CodeAnalysisDictionary Include="..\..\CustomDictionary.xml">
-      <Link>CustomDictionary.xml</Link>
-    </CodeAnalysisDictionary>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\..\packages\StyleCop.MSBuild.4.7.55.0\build\StyleCop.MSBuild.Targets" Condition="Exists('..\..\packages\StyleCop.MSBuild.4.7.55.0\build\StyleCop.MSBuild.Targets')" />

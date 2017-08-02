@@ -65,6 +65,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
             var ruleOutput = bindingFactory.BindToCollector<NotificationHubAttribute, Notification>((attribute) => BuildFromAttribute(attribute, context.Trace));
 
             extensions.RegisterBindingRules<NotificationHubAttribute>(ruleOutput, clientProvider);
+
+            clientProvider = bindingFactory.BindToInput<NotificationHubDirectSendAttribute, NotificationHubClient>(new NotificationHubDirectSendClientBuilder(this));
+
+            ruleOutput = bindingFactory.BindToCollector<NotificationHubDirectSendAttribute, DirectNotification>((attribute) => BuildFromAttribute(attribute, context.Trace));
+
+            extensions.RegisterBindingRules<NotificationHubDirectSendAttribute>(ruleOutput, clientProvider);
         }
 
         internal IAsyncCollector<Notification> BuildFromAttribute(NotificationHubAttribute attribute, TraceWriter trace)
@@ -75,6 +81,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 
             INotificationHubClientService service = GetService(resolvedConnectionString, resolvedHubName, enableTestSend);
             return new NotificationHubAsyncCollector(service, attribute.TagExpression, attribute.EnableTestSend, trace);
+        }
+
+        internal IAsyncCollector<DirectNotification> BuildFromAttribute(NotificationHubDirectSendAttribute attribute, TraceWriter trace)
+        {
+            string resolvedConnectionString = ResolveConnectionString(attribute.ConnectionStringSetting);
+            string resolvedHubName = ResolveHubName(attribute.HubName);
+            bool enableTestSend = attribute.EnableTestSend;
+
+            INotificationHubClientService service = GetService(resolvedConnectionString, resolvedHubName, enableTestSend);
+            return new NotificationHubDirectSendAsyncCollector(service, attribute.EnableTestSend, trace);
         }
 
         internal NotificationHubClient BindForNotificationHubClient(NotificationHubAttribute attribute)

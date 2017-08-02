@@ -3,7 +3,6 @@
 
 using System.Threading.Tasks;
 using Microsoft.Azure.NotificationHubs;
-using Microsoft.Azure.WebJobs.Host;
 
 namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
 {
@@ -23,6 +22,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
         public Task<NotificationOutcome> SendNotificationAsync(Notification notification, string tagExpression)
         {
             return _notificationHubClient.SendNotificationAsync(notification, tagExpression);
+        }
+
+        public Task<NotificationOutcome> SendDirectNotificationAsync(Notification notification, string deviceHandle)
+        {
+            return _notificationHubClient.SendDirectNotificationAsync(notification, deviceHandle);
         }
 
         public NotificationHubClient GetNotificationHubClient()

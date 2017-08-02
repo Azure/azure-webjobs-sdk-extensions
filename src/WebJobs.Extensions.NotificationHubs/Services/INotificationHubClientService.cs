@@ -20,6 +20,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.NotificationHubs
         Task<NotificationOutcome> SendNotificationAsync(Notification notification, string tagExpression);
 
         /// <summary>
+        /// Asynchronously sends a direct notification to a specific device
+        /// </summary>
+        /// <param name="notification">notification to send</param>
+        /// <param name="deviceHandle">the deviceHandle of the target device</param>
+        /// <returns></returns>
+        Task<NotificationOutcome> SendDirectNotificationAsync(Notification notification, string deviceHandle);
+
+        /// <summary>
         /// Returns the underlying <see cref="NotificationHubClient"/>.
         /// </summary>
         /// <returns></returns>
