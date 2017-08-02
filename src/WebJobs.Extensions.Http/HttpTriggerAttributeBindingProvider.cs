@@ -35,9 +35,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         internal const string HttpQueryKey = "Query";
         internal const string HttpHeadersKey = "Headers";
 
-        private readonly Action<HttpRequestMessage, object> _responseHook;
+        private readonly Action<HttpRequest, object> _responseHook;
 
-        public HttpTriggerAttributeBindingProvider(Action<HttpRequestMessage, object> responseHook)
+        public HttpTriggerAttributeBindingProvider(Action<HttpRequest, object> responseHook)
         {
             _responseHook = responseHook;
         }
@@ -82,10 +82,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             private readonly IBindingDataProvider _bindingDataProvider;
             private readonly bool _isUserTypeBinding;
             private readonly Dictionary<string, Type> _bindingDataContract;
-            private readonly HttpRouteFactory _httpRouteFactory = new HttpRouteFactory();
-            private readonly Action<HttpRequestMessage, object> _responseHook;
+            private readonly Action<HttpRequest, object> _responseHook;
 
-            public HttpTriggerBinding(HttpTriggerAttribute attribute, ParameterInfo parameter, bool isUserTypeBinding, Action<HttpRequestMessage, object> responseHook = null)
+            public HttpTriggerBinding(HttpTriggerAttribute attribute, ParameterInfo parameter, bool isUserTypeBinding, Action<HttpRequest, object> responseHook = null)
             {
                 _responseHook = responseHook;
                 _parameter = parameter;
@@ -464,10 +463,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
             private class ResponseHandler : IValueBinder
             {
-                private readonly HttpRequestMessage _request;
-                private readonly Action<HttpRequestMessage, object> _responseHook;
+                private readonly HttpRequest _request;
+                private readonly Action<HttpRequest, object> _responseHook;
 
-                public ResponseHandler(HttpRequestMessage request, Action<HttpRequestMessage, object> responseHook)
+                public ResponseHandler(HttpRequest request, Action<HttpRequest, object> responseHook)
                 {
                     _request = request;
                     _responseHook = responseHook;

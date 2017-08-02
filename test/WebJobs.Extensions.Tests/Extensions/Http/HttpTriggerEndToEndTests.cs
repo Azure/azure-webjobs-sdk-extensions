@@ -36,9 +36,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             _host = new JobHost(_config);
         }
 
-        private void SetResultHook(HttpRequestMessage request, object result)
+        private void SetResultHook(HttpRequest request, object result)
         {
-            request.Properties["$ret"] = result;
+            request.HttpContext.Items["$ret"] = result;
         }
 
         [Fact]
@@ -61,11 +61,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         [Fact]
         public void BasicResponse()
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, "http://functions.com/api/abc");
-            var method = typeof(TestFunctions).GetMethod("TestResponse");
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions.com/api/abc");
+            var method = typeof(TestFunctions).GetMethod(nameof(TestFunctions.TestResponse));
             _host.Call(method, new { req = request });
 
-            Assert.Equal(request.Properties["$ret"], "test-response"); // Verify resposne was set
+            Assert.Equal("test-response", request.HttpContext.Items["$ret"]); // Verify resposne was set
         }
 
         [Fact]
@@ -139,7 +139,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             }
                         
             public static Task<string> TestResponse(
-                [HttpTrigger("get", "post")] HttpRequestMessage req)
+                [HttpTrigger("get", "post")] HttpRequest req)
             {
                 // Return value becomes the HttpResponseMessage.
                 return Task.FromResult("test-response"); 
