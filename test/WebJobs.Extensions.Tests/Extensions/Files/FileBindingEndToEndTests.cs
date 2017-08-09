@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
@@ -207,7 +208,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
         {
             foreach (string file in Directory.GetFiles(path))
             {
-                File.Delete(file);
+                bool success = false;
+                int attempt = 0;
+                while (!success && ++attempt <= 3)
+                {
+                    try
+                    {
+                        File.Delete(file);
+                        success = true;
+                    }
+                    catch (IOException)
+                    {
+                        // Sleep to allow the file to be released.
+                        Thread.Sleep(1000);
+                    }
+                }
             }
         }
 
