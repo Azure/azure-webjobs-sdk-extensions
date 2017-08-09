@@ -120,7 +120,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
 
                 // often we may see multiple sequential error messages for the same
                 // exception, so we want to skip the duplicates
-                bool isDuplicate = Object.ReferenceEquals(_lastException, traceEvent.Exception);
+                bool isDuplicate = object.ReferenceEquals(_lastException, traceEvent.Exception);
                 if (isDuplicate)
                 {
                     return true;

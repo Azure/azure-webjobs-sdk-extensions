@@ -2,15 +2,15 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.ObjectModel;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host;
-using Xunit;
 using Microsoft.Azure.WebJobs.Host.Timers;
+using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
 {

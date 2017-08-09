@@ -64,8 +64,8 @@ namespace WebJobsSandbox
 
         public class MyDailySchedule : DailySchedule
         {
-            public MyDailySchedule() :
-                base("8:00:00", "12:00:00", "22:00:00")
+            public MyDailySchedule()
+                : base("8:00:00", "12:00:00", "22:00:00")
             {
             }
         }

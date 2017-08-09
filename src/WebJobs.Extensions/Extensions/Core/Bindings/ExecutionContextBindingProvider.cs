@@ -84,7 +84,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core
                     FunctionAppDirectory = _config.AppDirectory
                 };
 
-                if (result.FunctionAppDirectory  != null)
+                if (result.FunctionAppDirectory != null)
                 {
                     result.FunctionDirectory = Path.Combine(result.FunctionAppDirectory, result.FunctionName);
                 }

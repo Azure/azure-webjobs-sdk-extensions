@@ -17,6 +17,9 @@
       "documentPrivateElements": false,
       "documentPrivateFields": false
     },
+    "namingRules": {
+      "allowedHungarianPrefixes": ["_"]
+    },
     "orderingRules": {
       "usingDirectivesPlacement": "outsideNamespace"
     }

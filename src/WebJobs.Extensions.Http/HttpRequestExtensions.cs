@@ -14,7 +14,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
     {
         private const int DefaultBufferSize = 1024;
 
-        public async static Task<string> ReadAsStringAsync(this HttpRequest request)
+        public static async Task<string> ReadAsStringAsync(this HttpRequest request)
         {
             request.EnableRewind();
 

@@ -36,12 +36,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
         public int Count => _routes.Count;
 
-        public void MapFunctionRoute(string name, string template, string functionName /* Change to metadata */)
+        public void MapFunctionRoute(string name, string template, string functionName)
         {
             MapFunctionRoute(name, template, null, null, null, functionName);
         }
 
-        public void MapFunctionRoute(string name, string template, object constraints, string functionName /* Change to metadata */)
+        public void MapFunctionRoute(string name, string template, object constraints, string functionName)
         {
             MapFunctionRoute(name, template, null, constraints, null, functionName);
         }
@@ -52,7 +52,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         object defaults,
         object constraints,
         object dataTokens,
-        string functionName /* Change to metadata */)
+        string functionName)
         {
             var tokens = new RouteValueDictionary(dataTokens)
             {
@@ -82,11 +82,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
             return routes;
         }
+
         private static string BuildRouteTemplate(string routePrefix, string routeTemplate)
         {
             return string.IsNullOrEmpty(routePrefix)
                 ? routeTemplate
-                : routePrefix + '/' + routeTemplate; ;
+                : routePrefix + '/' + routeTemplate;
         }
     }
 }

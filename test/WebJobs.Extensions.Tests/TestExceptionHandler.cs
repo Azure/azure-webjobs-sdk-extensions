@@ -14,7 +14,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
     {
         public void Initialize(JobHost host)
         {
-
         }
 
         public Task OnTimeoutExceptionAsync(ExceptionDispatchInfo exceptionInfo, TimeSpan timeoutGracePeriod)

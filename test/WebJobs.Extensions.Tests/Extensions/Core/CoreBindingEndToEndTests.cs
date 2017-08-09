@@ -33,24 +33,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             Assert.Equal(Environment.CurrentDirectory, result.FunctionDirectory);
         }
 
-        public static class CoreTestJobs
-        {
-            public static ExecutionContext Context { get; set; }
-
-            [NoAutomaticTrigger]
-            public static void ExecutionContext(ExecutionContext context)
-            {
-                Context = context;
-            }
-
-            [NoAutomaticTrigger]
-            [FunctionName("myfunc")] 
-            public static void ExecutionContext2(ExecutionContext context)
-            {
-                Context = context;
-            }
-        }
-
         [Fact]
         public async Task SetAppDirectory()
         {
@@ -69,6 +51,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
             Assert.Equal("myfunc", result.FunctionName);
             Assert.Equal(@"z:\home\myfunc", result.FunctionDirectory);
             Assert.Equal(@"z:\home", result.FunctionAppDirectory);
+        }
+
+        public static class CoreTestJobs
+        {
+            public static ExecutionContext Context { get; set; }
+
+            [NoAutomaticTrigger]
+            public static void ExecutionContext(ExecutionContext context)
+            {
+                Context = context;
+            }
+
+            [NoAutomaticTrigger]
+            [FunctionName("myfunc")]
+            public static void ExecutionContext2(ExecutionContext context)
+            {
+                Context = context;
+            }
         }
     }
 }

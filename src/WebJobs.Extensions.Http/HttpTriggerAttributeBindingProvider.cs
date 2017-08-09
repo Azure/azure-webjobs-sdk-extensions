@@ -8,25 +8,25 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Http.Internal;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.Mvc.Internal;
 using Microsoft.AspNetCore.Routing.Template;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Azure.WebJobs.Extensions.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
-using Newtonsoft.Json.Linq;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using ModelBinding = Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.Internal;
-using System.Text;
-using Microsoft.AspNetCore.Http.Internal;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Http
 {
@@ -178,7 +178,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 {
                     builder.Port = request.Host.Port.Value;
                 }
-                
 
                 return $"Method: {request.Method}, Uri: {builder.Uri.GetLeftPart(UriPartial.Path)}";
             }
@@ -321,7 +320,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 // add headers collection to binding data
                 if (!bindingData.ContainsKey(HttpHeadersKey))
                 {
-
                     bindingData[HttpHeadersKey] = request.Headers.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString(), StringComparer.OrdinalIgnoreCase);
                 }
 
@@ -426,6 +424,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     {
                         return _request;
                     }
+
                     // TODO: FACAVAL support HttpRequestMessage
                     else if (_parameter.ParameterType == typeof(object))
                     {

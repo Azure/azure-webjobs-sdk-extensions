@@ -129,7 +129,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
 
         //    AssertPublicTypes(expected, assembly);
         //}
-
         [Fact]
         public void HttpPublicSurface_LimitedToSpecificTypes()
         {
@@ -180,7 +179,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
 
             if (newlyIntroducedPublicTypes.Length > 0)
             {
-                string message = String.Format("Found {0} unexpected public type{1}: \r\n{2}",
+                string message = string.Format("Found {0} unexpected public type{1}: \r\n{2}",
                     newlyIntroducedPublicTypes.Length,
                     newlyIntroducedPublicTypes.Length == 1 ? string.Empty : "s",
                     string.Join("\r\n", newlyIntroducedPublicTypes));
@@ -191,7 +190,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
 
             if (missingPublicTypes.Length > 0)
             {
-                string message = String.Format("missing {0} public type{1}: \r\n{2}",
+                string message = string.Format("missing {0} public type{1}: \r\n{2}",
                     missingPublicTypes.Length,
                     missingPublicTypes.Length == 1 ? string.Empty : "s",
                     string.Join("\r\n", missingPublicTypes));

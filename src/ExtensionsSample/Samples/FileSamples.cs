@@ -16,7 +16,7 @@ namespace ExtensionsSample
     {
         // When new files arrive in the "import" directory, they are uploaded to a blob
         // container then deleted.
-        public async static Task ImportFile(
+        public static async Task ImportFile(
             [FileTrigger(@"import/{name}", "*.dat", autoDelete: true)] Stream file,
             [Blob(@"processed/{name}")] CloudBlockBlob output,
             string name,
@@ -32,7 +32,6 @@ namespace ExtensionsSample
             [ErrorTrigger] TraceEvent error, string message, TextWriter log)
         {
             // Here you could send an error notification
-
             log.WriteLine(string.Format("{0} : {1}", message, error.ToString()));
         }
 
