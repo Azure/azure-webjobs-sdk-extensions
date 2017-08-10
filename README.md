@@ -27,6 +27,12 @@ JobHost host = new JobHost(config);
 host.RunAndBlock();
 ```
 
+## Other Extension Repositories
+Not all extensions for webjobs live here. Over time we expect them to move towards having their own ship cycle and repository. You can find other Azure owned extensions using [this github query](https://github.com/Azure?utf8=✓&q=functions%20extension). Right now there are:
+- https://github.com/Azure/azure-functions-durable-extension
+- https://github.com/Azure/azure-functions-eventing-extension
+- https://github.com/Azure/azure-functions-iothub-extension
+
 ## Extensions
 
 The extensions included in this repo include the following. This is not an exhaustive list - see the **ExtensionsSample** project in this repo for more information extension samples.
