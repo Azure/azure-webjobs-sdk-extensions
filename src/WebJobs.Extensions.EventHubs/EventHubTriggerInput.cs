@@ -1,9 +1,10 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using Microsoft.ServiceBus.Messaging;
+using Microsoft.Azure.EventHubs;
+using Microsoft.Azure.EventHubs.Processor;
 
-namespace Microsoft.Azure.WebJobs.ServiceBus
+namespace Microsoft.Azure.WebJobs.Extensions.EventHubs
 {
     // The core object we get when an EventHub is triggered. 
     // This gets converted to the user type (EventData, string, poco, etc) 
