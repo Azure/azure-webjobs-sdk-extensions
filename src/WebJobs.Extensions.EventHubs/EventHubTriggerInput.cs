@@ -14,7 +14,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.EventHubs
         private int _selector = -1;
 
         internal EventData[] Events { get; set; }
+
         internal PartitionContext PartitionContext { get; set; }
+
+        public bool IsSingleDispatch
+        {
+            get
+            {
+                return _selector != -1;
+            }
+        }
 
         public static EventHubTriggerInput New(EventData eventData)
         {
@@ -27,14 +36,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.EventHubs
                 },
                 _selector = 0,
             };
-        }
-
-        public bool IsSingleDispatch
-        {
-            get
-            {
-                return _selector != -1;
-            }
         }
 
         public EventHubTriggerInput GetSingleEventTriggerInput(int idx)

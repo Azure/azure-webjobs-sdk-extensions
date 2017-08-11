@@ -16,17 +16,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.EventHubs
     /// </summary>
     public class EventHubAsyncCollector : IAsyncCollector<EventData>
     {
+        private const int BatchSize = 100;
+
+        // Suggested to use 240k instead of 256k to leave padding room for headers.
+        private const int MaxByteSize = 240 * 1024;
+
         private readonly EventHubClient _client;
 
         private List<EventData> _list = new List<EventData>();
 
         // total size of bytes in _list that we'll be sending in this batch. 
         private int _currentByteSize = 0;
-
-        private const int BatchSize = 100;
-
-        // Suggested to use 240k instead of 256k to leave padding room for headers.
-        private const int MaxByteSize = 240 * 1024; 
 
         /// <summary>
         /// Create a sender around the given client. 
@@ -74,6 +74,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.EventHubs
                         _currentByteSize += size;
                         return;
                     }
+
                     // We should flush. 
                     // Release the lock, flush, and then loop around and try again. 
                 }                    

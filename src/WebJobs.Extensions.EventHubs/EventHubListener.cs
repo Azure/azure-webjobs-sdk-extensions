@@ -6,10 +6,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Azure.EventHubs;
+using Microsoft.Azure.EventHubs.Processor;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
-using Microsoft.Azure.EventHubs.Processor;
-using Microsoft.Azure.EventHubs;
 
 namespace Microsoft.Azure.WebJobs.Extensions.EventHubs
 {
@@ -163,7 +163,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.EventHubs
                 else
                 {
                     // Batch dispatch
-
                     TriggeredFunctionData input = new TriggeredFunctionData
                     {
                         ParentId = null,
@@ -174,6 +173,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.EventHubs
                 }
 
                 bool hasEvents = false;
+
                 // Dispose all messages to help with memory pressure. If this is missed, the finalizer thread will still get them. 
                 foreach (var message in messages)
                 {
