@@ -8,9 +8,9 @@ using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Triggers;
-using Microsoft.ServiceBus.Messaging;
+using Microsoft.Azure.EventHubs;
 
-namespace Microsoft.Azure.WebJobs.ServiceBus
+namespace Microsoft.Azure.WebJobs.Extensions.EventHubs
 {
     internal class EventHubTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
@@ -46,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.ServiceBus
 
             string resolvedEventHubName = _nameResolver.ResolveWholeString(attribute.EventHubName);
 
-            string consumerGroup = attribute.ConsumerGroup ?? EventHubConsumerGroup.DefaultGroupName;
+            string consumerGroup = attribute.ConsumerGroup ?? PartitionReceiver.DefaultConsumerGroupName;
             string resolvedConsumerGroup = _nameResolver.ResolveWholeString(consumerGroup);
 
             if (!string.IsNullOrWhiteSpace(attribute.Connection))

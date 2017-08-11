@@ -8,9 +8,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
-using Microsoft.ServiceBus.Messaging;
+using Microsoft.Azure.EventHubs.Processor;
+using Microsoft.Azure.EventHubs;
 
-namespace Microsoft.Azure.WebJobs.ServiceBus
+namespace Microsoft.Azure.WebJobs.Extensions.EventHubs
 {
     // Created from the EventHubTrigger attribute to listen on the EventHub. 
     internal sealed class EventHubListener : IListener, IEventProcessorFactory
@@ -111,6 +112,12 @@ namespace Microsoft.Azure.WebJobs.ServiceBus
             public Task OpenAsync(PartitionContext context)
             {
                 return Task.FromResult(0);
+            }
+
+            public Task ProcessErrorAsync(PartitionContext context, Exception error)
+            {
+                // TODO: log underlying event hubs error
+                return Task.CompletedTask;
             }
 
             public async Task ProcessEventsAsync(PartitionContext context, IEnumerable<EventData> messages)

@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.ServiceBus.Messaging;
+using Microsoft.Azure.EventHubs;
 
-namespace Microsoft.Azure.WebJobs.ServiceBus
+namespace Microsoft.Azure.WebJobs.Extensions.EventHubs
 {
     /// <summary>
     /// Core object to send events to EventHub. 
@@ -58,7 +58,7 @@ namespace Microsoft.Azure.WebJobs.ServiceBus
             {
                 lock (_list)
                 {
-                    var size = (int)item.SerializedSizeInBytes;
+                    var size = item.Body.Count;
 
                     if (size > MaxByteSize)
                     {
@@ -114,7 +114,7 @@ namespace Microsoft.Azure.WebJobs.ServiceBus
         /// <param name="batch">the set of events to send</param>
         protected virtual async Task SendBatchAsync(EventData[] batch)
         {
-            await _client.SendBatchAsync(batch);
+            await _client.SendAsync(batch);
         }
     }
 }

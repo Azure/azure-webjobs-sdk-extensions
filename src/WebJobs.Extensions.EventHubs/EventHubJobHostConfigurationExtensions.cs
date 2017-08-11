@@ -5,7 +5,7 @@ using System;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Config;
 
-namespace Microsoft.Azure.WebJobs.ServiceBus
+namespace Microsoft.Azure.WebJobs.Extensions.EventHubs
 {
     /// <summary>
     /// Extension for registering an event hub configuration with the JobHostConfiguration.
