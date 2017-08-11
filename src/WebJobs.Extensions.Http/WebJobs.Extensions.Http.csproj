@@ -17,6 +17,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.0.0-preview2-final" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Formatters.Json" Version="2.0.0-preview2-final" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.WebApiCompatShim" Version="2.0.0-preview2-final" />
     <PackageReference Include="Microsoft.AspNetCore.Routing" Version="2.0.0-preview2-final" />
     <PackageReference Include="ncrontab" Version="3.3.0" />
   </ItemGroup>

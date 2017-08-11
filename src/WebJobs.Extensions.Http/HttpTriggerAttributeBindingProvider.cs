@@ -7,6 +7,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -16,6 +17,7 @@ using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.Internal;
+using Microsoft.AspNetCore.Mvc.WebApiCompatShim;
 using Microsoft.AspNetCore.Routing.Template;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Azure.WebJobs.Extensions.Bindings;
@@ -25,6 +27,7 @@ using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ModelBinding = Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -424,14 +427,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     {
                         return _request;
                     }
-
-                    // TODO: FACAVAL support HttpRequestMessage
+                    else if (_parameter.ParameterType == typeof(HttpRequestMessage))
+                    {
+                        return new HttpRequestMessageFeature(_request.HttpContext).HttpRequestMessage;
+                    }
                     else if (_parameter.ParameterType == typeof(object))
                     {
                         // for dynamic, we read as an object, which will actually return
                         // a JObject which is dynamic
-                        // TODO: FACAVAL
-                      //  return await _request.Content.ReadAsAsync<object>();
+
+                        // Only supported for JSON payloads
+                        if (MediaTypeHeaderValue.TryParse(_request.ContentType, out MediaTypeHeaderValue value) &&
+                            string.Equals(value.MediaType, "application/json", StringComparison.OrdinalIgnoreCase))
+                        {
+                            using (var reader = new StreamReader(_request.Body))
+                            {
+                                var serializer = JsonSerializer.CreateDefault();
+                                return serializer.Deserialize(reader, typeof(object));
+                            }
+                        }
                     }
 
                     return await base.GetValueAsync();

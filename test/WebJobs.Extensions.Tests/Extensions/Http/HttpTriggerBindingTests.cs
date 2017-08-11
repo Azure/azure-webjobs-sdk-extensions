@@ -296,9 +296,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         }
 
         [Fact]
-        public async Task BindAsync_HttpRequestMessage_FromRequestBody()
+        public async Task BindAsync_HttpRequest_FromRequestBody()
         {
-            ParameterInfo parameterInfo = GetType().GetMethod("TestHttpRequestMessageFunction").GetParameters()[0];
+            ParameterInfo parameterInfo = GetType().GetMethod("TestHttpRequestFunction").GetParameters()[0];
             HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, false);
 
             // we intentionally do not send a content type on the request
@@ -323,9 +323,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         }
 
         [Fact]
-        public async Task BindAsync_HttpRequestMessage_FromQueryParameters()
+        public async Task BindAsync_HttpRequest_FromQueryParameters()
         {
-            ParameterInfo parameterInfo = GetType().GetMethod("TestHttpRequestMessageFunction").GetParameters()[0];
+            ParameterInfo parameterInfo = GetType().GetMethod("TestHttpRequestFunction").GetParameters()[0];
             HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, false);
 
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET",  "http://functions/myfunc?code=abc123&Name=Mathew%20Charles&Location=Seattle");
@@ -340,6 +340,58 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
             HttpRequest result = (HttpRequest)(await triggerData.ValueProvider.GetValueAsync());
             Assert.Same(request, result);
+        }
+
+        [Fact]
+        public async Task BindAsync_HttpRequestMessage_FromRequestBody()
+        {
+            ParameterInfo parameterInfo = GetType().GetMethod("TestHttpRequestMessageFunction").GetParameters()[0];
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, false);
+
+            // we intentionally do not send a content type on the request
+            // to ensure that we can still extract binding data in such cases
+            JObject requestBody = new JObject
+            {
+                { "Name", "Mathew Charles" },
+                { "Location", "Seattle" }
+            };
+            
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/myfunc?code=abc123", null, requestBody.ToString());
+            request.ContentType = "application/json";
+
+            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(System.Diagnostics.TraceLevel.Verbose));
+            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            ITriggerData triggerData = await binding.BindAsync(request, context);
+
+            Assert.Equal(4, triggerData.BindingData.Count);
+            Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
+            Assert.Equal("Seattle", triggerData.BindingData["Location"]);
+
+            HttpRequestMessage result = (HttpRequestMessage)(await triggerData.ValueProvider.GetValueAsync());
+            Assert.NotNull(result);
+
+            var contentResult = await result.Content.ReadAsAsync<JObject>();
+            Assert.Equal("Mathew Charles", contentResult["Name"]);
+        }
+
+        [Fact]
+        public async Task BindAsync_HttpRequestMessage_FromQueryParameters()
+        {
+            ParameterInfo parameterInfo = GetType().GetMethod("TestHttpRequestMessageFunction").GetParameters()[0];
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, false);
+
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions/myfunc?code=abc123&Name=Mathew%20Charles&Location=Seattle");
+
+            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(System.Diagnostics.TraceLevel.Verbose));
+            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            ITriggerData triggerData = await binding.BindAsync(request, context);
+
+            Assert.Equal(4, triggerData.BindingData.Count);
+            Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
+            Assert.Equal("Seattle", triggerData.BindingData["Location"]);
+
+            HttpRequestMessage result = (HttpRequestMessage)(await triggerData.ValueProvider.GetValueAsync());
+            Assert.NotNull(result);
         }
 
         [Fact]
@@ -414,11 +466,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         {
         }
 
-        public void TestHttpRequestMessageFunction(HttpRequest req)
+        public void TestHttpRequestFunction(HttpRequest req)
+        {
+        }
+
+        public void TestHttpRequestMessageFunction(HttpRequestMessage req)
         {
         }
 
         public void TestStringFunction(string body)
+        {
+        }
+
+        public void TestDynamicFunction(dynamic body)
         {
         }
 
