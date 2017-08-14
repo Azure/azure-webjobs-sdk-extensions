@@ -13,14 +13,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
     internal class CosmosDBTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
-        private readonly string _monitorConnectionString;
-        private readonly string _leasesConnectionString;
         private readonly ChangeFeedHostOptions _leasesOptions;
+        private readonly INameResolver _nameResolver;
+        private string _monitorConnectionString;
+        private string _leasesConnectionString;
 
-        public CosmosDBTriggerAttributeBindingProvider(string monitorConnectionString, string leasesConnectionString, ChangeFeedHostOptions leasesOptions = null)
+        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, ChangeFeedHostOptions leasesOptions = null)
         {
-            _monitorConnectionString = monitorConnectionString;
-            _leasesConnectionString = leasesConnectionString;
+            _nameResolver = nameResolver;
             _leasesOptions = leasesOptions ?? new ChangeFeedHostOptions();
         }
 
@@ -38,7 +38,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             {
                 return Task.FromResult<ITriggerBinding>(null);
             }
-          
+
+            _monitorConnectionString = _nameResolver.Resolve(DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName);
+            _leasesConnectionString = _nameResolver.Resolve(DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName);
+
             DocumentCollectionInfo documentCollectionLocation;
             DocumentCollectionInfo leaseCollectionLocation;
             ChangeFeedHostOptions leaseHostOptions = ResolveLeaseOptions(attribute);
@@ -91,27 +94,55 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
         private string ResolveAttributeConnectionString(CosmosDBTriggerAttribute attribute)
         {
-            if (string.IsNullOrEmpty(_monitorConnectionString) &&
-                string.IsNullOrEmpty(attribute.ConnectionStringSetting))
+            string connectionString = this._monitorConnectionString;
+            if (!TryReadFromSettings(attribute.ConnectionStringSetting, connectionString, out connectionString))
             {
                 throw new InvalidOperationException(
                     string.Format(CultureInfo.CurrentCulture,
-                    "The DocumentDBTrigger connection string must be set either via a '{0}' app setting, via the DocumentDBTriggerAttribute.ConnectionString property or via DocumentDBConfiguration.TriggerConnectionString.",
+                    "The CosmosDBTriggerAttribute.ConnectionStringSetting '{0}' property specified does not exist in the Application Settings.",
+                    attribute.ConnectionStringSetting));
+            }
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new InvalidOperationException(
+                    string.Format(CultureInfo.CurrentCulture,
+                    "The CosmosDBTrigger connection string must be set either via a '{0}' app setting, via the CosmosDBTriggerAttribute.ConnectionStringSetting property or via DocumentDBConfiguration.ConnectionString.",
                     DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName));
             }
 
-            return attribute.ConnectionStringSetting ?? _monitorConnectionString;
+            return connectionString;
         }
 
         private string ResolveAttributeLeasesConnectionString(CosmosDBTriggerAttribute attribute, string triggerConnectionString)
         {
             // If the leases connection is not specified, it connects to the monitored service
-            return attribute.LeaseConnectionStringSetting ?? _leasesConnectionString ?? triggerConnectionString;
+            string connectionString = string.IsNullOrEmpty(this._leasesConnectionString) ? triggerConnectionString : this._leasesConnectionString;
+            if (!TryReadFromSettings(attribute.LeaseConnectionStringSetting, connectionString, out connectionString))
+            {
+                throw new InvalidOperationException(
+                    string.Format(CultureInfo.CurrentCulture,
+                    "The CosmosDBTriggerAttribute.LeaseConnectionStringSetting '{0}' property specified does not exist in the Application Settings.",
+                    attribute.ConnectionStringSetting));
+            }
+
+            return connectionString;
         }
 
         private ChangeFeedHostOptions ResolveLeaseOptions(CosmosDBTriggerAttribute attribute)
         {
             return attribute.LeaseOptions ?? _leasesOptions;
+        }
+
+        private bool TryReadFromSettings(string settingsKey, string defaultValue, out string settingsValue)
+        {
+            if (string.IsNullOrEmpty(settingsKey))
+            {
+                settingsValue = defaultValue;
+                return true;
+            }
+            settingsValue = _nameResolver.Resolve(settingsKey);
+            return !string.IsNullOrEmpty(settingsValue);
         }
     }
 }
