@@ -7,7 +7,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
     {
         public const string DefaultLeaseCollectionName = "leases";
 
-        public const string TriggerName = "DocumentDBTrigger";
+        public const string TriggerName = "CosmosDBTrigger";
 
         public const string TriggerDescription = "New changes on collection {0} at {1}";
 

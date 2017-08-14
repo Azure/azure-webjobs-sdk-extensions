@@ -36,6 +36,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         /// </summary>
         public Type TriggerValueType => typeof(IReadOnlyList<Document>);
 
+        internal DocumentCollectionInfo DocumentCollectionLocation => _documentCollectionLocation;
+
+        internal DocumentCollectionInfo LeaseCollectionLocation => _leaseCollectionLocation;
+
         public IReadOnlyDictionary<string, Type> BindingDataContract
         {
             get { return _bindingDataProvider.Contract; }
@@ -50,10 +54,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             }
             catch (Exception ex)
             {
-                throw new InvalidOperationException("Unable to convert trigger to DocumentDBTrigger:" + ex.Message);
+                throw new InvalidOperationException("Unable to convert trigger to CosmosDBTrigger:" + ex.Message);
             }
 
-            var valueBinder = new CosmosDBTriggerValueBinder(_parameter.ParameterType, triggerValue);            
+            var valueBinder = new CosmosDBTriggerValueBinder(_parameter.ParameterType, triggerValue);
             return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, _bindingDataProvider.GetBindingData(valueBinder.GetValue())));
         }
 
