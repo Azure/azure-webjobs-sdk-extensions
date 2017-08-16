@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Linq;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Xunit;
@@ -58,6 +59,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             attribute.UseMonitor = false;
             schedule = (ConstantSchedule)TimerSchedule.Create(attribute, nameResolver);
             Assert.False(attribute.UseMonitor);
+        }
+
+        [Fact]
+        public void Create_ConstantSchedule_ScheduleIntervalsAreValid()
+        {
+            VerifyConstantSchedule("00:00:45", TimeSpan.FromSeconds(45));
+            VerifyConstantSchedule("00:06:00", TimeSpan.FromMinutes(6));
+            VerifyConstantSchedule("12:00:00", TimeSpan.FromHours(12));
+            VerifyConstantSchedule("1.00:00", TimeSpan.FromHours(24)); 
+        }
+
+        private static void VerifyConstantSchedule(string expression, TimeSpan expectedInterval)
+        {
+            TimeSpan timeSpan;
+            Assert.True(TimeSpan.TryParse(expression, out timeSpan));
+            Assert.Equal(timeSpan, expectedInterval);
+
+            TimerTriggerAttribute attribute = new TimerTriggerAttribute(expression);
+            INameResolver nameResolver = new TestNameResolver();
+            ConstantSchedule schedule = (ConstantSchedule)TimerSchedule.Create(attribute, nameResolver);
+
+            DateTime now = new DateTime(2015, 5, 22, 9, 45, 00);
+            var occurrences = schedule.GetNextOccurrences(5, now);
+
+            for (int i = 0; i < 4; i++)
+            {
+                var delta = occurrences.ElementAt(i + 1) - occurrences.ElementAt(i);
+                Assert.Equal(expectedInterval, delta);
+            }
         }
 
         [Fact]
