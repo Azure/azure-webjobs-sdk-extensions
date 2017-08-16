@@ -1,0 +1,17 @@
+version: '{build}'
+pull_requests:
+  do_not_increment_build_number: true
+branches:
+  only:
+  - master
+  - dev
+  - v2.x
+clone_folder: c:\azure-webjobs-sdk-extensions
+environment:
+  BUILD_NUMBER: '%APPVEYOR_BUILD_NUMBER%'
+  IncludeBuildNumberInVersion: 1
+build_script:
+- cmd: msbuild "WebJobs.Extensions.proj" /target:EnableSkipStrongNames;TestBuild /verbosity:normal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /property:Buildnumber=%APPVEYOR_BUILD_NUMBER%;Configuration=Release
+artifacts:
+- path: bin\Packages\*.*
+  name: Packages
