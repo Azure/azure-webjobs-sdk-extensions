@@ -35,9 +35,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             // build a SqlParameterCollection for each parameter            
             SqlParameterCollection paramCollection = new SqlParameterCollection();
             // also build up a dictionary replacing '{token}' with '@token' 
-            IDictionary<string, string> replacements = new Dictionary<string, string>();
+            IDictionary<string, object> replacements = new Dictionary<string, object>();
             foreach (var token in bindingTemplate.ParameterNames.Distinct())
             {
+                // Is bindingData string, or dictionary
+                Dictionary<string, string> dict = bindingData[token] as Dictionary<string, string>;
+                if (dict != null)
+                {
+                    // Map all the end values into the parameter collection removing dots from sql parameter values
+                    var replacementObj = new Dictionary<string, string>();
+                    foreach (var item in dict)
+                    {
+                        string sqlTokenItem = $"@{token}{item.Key}";
+                        paramCollection.Add(new SqlParameter(sqlTokenItem, dict[item.Key]));
+                        replacementObj.Add(item.Key, sqlTokenItem);
+                    }
+
+                    replacements.Add(token, replacementObj);
+
+                    continue;
+                }
+
                 string sqlToken = $"@{token}";
                 paramCollection.Add(new SqlParameter(sqlToken, bindingData[token]));
                 replacements.Add(token, sqlToken);
@@ -45,7 +63,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
             docDbAttribute.SqlQueryParameters = paramCollection;
 
-            string replacement = bindingTemplate.Bind(new ReadOnlyDictionary<string, string>(replacements));
+            string replacement = bindingTemplate.Bind(new ReadOnlyDictionary<string, object>(replacements));
             return replacement;
         }
     }

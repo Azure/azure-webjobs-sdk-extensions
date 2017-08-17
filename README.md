@@ -283,6 +283,26 @@ public static void ReadDocument(
 }
 ```
 
+It is also possible to access through dot expression a value of a Dictionary<string,string> list. The following example uses a HttpTrigger's header values within a query.
+
+```
+Request  HTTP  GET  /api/something
+Headers  headerKey:value
+```
+
+```csharp
+public static void ReadDocument(
+    [HttpTrigger("get", Route = "something")]HttpRequestMessage req,
+    IDictionary<string, string> headers,
+    [DocumentDB("ItemDb", "ItemCollection", SqlQuery = "SELECT c.id, c.fullName, c.department FROM c where c.department = {headers.headerKey}")] IEnumerable<JObject> documents)
+{
+    foreach(JObject doc in documents)
+    {
+        // do something
+    }
+}
+```
+
 
 If you need more control, you can also specify a parameter of type `DocumentClient`. The following example uses DocumentClient to query for all documents in `ItemCollection` and log their ids.
 
