@@ -165,16 +165,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthorizationLevel.cs" />
+    <Compile Include="Bindings\ClaimsIdentityBindingProvider.cs" />
+    <Compile Include="Bindings\ClaimsPrincipalBindingProvider.cs" />
     <Compile Include="Config\HttpExtensionConfiguration.cs" />
     <Compile Include="Config\HttpJobHostConfigurationExtensions.cs" />
     <Compile Include="Extensions\HttpRequestMessageExtensions.cs" />
+    <Compile Include="HttpConstants.cs" />
     <Compile Include="HttpExtensionConstants.cs" />
     <Compile Include="Extensions\IDictionaryExtensions.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="HttpRequestManager.cs" />
     <Compile Include="HttpRouteFactory.cs" />
     <Compile Include="HttpTriggerAttribute.cs" />
-    <Compile Include="HttpTriggerAttributeBindingProvider.cs" />
+    <Compile Include="Bindings\HttpTriggerAttributeBindingProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertyHelper.cs" />
     <Compile Include="Utility.cs" />
