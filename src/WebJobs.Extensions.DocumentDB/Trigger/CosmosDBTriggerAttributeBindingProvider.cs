@@ -8,7 +8,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
     using System.Reflection;
     using System.Threading.Tasks;
     using Config;
+    using Microsoft.Azure.Documents;
     using Microsoft.Azure.Documents.ChangeFeedProcessor;
+    using Microsoft.Azure.Documents.Client;
     using Microsoft.Azure.WebJobs.Host.Triggers;
 
     internal class CosmosDBTriggerAttributeBindingProvider : ITriggerBindingProvider
@@ -17,14 +19,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         private readonly INameResolver _nameResolver;
         private string _monitorConnectionString;
         private string _leasesConnectionString;
+        private DocumentDBConfiguration _config;
 
-        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, ChangeFeedHostOptions leasesOptions = null)
+        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, DocumentDBConfiguration config, ChangeFeedHostOptions leasesOptions = null)
         {
             _nameResolver = nameResolver;
+            _config = config;
             _leasesOptions = leasesOptions ?? new ChangeFeedHostOptions();
         }
 
-        public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
+        public async Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
         {
             // Tries to parse the context parameters and see if it belongs to this [CosmosDBTrigger] binder
             if (context == null)
@@ -36,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             CosmosDBTriggerAttribute attribute = parameter.GetCustomAttribute<CosmosDBTriggerAttribute>(inherit: false);
             if (attribute == null)
             {
-                return Task.FromResult<ITriggerBinding>(null);
+                return null;
             }
 
             _monitorConnectionString = _nameResolver.Resolve(DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName);
@@ -55,12 +59,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                     throw new InvalidOperationException("The connection string for the monitored collection is in an invalid format, please use AccountEndpoint=XXXXXX;AccountKey=XXXXXX;.");
                 }
 
-                DocumentDBConnectionString leasesConnection = new DocumentDBConnectionString(ResolveAttributeLeasesConnectionString(attribute, triggerConnectionString));
-                if (triggerConnection.ServiceEndpoint == null)
+                string leasesConnectionString = ResolveAttributeLeasesConnectionString(attribute, triggerConnectionString);
+                DocumentDBConnectionString leasesConnection = new DocumentDBConnectionString(leasesConnectionString);
+                if (leasesConnection.ServiceEndpoint == null)
                 {
                     throw new InvalidOperationException("The connection string for the leases collection is in an invalid format, please use AccountEndpoint=XXXXXX;AccountKey=XXXXXX;.");
                 }
-
+                
                 documentCollectionLocation = new DocumentCollectionInfo
                 {
                     Uri = triggerConnection.ServiceEndpoint,
@@ -83,13 +88,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 {
                     throw new InvalidOperationException("The monitored collection cannot be the same as the collection storing the leases.");
                 }
+
+                if (attribute.CreateLeaseCollectionIfNotExists)
+                {
+                    // Not disposing this because it might be reused on other Trigger since Triggers could share lease collection
+                    IDocumentDBService service = _config.GetService(leasesConnectionString);
+                    await CreateIfNotExistAsync(service, leaseCollectionLocation.DatabaseName, leaseCollectionLocation.CollectionName, attribute.LeasesCollectionThroughput);
+                }
             }
             catch (Exception ex)
             {
                 throw new InvalidOperationException(string.Format("Cannot create Collection Information for {0} in database {1} with lease {2} in database {3} : {4}", attribute.CollectionName, attribute.DatabaseName, attribute.LeaseCollectionName, attribute.LeaseDatabaseName, ex.Message), ex);
             }
 
-            return Task.FromResult<ITriggerBinding>(new CosmosDBTriggerBinding(parameter, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions));
+            return new CosmosDBTriggerBinding(parameter, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions);
         }
 
         private string ResolveAttributeConnectionString(CosmosDBTriggerAttribute attribute)
@@ -143,6 +155,40 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             }
             settingsValue = _nameResolver.Resolve(settingsKey);
             return !string.IsNullOrEmpty(settingsValue);
+        }
+
+        internal static async Task CreateIfNotExistAsync(IDocumentDBService service, string databaseName, string collectionName, int throughput)
+        {
+            await CreateDatabaseIfNotExistsAsync(service, databaseName);
+
+            await CreateDocumentCollectionIfNotExistsAsync(service, databaseName, collectionName, throughput);
+        }
+
+        internal static async Task<Database> CreateDatabaseIfNotExistsAsync(IDocumentDBService service, string databaseName)
+        {
+            Uri databaseUri = UriFactory.CreateDatabaseUri(databaseName);
+            return await service.CreateDatabaseIfNotExistsAsync(new Database { Id = databaseName });
+        }
+
+        internal static async Task<DocumentCollection> CreateDocumentCollectionIfNotExistsAsync(IDocumentDBService service, string databaseName, string collectionName, int throughput)
+        {
+            Uri databaseUri = UriFactory.CreateDatabaseUri(databaseName);
+
+            RequestOptions collectionOptions = null;
+            if (throughput != 0)
+            {
+                collectionOptions = new RequestOptions
+                {
+                    OfferThroughput = throughput
+                };
+            }
+
+            DocumentCollection documentCollection = new DocumentCollection
+            {
+                Id = collectionName
+            };
+
+            return await service.CreateDocumentCollectionIfNotExistsAsync(databaseUri, documentCollection, collectionOptions);
         }
     }
 }

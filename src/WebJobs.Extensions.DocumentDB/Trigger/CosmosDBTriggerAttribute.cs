@@ -62,7 +62,7 @@ namespace Microsoft.Azure.WebJobs
         public string LeaseConnectionStringSetting { get; set; }
 
         /// <summary>
-        /// Name of the lease collection
+        /// Name of the lease collection. Default value is "leases"
         /// </summary>
         [AutoResolve]
         public string LeaseCollectionName { get; set; }
@@ -77,5 +77,19 @@ namespace Microsoft.Azure.WebJobs
         /// Gets or sets the lease options for this particular DocumentDB Trigger. Overrides any value defined in <see cref="DocumentDBConfiguration" /> 
         /// </summary>
         public ChangeFeedHostOptions LeaseOptions { get; set; }
+
+        /// <summary>
+        /// Optional.
+        /// Only applies to lease collection.
+        /// If true, the database and collection for leases will be automatically created if it does not exist.
+        /// </summary>
+        public bool CreateLeaseCollectionIfNotExists { get; set; } = false;
+
+        /// <summary>
+        /// Optional.
+        /// When specified on an output binding and <see cref="CreateLeaseCollectionIfNotExists"/> is true, defines the throughput of the created
+        /// collection.
+        /// </summary>
+        public int LeasesCollectionThroughput { get; set; }
     }
 }

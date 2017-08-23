@@ -26,6 +26,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         Task<Database> CreateDatabaseAsync(Database database);
 
         /// <summary>
+        /// Creates the specified <see cref="Database"/> if it doesn't exists or returns the existing one.
+        /// </summary>
+        /// <param name="database">The <see cref="Database"/> to create.</param>
+        /// <returns>The task object representing the service response for the asynchronous operation.</returns>
+        Task<Database> CreateDatabaseIfNotExistsAsync(Database database);
+
+        /// <summary>
         /// Creates the specified <see cref="DocumentCollection"/>.
         /// </summary>
         /// <param name="databaseUri">The self-link of the database to create the collection in.</param>
@@ -33,6 +40,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         /// <param name="options">The <see cref="RequestOptions"/> for the request.</param>
         /// <returns>The task object representing the service response for the asynchronous operation.</returns>
         Task<DocumentCollection> CreateDocumentCollectionAsync(Uri databaseUri, DocumentCollection documentCollection, RequestOptions options);
+
+        /// <summary>
+        /// Creates the specified <see cref="DocumentCollection"/> if it doesn't exist or returns the existing one.
+        /// </summary>
+        /// <param name="databaseUri">The self-link of the database to create the collection in.</param>
+        /// <param name="documentCollection">The <see cref="DocumentCollection"/> to create.</param>
+        /// <param name="options">The <see cref="RequestOptions"/> for the request.</param>
+        /// <returns>The task object representing the service response for the asynchronous operation.</returns>
+        Task<DocumentCollection> CreateDocumentCollectionIfNotExistsAsync(Uri databaseUri, DocumentCollection documentCollection, RequestOptions options);
 
         /// <summary>
         /// Inserts or replaces a document.
