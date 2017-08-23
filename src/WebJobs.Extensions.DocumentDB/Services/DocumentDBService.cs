@@ -43,9 +43,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             return response.Resource;
         }
 
+        public async Task<DocumentCollection> CreateDocumentCollectionIfNotExistsAsync(Uri databaseUri, DocumentCollection documentCollection, RequestOptions options)
+        {
+            ResourceResponse<DocumentCollection> response = await _client.CreateDocumentCollectionIfNotExistsAsync(databaseUri, documentCollection, options);
+            return response.Resource;
+        }
+
         public async Task<Database> CreateDatabaseAsync(Database database)
         {
             ResourceResponse<Database> response = await _client.CreateDatabaseAsync(database);
+            return response.Resource;
+        }
+
+        public async Task<Database> CreateDatabaseIfNotExistsAsync(Database database)
+        {
+            ResourceResponse<Database> response = await _client.CreateDatabaseIfNotExistsAsync(database);
             return response.Resource;
         }
 
