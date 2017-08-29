@@ -133,7 +133,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
-            Assert.Equal(4, triggerData.BindingData.Count);
+            Assert.Equal(5, triggerData.BindingData.Count);
             Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
             Assert.Equal("Seattle", triggerData.BindingData["Location"]);
 
@@ -160,7 +160,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
-            Assert.Equal(4, triggerData.BindingData.Count);
+            Assert.Equal(5, triggerData.BindingData.Count);
             Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
             Assert.Equal("Seattle", triggerData.BindingData["Location"]);
 
@@ -180,7 +180,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
-            Assert.Equal(4, triggerData.BindingData.Count);
+            Assert.Equal(5, triggerData.BindingData.Count);
             Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
             Assert.Equal("Seattle", triggerData.BindingData["Location"]);
 
@@ -208,7 +208,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
-            Assert.Equal(4, triggerData.BindingData.Count);
+            Assert.Equal(5, triggerData.BindingData.Count);
             Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
             Assert.Equal("Seattle", triggerData.BindingData["Location"]);
 
@@ -243,7 +243,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
-            Assert.Equal(8, triggerData.BindingData.Count);
+            Assert.Equal(9, triggerData.BindingData.Count);
             Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
             Assert.Equal("Seattle", triggerData.BindingData["Location"]);
             Assert.Equal("(425) 555-6666", triggerData.BindingData["Phone"]);
@@ -276,7 +276,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
-            Assert.Equal(4, triggerData.BindingData.Count);
+            Assert.Equal(5, triggerData.BindingData.Count);
             Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
             Assert.Equal("Seattle", triggerData.BindingData["Location"]);
 
@@ -296,7 +296,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
-            Assert.Equal(4, triggerData.BindingData.Count);
+            Assert.Equal(5, triggerData.BindingData.Count);
             Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
             Assert.Equal("Seattle", triggerData.BindingData["Location"]);
 
@@ -318,7 +318,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
-            Assert.Equal(2, triggerData.BindingData.Count);
+            Assert.Equal(3, triggerData.BindingData.Count);
 
             string result = (string)(await triggerData.ValueProvider.GetValueAsync());
             Assert.Equal("This is a test", result);

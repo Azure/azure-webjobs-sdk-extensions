@@ -69,6 +69,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             }
 
             context.Config.RegisterBindingExtension(new HttpTriggerAttributeBindingProvider(this.SetResponse));
+            context.Config.RegisterBindingExtension(new HttpDirectRequestBindingProvider());
         }
     }
 }

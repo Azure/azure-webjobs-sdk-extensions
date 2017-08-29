@@ -168,6 +168,7 @@
     <Compile Include="Config\HttpExtensionConfiguration.cs" />
     <Compile Include="Config\HttpJobHostConfigurationExtensions.cs" />
     <Compile Include="Extensions\HttpRequestMessageExtensions.cs" />
+    <Compile Include="HttpDirectRequestBindingProvider.cs" />
     <Compile Include="HttpExtensionConstants.cs" />
     <Compile Include="Extensions\IDictionaryExtensions.cs" />
     <Compile Include="GlobalSuppressions.cs" />
