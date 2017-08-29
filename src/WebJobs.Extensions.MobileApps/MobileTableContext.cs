@@ -1,0 +1,19 @@
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using Microsoft.WindowsAzure.MobileServices;
+
+namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
+{
+    internal class MobileTableContext
+    {
+        public MobileTableContext()
+        {
+            ResolvedAttribute = new MobileTableAttribute();
+        }
+
+        public MobileTableAttribute ResolvedAttribute { get; set; }
+
+        public IMobileServiceClient Client { get; set; }
+    }
+}

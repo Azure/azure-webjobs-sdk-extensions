@@ -44,6 +44,8 @@ build_script:
     dotnet pack src\WebJobs.Extensions\WebJobs.Extensions.csproj -o ..\..\buildoutput --no-build --version-suffix "-$env:APPVEYOR_BUILD_NUMBER"
 
     dotnet pack src\WebJobs.Extensions.Http\WebJobs.Extensions.Http.csproj -o ..\..\buildoutput --no-build --version-suffix "-$env:APPVEYOR_BUILD_NUMBER"
+
+    dotnet pack src\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj -o ..\..\buildoutput --no-build --version-suffix "-$env:APPVEYOR_BUILD_NUMBER"
 test_script:
 - ps: >-
     dotnet test .\test\WebJobs.Extensions.Tests\ -v q --no-build -p:ParallelizeTestCollections=false

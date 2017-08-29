@@ -31,6 +31,7 @@ namespace ExtensionsSample
             config.UseFiles(filesConfig);
             config.UseTimers();
             config.UseSample();
+            config.UseMobileApps();
             config.UseCore();
             
             ConfigureTraceMonitor(config);

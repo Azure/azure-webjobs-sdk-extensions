@@ -2,11 +2,8 @@
   <Import Project="..\..\build\common.props" />
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-
     <IsPackable>false</IsPackable>
-
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Tests</AssemblyName>
-
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Tests</RootNamespace>
   </PropertyGroup>
 
@@ -25,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\WebJobs.Extensions.Http\WebJobs.Extensions.Http.csproj" />
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj" />
     <ProjectReference Include="..\..\src\WebJobs.Extensions\WebJobs.Extensions.csproj" />
   </ItemGroup>
 
