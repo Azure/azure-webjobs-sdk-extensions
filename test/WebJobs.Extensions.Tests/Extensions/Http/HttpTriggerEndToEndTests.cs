@@ -13,6 +13,8 @@ using Microsoft.Azure.WebJobs.Host.Timers;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Xunit;
+using Newtonsoft.Json;
+using System.Text;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 {
@@ -66,6 +68,44 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             _host.Call(method, new { req = request });
 
             Assert.Equal("test-response", request.HttpContext.Items["$ret"]); // Verify resposne was set
+        }
+
+        // Verify we can do a host.call and pass in a httprequestmessage directly apart from the [HttpTrigger].
+        [Fact]
+        public void BindToRequestAndPocoSeparately()
+        {
+            var json = JsonConvert.SerializeObject(new TestFunctions.MyPoco { Value = "abc" });
+            var request = new HttpRequestMessage(HttpMethod.Post, "http://functions.com/api/abc")
+            {
+                Content = new StringContent(json, Encoding.UTF8, "application/json")
+            };
+            var directRequest = new HttpRequestMessage();
+
+            // Trigger data is specificaly the parameter with [HttpTrigger], not the parameter of type request. 
+            var method = typeof(TestFunctions).GetMethod("TestMultiBinding");
+            _host.Call(method, new {
+                triggerValue = request,
+                directRequest = directRequest // overides the implicit HttpRequestMessage binding. 
+            });
+
+            Assert.Equal(directRequest.Properties["result"], "abc"); // Verify resposne was set
+        }
+
+        // verify that we can bind [HttpTrigger] to a poco and still get a HttpRequestMessage. 
+        [Fact]
+        public void BindToRequestAndPocoAtSameTime()
+        {
+            var json = JsonConvert.SerializeObject(new TestFunctions.MyPoco { Value = "abc" });
+            var request = new HttpRequestMessage(HttpMethod.Post, "http://functions.com/api/abc")
+            {
+                Content = new StringContent(json, Encoding.UTF8, "application/json")
+            };
+
+            // Trigger data is specificaly the parameter with [HttpTrigger], not the parameter of type request. 
+            var method = typeof(TestFunctions).GetMethod("TestMultiBinding");
+            _host.Call(method, new { triggerValue = request,  });
+
+            Assert.Equal(request.Properties["result"], "abc"); // Verify resposne was set
         }
 
         [Fact]
@@ -143,6 +183,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             {
                 // Return value becomes the HttpResponseMessage.
                 return Task.FromResult("test-response"); 
+            }
+
+            // Test that we can bind to both a Poco and the direct request message
+            public static void TestMultiBinding(
+                  [HttpTrigger("get", "post")] MyPoco triggerValue,
+                  HttpRequestMessage directRequest)
+            {
+                directRequest.Properties["result"] = triggerValue.Value;
+            }
+
+            public class MyPoco
+            {
+                public string Value { get; set; }
             }
         }
     }

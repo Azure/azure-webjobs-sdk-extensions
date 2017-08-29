@@ -38,7 +38,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         internal const string HttpQueryKey = "Query";
         internal const string HttpHeadersKey = "Headers";
 
-        private readonly Action<HttpRequest, object> _responseHook;
+        // Name of binding data slot where we place the full HttpRequestMessage
+        internal const string RequestBindingName = "$request";
+
+        // Name of binding data slot where return value is placed. 
+        internal const string ReturnBindingName = "$return";
+
+        private readonly Action<HttpRequestMessage, object> _responseHook;
 
         public HttpTriggerAttributeBindingProvider(Action<HttpRequest, object> responseHook)
         {
@@ -152,6 +158,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 var aggregateBindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
                 aggregateBindingData.AddRange(userTypeBindingData);
 
+                aggregateBindingData[RequestBindingName] = request;
+
                 // Apply additional binding data coming from request route, query params, etc.
                 var requestBindingData = await GetRequestBindingDataAsync(request, _bindingDataContract);
                 aggregateBindingData.AddRange(requestBindingData);
@@ -232,7 +240,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 }
 
                 // Mark that HttpTrigger accepts a return value. 
-                aggregateDataContract["$return"] = typeof(object).MakeByRefType();
+                aggregateDataContract[ReturnBindingName] = typeof(object).MakeByRefType();
 
                 // add contract members for any route parameters
                 if (!string.IsNullOrEmpty(attribute.Route))
@@ -507,7 +515,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 }
             }
 
-            private class SimpleValueProvider : IValueProvider
+            internal class SimpleValueProvider : IValueProvider
             {
                 private readonly Type _type;
                 private readonly object _value;
