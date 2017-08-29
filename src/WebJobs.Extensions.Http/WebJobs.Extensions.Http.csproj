@@ -4,6 +4,7 @@
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Http</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Http</RootNamespace>
     <PackageId>Microsoft.Azure.WebJobs.Extensions.Http</PackageId>
+    <Description>This package adds binding extensions for Http.</Description>
   </PropertyGroup>
 
   <ItemGroup>

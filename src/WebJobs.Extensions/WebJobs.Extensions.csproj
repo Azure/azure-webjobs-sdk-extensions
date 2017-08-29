@@ -4,6 +4,7 @@
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions</RootNamespace>
     <PackageId>Microsoft.Azure.WebJobs.Extensions</PackageId>
+    <Description>This package contains the runtime assemblies for Microsoft.Azure.WebJobs.Extensions. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources.</Description>
   </PropertyGroup>
 
   <ItemGroup>

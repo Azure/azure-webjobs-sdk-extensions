@@ -4,6 +4,7 @@
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions.MobileApps</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.MobileApps</RootNamespace>
     <PackageId>Microsoft.Azure.WebJobs.Extensions.MobileApps</PackageId>
+    <Description>This package contains binding extensions for Azure Mobile Apps.</Description>
   </PropertyGroup>
 
   <ItemGroup>

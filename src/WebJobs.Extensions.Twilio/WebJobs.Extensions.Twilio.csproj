@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\build\common.props" />
+  <PropertyGroup>
+    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Twilio</AssemblyName>
+    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Twilio</RootNamespace>
+    <PackageId>Microsoft.Azure.WebJobs.Extensions.Twilio</PackageId>
+    <Description>This package contains binding extensions for Twilio.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Twilio" Version="5.6.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WebJobs.Extensions\WebJobs.Extensions.csproj" />
+  </ItemGroup>
+
+</Project>

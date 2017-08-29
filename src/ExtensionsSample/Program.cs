@@ -34,6 +34,7 @@ namespace ExtensionsSample
             config.UseTimers();
             config.UseSample();
             config.UseMobileApps();
+            config.UseTwilioSms();
             config.UseCore();
 
             var sendGridConfiguration = new SendGridConfiguration()
@@ -51,6 +52,7 @@ namespace ExtensionsSample
 
             // Add or remove types from this list to choose which functions will 
             // be indexed by the JobHost.
+            // To run some of the other samples included, add their types to this list
             config.TypeLocator = new SamplesTypeLocator(
                 typeof(ErrorMonitoringSamples),
                 typeof(FileSamples),
@@ -58,7 +60,7 @@ namespace ExtensionsSample
                 typeof(SampleSamples),
                 typeof(TableSamples),
                 typeof(TimerSamples),
-                typeof(SendGridSamples));
+                typeof(TwilioSamples));
 
             host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
             host.Call(typeof(FileSamples).GetMethod("ReadWrite"));
