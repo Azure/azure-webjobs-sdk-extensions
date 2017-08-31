@@ -2,7 +2,9 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Microsoft.WindowsAzure.Storage.Table;
 using Sample.Extension;
 
 namespace Microsoft.Azure.WebJobs
@@ -33,6 +35,17 @@ namespace Microsoft.Azure.WebJobs
                 context.Config.RegisterBindingExtensions(
                     new SampleAttributeBindingProvider(),
                     new SampleTriggerAttributeBindingProvider());
+
+                IConverterManager converterManager = context.Config.GetService<IConverterManager>();
+                converterManager.AddConverter<CloudTable, Table<OpenType>, TableAttribute>(typeof(CustomTableBindingConverter<>));
+            }
+        }
+        private class CustomTableBindingConverter<T>
+             : IConverter<CloudTable, Table<T>>
+        {
+            public Table<T> Convert(CloudTable input)
+            {
+                return new Table<T>(input);
             }
         }
     }
