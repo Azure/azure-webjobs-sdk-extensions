@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.10
+VisualStudioVersion = 15.0.26730.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1118E0AD-83C8-4B67-859B-FCDEF54338C1}"
 EndProject
@@ -29,6 +29,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.Http", "src\WebJobs.Extensions.Http\WebJobs.Extensions.Http.csproj", "{47B3ECC3-DDDB-4C80-8A13-E6279A2EB835}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.MobileApps", "src\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj", "{9C131CF2-2563-4A84-A93D-EA0E537CC031}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.SendGrid", "src\WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.csproj", "{ECAE5675-D59D-436E-B25B-089CBB7165F9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -60,6 +62,10 @@ Global
 		{9C131CF2-2563-4A84-A93D-EA0E537CC031}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C131CF2-2563-4A84-A93D-EA0E537CC031}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C131CF2-2563-4A84-A93D-EA0E537CC031}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECAE5675-D59D-436E-B25B-089CBB7165F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECAE5675-D59D-436E-B25B-089CBB7165F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECAE5675-D59D-436E-B25B-089CBB7165F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECAE5675-D59D-436E-B25B-089CBB7165F9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -71,6 +77,7 @@ Global
 		{7719584E-9863-405A-9D26-2CC02AFC2427} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{47B3ECC3-DDDB-4C80-8A13-E6279A2EB835} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{9C131CF2-2563-4A84-A93D-EA0E537CC031} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
+		{ECAE5675-D59D-436E-B25B-089CBB7165F9} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {821EF04F-5408-46AD-94ED-0E939B89D4B8}

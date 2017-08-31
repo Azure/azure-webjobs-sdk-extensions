@@ -6,6 +6,9 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions;
+using Microsoft.Azure.WebJobs.Extensions.SendGrid;
+using SendGrid;
+using SendGrid.Helpers.Mail;
 
 namespace ExtensionsSample
 {
@@ -18,9 +21,18 @@ namespace ExtensionsSample
         private const string NotificationUriSettingName = "AzureWebJobsErrorNotificationUri";
         private readonly string _webNotificationUri;
         private readonly HttpClient _httpClient = new HttpClient();
-        
-        public ErrorNotifier()
+        private readonly SendGridClient _sendGrid;
+        private readonly SendGridConfiguration _sendGridConfig;
+
+        public ErrorNotifier(SendGridConfiguration sendGridConfig)
         {
+            if (sendGridConfig == null)
+            {
+                throw new ArgumentNullException(nameof(sendGridConfig));
+            }
+            _sendGridConfig = sendGridConfig;
+            _sendGrid = new SendGridClient(sendGridConfig.ApiKey);
+
             // pull our IFTTT notification URL from app settings (since it contains a secret key)
             var nameResolver = new DefaultNameResolver();
             _webNotificationUri = nameResolver.Resolve(NotificationUriSettingName);
@@ -52,5 +64,23 @@ namespace ExtensionsSample
 
             _httpClient.SendAsync(request).Wait();
         }
+
+        /// <summary>
+        /// Send an email notification using SendGrid.
+        /// </summary>
+        /// <param name="filter">The <see cref="TraceFilter"/> that triggered the notification.</param>
+        public void EmailNotify(TraceFilter filter)
+        {
+            var message = new SendGridMessage()
+            {
+                From = _sendGridConfig.FromAddress,
+                Subject = "WebJob Error Notification"
+            };
+            message.AddContent("text/plain", filter.GetDetailedMessage(5));
+            message.AddTo(_sendGridConfig.ToAddress);
+
+            _sendGrid.SendEmailAsync(message).Wait();
+        }
+
     }
 }
