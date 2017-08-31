@@ -20,7 +20,8 @@ namespace Microsoft.Azure.WebJobs
         /// </summary>
         /// <param name="scheduleExpression">A schedule expression. This can either be a 6 field crontab expression
         /// <a href="http://en.wikipedia.org/wiki/Cron#CRON_expression"/> or a <see cref="TimeSpan"/>
-        /// string (e.g. "00:30:00").</param>
+        /// string (e.g. "00:30:00"). On Azure Functions, a TimeSpan string is only supported 
+        /// when running on an App Service Plan.</param>
         public TimerTriggerAttribute(string scheduleExpression)
         {
             ScheduleExpression = scheduleExpression;
