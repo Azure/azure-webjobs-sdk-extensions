@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\..\build\common.props" />
   <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions.MobileApps</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.MobileApps</RootNamespace>
     <PackageId>Microsoft.Azure.WebJobs.Extensions.MobileApps</PackageId>
