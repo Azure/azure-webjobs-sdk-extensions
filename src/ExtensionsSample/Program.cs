@@ -59,9 +59,9 @@ namespace ExtensionsSample
                 typeof(MiscellaneousSamples),
                 typeof(SampleSamples),
                 typeof(TableSamples),
-                typeof(TimerSamples),
-                typeof(TwilioSamples));
+                typeof(TimerSamples));
 
+            // Some direct invocations to demonstrate various binding scenarios
             host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
             host.Call(typeof(FileSamples).GetMethod("ReadWrite"));
             host.Call(typeof(SampleSamples).GetMethod("Sample_BindToStream"));
