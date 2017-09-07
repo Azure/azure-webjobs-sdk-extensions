@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.12
+VisualStudioVersion = 15.0.26730.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1118E0AD-83C8-4B67-859B-FCDEF54338C1}"
 EndProject
@@ -28,11 +28,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions", "src\W
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.Http", "src\WebJobs.Extensions.Http\WebJobs.Extensions.Http.csproj", "{47B3ECC3-DDDB-4C80-8A13-E6279A2EB835}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.MobileApps", "src\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj", "{FB65E11F-97B3-42A5-991A-190D6CD3208F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.MobileApps", "src\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj", "{FB65E11F-97B3-42A5-991A-190D6CD3208F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.SendGrid", "src\WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.csproj", "{4B1CA665-5F3E-4A0A-BEFC-FC174BB1BABA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.SendGrid", "src\WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.csproj", "{4B1CA665-5F3E-4A0A-BEFC-FC174BB1BABA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.Twilio", "src\WebJobs.Extensions.Twilio\WebJobs.Extensions.Twilio.csproj", "{4F335FB9-2BE8-4B51-9CE9-01465CCF05CB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.Twilio", "src\WebJobs.Extensions.Twilio\WebJobs.Extensions.Twilio.csproj", "{4F335FB9-2BE8-4B51-9CE9-01465CCF05CB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebJobs.Extensions.DocumentDB", "src\WebJobs.Extensions.DocumentDB\WebJobs.Extensions.DocumentDB.csproj", "{38372E3C-70C9-4678-892D-7295A4615561}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -72,6 +74,10 @@ Global
 		{4F335FB9-2BE8-4B51-9CE9-01465CCF05CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4F335FB9-2BE8-4B51-9CE9-01465CCF05CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4F335FB9-2BE8-4B51-9CE9-01465CCF05CB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38372E3C-70C9-4678-892D-7295A4615561}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38372E3C-70C9-4678-892D-7295A4615561}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38372E3C-70C9-4678-892D-7295A4615561}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38372E3C-70C9-4678-892D-7295A4615561}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -85,6 +91,7 @@ Global
 		{FB65E11F-97B3-42A5-991A-190D6CD3208F} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{4B1CA665-5F3E-4A0A-BEFC-FC174BB1BABA} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{4F335FB9-2BE8-4B51-9CE9-01465CCF05CB} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
+		{38372E3C-70C9-4678-892D-7295A4615561} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {821EF04F-5408-46AD-94ED-0E939B89D4B8}

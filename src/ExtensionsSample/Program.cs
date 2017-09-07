@@ -36,6 +36,7 @@ namespace ExtensionsSample
             config.UseMobileApps();
             config.UseTwilioSms();
             config.UseCore();
+            config.UseDocumentDB();
 
             var sendGridConfiguration = new SendGridConfiguration()
             {
@@ -54,19 +55,14 @@ namespace ExtensionsSample
             // be indexed by the JobHost.
             // To run some of the other samples included, add their types to this list
             config.TypeLocator = new SamplesTypeLocator(
-                typeof(ErrorMonitoringSamples),
-                typeof(FileSamples),
-                typeof(MiscellaneousSamples),
-                typeof(SampleSamples),
-                typeof(TableSamples),
-                typeof(TimerSamples));
+                typeof(DocumentDBSamples));
 
             // Some direct invocations to demonstrate various binding scenarios
-            host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
-            host.Call(typeof(FileSamples).GetMethod("ReadWrite"));
-            host.Call(typeof(SampleSamples).GetMethod("Sample_BindToStream"));
-            host.Call(typeof(SampleSamples).GetMethod("Sample_BindToString"));
-            host.Call(typeof(TableSamples).GetMethod("CustomBinding"));
+            //host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
+            //host.Call(typeof(FileSamples).GetMethod("ReadWrite"));
+            //host.Call(typeof(SampleSamples).GetMethod("Sample_BindToStream"));
+            //host.Call(typeof(SampleSamples).GetMethod("Sample_BindToString"));
+            //host.Call(typeof(TableSamples).GetMethod("CustomBinding"));
 
             host.RunAndBlock();
         }
