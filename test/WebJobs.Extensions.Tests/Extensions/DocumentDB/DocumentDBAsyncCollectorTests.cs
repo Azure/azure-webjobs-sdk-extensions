@@ -62,28 +62,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         }
 
         [Fact]
-        public async Task AddAsync_Retries_IfThrottled()
-        {
-            // Arrange
-            var mockDocDBService = new Mock<IDocumentDBService>(MockBehavior.Strict);
-            var context = CreateContext(mockDocDBService.Object);
-            var collector = new DocumentDBAsyncCollector<Item>(context);
-
-            mockDocDBService
-                    .SetupSequence(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()))
-                    .Throws(DocumentDBTestUtility.CreateDocumentClientException((HttpStatusCode)429))
-                    .Throws(DocumentDBTestUtility.CreateDocumentClientException((HttpStatusCode)429))
-                    .Throws(DocumentDBTestUtility.CreateDocumentClientException((HttpStatusCode)429))
-                    .Returns(Task.FromResult(new Document()));
-
-            // Act
-            await collector.AddAsync(new Item { Text = "hello!" });
-
-            // Assert
-            mockDocDBService.Verify(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()), Times.Exactly(4));
-        }
-
-        [Fact]
         public async Task AddAsync_DoesNotCreate_IfUpsertSucceeds()
         {
             // Arrange

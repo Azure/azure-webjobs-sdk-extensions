@@ -7,16 +7,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 {
     internal class DocumentDBContext
     {
-        internal const int DefaultMaxThrottleRetries = 10;
-
-        public DocumentDBContext()
-        {
-            MaxThrottleRetries = DefaultMaxThrottleRetries;
-        }
-
         public DocumentDBAttribute ResolvedAttribute { get; set; }
         public IDocumentDBService Service { get; set; }
-        public int MaxThrottleRetries { get; set; }
         public TraceWriter Trace { get; set; }
     }
 }

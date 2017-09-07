@@ -37,9 +37,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
             do
             {
-                DocumentQueryResponse<T> response = await DocumentDBUtility.RetryAsync(
-                    () => context.Service.ExecuteNextAsync<T>(collectionUri, sqlSpec, continuation),
-                    context.MaxThrottleRetries);
+                DocumentQueryResponse<T> response = await context.Service.ExecuteNextAsync<T>(collectionUri, sqlSpec, continuation);
 
                 finalResults.AddRange(response.Results);
                 continuation = response.ResponseContinuation;

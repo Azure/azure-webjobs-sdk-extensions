@@ -51,8 +51,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 };
             }
 
-            Document document = await DocumentDBUtility.RetryAsync(() => _context.Service.ReadDocumentAsync(documentUri, options),
-                    _context.MaxThrottleRetries, codesToIgnore: HttpStatusCode.NotFound);
+            Document document = null;
+
+            try
+            {
+                document = await _context.Service.ReadDocumentAsync(documentUri, options);
+            }
+            catch (DocumentClientException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                // ignore not found; we'll return null below
+            }
 
             if (document == null)
             {
@@ -115,8 +123,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 }
 
                 Uri documentUri = UriFactory.CreateDocumentUri(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName, originalId);
-                await DocumentDBUtility.RetryAsync(() => context.Service.ReplaceDocumentAsync(documentUri, newItem),
-                    context.MaxThrottleRetries);
+                await context.Service.ReplaceDocumentAsync(documentUri, newItem);
             }
         }
 
