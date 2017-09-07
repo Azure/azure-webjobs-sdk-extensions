@@ -22,6 +22,8 @@ build_script:
     dotnet build -v q
 
     dotnet pack src\WebJobs.Extensions\WebJobs.Extensions.csproj -o ..\..\buildoutput --no-build --version-suffix "-$env:APPVEYOR_BUILD_NUMBER"
+    
+    dotnet pack src\WebJobs.Extensions.CosmosDB\WebJobs.Extensions.CosmosDB.csproj -o ..\..\buildoutput --no-build --version-suffix "-$env:APPVEYOR_BUILD_NUMBER"
 
     dotnet pack src\WebJobs.Extensions.Http\WebJobs.Extensions.Http.csproj -o ..\..\buildoutput --no-build --version-suffix "-$env:APPVEYOR_BUILD_NUMBER"
 
