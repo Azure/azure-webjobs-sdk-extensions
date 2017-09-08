@@ -30,8 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.CosmosDB
             // Arrange           
             string partitionKey = "partitionKey";
             string partitionKeyValue = string.Format("[\"{0}\"]", partitionKey);
-            Mock<ICosmosDBService> mockService;
-            IValueBinder binder = CreateBinder<Item>(out mockService, partitionKey);
+            IValueBinder binder = CreateBinder<Item>(out Mock<ICosmosDBService> mockService, partitionKey);
             mockService
                 .Setup(m => m.ReadDocumentAsync(_expectedUri, It.Is<RequestOptions>(r => r.PartitionKey.ToString() == partitionKeyValue)))
                 .ReturnsAsync(new Document());
@@ -48,8 +47,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.CosmosDB
         public async Task GetValueAsync_JObject_QueriesItem()
         {
             // Arrange            
-            Mock<ICosmosDBService> mockService;
-            IValueBinder binder = CreateBinder<Item>(out mockService);
+            IValueBinder binder = CreateBinder<Item>(out Mock<ICosmosDBService> mockService);
             mockService
                 .Setup(m => m.ReadDocumentAsync(_expectedUri, null))
                 .ReturnsAsync(new Document());
@@ -66,8 +64,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.CosmosDB
         public async Task GetValueAsync_DoesNotThrow_WhenResponseIsNotFound()
         {
             // Arrange
-            Mock<ICosmosDBService> mockService;
-            IValueBinder binder = CreateBinder<Item>(out mockService);
+            IValueBinder binder = CreateBinder<Item>(out Mock<ICosmosDBService> mockService);
             mockService
                 .Setup(m => m.ReadDocumentAsync(_expectedUri, null))
                 .ThrowsAsync(CosmosDBTestUtility.CreateDocumentClientException(HttpStatusCode.NotFound));
@@ -84,8 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.CosmosDB
         public async Task GetValueAsync_Throws_WhenErrorResponse()
         {
             // Arrange
-            Mock<ICosmosDBService> mockService;
-            IValueBinder binder = CreateBinder<Item>(out mockService);
+            IValueBinder binder = CreateBinder<Item>(out Mock<ICosmosDBService> mockService);
             mockService
                 .Setup(m => m.ReadDocumentAsync(_expectedUri, null))
                 .ThrowsAsync(CosmosDBTestUtility.CreateDocumentClientException(HttpStatusCode.ServiceUnavailable));
@@ -107,10 +103,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.CosmosDB
         {
             // Arrange
             var token = JObject.Parse(string.Format("{{{0}:'abc123'}}", idKey));
-            string id = null;
 
             // Act
-            bool result = CosmosDBItemValueBinder<object>.TryGetId(token, out id);
+            bool result = CosmosDBItemValueBinder<object>.TryGetId(token, out string id);
 
             // Assert
             Assert.Equal(expected, result);
@@ -262,13 +257,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.CosmosDB
             await TestGetThenSet<Document>();
         }
 
-
         [Fact]
         public async Task GetAsync_SetAsync_DoesNotUpdate_IfUnchanged_String()
         {
             await TestGetThenSet<string>();
         }
-
 
         [Fact]
         public async Task GetAsync_SetAsync_DoesNotUpdate_IfUnchanged_Dynamic()
@@ -276,15 +269,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.CosmosDB
             await TestGetThenSet<dynamic>();
         }
 
-        private async Task TestGetThenSet<T>() where T : class
+        private async Task TestGetThenSet<T>()
+            where T : class
         {
             // Arrange
-            Document newDocument = new Document();
-            newDocument.Id = Guid.NewGuid().ToString();
+            Document newDocument = new Document
+            {
+                Id = Guid.NewGuid().ToString()
+            };
             newDocument.SetPropertyValue("text", "some text");
 
-            Mock<ICosmosDBService> mockService;
-            IValueBinder binder = CreateBinder<T>(out mockService);
+            IValueBinder binder = CreateBinder<T>(out Mock<ICosmosDBService> mockService);
             mockService
                 .Setup(m => m.ReadDocumentAsync(_expectedUri, null))
                 .ReturnsAsync(newDocument);
@@ -299,7 +294,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.CosmosDB
             mockService.Verify();
         }
 
-        private static CosmosDBItemValueBinder<T> CreateBinder<T>(out Mock<ICosmosDBService> mockService, string partitionKey = null) where T : class
+        private static CosmosDBItemValueBinder<T> CreateBinder<T>(out Mock<ICosmosDBService> mockService, string partitionKey = null)
+            where T : class
         {
             mockService = new Mock<ICosmosDBService>(MockBehavior.Strict);
 

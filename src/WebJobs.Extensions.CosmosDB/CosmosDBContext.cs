@@ -8,7 +8,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
     internal class CosmosDBContext
     {
         public CosmosDBAttribute ResolvedAttribute { get; set; }
+
         public ICosmosDBService Service { get; set; }
+
         public TraceWriter Trace { get; set; }
     }
 }

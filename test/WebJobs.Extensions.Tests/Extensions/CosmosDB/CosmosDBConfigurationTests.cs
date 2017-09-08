@@ -60,7 +60,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
             var binder = await config.BindForItemAsync(attribute, typeof(Item));
 
             // Assert
-            Assert.Equal(1, config.ClientCache.Count);
+            Assert.Single(config.ClientCache);
         }
 
         [Fact]
@@ -115,14 +115,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         }
 
         [Theory]
-        [MemberData("ValidInputBindings")]
+        [MemberData(nameof(ValidInputBindings))]
         public void ValidateInputBindings_Succeeds_WithValidBindings(CosmosDBAttribute attribute, Type parameterType)
         {
             CosmosDBConfiguration.ValidateInputBinding(attribute, parameterType);
         }
 
         [Theory]
-        [MemberData("InvalidInputBindings")]
+        [MemberData(nameof(InvalidInputBindings))]
         public void ValidateInputBindings_Throws_WithInvalidBindings(CosmosDBAttribute attribute, Type parameterType)
         {
             Assert.Throws<InvalidOperationException>(() => CosmosDBConfiguration.ValidateInputBinding(attribute, parameterType));

@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,9 +29,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
             catch (Exception ex)
             {
-                DocumentClientException de;
                 if (_docDBContext.ResolvedAttribute.CreateIfNotExists &&
-                    CosmosDBUtility.TryGetDocumentClientException(ex, out de) &&
+                    CosmosDBUtility.TryGetDocumentClientException(ex, out DocumentClientException de) &&
                     de.StatusCode == HttpStatusCode.NotFound)
                 {
                     create = true;
@@ -45,7 +43,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             if (create)
             {
-                await CreateIfNotExistAsync(_docDBContext);
+                await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(_docDBContext);
+
                 await UpsertDocument(_docDBContext, item);
             }
         }
@@ -68,59 +67,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
 
             await context.Service.UpsertDocumentAsync(collectionUri, convertedItem);
-        }
-
-        internal static async Task CreateIfNotExistAsync(CosmosDBContext context)
-        {
-            await CreateDatabaseIfNotExistsAsync(context.Service, context.ResolvedAttribute.DatabaseName);
-
-            await CreateDocumentCollectionIfNotExistsAsync(context.Service, context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName, context.ResolvedAttribute.PartitionKey, context.ResolvedAttribute.CollectionThroughput);
-        }
-
-        internal static async Task<Database> CreateDatabaseIfNotExistsAsync(ICosmosDBService service, string databaseName)
-        {
-            Uri databaseUri = UriFactory.CreateDatabaseUri(databaseName);
-            Database database = service.CreateDatabaseQuery().Where(db => db.Id == databaseName).AsEnumerable().FirstOrDefault();
-
-            if (database == null)
-            {
-                database = await service.CreateDatabaseAsync(new Database { Id = databaseName });
-            }
-
-            return database;
-        }
-
-        internal static async Task<DocumentCollection> CreateDocumentCollectionIfNotExistsAsync(ICosmosDBService service, string databaseName, string collectionName, string partitionKey, int throughput)
-        {
-            Uri databaseUri = UriFactory.CreateDatabaseUri(databaseName);
-            DocumentCollection collection = service.CreateDocumentCollectionQuery(databaseUri).Where(c => c.Id == collectionName).AsEnumerable().FirstOrDefault();
-
-            if (collection == null)
-            {
-                DocumentCollection documentCollection = new DocumentCollection
-                {
-                    Id = collectionName
-                };
-
-                if (!string.IsNullOrEmpty(partitionKey))
-                {
-                    documentCollection.PartitionKey.Paths.Add(partitionKey);
-                }
-
-                // If there is any throughput specified, pass it on. DocumentClient will throw with a 
-                // descriptive message if the value does not meet the collection requirements.
-                RequestOptions collectionOptions = null;
-                if (throughput != 0)
-                {
-                    collectionOptions = new RequestOptions
-                    {
-                        OfferThroughput = throughput
-                    };
-                }
-                collection = await service.CreateDocumentCollectionAsync(databaseUri, documentCollection, collectionOptions);
-            }
-
-            return collection;
         }
     }
 }

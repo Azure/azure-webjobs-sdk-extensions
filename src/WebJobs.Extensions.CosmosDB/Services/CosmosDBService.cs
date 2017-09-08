@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
@@ -27,31 +26,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return _client;
         }
 
-        public IOrderedQueryable<Database> CreateDatabaseQuery()
-        {
-            return _client.CreateDatabaseQuery();
-        }
-
-        public IOrderedQueryable<DocumentCollection> CreateDocumentCollectionQuery(Uri collectionUri)
-        {
-            return _client.CreateDocumentCollectionQuery(collectionUri);
-        }
-
-        public async Task<DocumentCollection> CreateDocumentCollectionAsync(Uri databaseUri, DocumentCollection documentCollection, RequestOptions options)
-        {
-            ResourceResponse<DocumentCollection> response = await _client.CreateDocumentCollectionAsync(databaseUri, documentCollection, options);
-            return response.Resource;
-        }
-
         public async Task<DocumentCollection> CreateDocumentCollectionIfNotExistsAsync(Uri databaseUri, DocumentCollection documentCollection, RequestOptions options)
         {
             ResourceResponse<DocumentCollection> response = await _client.CreateDocumentCollectionIfNotExistsAsync(databaseUri, documentCollection, options);
-            return response.Resource;
-        }
-
-        public async Task<Database> CreateDatabaseAsync(Database database)
-        {
-            ResourceResponse<Database> response = await _client.CreateDatabaseAsync(database);
             return response.Resource;
         }
 

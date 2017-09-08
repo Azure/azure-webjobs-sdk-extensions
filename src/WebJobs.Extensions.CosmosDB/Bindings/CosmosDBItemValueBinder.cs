@@ -13,7 +13,8 @@ using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
-    internal class CosmosDBItemValueBinder<T> : IValueBinder where T : class
+    internal class CosmosDBItemValueBinder<T> : IValueBinder
+        where T : class
     {
         private CosmosDBContext _context;
         private JObject _originalItem;
@@ -102,11 +103,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (HasChanged(originalItem, currentValue))
             {
                 // make sure it's not the id that has changed
-                string originalId = null;
-                string currentId = null;
-                if (TryGetId(currentValue, out currentId) &&
+                if (TryGetId(currentValue, out string currentId) &&
                     !string.IsNullOrEmpty(currentId) &&
-                    TryGetId(originalItem, out originalId) &&
+                    TryGetId(originalItem, out string originalId) &&
                     !string.IsNullOrEmpty(originalId))
                 {
                     // make sure it's not the Id that has changed
@@ -130,10 +129,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         internal static bool TryGetId(JObject item, out string id)
         {
             id = null;
-            JToken idToken = null;
 
             // 'id' must be lowercase
-            if (item.TryGetValue("id", StringComparison.Ordinal, out idToken))
+            if (item.TryGetValue("id", StringComparison.Ordinal, out JToken idToken))
             {
                 id = idToken.ToString();
                 return true;

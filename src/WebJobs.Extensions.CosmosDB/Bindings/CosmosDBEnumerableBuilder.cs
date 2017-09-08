@@ -10,7 +10,8 @@ using Microsoft.Azure.Documents.Client;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
-    internal class CosmosDBEnumerableBuilder<T> : IAsyncConverter<CosmosDBAttribute, IEnumerable<T>> where T : class
+    internal class CosmosDBEnumerableBuilder<T> : IAsyncConverter<CosmosDBAttribute, IEnumerable<T>>
+        where T : class
     {
         private readonly CosmosDBConfiguration _config;
 

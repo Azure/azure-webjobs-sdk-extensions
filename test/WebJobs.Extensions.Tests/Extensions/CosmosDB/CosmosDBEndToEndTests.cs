@@ -149,7 +149,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
                     It.Is<SqlQuerySpec>((s) =>
                         s.QueryText == null &&
                         s.Parameters.Count() == 0),
-                        null))
+                    null))
                 .ReturnsAsync(new DocumentQueryResponse<JObject>());
 
             // We only expect item2 to be updated
@@ -169,7 +169,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
 
             // Assert
             factoryMock.Verify(f => f.CreateService(It.IsAny<string>()), Times.Once());
-            Assert.Equal(1, testTrace.Events.Count);
+            Assert.Single(testTrace.Events);
             Assert.Equal("Inputs", testTrace.Events[0].Message);
             serviceMock.VerifyAll();
         }
@@ -203,7 +203,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
 
             // Assert
             factoryMock.Verify(f => f.CreateService(AttributeConnStr), Times.Once());
-            Assert.Equal(1, testTrace.Events.Count);
+            Assert.Single(testTrace.Events);
             Assert.Equal("TriggerObject", testTrace.Events[0].Message);
         }
 
@@ -261,8 +261,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
 
             config.Tracing.Tracers.Add(testTrace);
 
-            var arguments = new Dictionary<string, object>();
-            arguments.Add("triggerData", argument);
+            var arguments = new Dictionary<string, object>
+            {
+                { "triggerData", argument }
+            };
 
             var cosmosDBConfig = new CosmosDBConfiguration()
             {
@@ -404,6 +406,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         private class QueueData
         {
             public string DocumentId { get; set; }
+
             public string PartitionKey { get; set; }
         }
     }

@@ -81,6 +81,5 @@ namespace ExtensionsSample
 
             _sendGrid.SendEmailAsync(message).Wait();
         }
-
     }
 }

@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
@@ -14,32 +13,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
     /// </summary>
     internal interface ICosmosDBService
     {
-        IOrderedQueryable<Database> CreateDatabaseQuery();
-
-        IOrderedQueryable<DocumentCollection> CreateDocumentCollectionQuery(Uri collectionUri);
-
-        /// <summary>
-        /// Creates the specified <see cref="Database"/>.
-        /// </summary>
-        /// <param name="database">The <see cref="Database"/> to create.</param>
-        /// <returns>The task object representing the service response for the asynchronous operation.</returns>
-        Task<Database> CreateDatabaseAsync(Database database);
-
         /// <summary>
         /// Creates the specified <see cref="Database"/> if it doesn't exists or returns the existing one.
         /// </summary>
         /// <param name="database">The <see cref="Database"/> to create.</param>
         /// <returns>The task object representing the service response for the asynchronous operation.</returns>
         Task<Database> CreateDatabaseIfNotExistsAsync(Database database);
-
-        /// <summary>
-        /// Creates the specified <see cref="DocumentCollection"/>.
-        /// </summary>
-        /// <param name="databaseUri">The self-link of the database to create the collection in.</param>
-        /// <param name="documentCollection">The <see cref="DocumentCollection"/> to create.</param>
-        /// <param name="options">The <see cref="RequestOptions"/> for the request.</param>
-        /// <returns>The task object representing the service response for the asynchronous operation.</returns>
-        Task<DocumentCollection> CreateDocumentCollectionAsync(Uri databaseUri, DocumentCollection documentCollection, RequestOptions options);
 
         /// <summary>
         /// Creates the specified <see cref="DocumentCollection"/> if it doesn't exist or returns the existing one.

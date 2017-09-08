@@ -22,20 +22,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Config
                 ConnectionString = connectionString
             };
 
-            object key = null;
-            if (builder.TryGetValue("AccountKey", out key))
+            if (builder.TryGetValue("AccountKey", out object key))
             {
                 AuthKey = key.ToString();
             }
 
-            object uri;
-            if (builder.TryGetValue("AccountEndpoint", out uri))
+            if (builder.TryGetValue("AccountEndpoint", out object uri))
             {
                 ServiceEndpoint = new Uri(uri.ToString());
             }
         }
 
         public Uri ServiceEndpoint { get; set; }
+
         public string AuthKey { get; set; }
     }
 }

@@ -25,8 +25,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         [Fact]
         public async Task ConvertAsync_Succeeds_NoContinuation()
         {
-            Mock<ICosmosDBService> mockService;
-            var builder = CreateBuilder<Document>(out mockService);
+            var builder = CreateBuilder<Document>(out Mock<ICosmosDBService> mockService);
 
             mockService
                 .Setup(m => m.ExecuteNextAsync<Document>(_expectedUri, It.IsAny<SqlQuerySpec>(), It.IsAny<string>()))
@@ -49,9 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         [Fact]
         public async Task ConvertAsync_Succeeds_WithContinuation()
         {
-            Mock<ICosmosDBService> mockService;
-            var builder = CreateBuilder<Document>(out mockService);
-
+            var builder = CreateBuilder<Document>(out Mock<ICosmosDBService> mockService);
             var docCollection = GetDocumentCollection(17);
 
             mockService
@@ -75,7 +72,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
                     ResponseContinuation = null
                 });
 
-
             CosmosDBAttribute attribute = new CosmosDBAttribute(DatabaseName, CollectionName)
             {
                 SqlQuery = string.Empty,
@@ -91,8 +87,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         [Fact]
         public async Task ConvertAsync_RethrowsException_IfNotFound()
         {
-            Mock<ICosmosDBService> mockService;
-            var builder = CreateBuilder<Item>(out mockService);
+            var builder = CreateBuilder<Item>(out Mock<ICosmosDBService> mockService);
 
             mockService
                 .Setup(m => m.ExecuteNextAsync<Item>(_expectedUri, It.IsAny<SqlQuerySpec>(), It.IsAny<string>()))
@@ -123,10 +118,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
             return items;
         }
 
-        private static CosmosDBEnumerableBuilder<T> CreateBuilder<T>(out Mock<ICosmosDBService> mockService) where T : class
+        private static CosmosDBEnumerableBuilder<T> CreateBuilder<T>(out Mock<ICosmosDBService> mockService)
+            where T : class
         {
-            CosmosDBConfiguration config = new CosmosDBConfiguration();
-            config.ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;";
+            CosmosDBConfiguration config = new CosmosDBConfiguration
+            {
+                ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;"
+            };
 
             mockService = new Mock<ICosmosDBService>(MockBehavior.Strict);
             Mock<ICosmosDBServiceFactory> mockServiceFactory = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
