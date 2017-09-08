@@ -101,23 +101,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             Assert.Equal("Default", connString);
         }
 
-        [Fact]
-        public void CreateContext_UsesDefaultRetryValue()
-        {
-            // Arrange            
-            var attribute = new DocumentDBAttribute
-            {
-                ConnectionStringSetting = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;"
-            };
-            var config = new DocumentDBConfiguration();
-
-            // Act
-            var context = config.CreateContext(attribute);
-
-            // Assert
-            Assert.Equal(DocumentDBContext.DefaultMaxThrottleRetries, context.MaxThrottleRetries);
-        }
-
         [Theory]
         [InlineData(typeof(IEnumerable<string>), true)]
         [InlineData(typeof(IEnumerable<Document>), true)]

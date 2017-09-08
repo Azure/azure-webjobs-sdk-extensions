@@ -266,7 +266,6 @@
     <Compile Include="Extensions\Core\TraceFilterTests.cs" />
     <Compile Include="Extensions\Core\TraceMonitorTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBConnectionStringTests.cs" />
-    <Compile Include="Extensions\DocumentDB\DocumentDBContextTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBEndToEndTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBEnumerableBuilderTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBItemValueBinderTests.cs" />
@@ -295,7 +294,6 @@
     <Compile Include="Extensions\DocumentDB\DocumentDBAsyncCollectorTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBConfigurationTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBTestUtility.cs" />
-    <Compile Include="Extensions\DocumentDB\DocumentDBUtilityTests.cs" />
     <Compile Include="Extensions\DocumentDB\Models\Item.cs" />
     <Compile Include="Extensions\Files\Config\FilesConfigurationTests.cs" />
     <Compile Include="Extensions\Files\FileAttributeTests.cs" />

@@ -89,31 +89,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         }
 
         [Fact]
-        public async Task ConvertAsync_Retries_IfThrottled()
-        {
-            Mock<IDocumentDBService> mockService;
-            var builder = CreateBuilder<Item>(out mockService);
-
-            mockService
-                .SetupSequence(m => m.ExecuteNextAsync<Item>(_expectedUri, It.IsAny<SqlQuerySpec>(), It.IsAny<string>()))
-                    .ThrowsAsync(DocumentDBTestUtility.CreateDocumentClientException((HttpStatusCode)429))
-                    .ThrowsAsync(DocumentDBTestUtility.CreateDocumentClientException((HttpStatusCode)429))
-                    .ThrowsAsync(DocumentDBTestUtility.CreateDocumentClientException((HttpStatusCode)429))
-                    .ReturnsAsync(new DocumentQueryResponse<Item>());
-
-            DocumentDBAttribute attribute = new DocumentDBAttribute(DatabaseName, CollectionName)
-            {
-                SqlQuery = string.Empty,
-                SqlQueryParameters = new SqlParameterCollection()
-            };
-
-            var results = await builder.ConvertAsync(attribute, CancellationToken.None);
-            Assert.Empty(results);
-
-            mockService.Verify(m => m.ExecuteNextAsync<Item>(_expectedUri, It.IsAny<SqlQuerySpec>(), It.IsAny<string>()), Times.Exactly(4));
-        }
-
-        [Fact]
         public async Task ConvertAsync_RethrowsException_IfNotFound()
         {
             Mock<IDocumentDBService> mockService;

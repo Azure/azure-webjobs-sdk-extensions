@@ -67,16 +67,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 convertedItem = JObject.Parse(item.ToString());
             }
 
-            await DocumentDBUtility.RetryAsync(() => context.Service.UpsertDocumentAsync(collectionUri, convertedItem), context.MaxThrottleRetries);
+            await context.Service.UpsertDocumentAsync(collectionUri, convertedItem);
         }
 
         internal static async Task CreateIfNotExistAsync(DocumentDBContext context)
         {
-            await DocumentDBUtility.RetryAsync(() => CreateDatabaseIfNotExistsAsync(context.Service, context.ResolvedAttribute.DatabaseName),
-                context.MaxThrottleRetries, codesToIgnore: HttpStatusCode.Conflict);
+            await CreateDatabaseIfNotExistsAsync(context.Service, context.ResolvedAttribute.DatabaseName);
 
-            await DocumentDBUtility.RetryAsync(() => CreateDocumentCollectionIfNotExistsAsync(context.Service, context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName, context.ResolvedAttribute.PartitionKey, context.ResolvedAttribute.CollectionThroughput),
-                context.MaxThrottleRetries, codesToIgnore: HttpStatusCode.Conflict);
+            await CreateDocumentCollectionIfNotExistsAsync(context.Service, context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName, context.ResolvedAttribute.PartitionKey, context.ResolvedAttribute.CollectionThroughput);
         }
 
         internal static async Task<Database> CreateDatabaseIfNotExistsAsync(IDocumentDBService service, string databaseName)
