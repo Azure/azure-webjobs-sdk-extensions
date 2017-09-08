@@ -270,10 +270,10 @@
     <Compile Include="Extensions\DocumentDB\DocumentDBEnumerableBuilderTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBItemValueBinderTests.cs" />
     <Compile Include="Extensions\DocumentDB\DocumentDBSqlResolutionPolicyTests.cs" />
+    <Compile Include="Extensions\DocumentDB\DocumentDBUtilityTests.cs" />
     <Compile Include="Extensions\DocumentDB\TestDocumentDBServiceFactory.cs" />
     <Compile Include="Extensions\DocumentDB\Trigger\CosmosDBTriggerAttributeBindingProviderTests.cs" />
     <Compile Include="Extensions\DocumentDB\Trigger\CosmosDBTriggerAttributeTests.cs" />
-    <Compile Include="Extensions\DocumentDB\Trigger\CosmosDBTriggerClientTests.cs" />
     <Compile Include="Extensions\Http\HttpRequestManagerTests.cs" />
     <Compile Include="Extensions\Http\HttpRouteFactoryTests.cs" />
     <Compile Include="Extensions\Http\HttpTriggerAttributeBindingProviderTests.cs" />

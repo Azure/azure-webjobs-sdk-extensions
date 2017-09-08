@@ -8,9 +8,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
     using System.Reflection;
     using System.Threading.Tasks;
     using Config;
-    using Microsoft.Azure.Documents;
     using Microsoft.Azure.Documents.ChangeFeedProcessor;
-    using Microsoft.Azure.Documents.Client;
     using Microsoft.Azure.WebJobs.Host.Triggers;
 
     internal class CosmosDBTriggerAttributeBindingProvider : ITriggerBindingProvider
@@ -65,7 +63,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 {
                     throw new InvalidOperationException("The connection string for the leases collection is in an invalid format, please use AccountEndpoint=XXXXXX;AccountKey=XXXXXX;.");
                 }
-                
+
                 documentCollectionLocation = new DocumentCollectionInfo
                 {
                     Uri = triggerConnection.ServiceEndpoint,
@@ -93,7 +91,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 {
                     // Not disposing this because it might be reused on other Trigger since Triggers could share lease collection
                     IDocumentDBService service = _config.GetService(leasesConnectionString);
-                    await CreateIfNotExistAsync(service, leaseCollectionLocation.DatabaseName, leaseCollectionLocation.CollectionName, attribute.LeasesCollectionThroughput);
+                    await DocumentDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(service, leaseCollectionLocation.DatabaseName, leaseCollectionLocation.CollectionName, null, attribute.LeasesCollectionThroughput);
                 }
             }
             catch (Exception ex)
@@ -155,40 +153,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             }
             settingsValue = _nameResolver.Resolve(settingsKey);
             return !string.IsNullOrEmpty(settingsValue);
-        }
-
-        internal static async Task CreateIfNotExistAsync(IDocumentDBService service, string databaseName, string collectionName, int throughput)
-        {
-            await CreateDatabaseIfNotExistsAsync(service, databaseName);
-
-            await CreateDocumentCollectionIfNotExistsAsync(service, databaseName, collectionName, throughput);
-        }
-
-        internal static async Task<Database> CreateDatabaseIfNotExistsAsync(IDocumentDBService service, string databaseName)
-        {
-            Uri databaseUri = UriFactory.CreateDatabaseUri(databaseName);
-            return await service.CreateDatabaseIfNotExistsAsync(new Database { Id = databaseName });
-        }
-
-        internal static async Task<DocumentCollection> CreateDocumentCollectionIfNotExistsAsync(IDocumentDBService service, string databaseName, string collectionName, int throughput)
-        {
-            Uri databaseUri = UriFactory.CreateDatabaseUri(databaseName);
-
-            RequestOptions collectionOptions = null;
-            if (throughput != 0)
-            {
-                collectionOptions = new RequestOptions
-                {
-                    OfferThroughput = throughput
-                };
-            }
-
-            DocumentCollection documentCollection = new DocumentCollection
-            {
-                Id = collectionName
-            };
-
-            return await service.CreateDocumentCollectionIfNotExistsAsync(databaseUri, documentCollection, collectionOptions);
         }
     }
 }
