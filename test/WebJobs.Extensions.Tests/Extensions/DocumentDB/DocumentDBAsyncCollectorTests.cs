@@ -35,7 +35,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         }
 
         [Fact]
-        public async Task AddAsync_Throws_IfExceptionIsNotTooManyRequests()
+        public async Task AddAsync_ThrowsWithCustomMessage_IfNotFound()
         {
             // Arrange
             var mockDocDBService = new Mock<IDocumentDBService>(MockBehavior.Strict);
@@ -44,13 +44,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
                 .Setup(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()))
                 .ThrowsAsync(DocumentDBTestUtility.CreateDocumentClientException(HttpStatusCode.NotFound));
 
-            var context = DocumentDBTestUtility.CreateContext(mockDocDBService.Object);
+            var context = DocumentDBTestUtility.CreateContext(mockDocDBService.Object, createIfNotExists: false);
             var collector = new DocumentDBAsyncCollector<Item>(context);
 
             // Act
-            await Assert.ThrowsAsync<DocumentClientException>(() => collector.AddAsync(new Item { Text = "hello!" }));
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => collector.AddAsync(new Item { Text = "hello!" }));
 
             // Assert
+            Assert.Contains(DocumentDBTestUtility.CollectionName, ex.Message);
+            Assert.Contains(DocumentDBTestUtility.DatabaseName, ex.Message);
             mockDocDBService.VerifyAll();
         }
 
@@ -69,26 +71,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 
             //// Act
             await collector.AddAsync(new Item { Text = "hello!" });
-
-            // Assert
-            mockDocDBService.VerifyAll();
-        }
-
-        [Fact]
-        public async Task AddAsync_DoesNotCreate_IfFalse()
-        {
-            // Arrange
-            var mockDocDBService = new Mock<IDocumentDBService>(MockBehavior.Strict);
-            var context = DocumentDBTestUtility.CreateContext(mockDocDBService.Object);
-            context.ResolvedAttribute.CreateIfNotExists = false;
-            var collector = new DocumentDBAsyncCollector<Item>(context);
-
-            mockDocDBService
-                    .Setup(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()))
-                    .ThrowsAsync(DocumentDBTestUtility.CreateDocumentClientException(HttpStatusCode.NotFound));
-
-            //// Act
-            await Assert.ThrowsAsync<DocumentClientException>(() => collector.AddAsync(new Item { Text = "hello!" }));
 
             // Assert
             mockDocDBService.VerifyAll();
