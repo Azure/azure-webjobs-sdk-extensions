@@ -9,6 +9,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models
     {
         [JsonProperty("id")]
         public string Id { get; set; }
+
         public string Text { get; set; }
     }
 }

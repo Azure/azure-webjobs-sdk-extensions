@@ -35,7 +35,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         }
 
         [Fact]
-        public async Task AddAsync_Throws_IfExceptionIsNotTooManyRequests()
+        public async Task AddAsync_ThrowsWithCustomMessage_IfNotFound()
         {
             // Arrange
             var mockDocDBService = new Mock<ICosmosDBService>(MockBehavior.Strict);
@@ -44,13 +44,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
                 .Setup(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()))
                 .ThrowsAsync(CosmosDBTestUtility.CreateDocumentClientException(HttpStatusCode.NotFound));
 
-            var context = CosmosDBTestUtility.CreateContext(mockDocDBService.Object);
+            var context = CosmosDBTestUtility.CreateContext(mockDocDBService.Object, createIfNotExists: false);
             var collector = new CosmosDBAsyncCollector<Item>(context);
 
             // Act
-            await Assert.ThrowsAsync<DocumentClientException>(() => collector.AddAsync(new Item { Text = "hello!" }));
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => collector.AddAsync(new Item { Text = "hello!" }));
 
             // Assert
+            Assert.Contains(CosmosDBTestUtility.CollectionName, ex.Message);
+            Assert.Contains(CosmosDBTestUtility.DatabaseName, ex.Message);
             mockDocDBService.VerifyAll();
         }
 
@@ -69,26 +71,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
 
             //// Act
             await collector.AddAsync(new Item { Text = "hello!" });
-
-            // Assert
-            mockDocDBService.VerifyAll();
-        }
-
-        [Fact]
-        public async Task AddAsync_DoesNotCreate_IfFalse()
-        {
-            // Arrange
-            var mockDocDBService = new Mock<ICosmosDBService>(MockBehavior.Strict);
-            var context = CosmosDBTestUtility.CreateContext(mockDocDBService.Object);
-            context.ResolvedAttribute.CreateIfNotExists = false;
-            var collector = new CosmosDBAsyncCollector<Item>(context);
-
-            mockDocDBService
-                    .Setup(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()))
-                    .ThrowsAsync(CosmosDBTestUtility.CreateDocumentClientException(HttpStatusCode.NotFound));
-
-            //// Act
-            await Assert.ThrowsAsync<DocumentClientException>(() => collector.AddAsync(new Item { Text = "hello!" }));
 
             // Assert
             mockDocDBService.VerifyAll();

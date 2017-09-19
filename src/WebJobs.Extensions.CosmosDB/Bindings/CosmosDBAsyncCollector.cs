@@ -29,11 +29,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
             catch (Exception ex)
             {
-                if (_docDBContext.ResolvedAttribute.CreateIfNotExists &&
-                    CosmosDBUtility.TryGetDocumentClientException(ex, out DocumentClientException de) &&
+                if (CosmosDBUtility.TryGetDocumentClientException(ex, out DocumentClientException de) &&
                     de.StatusCode == HttpStatusCode.NotFound)
                 {
-                    create = true;
+                    if (_docDBContext.ResolvedAttribute.CreateIfNotExists)
+                    {
+                        create = true;
+                    }
+                    else
+                    {
+                        // Throw a custom error so that it's easier to decipher.
+                        string message = $"The collection '{_docDBContext.ResolvedAttribute.CollectionName}' (in database '{_docDBContext.ResolvedAttribute.DatabaseName}') does not exist. To automatically create the collection, set '{nameof(CosmosDBAttribute.CreateIfNotExists)}' to 'true'.";
+                        throw new InvalidOperationException(message, ex);
+                    }
                 }
                 else
                 {
