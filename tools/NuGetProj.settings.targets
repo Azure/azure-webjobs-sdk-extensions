@@ -11,8 +11,8 @@
     <TwilioVersion>1.1.0</TwilioVersion>
     <ApiHubsVersion>1.0.0</ApiHubsVersion>
     <HttpVersion>1.0.0</HttpVersion>
-    <ApiHubsPrereleaseTag>-beta5</ApiHubsPrereleaseTag>
-    <PrereleaseTag>-beta3</PrereleaseTag>
+    <ApiHubsPrereleaseTag>-beta6</ApiHubsPrereleaseTag>
+    <PrereleaseTag>-beta4</PrereleaseTag>
   </PropertyGroup>
   <Choose>
     <When Condition=" '$(IncludeBuildNumberInVersion)' == '1'">
