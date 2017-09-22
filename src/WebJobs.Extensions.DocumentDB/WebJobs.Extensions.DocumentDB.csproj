@@ -229,4 +229,5 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <Import Project="..\..\tools\Clean.targets"/>
 </Project>
