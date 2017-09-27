@@ -60,6 +60,7 @@
       <Word>DocumentDB</Word>
       <Word>DocumentDBAttribute</Word>
       <Word>DocumentDBConfiguration</Word>
+      <Word>CosmosDBTrigger</Word>
       <Word>ConnectionStringSetting</Word>
       <Word>MobileAppUriSetting</Word>
       <Word>Twilio</Word>

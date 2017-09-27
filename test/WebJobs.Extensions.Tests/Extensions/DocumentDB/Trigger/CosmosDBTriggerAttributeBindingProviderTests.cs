@@ -79,6 +79,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Trigger
             Assert.Equal(binding.LeaseCollectionLocation.Uri, new Uri("https://fromSettingsLease"));
         }
 
+        [Fact]
+        public void TryAndConvertToDocumentList_Fail()
+        {
+            IReadOnlyList<Document> convertedValue;
+            Assert.False(CosmosDBTriggerBinding.TryAndConvertToDocumentList(null, out convertedValue));
+            Assert.False(CosmosDBTriggerBinding.TryAndConvertToDocumentList("some weird string", out convertedValue));
+            Assert.False(CosmosDBTriggerBinding.TryAndConvertToDocumentList(Guid.NewGuid(), out convertedValue));
+        }
+
+        [Fact]
+        public void TryAndConvertToDocumentList_Succeed()
+        {
+            IReadOnlyList<Document> convertedValue;
+            Assert.True(CosmosDBTriggerBinding.TryAndConvertToDocumentList("[{\"id\":\"123\"}]", out convertedValue));
+            Assert.Equal("123", convertedValue[0].Id);
+
+            IReadOnlyList<Document> triggerValue = new List<Document>() { new Document() { Id="123" } };
+            Assert.True(CosmosDBTriggerBinding.TryAndConvertToDocumentList(triggerValue, out convertedValue));
+            Assert.Equal(triggerValue[0].Id, convertedValue[0].Id);
+        }
+
         public static IEnumerable<ParameterInfo[]> InvalidCosmosDBTriggerParameters
         {
             get { return InvalidCosmosDBTriggerBindigs.GetParameters(); }
