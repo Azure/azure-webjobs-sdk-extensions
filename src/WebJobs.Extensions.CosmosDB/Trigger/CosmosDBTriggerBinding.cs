@@ -48,13 +48,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
         {
             IReadOnlyList<Document> triggerValue;
-            try
+            if (!TryAndConvertToDocumentList(value, out triggerValue))
             {
-                triggerValue = value as IReadOnlyList<Document>;
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("Unable to convert trigger to CosmosDBTrigger:" + ex.Message);
+                throw new InvalidOperationException("Unable to convert trigger to CosmosDBTrigger.");
             }
 
             var valueBinder = new CosmosDBTriggerValueBinder(_parameter.ParameterType, triggerValue);
@@ -83,6 +79,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 Type = CosmosDBTriggerConstants.TriggerName,
                 CollectionName = this._documentCollectionLocation.CollectionName
             };
+        }
+
+        internal static bool TryAndConvertToDocumentList(object value, out IReadOnlyList<Document> documents)
+        {
+            documents = null;
+
+            try
+            {
+                if (value is IReadOnlyList<Document> docs)
+                {
+                    documents = docs;
+                }
+                else if (value is string stringVal)
+                {
+                    documents = JsonConvert.DeserializeObject<IReadOnlyList<Document>>(stringVal);
+                }
+
+                return documents != null;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
