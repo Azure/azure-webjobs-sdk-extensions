@@ -44,7 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         // Name of binding data slot where return value is placed. 
         internal const string ReturnBindingName = "$return";
 
-        private readonly Action<HttpRequestMessage, object> _responseHook;
+        private readonly Action<HttpRequest, object> _responseHook;
 
         public HttpTriggerAttributeBindingProvider(Action<HttpRequest, object> responseHook)
         {

@@ -17,7 +17,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.0-beta3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WebJobs.Extensions\WebJobs.Extensions.csproj" />
   </ItemGroup>
 
 </Project>

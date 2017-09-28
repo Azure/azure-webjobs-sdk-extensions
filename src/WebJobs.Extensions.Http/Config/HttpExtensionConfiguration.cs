@@ -53,7 +53,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         public bool DynamicThrottlesEnabled { get; set; }
 
         /// <summary>
-        /// Hook to enable a host to receive the response
+        /// Gets or sets hook to enable a host to receive the response
         /// </summary>
         [JsonIgnore]
         public Action<HttpRequest, object> SetResponse { get; set; }
