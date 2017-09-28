@@ -48,6 +48,7 @@ namespace Microsoft.Azure.WebJobs
         /// Optional. The Notification Hub Name to use, if different than the one specified in the
         /// <see cref="NotificationHubsConfiguration"/>.
         /// </summary>
+        [AutoResolve]
         public string HubName { get; set; }
 
         /// <summary>
