@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Linq;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Xunit;
@@ -29,30 +30,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             TimerInfo timerInfo = new TimerInfo(new CronSchedule("0 0 * * * *"), null);
             string result = timerInfo.FormatNextOccurrences(10, now);
 
+            var expectedDates = Enumerable.Range(11, 10)
+                .Select(hour => new DateTime(2015, 09, 16, hour, 00, 00))
+                .Select(dateTime => string.Format("{0}\r\n", dateTime))
+                .ToArray();
+
             string expected =
                 "The next 10 occurrences of the schedule will be:\r\n" +
-                "9/16/2015 11:00:00 AM\r\n" +
-                "9/16/2015 12:00:00 PM\r\n" +
-                "9/16/2015 1:00:00 PM\r\n" +
-                "9/16/2015 2:00:00 PM\r\n" +
-                "9/16/2015 3:00:00 PM\r\n" +
-                "9/16/2015 4:00:00 PM\r\n" +
-                "9/16/2015 5:00:00 PM\r\n" +
-                "9/16/2015 6:00:00 PM\r\n" +
-                "9/16/2015 7:00:00 PM\r\n" +
-                "9/16/2015 8:00:00 PM\r\n";
+                string.Join(string.Empty, expectedDates);
+
             Assert.Equal(expected, result);
 
             timerInfo = new TimerInfo(new DailySchedule("2:00:00"), null);
             result = timerInfo.FormatNextOccurrences(5, now);
 
+            expectedDates = Enumerable.Range(17, 5)
+                .Select(day => new DateTime(2015, 09, day, 02, 00, 00))
+                .Select(dateTime => string.Format("{0}\r\n", dateTime))
+                .ToArray();
+
             expected =
                 "The next 5 occurrences of the schedule will be:\r\n" +
-                "9/17/2015 2:00:00 AM\r\n" +
-                "9/18/2015 2:00:00 AM\r\n" +
-                "9/19/2015 2:00:00 AM\r\n" +
-                "9/20/2015 2:00:00 AM\r\n" +
-                "9/21/2015 2:00:00 AM\r\n";
+                string.Join(string.Empty, expectedDates);
             Assert.Equal(expected, result);
 
             WeeklySchedule weeklySchedule = new WeeklySchedule();
@@ -67,11 +66,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
             expected =
                 "The next 5 occurrences of the schedule will be:\r\n" +
-                "9/16/2015 9:30:00 PM\r\n" +
-                "9/18/2015 10:00:00 AM\r\n" +
-                "9/21/2015 8:00:00 AM\r\n" +
-                "9/23/2015 9:30:00 AM\r\n" +
-                "9/23/2015 9:30:00 PM\r\n";
+                new DateTime(2015, 09, 16, 21, 30, 00).ToString() + "\r\n" +
+                new DateTime(2015, 09, 18, 10, 00, 00).ToString() + "\r\n" +
+                new DateTime(2015, 09, 21, 08, 00, 00).ToString() + "\r\n" +
+                new DateTime(2015, 09, 23, 09, 30, 00).ToString() + "\r\n" +
+                new DateTime(2015, 09, 23, 21, 30, 00).ToString() + "\r\n";
+
             Assert.Equal(expected, result);
         }
     }
