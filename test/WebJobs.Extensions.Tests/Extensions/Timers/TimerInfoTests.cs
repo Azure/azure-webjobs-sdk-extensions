@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
+using NCrontab;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
@@ -27,7 +28,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         public void FormatNextOccurrences_ReturnsExpectedString()
         {
             DateTime now = new DateTime(2015, 9, 16, 10, 30, 00);
-            TimerInfo timerInfo = new TimerInfo(new CronSchedule("0 0 * * * *"), null);
+            TimerInfo timerInfo = new TimerInfo(new CronSchedule(CrontabSchedule.Parse("0 * * * *")), null);
             string result = timerInfo.FormatNextOccurrences(10, now);
 
             var expectedDates = Enumerable.Range(11, 10)

@@ -16,19 +16,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         private readonly CrontabSchedule _cronSchedule;
 
         /// <summary>
-        /// Constructs a new instance based on the specified crontab expression
-        /// </summary>
-        /// <param name="cronTabExpression">The crontab expression defining the schedule</param>
-        public CronSchedule(string cronTabExpression)
-        {
-            CrontabSchedule.ParseOptions options = new CrontabSchedule.ParseOptions()
-            {
-                IncludingSeconds = true
-            };
-            _cronSchedule = CrontabSchedule.Parse(cronTabExpression, options);
-        }
-
-        /// <summary>
         /// Constructs a new instance based on the specified crontab schedule
         /// </summary>
         /// <param name="schedule">The crontab schedule to use</param>

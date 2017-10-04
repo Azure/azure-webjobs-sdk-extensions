@@ -2,8 +2,11 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Globalization;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
+using NCrontab;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
@@ -17,9 +20,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
 
         public ScheduleMonitorTests()
         {
-            _hourlySchedule = new CronSchedule("0 0 * * * *");
-            _halfHourlySchedule = new CronSchedule("0 */30 * * * *");
-            _dailySchedule = new CronSchedule("0 0 0 * * *");
+            _hourlySchedule = new CronSchedule(CrontabSchedule.Parse("0 * * * *"));
+            _halfHourlySchedule = new CronSchedule(CrontabSchedule.Parse("*/30 * * * *"));
+            _dailySchedule = new CronSchedule(CrontabSchedule.Parse("0 0 * * *"));
         }
 
         [Fact]
