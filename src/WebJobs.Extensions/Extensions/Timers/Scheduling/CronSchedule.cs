@@ -47,9 +47,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         internal static bool TryCreate(string cronExpression, out CronSchedule cronSchedule)
         {
             cronSchedule = null;
+            var isSixPart = cronExpression.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length == 6;
             CrontabSchedule.ParseOptions options = new CrontabSchedule.ParseOptions()
             {
-                IncludingSeconds = true
+                IncludingSeconds = isSixPart
             };
             CrontabSchedule crontabSchedule = CrontabSchedule.TryParse(cronExpression, options);
             if (crontabSchedule != null)

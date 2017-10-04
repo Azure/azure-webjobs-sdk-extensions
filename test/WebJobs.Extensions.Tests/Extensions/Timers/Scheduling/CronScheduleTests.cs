@@ -21,6 +21,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         }
 
         [Fact]
+        public void GetNextOccurrence_FivePartCronExpression_NowEqualToNext_ReturnsCorrectValue()
+        {
+            CronSchedule.TryCreate("* * * * *", out CronSchedule schedule);
+
+            var now = schedule.GetNextOccurrence(DateTime.Now);
+            var next = schedule.GetNextOccurrence(now);
+
+            Assert.True(next > now);
+        }
+
+        [Fact]
         public void GetNextOccurrence_ThreeDaySchedule_MultipleScheduleIterations()
         {
             // 11:59AM on Mondays, Tuesdays, Wednesdays, Thursdays and Fridays
