@@ -47,11 +47,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         internal static bool TryCreate(string cronExpression, out CronSchedule cronSchedule)
         {
             cronSchedule = null;
-            var isSixPart = cronExpression.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length == 6;
+            
             CrontabSchedule.ParseOptions options = new CrontabSchedule.ParseOptions()
             {
-                IncludingSeconds = isSixPart
+                IncludingSeconds = HasSeconds(cronExpression)
             };
+
             CrontabSchedule crontabSchedule = CrontabSchedule.TryParse(cronExpression, options);
             if (crontabSchedule != null)
             {
@@ -59,6 +60,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 return true;
             }
             return false;
+        }
+
+        private static bool HasSeconds(string cronExpression)
+        {
+            return cronExpression.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length != 5;
         }
     }
 }
