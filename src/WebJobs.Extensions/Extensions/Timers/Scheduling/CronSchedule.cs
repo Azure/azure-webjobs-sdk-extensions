@@ -47,19 +47,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         internal static bool TryCreate(string cronExpression, out CronSchedule cronSchedule)
         {
             cronSchedule = null;
-            
-            CrontabSchedule.ParseOptions options = new CrontabSchedule.ParseOptions()
+
+            if (cronExpression != null)
+            {
+                var options = CreateParseOptions(cronExpression);
+
+                CrontabSchedule crontabSchedule = CrontabSchedule.TryParse(cronExpression, options);
+                if (crontabSchedule != null)
+                {
+                    cronSchedule = new CronSchedule(crontabSchedule);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static CrontabSchedule.ParseOptions CreateParseOptions(string cronExpression)
+        {
+            var options = new CrontabSchedule.ParseOptions()
             {
                 IncludingSeconds = HasSeconds(cronExpression)
             };
 
-            CrontabSchedule crontabSchedule = CrontabSchedule.TryParse(cronExpression, options);
-            if (crontabSchedule != null)
-            {
-                cronSchedule = new CronSchedule(crontabSchedule);
-                return true;
-            }
-            return false;
+            return options;
         }
 
         private static bool HasSeconds(string cronExpression)

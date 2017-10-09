@@ -53,8 +53,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void ToString_ReturnsExpectedValue()
         {
-            CronSchedule.TryCreate("0 59 11 * * 1-5", out CronSchedule schedule);
+            var result = CronSchedule.TryCreate("0 59 11 * * 1-5", out CronSchedule schedule);
+
+            Assert.True(result);
             Assert.Equal("Cron: '0 59 11 * * 1-5'", schedule.ToString());
+        }
+
+        [Fact]
+        public void NullExpression_ReturnsFalseAndNullcronSchedule()
+        {
+            var result = CronSchedule.TryCreate(null, out CronSchedule schedule);
+
+            Assert.Null(schedule);
+            Assert.False(result);
         }
     }
 }
