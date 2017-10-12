@@ -416,6 +416,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         }
 
         [Fact]
+        public async Task BindAsync_Dynamic()
+        {
+            ParameterInfo parameterInfo = GetType().GetMethod(nameof(TestDynamicFunction)).GetParameters()[0];
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, false);
+
+            var headers = new HeaderDictionary();
+            headers.Add("Content-Type", "application/json");
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/myfunc?code=abc123", headers, "{ \"value\" : \"This is a test\" }");
+
+            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, new TestTraceWriter(Level.Verbose));
+            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            ITriggerData triggerData = await binding.BindAsync(request, context);
+
+            Assert.Equal(3, triggerData.BindingData.Count);
+
+            var result = (JObject)(await triggerData.ValueProvider.GetValueAsync());
+            Assert.Equal("This is a test", result["value"].ToString());
+        }
+
+        [Fact]
         public static void ApplyBindingData_Succeeds()
         {
             TestPocoEx poco = new TestPocoEx();
