@@ -19,7 +19,27 @@ namespace Microsoft.Azure.WebJobs
         /// <param name="config">The <see cref="JobHostConfiguration"/> to configure.</param>
         public static void UseTimers(this JobHostConfiguration config)
         {
-            UseTimers(config, new TimersConfiguration());
+            TimersConfiguration timersConfig = null;
+            switch (config.TimerMode)
+            {
+                case TimerMode.File:
+                    timersConfig = new TimersConfiguration()
+                    {
+                        ScheduleMonitor = new FileSystemScheduleMonitor()
+                    };
+
+                    break;
+                case TimerMode.Storage:
+                    timersConfig = new TimersConfiguration()
+                    {
+                        // TimersExtensionConfig will initialize the schedule monitor with context
+                        ScheduleMonitor = null
+                    };
+
+                    break;
+            }
+
+            UseTimers(config, timersConfig);
         }
 
         /// <summary>
@@ -33,6 +53,7 @@ namespace Microsoft.Azure.WebJobs
             {
                 throw new ArgumentNullException("config");
             }
+
             if (timersConfig == null)
             {
                 throw new ArgumentNullException("timersConfig");
