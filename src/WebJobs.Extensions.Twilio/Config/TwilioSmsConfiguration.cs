@@ -47,17 +47,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
             _defaultAccountSid = nameResolver.Resolve(AzureWebJobsTwilioAccountSidKeyName);
             _defaultAuthToken = nameResolver.Resolve(AzureWebJobsTwilioAccountAuthTokenName);
 
-            IConverterManager converterManager = context.Config.GetService<IConverterManager>();
-            converterManager.AddConverter<JObject, CreateMessageOptions>(CreateMessageOptions);
+            context.AddConverter<JObject, CreateMessageOptions>(CreateMessageOptions);
 
-            BindingFactory factory = new BindingFactory(nameResolver, converterManager);
-            IBindingProvider outputProvider = factory.BindToCollector<TwilioSmsAttribute, CreateMessageOptions>((attr) =>
+            var rule = context.AddBindingRule<TwilioSmsAttribute>();
+            rule.AddValidator(ValidateBinding);
+            rule.BindToCollector<CreateMessageOptions>((attr) =>
             {
                 return new TwilioSmsMessageAsyncCollector(CreateContext(attr));
             });
-
-            IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
-            extensions.RegisterBindingRules<TwilioSmsAttribute>(ValidateBinding, nameResolver, outputProvider);
         }
 
         private void ValidateBinding(TwilioSmsAttribute attribute, Type type)
