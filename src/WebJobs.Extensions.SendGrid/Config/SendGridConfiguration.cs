@@ -77,12 +77,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
                 this.ApiKey = nameResolver.Resolve(AzureWebJobsSendGridApiKeyName);
             }
 
-            context                
+            context
                 .AddConverter<string, SendGridMessage>(SendGridHelpers.CreateMessage)
-                .AddConverter<JObject, SendGridMessage>(SendGridHelpers.CreateMessage)
-                .AddBindingRule<SendGridAttribute>()
-                .AddValidator(ValidateBinding)
-                    .BindToCollector<SendGridMessage>(CreateCollector);
+                .AddConverter<JObject, SendGridMessage>(SendGridHelpers.CreateMessage);
+
+            var rule = context.AddBindingRule<SendGridAttribute>();
+            rule.AddValidator(ValidateBinding);
+            rule.BindToCollector<SendGridMessage>(CreateCollector);
         }
 
         private IAsyncCollector<SendGridMessage> CreateCollector(SendGridAttribute attr)

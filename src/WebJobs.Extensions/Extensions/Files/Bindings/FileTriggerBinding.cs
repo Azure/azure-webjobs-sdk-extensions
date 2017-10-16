@@ -54,21 +54,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             if (fileEvent == null)
             {
                 string filePath = value as string;
-                if (!string.IsNullOrEmpty(filePath))
-                {
-                    // TODO: This only supports Created events. For Dashboard invocation, how can we
-                    // handle Change events?
-                    string directory = Path.GetDirectoryName(filePath);
-                    string fileName = Path.GetFileName(filePath);
-
-                    fileEvent = new FileSystemEventArgs(WatcherChangeTypes.Created, directory, fileName);
-                }
+                fileEvent = GetFileArgsFromString(filePath);
             }
 
-            IValueBinder valueBinder = new FileValueBinder(_parameter, fileEvent);
             IReadOnlyDictionary<string, object> bindingData = GetBindingData(fileEvent);
 
-            return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, bindingData));
+            return Task.FromResult<ITriggerData>(new TriggerData(null, bindingData));
+        }
+
+        internal static FileSystemEventArgs GetFileArgsFromString(string filePath)
+        {            
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                // TODO: This only supports Created events. For Dashboard invocation, how can we
+                // handle Change events?
+                string directory = Path.GetDirectoryName(filePath);
+                string fileName = Path.GetFileName(filePath);
+
+                return new FileSystemEventArgs(WatcherChangeTypes.Created, directory, fileName);
+            }
+
+            return null;
         }
 
         public Task<IListener> CreateListenerAsync(ListenerFactoryContext context)
@@ -142,42 +148,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             }
 
             return bindingData;
-        }
-
-        private class FileValueBinder : StreamValueBinder
-        {
-            private readonly ParameterInfo _parameter;
-            private readonly FileSystemEventArgs _fileEvent;
-
-            public FileValueBinder(ParameterInfo parameter, FileSystemEventArgs fileEvent)
-                : base(parameter)
-            {
-                _parameter = parameter;
-                _fileEvent = fileEvent;
-            }
-
-            public override async Task<object> GetValueAsync()
-            {
-                if (_parameter.ParameterType == typeof(FileSystemEventArgs))
-                {
-                    return _fileEvent;
-                }
-                else if (_parameter.ParameterType == typeof(FileInfo))
-                {
-                    return new FileInfo(_fileEvent.FullPath);
-                }
-                return await base.GetValueAsync();
-            }
-
-            protected override Stream GetStream()
-            {
-                return File.OpenRead(_fileEvent.FullPath);
-            }
-
-            public override string ToInvokeString()
-            {
-                return _fileEvent.FullPath;
-            }
         }
 
         private class FileTriggerParameterDescriptor : TriggerParameterDescriptor
