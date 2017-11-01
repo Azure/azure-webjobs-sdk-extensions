@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents.ChangeFeedProcessor;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings;
 using Microsoft.Azure.WebJobs.Host;
@@ -40,6 +41,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         /// </summary>
         public string ConnectionString { get; set; }
 
+        /// <summary>
+        /// Gets or sets the lease options for the DocumentDB Trigger. 
+        /// </summary>
+        public ChangeFeedHostOptions LeaseOptions { get; set; }
+
         /// <inheritdoc />
         public void Initialize(ExtensionConfigContext context)
         {
@@ -73,6 +79,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
             extensions.RegisterBindingRules<CosmosDBAttribute>(ValidateConnection, nameResolver, outputProvider, clientProvider, jArrayProvider, enumerableProvider, inputProvider);
+
+            context.Config.RegisterBindingExtensions(new CosmosDBTriggerAttributeBindingProvider(nameResolver, this, LeaseOptions));
         }
 
         internal static void ValidateInputBinding(CosmosDBAttribute attribute, Type parameterType)
