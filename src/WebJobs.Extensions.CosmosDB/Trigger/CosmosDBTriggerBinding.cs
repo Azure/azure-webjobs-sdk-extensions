@@ -20,11 +20,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly DocumentCollectionInfo _documentCollectionLocation;
         private readonly DocumentCollectionInfo _leaseCollectionLocation;
         private readonly ChangeFeedHostOptions _leaseHostOptions;
-        private readonly IBindingDataProvider _bindingDataProvider;
+        private readonly IReadOnlyDictionary<string, Type> _emptyBindingContract = new Dictionary<string, Type>();
+        private readonly IReadOnlyDictionary<string, object> _emptyBindingData = new Dictionary<string, object>();
 
         public CosmosDBTriggerBinding(ParameterInfo parameter, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions)
         {
-            _bindingDataProvider = BindingDataProvider.FromType(parameter.ParameterType);
             _documentCollectionLocation = documentCollectionLocation;
             _leaseCollectionLocation = leaseCollectionLocation;
             _leaseHostOptions = leaseHostOptions;
@@ -42,7 +42,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public IReadOnlyDictionary<string, Type> BindingDataContract
         {
-            get { return _bindingDataProvider.Contract; }
+            get { return _emptyBindingContract; }
         }
 
         public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
@@ -58,7 +58,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
 
             var valueBinder = new CosmosDBTriggerValueBinder(_parameter.ParameterType, triggerValue);
-            return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, _bindingDataProvider.GetBindingData(valueBinder.GetValue())));
+            return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, _emptyBindingData));
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]

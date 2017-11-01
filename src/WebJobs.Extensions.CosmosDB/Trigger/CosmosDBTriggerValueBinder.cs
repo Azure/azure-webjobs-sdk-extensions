@@ -19,7 +19,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         public CosmosDBTriggerValueBinder(Type type, IReadOnlyList<Document> value)
                     : base(type)
         {
-            if (!type.Equals(typeof(IReadOnlyList<Document>)) && !type.Equals(typeof(JArray)))
+            if (!type.Equals(typeof(IReadOnlyList<Document>)) && !type.Equals(typeof(JArray)) && !type.Equals(typeof(string)))
             {
                 throw new ArgumentException("Binding can only be done with IReadOnlyList<Document> or JArray", "type");
             }
@@ -31,12 +31,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public override Task<object> GetValueAsync()
         {
-            if (_type.Equals(typeof(IReadOnlyList<Document>)))
-            {
-                return Task.FromResult(_value);
-            }
-
-            return Task.FromResult((object)JArray.FromObject(_value));
+            return Task.FromResult(GetValue());
         }
 
         public object GetValue()
@@ -46,7 +41,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 return _value;
             }
 
-            return JArray.FromObject(_value);
+            JArray json = JArray.FromObject(_value);
+
+            if (_type.Equals(typeof(string)))
+            {
+                return json.ToString();
+            }
+
+            return json;
         }
 
         public override string ToInvokeString()
