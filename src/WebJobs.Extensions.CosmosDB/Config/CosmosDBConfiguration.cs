@@ -67,6 +67,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             IBindingProvider outputProvider = factory.BindToCollector<CosmosDBAttribute, OpenType>(typeof(CosmosDBCollectorBuilder<>), this);
 
+            IBindingProvider outputProviderJObject = factory.BindToCollector<CosmosDBAttribute, JObject>(typeof(CosmosDBCollectorBuilder<>), this);
+
             IBindingProvider clientProvider = factory.BindToInput<CosmosDBAttribute, DocumentClient>(new CosmosDBClientBuilder(this));
 
             IBindingProvider jArrayProvider = factory.BindToInput<CosmosDBAttribute, JArray>(typeof(CosmosDBJArrayBuilder), this);
@@ -77,8 +79,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             IBindingProvider inputProvider = factory.BindToGenericValueProvider<CosmosDBAttribute>((attr, t) => BindForItemAsync(attr, t));
             inputProvider = factory.AddValidator<CosmosDBAttribute>(ValidateInputBinding, inputProvider);
 
+            context.AddBindingRule<CosmosDBAttribute>()
+                .AddConverter<JObject, JObject>(s => s);
+
             IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
-            extensions.RegisterBindingRules<CosmosDBAttribute>(ValidateConnection, nameResolver, outputProvider, clientProvider, jArrayProvider, enumerableProvider, inputProvider);
+            extensions.RegisterBindingRules<CosmosDBAttribute>(ValidateConnection, nameResolver, outputProvider, outputProviderJObject, clientProvider, jArrayProvider, enumerableProvider, inputProvider);
 
             context.Config.RegisterBindingExtensions(new CosmosDBTriggerAttributeBindingProvider(nameResolver, this, LeaseOptions));
         }
