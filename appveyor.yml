@@ -16,23 +16,35 @@ environment:
   BUILD_NUMBER: '%APPVEYOR_BUILD_NUMBER%'
   IncludeBuildNumberInVersion: 1
 build_script:
-- ps: >
+- ps: |
     dotnet --version
 
     dotnet build -v q
 
-    dotnet pack src\WebJobs.Extensions\WebJobs.Extensions.csproj -o ..\..\buildoutput --no-build --version-suffix "-$env:APPVEYOR_BUILD_NUMBER"
-    
-    dotnet pack src\WebJobs.Extensions.CosmosDB\WebJobs.Extensions.CosmosDB.csproj -o ..\..\buildoutput --no-build --version-suffix "-$env:APPVEYOR_BUILD_NUMBER"
+    $projects = `
+        "WebJobs.Extensions", `
+        "WebJobs.Extensions.CosmosDB", `
+        "WebJobs.Extensions.Http", `
+        "WebJobs.Extensions.MobileApps", `
+        "WebJobs.Extensions.Twilio", `
+        "WebJobs.Extensions.SendGrid"
 
-    dotnet pack src\WebJobs.Extensions.Http\WebJobs.Extensions.Http.csproj -o ..\..\buildoutput --no-build --version-suffix "-$env:APPVEYOR_BUILD_NUMBER"
-
-    dotnet pack src\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj -o ..\..\buildoutput --no-build --version-suffix "-$env:APPVEYOR_BUILD_NUMBER"
-
-    dotnet pack src\WebJobs.Extensions.Twilio\WebJobs.Extensions.Twilio.csproj -o ..\..\buildoutput --no-build --version-suffix "-$env:APPVEYOR_BUILD_NUMBER"
-
-    dotnet pack src\WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.csproj -o ..\..\buildoutput --no-build --version-suffix "-$env:APPVEYOR_BUILD_NUMBER"
-
+    if($env:IncludeBuildNumberInVersion -eq "1")
+    {
+        Write-Host "Generating nuget packages with build number."
+        foreach ($project in $projects)
+        {
+            dotnet pack src\$project\$project.csproj -o ..\..\buildoutput --no-build --version-suffix "-$env:APPVEYOR_BUILD_NUMBER"
+        }       
+    }
+    else
+    {
+        Write-Host "Generating nuget packages without build number."
+        foreach ($project in $projects)
+        {
+            dotnet pack src\$project\$project.csproj -o ..\..\buildoutput --no-build
+        }    
+    }
 test_script:
 - ps: >-
     dotnet test .\test\WebJobs.Extensions.Tests\ -v q --no-build -p:ParallelizeTestCollections=false
