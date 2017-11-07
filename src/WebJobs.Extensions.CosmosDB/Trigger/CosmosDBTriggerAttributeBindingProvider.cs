@@ -68,17 +68,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 {
                     Uri = triggerConnection.ServiceEndpoint,
                     MasterKey = triggerConnection.AuthKey,
-                    DatabaseName = attribute.DatabaseName,
-                    CollectionName = attribute.CollectionName
+                    DatabaseName = ResolveAttributeValue(attribute.DatabaseName),
+                    CollectionName = ResolveAttributeValue(attribute.CollectionName)
                 };
 
                 leaseCollectionLocation = new DocumentCollectionInfo
                 {
                     Uri = leasesConnection.ServiceEndpoint,
                     MasterKey = leasesConnection.AuthKey,
-                    DatabaseName = attribute.LeaseDatabaseName,
-                    CollectionName = attribute.LeaseCollectionName
+                    DatabaseName = ResolveAttributeValue(attribute.LeaseDatabaseName),
+                    CollectionName = ResolveAttributeValue(attribute.LeaseCollectionName)
                 };
+
+                if (string.IsNullOrEmpty(documentCollectionLocation.DatabaseName)
+                    || string.IsNullOrEmpty(documentCollectionLocation.CollectionName)
+                    || string.IsNullOrEmpty(leaseCollectionLocation.DatabaseName)
+                    || string.IsNullOrEmpty(leaseCollectionLocation.CollectionName))
+                {
+                    throw new InvalidOperationException("Cannot establish database and collection values. If you are using environment and configuration values, please ensure these are correctly set.");
+                }
 
                 if (documentCollectionLocation.Uri.Equals(leaseCollectionLocation.Uri)
                     && documentCollectionLocation.DatabaseName.Equals(leaseCollectionLocation.DatabaseName)
@@ -153,6 +161,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
             settingsValue = _nameResolver.Resolve(settingsKey);
             return !string.IsNullOrEmpty(settingsValue);
+        }
+
+        private string ResolveAttributeValue(string attributeValue)
+        {
+            return _nameResolver.Resolve(attributeValue) ?? attributeValue;
         }
     }
 }

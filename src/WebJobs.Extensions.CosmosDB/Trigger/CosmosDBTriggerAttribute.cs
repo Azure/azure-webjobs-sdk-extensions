@@ -48,13 +48,11 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Name of the collection to monitor for changes
         /// </summary>
-        [AutoResolve]
         public string CollectionName { get; private set; }
 
         /// <summary>
         /// Name of the database containing the collection to monitor for changes
         /// </summary>
-        [AutoResolve]
         public string DatabaseName { get; private set; }
 
         /// <summary>
@@ -66,13 +64,11 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Name of the lease collection. Default value is "leases"
         /// </summary>
-        [AutoResolve]
         public string LeaseCollectionName { get; set; }
 
         /// <summary>
         /// Name of the database containing the lease collection
         /// </summary>
-        [AutoResolve]
         public string LeaseDatabaseName { get; set; }
 
         /// <summary>
