@@ -10,7 +10,7 @@ namespace Microsoft.Azure.WebJobs
     /// <summary>
     /// Attribute used for http triggered functions.
     /// </summary>
-    [Binding]
+    [Binding(TriggerHandlesReturnValue = true)]
     [AttributeUsage(AttributeTargets.Parameter)]
     public sealed class HttpTriggerAttribute : Attribute
     {
