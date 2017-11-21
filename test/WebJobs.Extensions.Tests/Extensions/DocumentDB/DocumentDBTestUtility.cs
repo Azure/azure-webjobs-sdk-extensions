@@ -23,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         public const string DatabaseName = "ItemDB";
         public const string CollectionName = "ItemCollection";
 
-        public static void SetupCollectionMock(Mock<IDocumentDBService> mockService, string partitionKeyPath = null, int throughput = 0)
+        public static void SetupCollectionMock(Mock<IDocumentDBService> mockService, string partitionKeyPath = null, int throughput = 400)
         {
             Uri databaseUri = UriFactory.CreateDatabaseUri(DatabaseName);
 
@@ -33,22 +33,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
                 expectedPaths.Add(partitionKeyPath);
             }
 
-            if (throughput == 0)
-            {
-                mockService
-                    .Setup(m => m.CreateDocumentCollectionIfNotExistsAsync(databaseUri,
-                        It.Is<DocumentCollection>(d => d.Id == CollectionName && Enumerable.SequenceEqual(d.PartitionKey.Paths, expectedPaths)),
-                        null))
-                    .ReturnsAsync(new DocumentCollection());
-            }
-            else
-            {
-                mockService
+            mockService
                     .Setup(m => m.CreateDocumentCollectionIfNotExistsAsync(databaseUri,
                         It.Is<DocumentCollection>(d => d.Id == CollectionName && Enumerable.SequenceEqual(d.PartitionKey.Paths, expectedPaths)),
                         It.Is<RequestOptions>(r => r.OfferThroughput == throughput)))
                     .ReturnsAsync(new DocumentCollection());
-            }
         }
 
         public static void SetupDatabaseMock(Mock<IDocumentDBService> mockService)

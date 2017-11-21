@@ -10,6 +10,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 {
     internal static class DocumentDBUtility
     {
+        private const int CosmosDBMinimumCollectionRU = 400;
+
         internal static bool TryGetDocumentClientException(Exception originalEx, out DocumentClientException documentClientEx)
         {
             documentClientEx = originalEx as DocumentClientException;
@@ -58,16 +60,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 documentCollection.PartitionKey.Paths.Add(partitionKey);
             }
 
+            if (throughput == 0)
+            {
+                throughput = CosmosDBMinimumCollectionRU;
+            }
+
             // If there is any throughput specified, pass it on. DocumentClient will throw with a 
             // descriptive message if the value does not meet the collection requirements.
-            RequestOptions collectionOptions = null;
-            if (throughput != 0)
+            RequestOptions collectionOptions = new RequestOptions
             {
-                collectionOptions = new RequestOptions
-                {
-                    OfferThroughput = throughput
-                };
-            }
+                OfferThroughput = throughput
+            };
 
             return await service.CreateDocumentCollectionIfNotExistsAsync(databaseUri, documentCollection, collectionOptions);
         }
