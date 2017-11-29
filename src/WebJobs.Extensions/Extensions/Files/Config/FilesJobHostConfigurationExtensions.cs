@@ -5,6 +5,7 @@ using System;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.Files.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
+using System.IO;
 
 namespace Microsoft.Azure.WebJobs
 {
@@ -48,13 +49,38 @@ namespace Microsoft.Azure.WebJobs
             config.RegisterExtensionConfigProvider(new FilesExtensionConfig(filesConfig));
         }
 
-        private class FilesExtensionConfig : IExtensionConfigProvider
+        private class FilesExtensionConfig : IExtensionConfigProvider,
+            IConverter<FileAttribute, Stream>
         {
             private FilesConfiguration _filesConfig;
 
             public FilesExtensionConfig(FilesConfiguration filesConfig)
             {
                 _filesConfig = filesConfig;
+            }
+
+            private FileInfo GetFileInfo(FileAttribute attribute)
+            {
+                string boundFileName = attribute.Path;
+                string filePath = Path.Combine(_filesConfig.RootPath, boundFileName);
+                FileInfo fileInfo = new FileInfo(filePath);
+                return fileInfo;
+            }
+
+            public FileStream GetFileStream(FileAttribute attribute)
+            {
+                var fileInfo = GetFileInfo(attribute);
+                if ((attribute.Access == FileAccess.Read) && !fileInfo.Exists)
+                {
+                    return null;
+                }
+
+                return fileInfo.Open(attribute.Mode, attribute.Access);
+            }
+
+            public Stream Convert(FileAttribute attribute)
+            {
+                return GetFileStream(attribute);
             }
 
             public void Initialize(ExtensionConfigContext context)
@@ -64,9 +90,14 @@ namespace Microsoft.Azure.WebJobs
                     throw new ArgumentNullException("context");
                 }
 
+                var rule = context.AddBindingRule<FileAttribute>();
+                rule.BindToInput<FileInfo>(this.GetFileInfo);
+                rule.BindToInput<FileStream>(this.GetFileStream);
+                rule.BindToStream(this, FileAccess.ReadWrite);
+
                 context.Config.RegisterBindingExtensions(
-                    new FileTriggerAttributeBindingProvider(_filesConfig, context.Trace),
-                    new FileAttributeBindingProvider(_filesConfig, context.Config.NameResolver));
+                    new FileTriggerAttributeBindingProvider(_filesConfig, context.Trace)
+                    );
             }
         }
     }
