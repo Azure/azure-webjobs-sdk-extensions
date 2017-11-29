@@ -20,6 +20,12 @@ namespace ExtensionsSample
         public static void Main(string[] args)
         {
             JobHostConfiguration config = new JobHostConfiguration();
+
+            config.HostId = "hostid1234";
+            config.StorageConnectionString = null;
+            config.DashboardConnectionString = null;
+            SasConfig.SaSConnection = "https://mltest176.blob.core.windows.net/azure-webjobs-hosts?st=2017-11-10T10%3A42%3A00Z&se=2018-04-19T12%3A00%3A00Z&sp=rwdl&sv=2017-04-17&sr=c&sig=rvNZEnB9rTmEwjb%2BTKWHTXHrDHqB90XjU%2FzdO4Zyh30%3D";
+
             FilesConfiguration filesConfig = new FilesConfiguration();
 
             // See https://github.com/Azure/azure-webjobs-sdk/wiki/Running-Locally for details
@@ -30,24 +36,7 @@ namespace ExtensionsSample
                 filesConfig.RootPath = @"c:\temp\files";
             }
 
-            config.UseFiles(filesConfig);
             config.UseTimers();
-            config.UseSample();
-            config.UseMobileApps();
-            config.UseTwilioSms();
-            config.UseCore();
-            config.UseCosmosDB();
-
-            var sendGridConfiguration = new SendGridConfiguration()
-            {
-                ToAddress = new EmailAddress("admin@webjobssamples.com", "WebJobs Extensions Samples"),
-                FromAddress = new EmailAddress("samples@webjobssamples.com", "WebJobs Extensions Samples")
-            };
-            config.UseSendGrid(sendGridConfiguration);
-
-            ConfigureTraceMonitor(config, sendGridConfiguration);
-
-            EnsureSampleDirectoriesExist(filesConfig.RootPath);
 
             JobHost host = new JobHost(config);
 
@@ -55,20 +44,8 @@ namespace ExtensionsSample
             // be indexed by the JobHost.
             // To run some of the other samples included, add their types to this list
             config.TypeLocator = new SamplesTypeLocator(
-                typeof(ErrorMonitoringSamples),
-                typeof(FileSamples),
-                typeof(MiscellaneousSamples),
-                typeof(SampleSamples),
-                typeof(TableSamples),
                 typeof(TimerSamples));
-
-            // Some direct invocations to demonstrate various binding scenarios
-            host.Call(typeof(MiscellaneousSamples).GetMethod("ExecutionContext"));
-            host.Call(typeof(FileSamples).GetMethod("ReadWrite"));
-            host.Call(typeof(SampleSamples).GetMethod("Sample_BindToStream"));
-            host.Call(typeof(SampleSamples).GetMethod("Sample_BindToString"));
-            host.Call(typeof(TableSamples).GetMethod("CustomBinding"));
-
+        
             host.RunAndBlock();
         }
 

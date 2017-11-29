@@ -10,30 +10,9 @@ namespace WebJobsSandbox
     public static class TimerSamples
     {
         /// <summary>
-        /// Example job triggered by a crontab schedule.
-        /// </summary>
-        public static void CronJob([TimerTrigger("*/15 * * * * *")] TimerInfo timerInfo)
-        {
-            Console.WriteLine("Timer job fired!");
-        }
-
-        /// <summary>
-        /// Example job triggered by an crontab schedule that is also configured
-        /// to run immediately on startup.
-        /// </summary>
-        public static void StartupJob([TimerTrigger("0 0 */2 * * *", RunOnStartup = true, UseMonitor = true)] TimerInfo timerInfo)
-        {
-            Console.WriteLine("Timer job fired!");
-
-            string scheduleStatus = string.Format("Status: Last='{0}', Next='{1}', IsPastDue={2}", 
-                timerInfo.ScheduleStatus.Last, timerInfo.ScheduleStatus.Next, timerInfo.IsPastDue);
-            Console.WriteLine(scheduleStatus);
-        }
-
-        /// <summary>
         /// Example job triggered by a timespan schedule.
         /// </summary>
-        public static void TimerJob([TimerTrigger("01:00:00")] TimerInfo timerInfo)
+        public static void TimerJob([TimerTrigger("00:00:15")] TimerInfo timerInfo)
         {
             Console.WriteLine("Timer job fired!");
         }
