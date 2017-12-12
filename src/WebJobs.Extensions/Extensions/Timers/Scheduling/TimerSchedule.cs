@@ -86,7 +86,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 }
                 else
                 {
-                    throw new ArgumentException("The schedule expression was not recognized as a valid cron expression or timespan string.");
+                    throw new ArgumentException(string.Format("The schedule expression '{0}' was not recognized as a valid cron expression or timespan string.", resolvedExpression));
                 }
             }
             else
