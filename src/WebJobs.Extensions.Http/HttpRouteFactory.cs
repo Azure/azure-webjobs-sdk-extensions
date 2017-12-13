@@ -45,10 +45,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         /// <param name="routeName">The name of the route.</param>
         /// <param name="routeTemplate">The route template.</param>
         /// <param name="methods">The optional http methods to allow for the route.</param>
+        /// <param name="dataTokens">The optional collection of data tokens to apply.</param>
         /// <param name="routes">The routes collection to add to.</param>
         /// <param name="route">The route that was added.</param>
         /// <returns>True if the route was added successfully, false otherwise.</returns>
-        public bool TryAddRoute(string routeName, string routeTemplate, IEnumerable<HttpMethod> methods, HttpRouteCollection routes, out IHttpRoute route)
+        public bool TryAddRoute(string routeName, string routeTemplate, IEnumerable<HttpMethod> methods, IDictionary<string, object> dataTokens, HttpRouteCollection routes, out IHttpRoute route)
         {
             if (routes == null)
             {
@@ -68,7 +69,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     // that disallows ALL methods
                     constraints.Add("httpMethod", new HttpMethodConstraint(methods.ToArray()));
                 }
-                route = routes.CreateRoute(routeBuilder.Template, routeBuilder.Defaults, constraints);
+                route = routes.CreateRoute(routeBuilder.Template, routeBuilder.Defaults, constraints, dataTokens);
                 routes.Add(routeName, route);
             }
             catch

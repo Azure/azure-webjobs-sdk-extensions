@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Web.Http;
 using System.Web.Http.Routing;
@@ -32,8 +33,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
             HttpRouteCollection routes = new HttpRouteCollection();
             IHttpRoute route1, route2;
-            Assert.True(routeFactory.TryAddRoute("route1", "foo/bar/baz", null, routes, out route1));
-            Assert.True(routeFactory.TryAddRoute("route2", "foo/bar/baz", null, routes, out route2));
+            Assert.True(routeFactory.TryAddRoute("route1", "foo/bar/baz", null, null, routes, out route1));
+            Assert.True(routeFactory.TryAddRoute("route2", "foo/bar/baz", null, null, routes, out route2));
 
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "http://host/api/foo/bar/baz");
             var routeData = routes.GetRouteData(request);
@@ -47,8 +48,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
             HttpRouteCollection routes = new HttpRouteCollection();
             IHttpRoute route1, route2;
-            Assert.True(routeFactory.TryAddRoute("route1", "products/{category}/{id?}", new HttpMethod[] { HttpMethod.Get }, routes, out route1));
-            Assert.True(routeFactory.TryAddRoute("route2", "products/{category}/{id}", new HttpMethod[] { HttpMethod.Post }, routes, out route2));
+            Assert.True(routeFactory.TryAddRoute("route1", "products/{category}/{id?}", new HttpMethod[] { HttpMethod.Get }, null, routes, out route1));
+            Assert.True(routeFactory.TryAddRoute("route2", "products/{category}/{id}", new HttpMethod[] { HttpMethod.Post }, null, routes, out route2));
 
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "http://host/api/products/electronics/123");
             var routeData = routes.GetRouteData(request);
@@ -70,7 +71,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
             HttpRouteCollection routes = new HttpRouteCollection();
             IHttpRoute route = null;
-            Assert.True(routeFactory.TryAddRoute("route1", "products/{category}/{id?}", null, routes, out route));
+            Assert.True(routeFactory.TryAddRoute("route1", "products/{category}/{id?}", null, null, routes, out route));
 
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "http://host/api/products/electronics/123");
             var routeData = routes.GetRouteData(request);
@@ -88,7 +89,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
             HttpRouteCollection routes = new HttpRouteCollection();
             IHttpRoute route = null;
-            Assert.True(routeFactory.TryAddRoute("route1", "products/{category}/{id?}", new HttpMethod[0], routes, out route));
+            Assert.True(routeFactory.TryAddRoute("route1", "products/{category}/{id?}", new HttpMethod[0], null, routes, out route));
 
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "http://host/api/products/electronics/123");
             var routeData = routes.GetRouteData(request);
@@ -100,13 +101,31 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         }
 
         [Fact]
+        public void TryAddRoute_AppliesDataTokens()
+        {
+            HttpRouteFactory routeFactory = new HttpRouteFactory("api");
+            HttpRouteCollection routes = new HttpRouteCollection();
+            var dataTokens = new Dictionary<string, object>
+            {
+                { "Test", "TestValue" }
+            };
+            IHttpRoute route = null;
+            Assert.True(routeFactory.TryAddRoute("route1", "products/{category}/{id?}", new HttpMethod[] { HttpMethod.Get }, dataTokens, routes, out route));
+
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "http://host/api/products/electronics/123");
+            var routeData = routes.GetRouteData(request);
+            var testToken = routeData.Route.DataTokens["Test"];
+            Assert.Equal("TestValue", testToken);
+        }
+
+        [Fact]
         public void TryAddRoute_RouteParsingError_ReturnsFalse()
         {
             HttpRouteFactory routeFactory = new HttpRouteFactory("api");
 
             HttpRouteCollection routes = new HttpRouteCollection();
             IHttpRoute route = null;
-            Assert.False(routeFactory.TryAddRoute("route1", "/", new HttpMethod[0], routes, out route));
+            Assert.False(routeFactory.TryAddRoute("route1", "/", new HttpMethod[0], null, routes, out route));
             Assert.Equal(0, routes.Count);
         }
     }
