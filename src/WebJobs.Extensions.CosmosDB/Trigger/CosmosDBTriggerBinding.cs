@@ -23,13 +23,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly ChangeFeedHostOptions _leaseHostOptions;
         private readonly IReadOnlyDictionary<string, Type> _emptyBindingContract = new Dictionary<string, Type>();
         private readonly IReadOnlyDictionary<string, object> _emptyBindingData = new Dictionary<string, object>();
+        private readonly bool _haltOnFailure;
 
-        public CosmosDBTriggerBinding(ParameterInfo parameter, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions)
+        public CosmosDBTriggerBinding(ParameterInfo parameter, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, bool haltOnFailure)
         {
             _documentCollectionLocation = documentCollectionLocation;
             _leaseCollectionLocation = leaseCollectionLocation;
             _leaseHostOptions = leaseHostOptions;
             _parameter = parameter;
+            _haltOnFailure = haltOnFailure;
         }
 
         /// <summary>
@@ -59,7 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 throw new ArgumentNullException("context", "Missing listener context");
             }
-            return Task.FromResult<IListener>(new CosmosDBTriggerListener(context.Executor, this._documentCollectionLocation, this._leaseCollectionLocation, this._leaseHostOptions));
+            return Task.FromResult<IListener>(new CosmosDBTriggerListener(context.Executor, this._documentCollectionLocation, this._leaseCollectionLocation, this._leaseHostOptions, this._haltOnFailure));
         }
 
         /// <summary>

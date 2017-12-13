@@ -19,8 +19,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly ChangeFeedEventHost host;
         private readonly DocumentCollectionInfo monitorCollection;
         private readonly DocumentCollectionInfo leaseCollection;
+        private readonly bool haltOnFailure;
 
-        public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions)
+        public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, bool haltOnFailure)
         {
             this.executor = executor;
             string hostName = Guid.NewGuid().ToString();
@@ -29,6 +30,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             leaseCollection = leaseCollectionLocation;
 
             this.host = new ChangeFeedEventHost(hostName, documentCollectionLocation, leaseCollectionLocation, new ChangeFeedOptions(), leaseHostOptions);
+
+            this.haltOnFailure = haltOnFailure;
         }
 
         public void Cancel()
@@ -38,7 +41,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public IChangeFeedObserver CreateObserver()
         {
-            return new CosmosDBTriggerObserver(this.executor);
+            return new CosmosDBTriggerObserver(this.executor, this.haltOnFailure);
         }
 
         public void Dispose()

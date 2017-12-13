@@ -89,5 +89,17 @@ namespace Microsoft.Azure.WebJobs
         /// collection.
         /// </summary>
         public int LeasesCollectionThroughput { get; set; }
+
+        /// <summary>
+        /// Optional, defaults to false.
+        /// If false, any exception thrown by the function will be ignored and the checkpoint updated.
+        /// If true, throwing an exception from the function will cause the Feed Processor not to checkpoint. Processing will be halted for the 
+        /// current partition for a brief time and then any notifications since the last checkpoint will be re-delivered.
+        /// If set to true, the function should implement its own any poison document handling to prevent an un-processable notification from 
+        /// permanently halting processing of the partition and potentially running up execution costs; this flag is meant to enable guaranteed
+        /// processing of every notification, even in case of a temporary "downstream dependency failure" preventing the function from completing
+        /// successfully.
+        /// </summary>
+        public bool HaltOnFailure { get; set; } = false;
     }
 }
