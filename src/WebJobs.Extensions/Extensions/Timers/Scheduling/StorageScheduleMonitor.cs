@@ -55,10 +55,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                         throw new InvalidOperationException("Unable to determine host ID.");
                     }
 
-                    CloudStorageAccount storageAccount = CloudStorageAccount.Parse(_hostConfig.StorageConnectionString);
-                    CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
+                    CloudBlobContainer container;
+                    var storage = _hostConfig.InternalStorageConfiguration;
+                    if (storage != null && storage.InternalContainer != null)
+                    {
+                        container = storage.InternalContainer;
+                    }
+                    else
+                    {
+                        CloudStorageAccount storageAccount = CloudStorageAccount.Parse(_hostConfig.StorageConnectionString);
+                        CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
+                        container = blobClient.GetContainerReference(HostContainerName);
+                    }
                     string timerStatusDirectoryPath = string.Format("timers/{0}", _hostConfig.HostId);
-                    _timerStatusDirectory = blobClient.GetContainerReference(HostContainerName).GetDirectoryReference(timerStatusDirectoryPath);
+                    _timerStatusDirectory = container.GetDirectoryReference(timerStatusDirectoryPath);
                 }
                 return _timerStatusDirectory;
             }
