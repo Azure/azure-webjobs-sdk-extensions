@@ -9,6 +9,7 @@
     <Description>This package contains binding extensions for Azure Cosmos DB.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="EnterpriseLibrary.TransientFaultHandling" Version="6.0.1304" />
     <PackageReference Include="Microsoft.Azure.DocumentDB.ChangeFeedProcessor" Version="1.2.0" />
   </ItemGroup>
 

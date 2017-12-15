@@ -107,7 +107,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 throw new InvalidOperationException(string.Format("Cannot create Collection Information for {0} in database {1} with lease {2} in database {3} : {4}", attribute.CollectionName, attribute.DatabaseName, attribute.LeaseCollectionName, attribute.LeaseDatabaseName, ex.Message), ex);
             }
 
-            return new CosmosDBTriggerBinding(parameter, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions, attribute.HaltOnFailure);
+            return new CosmosDBTriggerBinding(parameter, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions, attribute.RetryOnFailure, attribute.RetryStrategy);
         }
 
         private string ResolveAttributeConnectionString(CosmosDBTriggerAttribute attribute)
