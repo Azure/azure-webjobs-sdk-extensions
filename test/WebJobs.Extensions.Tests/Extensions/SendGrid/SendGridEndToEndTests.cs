@@ -3,7 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +14,7 @@ using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Indexers;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json.Linq;
 using SendGrid.Helpers.Mail;
@@ -29,6 +30,8 @@ namespace SendGridTests
         private const string AttributeApiKey1 = "Attribute1";
         private const string AttributeApiKey2 = "Attribute2";
 
+        private readonly TestLoggerProvider _loggerProvider = new TestLoggerProvider();
+
         [Fact]
         public async Task OutputBindings_WithKeysOnConfigAndAttribute()
         {
@@ -38,9 +41,7 @@ namespace SendGridTests
             Mock<Client.ISendGridClient> clientMock;
             InitializeMocks(out factoryMock, out clientMock);
 
-            TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Warning);
-
-            await RunTestAsync(functionName, factoryMock.Object, testTrace, configApiKey: ConfigApiKey, includeDefaultApiKey: false);
+            await RunTestAsync(functionName, factoryMock.Object, configApiKey: ConfigApiKey, includeDefaultApiKey: false);
 
             // We expect three clients to be created. The others should be re-used because the ApiKeys match.
             factoryMock.Verify(f => f.Create(AttributeApiKey1), Times.Once());
@@ -51,8 +52,7 @@ namespace SendGridTests
             clientMock.Verify(c => c.SendMessageAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()), Times.Exactly(4));
 
             // Just make sure traces work.
-            Assert.Equal(1, testTrace.Events.Count);
-            Assert.Equal(functionName, testTrace.Events[0].Message);
+            Assert.Equal(functionName, _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
 
             factoryMock.VerifyAll();
             clientMock.VerifyAll();
@@ -67,9 +67,7 @@ namespace SendGridTests
             Mock<ISendGridClient> clientMock;
             InitializeMocks(out factoryMock, out clientMock);
 
-            TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Warning);
-
-            await RunTestAsync(functionName, factoryMock.Object, testTrace, configApiKey: null, includeDefaultApiKey: true);
+            await RunTestAsync(functionName, factoryMock.Object, configApiKey: null, includeDefaultApiKey: true);
 
             // We expect one client to be created.
             factoryMock.Verify(f => f.Create(DefaultApiKey), Times.Once());
@@ -78,8 +76,7 @@ namespace SendGridTests
             clientMock.Verify(c => c.SendMessageAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()), Times.Once);
 
             // Just make sure traces work.
-            Assert.Equal(1, testTrace.Events.Count);
-            Assert.Equal(functionName, testTrace.Events[0].Message);
+            Assert.Equal(functionName, _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
 
             factoryMock.VerifyAll();
             clientMock.VerifyAll();
@@ -94,10 +91,8 @@ namespace SendGridTests
             Mock<ISendGridClient> clientMock;
             InitializeMocks(out factoryMock, out clientMock);
 
-            TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Warning);
-
             var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
-                () => RunTestAsync(functionName, factoryMock.Object, testTrace, configApiKey: null, includeDefaultApiKey: false));
+                () => RunTestAsync(functionName, factoryMock.Object, configApiKey: null, includeDefaultApiKey: false));
 
             Assert.Equal("The SendGrid ApiKey must be set either via an 'AzureWebJobsSendGridApiKey' app setting, via an 'AzureWebJobsSendGridApiKey' environment variable, or directly in code via SendGridConfiguration.ApiKey or SendGridAttribute.ApiKey.", ex.InnerException.Message);
         }
@@ -116,8 +111,7 @@ namespace SendGridTests
                     .Returns(clientMock.Object);
         }
 
-        private async Task RunTestAsync(string testName, ISendGridClientFactory factory, TraceWriter testTrace, object argument = null,
-            string configApiKey = null, bool includeDefaultApiKey = true)
+        private async Task RunTestAsync(string testName, ISendGridClientFactory factory, object argument = null, string configApiKey = null, bool includeDefaultApiKey = true)
         {
             Type testType = typeof(SendGridEndToEndFunctions);
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
@@ -126,7 +120,10 @@ namespace SendGridTests
                 TypeLocator = locator,
             };
 
-            config.Tracing.Tracers.Add(testTrace);
+            ILoggerFactory loggerFactory = new LoggerFactory();
+            loggerFactory.AddProvider(_loggerProvider);
+
+            config.LoggerFactory = loggerFactory;
 
             var arguments = new Dictionary<string, object>();
             arguments.Add("triggerData", argument);

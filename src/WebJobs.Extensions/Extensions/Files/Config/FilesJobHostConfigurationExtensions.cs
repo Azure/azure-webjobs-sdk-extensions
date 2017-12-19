@@ -2,10 +2,10 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.IO;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.Files.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
-using System.IO;
 
 namespace Microsoft.Azure.WebJobs
 {
@@ -97,7 +97,7 @@ namespace Microsoft.Azure.WebJobs
 
                 // Triggers
                 var rule2 = context.AddBindingRule<FileTriggerAttribute>();
-                rule2.BindToTrigger<FileSystemEventArgs>(new FileTriggerAttributeBindingProvider(_filesConfig, context.Trace));
+                rule2.BindToTrigger<FileSystemEventArgs>(new FileTriggerAttributeBindingProvider(_filesConfig, context.Config.LoggerFactory));
 
                 rule2.AddConverter<string, FileSystemEventArgs>(str => FileTriggerBinding.GetFileArgsFromString(str));
                 rule2.AddConverter<FileSystemEventArgs, Stream>(args => File.OpenRead(args.FullPath));

@@ -26,7 +26,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         internal const string AzureWebJobsCosmosDBConnectionStringName = "AzureWebJobsCosmosDBConnectionString";
         internal readonly ConcurrentDictionary<string, ICosmosDBService> ClientCache = new ConcurrentDictionary<string, ICosmosDBService>();
         private string _defaultConnectionString;
-        private TraceWriter _trace;
 
         /// <summary>
         /// Constructs a new instance.
@@ -55,8 +54,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 throw new ArgumentNullException("context");
             }
-
-            _trace = context.Trace;
 
             INameResolver nameResolver = context.Config.GetService<INameResolver>();
 
@@ -177,7 +174,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return new CosmosDBContext
             {
                 Service = service,
-                Trace = _trace,
                 ResolvedAttribute = attribute,
             };
         }

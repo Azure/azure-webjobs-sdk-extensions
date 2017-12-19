@@ -1,18 +1,18 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using Microsoft.Azure.WebJobs.Extensions.Bindings;
+using Microsoft.Azure.WebJobs.Files.Listeners;
+using Microsoft.Azure.WebJobs.Host.Bindings;
+using Microsoft.Azure.WebJobs.Host.Listeners;
+using Microsoft.Azure.WebJobs.Host.Protocols;
+using Microsoft.Azure.WebJobs.Host.Triggers;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs.Extensions.Bindings;
-using Microsoft.Azure.WebJobs.Files.Listeners;
-using Microsoft.Azure.WebJobs.Host;
-using Microsoft.Azure.WebJobs.Host.Bindings;
-using Microsoft.Azure.WebJobs.Host.Listeners;
-using Microsoft.Azure.WebJobs.Host.Protocols;
-using Microsoft.Azure.WebJobs.Host.Triggers;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
@@ -23,13 +23,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
         private readonly FilesConfiguration _config;
         private readonly IReadOnlyDictionary<string, Type> _bindingContract;
         private readonly BindingDataProvider _bindingDataProvider;
-        private readonly TraceWriter _trace;
+        private readonly ILogger _logger;
 
-        public FileTriggerBinding(FilesConfiguration config, ParameterInfo parameter, TraceWriter trace)
+        public FileTriggerBinding(FilesConfiguration config, ParameterInfo parameter, ILogger logger)
         {
             _config = config;
             _parameter = parameter;
-            _trace = trace;
+            _logger = logger;
             _attribute = parameter.GetCustomAttribute<FileTriggerAttribute>(inherit: false);
             _bindingDataProvider = BindingDataProvider.FromTemplate(_attribute.Path);
             _bindingContract = CreateBindingContract();
@@ -83,7 +83,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             {
                 throw new ArgumentNullException("context");
             }
-            return Task.FromResult<IListener>(new FileListener(_config, _attribute, context.Executor, _trace));
+            return Task.FromResult<IListener>(new FileListener(_config, _attribute, context.Executor, _logger));
         }
 
         public ParameterDescriptor ToParameterDescriptor()

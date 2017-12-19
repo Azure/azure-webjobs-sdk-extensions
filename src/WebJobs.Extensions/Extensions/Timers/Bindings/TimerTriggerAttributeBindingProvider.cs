@@ -4,8 +4,8 @@
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 {
@@ -13,13 +13,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
     {
         private readonly TimersConfiguration _config;
         private readonly INameResolver _nameResolver;
-        private readonly TraceWriter _trace;
+        private readonly ILogger _logger;
 
-        public TimerTriggerAttributeBindingProvider(TimersConfiguration config, INameResolver nameResolver, TraceWriter trace)
+        public TimerTriggerAttributeBindingProvider(TimersConfiguration config, INameResolver nameResolver, ILogger logger)
         {
             _config = config;
             _nameResolver = nameResolver;
-            _trace = trace;
+            _logger = logger;
         }
 
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
@@ -36,7 +36,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             {
                 return Task.FromResult<ITriggerBinding>(null);
             }
-      
+
             if (parameter.ParameterType != typeof(TimerInfo))
             {
                 throw new InvalidOperationException(string.Format("Can't bind TimerTriggerAttribute to type '{0}'.", parameter.ParameterType));
@@ -44,7 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 
             TimerSchedule schedule = TimerSchedule.Create(timerTriggerAttribute, _nameResolver);
 
-            return Task.FromResult<ITriggerBinding>(new TimerTriggerBinding(parameter, timerTriggerAttribute, schedule, _config, _trace));
+            return Task.FromResult<ITriggerBinding>(new TimerTriggerBinding(parameter, timerTriggerAttribute, schedule, _config, _logger));
         }
     }
 }
