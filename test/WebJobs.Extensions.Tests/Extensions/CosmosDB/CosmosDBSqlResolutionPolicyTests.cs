@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
@@ -51,6 +52,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
             // Assert
             Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@foo" && p.Value.ToString() == "1234");
             Assert.Equal("SELECT * FROM c WHERE c.id = @foo AND c.value = @foo", result);
+        }
+
+        [Fact]
+        public void TemplateBind_NestedParameter()
+        {
+            // Arrange
+            PropertyInfo propInfo = null;
+            CosmosDBAttribute resolvedAttribute = new CosmosDBAttribute();
+            BindingTemplate bindingTemplate =
+                BindingTemplate.FromString("SELECT * FROM c WHERE c.id = {headers.x-ms-client-principal-name}");
+            Dictionary<string, object> bindingData = new Dictionary<string, object>();
+            bindingData.Add("headers", new Dictionary<string, string> { { "x-ms-client-principal-name", "username" } });
+            CosmosDBSqlResolutionPolicy policy = new CosmosDBSqlResolutionPolicy();
+
+            // Act
+            string result = policy.TemplateBind(propInfo, resolvedAttribute, bindingTemplate, bindingData);
+
+            // Assert
+            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@headers_x_ms_client_principal_name" && p.Value.ToString() == "username");
+            Assert.Equal("SELECT * FROM c WHERE c.id = @headers_x_ms_client_principal_name", result);
         }
     }
 }

@@ -35,19 +35,52 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             // build a SqlParameterCollection for each parameter            
             SqlParameterCollection paramCollection = new SqlParameterCollection();
 
+            string bindingTemplatePattern = bindingTemplate.Pattern;
+
+            IDictionary<string, string> expandedTokens = GetExpandedTokens(bindingTemplate, bindingData);
+
             // also build up a dictionary replacing '{token}' with '@token' 
             IDictionary<string, string> replacements = new Dictionary<string, string>();
-            foreach (var token in bindingTemplate.ParameterNames.Distinct())
+            foreach (var token in expandedTokens)
             {
-                string sqlToken = $"@{token}";
-                paramCollection.Add(new SqlParameter(sqlToken, bindingData[token]));
-                replacements.Add(token, sqlToken);
+                string sqlTokenName = $"@{EscapeSqlParameterName(token.Key)}";
+                paramCollection.Add(new SqlParameter(sqlTokenName, token.Value));
+                bindingTemplatePattern = bindingTemplatePattern.Replace($"{{{token.Key}}}", sqlTokenName);
             }
 
             docDbAttribute.SqlQueryParameters = paramCollection;
 
-            string replacement = bindingTemplate.Bind(new ReadOnlyDictionary<string, string>(replacements));
-            return replacement;
+            return bindingTemplatePattern;
+        }
+
+        private IDictionary<string, string> GetExpandedTokens(BindingTemplate bindingTemplate, IReadOnlyDictionary<string, object> bindingData)
+        {
+            var expandedTokens = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var tokenName in bindingTemplate.ParameterNames.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                if (bindingData[tokenName] is string tokenValue)
+                {
+                    expandedTokens.Add(tokenName, tokenValue);
+                }
+                else if (bindingData[tokenName] is IDictionary<string, string> tokenDictionary)
+                {
+                    foreach (var item in tokenDictionary)
+                    {
+                        expandedTokens.Add($"{tokenName}.{item.Key}", item.Value);
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException($"{tokenName} is an invalid type.");
+                }
+            }
+            return expandedTokens;
+        }
+
+        private string EscapeSqlParameterName(string name)
+        {
+            const string escapeChar = "_";
+            return name.Replace(".", escapeChar).Replace("-", escapeChar);
         }
     }
 }
