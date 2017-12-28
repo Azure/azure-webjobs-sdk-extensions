@@ -34,53 +34,45 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             // build a SqlParameterCollection for each parameter            
             SqlParameterCollection paramCollection = new SqlParameterCollection();
 
-            string bindingTemplatePattern = bindingTemplate.Pattern;
-            
-            IDictionary<string, string> expandedTokens = GetExpandedTokens(bindingTemplate, bindingData);
-            foreach (var token in expandedTokens)
+            // also build up a dictionary replacing '{token}' with '@token' 
+            IDictionary<string, object> replacements = new Dictionary<string, object>();
+            foreach (var token in bindingTemplate.ParameterNames.Distinct())
             {
-                string bindingExpression = $"{{{token.Key}}}";
-                if (bindingTemplatePattern.Contains(bindingExpression))
+                object tokenObject = bindingData[token];
+                if (tokenObject is string tokenString)
                 {
-                    string sqlTokenName = $"@{EscapeSqlParameterName(token.Key)}";
-                    paramCollection.Add(new SqlParameter(sqlTokenName, token.Value));
-                    bindingTemplatePattern = bindingTemplatePattern.Replace($"{{{token.Key}}}", sqlTokenName);
+                    string sqlToken = GetSqlParameterName(token);
+                    paramCollection.Add(new SqlParameter(sqlToken, tokenString));
+                    replacements.Add(token, sqlToken);
+                }
+                else if (tokenObject is IDictionary<string, string> tokenDictionary)
+                {
+                    IDictionary<string, string> tokens = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var item in tokenDictionary)
+                    {
+                        string fullToken = $"{token}.{item.Key}";
+                        bool tokenInUse = bindingTemplate.Pattern.Contains(fullToken);
+                        if (tokenInUse)
+                        {
+                            string sqlToken = GetSqlParameterName(fullToken);
+                            paramCollection.Add(new SqlParameter(sqlToken, item.Value));
+                            tokens.Add(item.Key, sqlToken);
+                        }
+                    }
+                    replacements.Add(token, tokens);
                 }
             }
 
             cosmosDBAttribute.SqlQueryParameters = paramCollection;
 
-            return bindingTemplatePattern;
+            string replacement = bindingTemplate.Bind(new ReadOnlyDictionary<string, object>(replacements));
+            return replacement;
         }
 
-        private IDictionary<string, string> GetExpandedTokens(BindingTemplate bindingTemplate, IReadOnlyDictionary<string, object> bindingData)
+        private string GetSqlParameterName(string name)
         {
-            var expandedTokens = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var tokenName in bindingTemplate.ParameterNames.Distinct(StringComparer.OrdinalIgnoreCase))
-            {
-                if (bindingData[tokenName] is string tokenValue)
-                {
-                    expandedTokens.Add(tokenName, tokenValue);
-                }
-                else if (bindingData[tokenName] is IDictionary<string, string> tokenDictionary)
-                {
-                    foreach (var item in tokenDictionary)
-                    {
-                        expandedTokens.Add($"{tokenName}.{item.Key}", item.Value);
-                    }
-                }
-                else
-                {
-                    throw new ArgumentException($"{tokenName} is an invalid type.");
-                }
-            }
-            return expandedTokens;
-        }
-
-        private string EscapeSqlParameterName(string name)
-        {
-            const string escapeChar = "_";
-            return name.Replace(".", escapeChar).Replace("-", escapeChar);
+            const string safeSeparator = "_";
+            return "@" + name.Replace(".", safeSeparator).Replace("-", safeSeparator);
         }
     }
 }
