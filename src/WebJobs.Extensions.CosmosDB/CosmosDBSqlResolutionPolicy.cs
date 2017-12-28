@@ -43,9 +43,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             IDictionary<string, string> replacements = new Dictionary<string, string>();
             foreach (var token in expandedTokens)
             {
-                string sqlTokenName = $"@{EscapeSqlParameterName(token.Key)}";
-                paramCollection.Add(new SqlParameter(sqlTokenName, token.Value));
-                bindingTemplatePattern = bindingTemplatePattern.Replace($"{{{token.Key}}}", sqlTokenName);
+                string bindingExpression = $"{{{token.Key}}}";
+                if (bindingTemplatePattern.Contains(bindingExpression))
+                {
+                    string sqlTokenName = $"@{EscapeSqlParameterName(token.Key)}";
+                    paramCollection.Add(new SqlParameter(sqlTokenName, token.Value));
+                    bindingTemplatePattern = bindingTemplatePattern.Replace($"{{{token.Key}}}", sqlTokenName);
+                }
             }
 
             docDbAttribute.SqlQueryParameters = paramCollection;

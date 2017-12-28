@@ -63,7 +63,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
             BindingTemplate bindingTemplate =
                 BindingTemplate.FromString("SELECT * FROM c WHERE c.id = {headers.x-ms-client-principal-name}");
             Dictionary<string, object> bindingData = new Dictionary<string, object>();
-            bindingData.Add("headers", new Dictionary<string, string> { { "x-ms-client-principal-name", "username" } });
+            bindingData.Add("headers", new Dictionary<string, string>
+            {
+                { "x-ms-client-principal-name", "username" },
+                { "x-ms-client-principal-id", "userid" }
+            });
             CosmosDBSqlResolutionPolicy policy = new CosmosDBSqlResolutionPolicy();
 
             // Act
@@ -71,6 +75,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
 
             // Assert
             Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@headers_x_ms_client_principal_name" && p.Value.ToString() == "username");
+            Assert.Single(resolvedAttribute.SqlQueryParameters);
             Assert.Equal("SELECT * FROM c WHERE c.id = @headers_x_ms_client_principal_name", result);
         }
     }
