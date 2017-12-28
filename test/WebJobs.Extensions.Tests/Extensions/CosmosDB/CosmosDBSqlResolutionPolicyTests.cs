@@ -1,7 +1,6 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
@@ -75,7 +74,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
 
             // Assert
             Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@headers_x_ms_client_principal_name" && p.Value.ToString() == "username");
-            Assert.Single(resolvedAttribute.SqlQueryParameters);
+            Assert.Single(resolvedAttribute.SqlQueryParameters); // should not contain more parameters than required
             Assert.Equal("SELECT * FROM c WHERE c.id = @headers_x_ms_client_principal_name", result);
         }
     }
