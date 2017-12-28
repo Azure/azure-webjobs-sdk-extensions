@@ -25,9 +25,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 throw new ArgumentNullException(nameof(bindingData));
             }
-
-            CosmosDBAttribute docDbAttribute = resolvedAttribute as CosmosDBAttribute;
-            if (docDbAttribute == null)
+            
+            if (!(resolvedAttribute is CosmosDBAttribute cosmosDBAttribute))
             {
                 throw new NotSupportedException($"This policy is only supported for {nameof(CosmosDBAttribute)}.");
             }
@@ -36,11 +35,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             SqlParameterCollection paramCollection = new SqlParameterCollection();
 
             string bindingTemplatePattern = bindingTemplate.Pattern;
-
+            
             IDictionary<string, string> expandedTokens = GetExpandedTokens(bindingTemplate, bindingData);
-
-            // also build up a dictionary replacing '{token}' with '@token' 
-            IDictionary<string, string> replacements = new Dictionary<string, string>();
             foreach (var token in expandedTokens)
             {
                 string bindingExpression = $"{{{token.Key}}}";
@@ -52,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 }
             }
 
-            docDbAttribute.SqlQueryParameters = paramCollection;
+            cosmosDBAttribute.SqlQueryParameters = paramCollection;
 
             return bindingTemplatePattern;
         }
