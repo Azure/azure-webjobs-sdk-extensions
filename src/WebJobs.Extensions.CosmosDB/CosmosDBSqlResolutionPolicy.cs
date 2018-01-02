@@ -41,22 +41,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 object tokenObject = bindingData[token];
                 if (tokenObject is string tokenString)
                 {
-                    string sqlToken = GetSqlParameterName(token);
-                    paramCollection.Add(new SqlParameter(sqlToken, tokenString));
-                    replacements.Add(token, sqlToken);
+                    AddParameter(paramCollection, replacements, tokenString, token);
                 }
                 else if (tokenObject is IDictionary<string, string> tokenDictionary)
                 {
-                    IDictionary<string, string> tokens = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    IDictionary<string, object> tokens = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
                     foreach (var item in tokenDictionary)
                     {
-                        string fullToken = $"{token}.{item.Key}";
-                        bool tokenInUse = bindingTemplate.Pattern.Contains(fullToken);
-                        if (tokenInUse)
+                        if (IsTokenInUse(bindingTemplate, token, item.Key))
                         {
-                            string sqlToken = GetSqlParameterName(fullToken);
-                            paramCollection.Add(new SqlParameter(sqlToken, item.Value));
-                            tokens.Add(item.Key, sqlToken);
+                            AddParameter(paramCollection, tokens, item.Value, token, item.Key);
                         }
                     }
                     replacements.Add(token, tokens);
@@ -67,6 +61,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             string replacement = bindingTemplate.Bind(new ReadOnlyDictionary<string, object>(replacements));
             return replacement;
+        }
+
+        private bool IsTokenInUse(BindingTemplate bindingTemplate, string firstTokenNameSegment, string secondTokenNameSegment)
+        {
+            string fullToken = GetFullTokenName(firstTokenNameSegment, secondTokenNameSegment);
+            return bindingTemplate.Pattern.Contains(fullToken);
+        }
+
+        private void AddParameter(SqlParameterCollection paramCollection, IDictionary<string, object> tokens, object sqlParamValue,
+            string firstTokenNameSegment, string secondTokenNameSegment = null)
+        {
+            string fullTokenName = GetFullTokenName(firstTokenNameSegment, secondTokenNameSegment);
+            string tokenName = secondTokenNameSegment ?? firstTokenNameSegment;
+
+            string sqlToken = GetSqlParameterName(fullTokenName);
+            paramCollection.Add(new SqlParameter(sqlToken, sqlParamValue));
+            tokens.Add(tokenName, sqlToken);
+        }
+
+        private string GetFullTokenName(string firstTokenNameSegment, string secondTokenNameSegment)
+        {
+            return string.IsNullOrEmpty(secondTokenNameSegment) ?
+                firstTokenNameSegment :
+                $"{firstTokenNameSegment}.{secondTokenNameSegment}";
         }
 
         private string GetSqlParameterName(string name)
