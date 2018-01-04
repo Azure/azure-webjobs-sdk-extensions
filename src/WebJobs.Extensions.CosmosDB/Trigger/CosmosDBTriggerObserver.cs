@@ -50,14 +50,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
                 if (result.Succeeded)
                 {
+                    // notification processed successfully
                     return;
                 }
 
                 if (retryCount != -1 && retries >= retryCount)
                 {
-                    throw result.Exception;
+                    // Function invocation failed, but no retries are left
+                    return;
                 }
 
+                // Function invocation failed, but retries are left, or infinite retries was specified
                 retries++;
                 continue;
             }
