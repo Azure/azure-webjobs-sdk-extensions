@@ -11,7 +11,6 @@ using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
-using Microsoft.Practices.EnterpriseLibrary.TransientFaultHandling;
 using Newtonsoft.Json;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
@@ -24,17 +23,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly ChangeFeedHostOptions _leaseHostOptions;
         private readonly IReadOnlyDictionary<string, Type> _emptyBindingContract = new Dictionary<string, Type>();
         private readonly IReadOnlyDictionary<string, object> _emptyBindingData = new Dictionary<string, object>();
-        private readonly bool _retryOnFailure;
-        private readonly RetryStrategy _retryStrategy;
+        private readonly int _retryCount;
 
-        public CosmosDBTriggerBinding(ParameterInfo parameter, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, bool retryOnFailure, RetryStrategy retryStrategy)
+        public CosmosDBTriggerBinding(ParameterInfo parameter, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, int retryCount)
         {
             _documentCollectionLocation = documentCollectionLocation;
             _leaseCollectionLocation = leaseCollectionLocation;
             _leaseHostOptions = leaseHostOptions;
             _parameter = parameter;
-            _retryOnFailure = retryOnFailure;
-            _retryStrategy = retryStrategy;
+            _retryCount = retryCount;
         }
 
         /// <summary>
@@ -64,7 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 throw new ArgumentNullException("context", "Missing listener context");
             }
-            return Task.FromResult<IListener>(new CosmosDBTriggerListener(context.Executor, this._documentCollectionLocation, this._leaseCollectionLocation, this._leaseHostOptions, this._retryOnFailure, this._retryStrategy));
+            return Task.FromResult<IListener>(new CosmosDBTriggerListener(context.Executor, this._documentCollectionLocation, this._leaseCollectionLocation, this._leaseHostOptions, this._retryCount));
         }
 
         /// <summary>

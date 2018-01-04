@@ -5,7 +5,6 @@ using System;
 using Microsoft.Azure.Documents.ChangeFeedProcessor;
 using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
-using Microsoft.Practices.EnterpriseLibrary.TransientFaultHandling;
 
 namespace Microsoft.Azure.WebJobs
 {
@@ -92,24 +91,14 @@ namespace Microsoft.Azure.WebJobs
         public int LeasesCollectionThroughput { get; set; }
 
         /// <summary>
-        /// Optional, defaults to false.
-        /// If false, any exception thrown by the function will be ignored and the checkpoint updated.
-        /// If true, throwing an exception from the function will cause a series of retries with back-off.  If those also fail, 
-        /// the Feed Processor will not checkpointed and processing will be halted for the 
-        /// current partition for a brief time, after which any notifications since the last checkpoint will be re-delivered.
-        /// When set to true, the function should implement its own any poison document handling logic in order to prevent an un-processable notification from 
-        /// permanently halting processing of the partition and potentially running up execution costs; this flag is meant to enable guaranteed
-        /// processing of every notification, even in case of a temporary "downstream dependency failure" preventing the function from completing
-        /// successfully.
+        /// Optional, defaults to 0
+        /// Specifies how many times to attempt re-delivery of the change notification to your function if an exception is thrown.
+        /// Setting this to -1 will give "infinite retries" and thus guaranteed notification processing.
+        /// Note that when setting this to -1 or a large value, you may wish to implement your own "poison notification" or dead-letter handling to avoid halting 
+        ///     notification processing in case a single change isn't able to be processed successfully (which could also potentially increase costs when hosted in a 
+        ///     shared environment).
+        /// If you wish to implement a back-off strategy, that should be done inside the function via a delay before throwing your exception (but note the max 5 minutes function execution time).
         /// </summary>
-        public bool RetryOnFailure { get; set; } = false;
-
-        /// <summary>
-        /// Optional, defaults to Incremental.DefaultExponential
-        /// This setting takes effect when RetryOnFailure is set to true (it defaults to false) and controls the local 
-        /// retry strategy used before abandoning the checkpoint.  
-        /// For an example of a custom retry strategy, see https://msdn.microsoft.com/en-us/library/hh680943(v=pandp.50).aspx
-        /// </summary>
-        public RetryStrategy RetryStrategy { get; set; } = Incremental.DefaultExponential;
+        public int RetryCount { get; set; } = 0;
     }
 }

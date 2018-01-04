@@ -10,7 +10,6 @@ using Microsoft.Azure.Documents.ChangeFeedProcessor;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
-using Microsoft.Practices.EnterpriseLibrary.TransientFaultHandling;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
@@ -20,10 +19,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly ChangeFeedEventHost host;
         private readonly DocumentCollectionInfo monitorCollection;
         private readonly DocumentCollectionInfo leaseCollection;
-        private readonly bool retryOnFailure;
-        private readonly RetryStrategy retryStrategy;
+        private readonly int retryCount;
 
-        public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, bool retryOnFailure, RetryStrategy retryStrategy)
+        public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, int retryCount)
         {
             this.executor = executor;
             string hostName = Guid.NewGuid().ToString();
@@ -33,8 +31,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             this.host = new ChangeFeedEventHost(hostName, documentCollectionLocation, leaseCollectionLocation, new ChangeFeedOptions(), leaseHostOptions);
 
-            this.retryOnFailure = retryOnFailure;
-            this.retryStrategy = retryStrategy;
+            this.retryCount = retryCount;
         }
 
         public void Cancel()
@@ -44,7 +41,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public IChangeFeedObserver CreateObserver()
         {
-            return new CosmosDBTriggerObserver(this.executor, this.retryOnFailure, this.retryStrategy);
+            return new CosmosDBTriggerObserver(this.executor, this.retryCount);
         }
 
         public void Dispose()
