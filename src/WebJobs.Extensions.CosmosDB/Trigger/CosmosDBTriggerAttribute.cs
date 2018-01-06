@@ -93,10 +93,10 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Optional, defaults to 0
         /// Specifies how many times to attempt re-delivery of the change notification to your function if an exception is thrown.
-        /// Setting this to -1 will give "infinite retries" and thus guaranteed notification processing.
-        /// Note that when setting this to -1 or a large value, you may wish to implement your own "poison notification" or dead-letter handling to avoid halting 
-        ///     notification processing in case a single change isn't able to be processed successfully (which could also potentially increase costs when hosted in a 
-        ///     shared environment).
+        /// Setting this to -1 will give "infinite retries" and thus guaranteed notification processing, but otherwise should be a positive value.
+        /// Note that when setting this to -1, or a large positive value, you may wish to implement your own "poison notification" or dead-letter handling to avoid halting 
+        ///     notification processing in the case where a change isn't able to be processed successfully (which could also potentially increase costs when hosted in a 
+        ///     shared environment as the function gets retried).
         /// If you wish to implement a back-off strategy, that should be done inside the function via a delay before throwing your exception (but note the max 5 minutes function execution time).
         /// </summary>
         public int RetryCount { get; set; } = 0;

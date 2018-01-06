@@ -54,6 +54,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     return;
                 }
 
+                // note: -1 means "infinite retries", so ignoring the count of retries in that case
                 if (retryCount != -1 && retries >= retryCount)
                 {
                     // Function invocation failed, but no retries are left
