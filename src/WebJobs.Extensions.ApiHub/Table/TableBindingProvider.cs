@@ -49,7 +49,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
 
             ValidateContract(attribute, ConfigContext.NameResolver, context.BindingDataContract);
 
-            return Task.FromResult<IBinding>(binding);
+            return Task.FromResult(binding);
         }
 
         private static void ValidateContract(ApiHubTableAttribute attribute, INameResolver nameResolver, IReadOnlyDictionary<string, Type> contract)

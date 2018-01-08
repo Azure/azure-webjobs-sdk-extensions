@@ -65,13 +65,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
             var parameterType = parameter.ParameterType;
             if (parameterType != typeof(ITableClient))
             {
-                throw new InvalidOperationException(string.Format(
-                    "The attribute {0} indicates a table client binding. " +
-                    "The parameter type must be {1}. " +
-                    "To bind to a table specify the table name. " +
-                    "To bind to an entity specify the table name and the entity identifier.",
-                    typeof(ApiHubTableAttribute).Name,
-                    typeof(ITableClient).FullName));
+                throw new InvalidOperationException($"The attribute {typeof(ApiHubTableAttribute).Name} indicates a table client binding. The parameter type must be {typeof(ITableClient).FullName}. To bind to a table specify the table name. To bind to an entity specify the table name and the entity identifier.");
             }
         }
 
@@ -86,6 +80,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Table
             }
 
             private ParameterInfo Parameter { get; set; }
+
             private TableConfigContext ConfigContext { get; set; }
 
             public Type Type

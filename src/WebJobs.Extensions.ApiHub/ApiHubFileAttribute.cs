@@ -23,9 +23,9 @@ namespace Microsoft.Azure.WebJobs
         /// <param name="access">Type of access requests <seealso cref="FileAccess"/></param>
         public ApiHubFileAttribute(string connectionStringSetting, string path, FileAccess access = FileAccess.Read)
         {
-            this.ConnectionStringSetting = connectionStringSetting;
-            this.Path = path;
-            this.Access = access;
+            ConnectionStringSetting = connectionStringSetting;
+            Path = path;
+            Access = access;
         }
 
         /// <summary>

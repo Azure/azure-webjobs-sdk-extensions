@@ -1,24 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+  <Import Project="..\..\build\common.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions.ApiHub</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.ApiHub</RootNamespace>
-    <Version>3.0.0-alpha5</Version>
-    <Authors>Microsoft - Romain Ehret</Authors>
-    <Company>Microsoft - Sword Group</Company>
-    <Product>Azure WebJobs SDK Extensions</Product>
+    <PackageId>Microsoft.Azure.WebJobs.Extensions.ApiHub</PackageId>
     <Description>This package contains the runtime assemblies for Microsoft.Azure.WebJobs.Extensions. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources.</Description>
-    <Copyright>© .NET Foundation. All rights reserved.</Copyright>
-    <PackageLicenseUrl>http://www.microsoft.com/web/webpi/eula/aspnetcomponent_rtw_enu.htm</PackageLicenseUrl>
-    <PackageIconUrl>https://raw.githubusercontent.com/Azure/azure-webjobs-sdk/dev/webjobs.png</PackageIconUrl>
-    <PackageId>Ehrom.Microsoft.Azure.WebJobs.Extensions.ApiHub</PackageId>
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <RepositoryUrl>https://github.com/EhRom/azure-webjobs-sdk-extensions</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>Conversion to .Net Standard 2.0</PackageReleaseNotes>
-    <PackageTags>icrosoft Azure WebJobs Jobs Extensions ApiHub windowsazure Web</PackageTags>
-    <PackageProjectUrl>http://go.microsoft.com/fwlink/?LinkID=320972</PackageProjectUrl>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -30,7 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ehrom.Microsoft.Azure.ApiHub.Sdk" Version="0.9.0-alpha" />
+    <PackageReference Include="Microsoft.Azure.ApiHub.Sdk" Version="3.0.0-beta4" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions" Version="3.0.0-beta4" />
   </ItemGroup>
 

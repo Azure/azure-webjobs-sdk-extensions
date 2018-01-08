@@ -15,7 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
     /// </summary>
     /// <typeparam name="TAttribute"></typeparam>
     /// <typeparam name="TFile"></typeparam>
-    internal class GenericStreamBindingProvider<TAttribute, TFile> : 
+    internal class GenericStreamBindingProvider<TAttribute, TFile> :
         IBindingProvider, IBindingProvider2
         where TAttribute : Attribute, IFileAttribute
     {
@@ -25,7 +25,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
         public GenericStreamBindingProvider(
             Func<TAttribute, Task<TFile>> strategyBuilder,
-            IConverterManager converterManager, 
+            IConverterManager converterManager,
             TraceWriter trace)
         {
             _strategyBuilder = strategyBuilder;
@@ -51,7 +51,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
 
             return BindDirect(context);
         }
-        
+
         // Called for each instance. 
         // Can be called by the Trigger codepath
         public Task<IBinding> BindDirect(BindingProviderContext context)
@@ -71,7 +71,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub.Common
                 {
                     // Bind to 'out string'
                     binding = new GenericOutStringFileBinding<TAttribute, TFile>(
-                        bindingTemplate, attribute,  _strategyBuilder, _converterManager);
+                        bindingTemplate, attribute, _strategyBuilder, _converterManager);
                 }
                 else
                 {

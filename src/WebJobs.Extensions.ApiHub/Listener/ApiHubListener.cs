@@ -44,35 +44,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
         private TraceWriter _trace;
         private JsonSerializer _serializer;
 
-        public ApiHubListener(
-            ApiHubConfiguration apiHubConfig,
-            JobHostConfiguration config,
-            IFolderItem folder,
-            string functionName,
-            ITriggeredFunctionExecutor executor,
-            TraceWriter trace,
-            ApiHubFileTriggerAttribute attribute)
+        public ApiHubListener(ApiHubConfiguration apiHubConfig, JobHostConfiguration config, IFolderItem folder, string functionName, ITriggeredFunctionExecutor executor, TraceWriter trace, ApiHubFileTriggerAttribute attribute)
         {
-            this._apiHubConfig = apiHubConfig;
-            this._config = config;
-            this._folderSource = folder;
-            this._functionName = functionName;
-            this._executor = executor;
-            this._trace = trace;
-            this._pollIntervalInSeconds = attribute.PollIntervalInSeconds;
-            this._fileWatcherType = attribute.FileWatcherType;
-            this._siteName = this._config.HostId;
-            this._connectionStringSetting = attribute.ConnectionStringSetting;
+            _apiHubConfig = apiHubConfig;
+            _config = config;
+            _folderSource = folder;
+            _functionName = functionName;
+            _executor = executor;
+            _trace = trace;
+            _pollIntervalInSeconds = attribute.PollIntervalInSeconds;
+            _fileWatcherType = attribute.FileWatcherType;
+            _siteName = _config.HostId;
+            _connectionStringSetting = attribute.ConnectionStringSetting;
             _serializer = JsonSerializer.Create();
 
-            CloudQueueClient queueClient = CloudStorageAccount.Parse(this._config.StorageConnectionString).CreateCloudQueueClient();
-            this._poisonQueue = queueClient.GetQueueReference(PoisonQueueName);
+            CloudQueueClient queueClient = CloudStorageAccount.Parse(_config.StorageConnectionString).CreateCloudQueueClient();
+            _poisonQueue = queueClient.GetQueueReference(PoisonQueueName);
         }
 
         public void Cancel()
         {
             // nop.. this is fire and forget
-            Task taskIgnore = this.StopAsync(CancellationToken.None);
+            Task taskIgnore = StopAsync(CancellationToken.None);
         }
 
         public void Dispose()
@@ -86,7 +79,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
             CloudBlobClient blobClient = account.CreateCloudBlobClient();
 
             string apiHubBlobDirectoryPath = string.Format(ApiHubBlobDirectoryPathTemplate, this._siteName);
-            this._apiHubBlobDirectory = blobClient.GetContainerReference(HostContainerName).GetDirectoryReference(apiHubBlobDirectoryPath);
+            _apiHubBlobDirectory = blobClient.GetContainerReference(HostContainerName).GetDirectoryReference(apiHubBlobDirectoryPath);
 
             // Need to start polling from the point where it was left off. if this is the first time then lastPoll will be null.
             var lastPoll = await GetLastPollStatusAsync();
@@ -96,8 +89,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
             if (lastPoll != null)
             {
                 // This is to make sure the trigger connection or path is not updated after the initial setup and if so reset the polling point.
-                if ((lastPoll.Connection == null || string.Compare(lastPoll.Connection, this._connectionStringSetting, true) == 0) &&
-                    (lastPoll.FilePath == null || string.Compare(lastPoll.FilePath, this._folderSource.Path, true) == 0))
+                if ((lastPoll.Connection == null || string.Compare(lastPoll.Connection, _connectionStringSetting, true) == 0) &&
+                    (lastPoll.FilePath == null || string.Compare(lastPoll.FilePath, _folderSource.Path, true) == 0))
                 {
                     Uri.TryCreate(lastPoll.PollUrl, UriKind.Absolute, out nextUri);
                 }
@@ -117,7 +110,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
         private async Task OnFileWatcher(IFileItem file, object obj)
         {
             ApiHubFile apiHubFile = new ApiHubFile(file);
-             
+
             TriggeredFunctionData input = new TriggeredFunctionData
             {
                 TriggerValue = apiHubFile
@@ -149,7 +142,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
 
                 await SetNextPollStatusAsync(status);
             }
-            else 
+            else
             {
                 var status = await GetLastPollStatusAsync();
 
@@ -165,7 +158,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
                 if (status.RetryCount < this._apiHubConfig.MaxFunctionExecutionRetryCount)
                 {
                     status.RetryCount++;
-                    _trace.Error(string.Format("Function {0} failed to successfully process file {1}. Number of retries: {2}. ", _functionName, apiHubFile.Path, status.RetryCount));
+                    _trace.Error($"Function {_functionName} failed to successfully process file {apiHubFile.Path}. Number of retries: {status.RetryCount}.");
 
                     await SetNextPollStatusAsync(status);
                     await OnFileWatcher(file, obj);
@@ -175,7 +168,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
                     // The maximum retries for the function execution has reached. The file info will be added to the poison queue and the next poll status will be updated to skip the file.
                     status.PollUrl = pollStatus;
                     status.RetryCount = 0;
-                    _trace.Error(string.Format("Function {0} failed to successfully process file {1} after max allowed retries of {2}. The file info will be moved to queue {3}.", _functionName, apiHubFile.Path, this._apiHubConfig.MaxFunctionExecutionRetryCount, PoisonQueueName));
+                    _trace.Error($"Function {_functionName} failed to successfully process file {apiHubFile.Path} after max allowed retries of {_apiHubConfig.MaxFunctionExecutionRetryCount}. The file info will be moved to queue {PoisonQueueName}.");
 
                     await MoveToPoisonQueueAsync(apiHubFile);
                     await SetNextPollStatusAsync(status);
@@ -199,8 +192,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
             var fileStatus = new ApiHubFileInfo
             {
                 FilePath = apiHubFile.Path,
-                FunctionName = this._functionName,
-                Connection = this._connectionStringSetting
+                FunctionName = _functionName,
+                Connection = _connectionStringSetting
             };
 
             string content;
@@ -212,39 +205,39 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
 
             var queueMessage = new CloudQueueMessage(content);
 
-            await this._poisonQueue.AddMessageAsync(queueMessage);
+            await _poisonQueue.AddMessageAsync(queueMessage);
         }
 
         private async Task<ApiHubStatus> GetLastPollStatusAsync()
         {
+            ApiHubStatus status;
             try
             {
                 var apiHubBlob = GetBlobReference();
 
                 var statusLine = await apiHubBlob.DownloadTextAsync();
-                ApiHubStatus status;
                 using (StringReader stringReader = new StringReader(statusLine))
                 {
                     status = (ApiHubStatus)_serializer.Deserialize(stringReader, typeof(ApiHubStatus));
                 }
-                return status;
+                
             }
-            catch (StorageException exception)
+            catch (StorageException e)
             {
-                if (exception.RequestInformation == null ||
-                    exception.RequestInformation.HttpStatusCode != 404)
+                if (e.RequestInformation == null ||
+                    e.RequestInformation.HttpStatusCode != 404)
                 {
-                    var errorText = string.Format("Encountered a storage exception while getting the next poll status from the blob storage. Path: {0}, Message: {1} ", this._folderSource.Path, exception.Message);
-                    _trace.Error(errorText);
+                    _trace.Error($"Encountered a storage exception while getting the next poll status from the blob storage. Path: {_folderSource.Path}, Message: {e.Message} ");
                 }
-                return null;
+                status = null;
             }
             catch (Exception e)
             {
-                var errorText = string.Format("Encountered an exception while getting the next poll status from the blob storage. Path: {0}, Message: {1} ", this._folderSource.Path, e.Message);
-                _trace.Error(errorText);
-                return null;
+                _trace.Error($"Encountered an exception while getting the next poll status from the blob storage. Path: {_folderSource.Path}, Message: {e.Message} ");
+                status = null;
             }
+
+            return status;
         }
 
         private async Task SetNextPollStatusAsync(ApiHubStatus status)
@@ -264,8 +257,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
             }
             catch (Exception e)
             {
-                var errorText = string.Format("Encountered an exception while setting the next poll status to the blob storage. Path: {0}, Message: {1} ", this._folderSource.Path, e.Message);
-                _trace.Error(errorText);
+                _trace.Error($"Encountered an exception while setting the next poll status to the blob storage. Path: {_folderSource.Path}, Message: {e.Message}");
             }
         }
 
@@ -273,7 +265,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
         {
             // Path to apiHub blob is:
             // apihubs/{siteName}/{functionName}/status
-            string blobName = string.Format("{0}/status", this._functionName);
+            string blobName = $"{_functionName}/status";
             return this._apiHubBlobDirectory.GetBlockBlobReference(blobName);
         }
 
@@ -290,7 +282,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApiHub
 
         private class ApiHubFileInfo
         {
-            public string FunctionName { get;  set; }
+            public string FunctionName { get; set; }
 
             public string FilePath { get; set; }
 

@@ -23,24 +23,33 @@ namespace Microsoft.Azure.WebJobs
     public class ApiHubConfiguration : IExtensionConfigProvider, IFileTriggerStrategy<ApiHubFile>
     {
         private const int DefaultMaxFunctionExecutionRetryCount = 5;
+
+        private readonly ConnectionFactory connectionFactory;
+
         // Map of saas names (ie, "Dropbox") to their underlying root folder. 
         private Dictionary<string, IFolderItem> _map = new Dictionary<string, IFolderItem>(StringComparer.OrdinalIgnoreCase);
         private ApiHubLogger _logger;
         private INameResolver _nameResolver;
-
-        private int _maxFunctionExecutionRetryCount = DefaultMaxFunctionExecutionRetryCount;
         
+        private int _maxFunctionExecutionRetryCount = DefaultMaxFunctionExecutionRetryCount;
+
+        /// <summary>
+        /// Creates a new instance of this class.
+        /// </summary>
+        /// <remarks>This an explicite parameterless constructor.</remarks>
+        public ApiHubConfiguration()
+            : this(null)
+        { }
+
         /// <summary>
         /// Creates a new instance of this class.
         /// </summary>
         /// <param name="connectionFactory">The factory used to create connections</param>
-        public ApiHubConfiguration(ConnectionFactory connectionFactory = null)
+        public ApiHubConfiguration(ConnectionFactory connectionFactory)
         {
-            ConnectionFactory = connectionFactory ?? ConnectionFactory.Default;
+            this.connectionFactory = connectionFactory ?? ConnectionFactory.Default;
         }
-
-        private ConnectionFactory ConnectionFactory { get; set; }
-
+        
         /// <summary>
         /// Gets or sets the logger.
         /// </summary>
@@ -49,17 +58,7 @@ namespace Microsoft.Azure.WebJobs
         /// </value>
         public TraceWriter Logger
         {
-            get
-            {
-                if (_logger != null)
-                {
-                    return _logger.TraceWriter;
-                }
-                else
-                {
-                    return null;
-                }
-            }
+            get { return _logger == null ? null : _logger.TraceWriter; }
             set
             {
                 if (value != null)
@@ -101,19 +100,13 @@ namespace Microsoft.Azure.WebJobs
             var converterManager = config.GetService<IConverterManager>();
             _nameResolver = config.GetService<INameResolver>();
 
-            var bindingProvider = new GenericStreamBindingProvider<ApiHubFileAttribute, ApiHubFile>(
-                BuildFromAttribute, converterManager, context.Trace);
+            var bindingProvider = new GenericStreamBindingProvider<ApiHubFileAttribute, ApiHubFile>(BuildFromAttribute, converterManager, context.Trace);
             extensions.RegisterExtension<IBindingProvider>(bindingProvider);
 
-            var triggerBindingProvider = new GenericFileTriggerBindingProvider<ApiHubFileTriggerAttribute, ApiHubFile>(
-                BuildListener, config, bindingProvider, this, context.Trace);
+            var triggerBindingProvider = new GenericFileTriggerBindingProvider<ApiHubFileTriggerAttribute, ApiHubFile>(BuildListener, config, bindingProvider, this, context.Trace);
             extensions.RegisterExtension<ITriggerBindingProvider>(triggerBindingProvider);
 
-            extensions.RegisterExtension<IBindingProvider>(
-                new TableBindingProvider(
-                    new TableConfigContext(
-                        ConnectionFactory, 
-                        _nameResolver)));
+            extensions.RegisterExtension<IBindingProvider>(new TableBindingProvider(new TableConfigContext(connectionFactory, _nameResolver)));
         }
 
         private Task<IListener> BuildListener(JobHostConfiguration config, ApiHubFileTriggerAttribute attribute, string functionName, ITriggeredFunctionExecutor executor, TraceWriter trace)
