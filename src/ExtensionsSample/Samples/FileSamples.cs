@@ -5,9 +5,6 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions;
-using Microsoft.Azure.WebJobs.Extensions.Timers;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace ExtensionsSample
@@ -26,13 +23,6 @@ namespace ExtensionsSample
             file.Close();
 
             log.WriteLine(string.Format("Processed input file '{0}'!", name));
-        }
-
-        public static void ImportFileErrorHandler(
-            [ErrorTrigger] TraceEvent error, string message, TextWriter log)
-        {
-            // Here you could send an error notification
-            log.WriteLine(string.Format("{0} : {1}", message, error.ToString()));
         }
 
         // When files are created or modified in the "cache" directory, this job will be triggered.

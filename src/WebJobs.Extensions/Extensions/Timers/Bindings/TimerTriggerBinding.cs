@@ -6,11 +6,11 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Listeners;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 {
@@ -20,17 +20,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
         private readonly TimerTriggerAttribute _attribute;
         private readonly TimerSchedule _schedule;
         private readonly TimersConfiguration _config;
-        private readonly TraceWriter _trace;
+        private readonly ILogger _logger;
         private IReadOnlyDictionary<string, Type> _bindingContract;
         private string _timerName;
 
-        public TimerTriggerBinding(ParameterInfo parameter, TimerTriggerAttribute attribute, TimerSchedule schedule, TimersConfiguration config, TraceWriter trace)
+        public TimerTriggerBinding(ParameterInfo parameter, TimerTriggerAttribute attribute, TimerSchedule schedule, TimersConfiguration config, ILogger logger)
         {
             _attribute = attribute;
             _schedule = schedule;
             _parameter = parameter;
             _config = config;
-            _trace = trace;
+            _logger = logger;
             _bindingContract = CreateBindingDataContract();
 
             MethodInfo methodInfo = (MethodInfo)parameter.Member;
@@ -75,7 +75,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             {
                 throw new ArgumentNullException("context");
             }
-            return Task.FromResult<IListener>(new TimerListener(_attribute, _schedule, _timerName, _config, context.Executor, _trace));
+            return Task.FromResult<IListener>(new TimerListener(_attribute, _schedule, _timerName, _config, context.Executor, _logger));
         }
 
         public ParameterDescriptor ToParameterDescriptor()

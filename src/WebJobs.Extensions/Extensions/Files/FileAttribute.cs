@@ -80,6 +80,7 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Gets the file path.
         /// </summary>
+        [AutoResolve]
         public string Path { get; private set; }
 
         /// <summary>

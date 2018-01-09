@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Extensions.Core;
 using Microsoft.Azure.WebJobs.Host.Config;
 
@@ -42,8 +41,7 @@ namespace Microsoft.Azure.WebJobs
                 }
 
                 context.Config.RegisterBindingExtensions(
-                    new ExecutionContextBindingProvider(this),
-                    new ErrorTriggerAttributeBindingProvider(context.Config));
+                    new ExecutionContextBindingProvider(this));
             }
         }
     }

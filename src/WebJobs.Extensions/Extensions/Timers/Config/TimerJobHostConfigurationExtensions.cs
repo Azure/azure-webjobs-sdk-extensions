@@ -5,6 +5,8 @@ using System;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Microsoft.Azure.WebJobs.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs
 {
@@ -57,12 +59,14 @@ namespace Microsoft.Azure.WebJobs
                     throw new ArgumentNullException("context");
                 }
 
+                ILogger logger = context.Config.LoggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Timer"));
+
                 if (_config.ScheduleMonitor == null)
                 {
-                    _config.ScheduleMonitor = new StorageScheduleMonitor(context.Config, context.Trace);
+                    _config.ScheduleMonitor = new StorageScheduleMonitor(context.Config, logger);
                 }
 
-                context.Config.RegisterBindingExtension(new TimerTriggerAttributeBindingProvider(_config, context.Config.NameResolver, context.Trace));
+                context.Config.RegisterBindingExtension(new TimerTriggerAttributeBindingProvider(_config, context.Config.NameResolver, logger));
             }
         }
     }
