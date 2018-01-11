@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions.ApiHub</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.ApiHub</RootNamespace>
-    <PackageId>Microsoft.Azure.WebJobs.Extensions.ApiHub</PackageId>
+    <PackageId>Temp.Microsoft.Azure.WebJobs.Extensions.ApiHub</PackageId>
     <Description>This package contains the runtime assemblies for Microsoft.Azure.WebJobs.Extensions. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources.</Description>
   </PropertyGroup>
 
