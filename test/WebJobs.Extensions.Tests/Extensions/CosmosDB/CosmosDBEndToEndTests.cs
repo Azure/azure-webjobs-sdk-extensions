@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
@@ -13,6 +12,7 @@ using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Indexers;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
@@ -28,6 +28,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         private const string AttributeConnStr = "AccountEndpoint=https://attribute;AccountKey=YXR0cmlidXRl;";
         private const string ConfigConnStr = "AccountEndpoint=https://config;AccountKey=Y29uZmln;";
         private const string DefaultConnStr = "AccountEndpoint=https://default;AccountKey=ZGVmYXVsdA==;";
+
+        private readonly ILoggerFactory _loggerFactory = new LoggerFactory();
+        private readonly TestLoggerProvider _loggerProvider = new TestLoggerProvider();
+
+        public CosmosDBEndToEndTests()
+        {
+            _loggerFactory.AddProvider(_loggerProvider);
+        }
 
         [Fact]
         public async Task OutputBindings()
@@ -51,15 +59,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
                 .Setup(f => f.CreateService(ConfigConnStr))
                 .Returns(serviceMock.Object);
 
-            var testTrace = new TestTraceWriter(TraceLevel.Warning);
-
             //Act
-            await RunTestAsync("Outputs", factoryMock.Object, testTrace);
+            await RunTestAsync("Outputs", factoryMock.Object);
 
             // Assert
             factoryMock.Verify(f => f.CreateService(ConfigConnStr), Times.Once());
             serviceMock.Verify(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()), Times.Exactly(8));
-            Assert.Equal("Outputs", testTrace.Events.Single().Message);
+            Assert.Equal("Outputs", _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
         }
 
         [Fact]
@@ -71,15 +77,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
                 .Setup(f => f.CreateService(DefaultConnStr))
                 .Returns<string>(connectionString => new CosmosDBService(connectionString));
 
-            var testTrace = new TestTraceWriter(TraceLevel.Warning);
-
             // Act
             // Also verify that this falls back to the default by setting the config connection string to null
-            await RunTestAsync("Client", factoryMock.Object, testTrace, configConnectionString: null);
+            await RunTestAsync("Client", factoryMock.Object, configConnectionString: null);
 
             //Assert
             factoryMock.Verify(f => f.CreateService(DefaultConnStr), Times.Once());
-            Assert.Equal("Client", testTrace.Events.Single().Message);
+            Assert.Equal("Client", _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
         }
 
         [Fact]
@@ -162,15 +166,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
                 .Setup(f => f.CreateService(It.IsAny<string>()))
                 .Returns(serviceMock.Object);
 
-            var testTrace = new TestTraceWriter(TraceLevel.Warning);
-
             // Act
-            await RunTestAsync(nameof(CosmosDBEndToEndFunctions.Inputs), factoryMock.Object, testTrace, item1Id);
+            await RunTestAsync(nameof(CosmosDBEndToEndFunctions.Inputs), factoryMock.Object, item1Id);
 
             // Assert
             factoryMock.Verify(f => f.CreateService(It.IsAny<string>()), Times.Once());
-            Assert.Single(testTrace.Events);
-            Assert.Equal("Inputs", testTrace.Events[0].Message);
+            Assert.Equal("Inputs", _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
             serviceMock.VerifyAll();
         }
 
@@ -196,15 +197,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
 
             var jobject = JObject.FromObject(new QueueData { DocumentId = "docid1", PartitionKey = "partkey1" });
 
-            var testTrace = new TestTraceWriter(TraceLevel.Warning);
-
             // Act
-            await RunTestAsync(nameof(CosmosDBEndToEndFunctions.TriggerObject), factoryMock.Object, testTrace, jobject.ToString());
+            await RunTestAsync(nameof(CosmosDBEndToEndFunctions.TriggerObject), factoryMock.Object, jobject.ToString());
 
             // Assert
             factoryMock.Verify(f => f.CreateService(AttributeConnStr), Times.Once());
-            Assert.Single(testTrace.Events);
-            Assert.Equal("TriggerObject", testTrace.Events[0].Message);
+            Assert.Equal("TriggerObject", _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
         }
 
         [Fact]
@@ -212,7 +210,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         {
             // Act
             var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
-                () => RunTestAsync(typeof(CosmosDBNoConnectionStringFunctions), "Broken", new DefaultCosmosDBServiceFactory(), new TestTraceWriter(), configConnectionString: null, includeDefaultConnectionString: false));
+                () => RunTestAsync(typeof(CosmosDBNoConnectionStringFunctions), "Broken", new DefaultCosmosDBServiceFactory(), configConnectionString: null, includeDefaultConnectionString: false));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex.InnerException);
@@ -225,7 +223,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
 
             // Act
             var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
-                () => RunTestAsync(typeof(CosmosDBInvalidEnumerableBindingFunctions), "BrokenEnumerable", new DefaultCosmosDBServiceFactory(), new TestTraceWriter()));
+                () => RunTestAsync(typeof(CosmosDBInvalidEnumerableBindingFunctions), "BrokenEnumerable", new DefaultCosmosDBServiceFactory()));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex.InnerException);
@@ -239,27 +237,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
 
             // Act
             var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
-                () => RunTestAsync(typeof(CosmosDBInvalidItemBindingFunctions), "BrokenItem", new DefaultCosmosDBServiceFactory(), new TestTraceWriter()));
+                () => RunTestAsync(typeof(CosmosDBInvalidItemBindingFunctions), "BrokenItem", new DefaultCosmosDBServiceFactory()));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex.InnerException);
             Assert.Equal("'Id' is required when binding to a JObject property.", ex.InnerException.Message);
         }
 
-        private Task RunTestAsync(string testName, ICosmosDBServiceFactory factory, TraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr)
+        private Task RunTestAsync(string testName, ICosmosDBServiceFactory factory, object argument = null, string configConnectionString = ConfigConnStr)
         {
-            return RunTestAsync(typeof(CosmosDBEndToEndFunctions), testName, factory, testTrace, argument, configConnectionString);
+            return RunTestAsync(typeof(CosmosDBEndToEndFunctions), testName, factory, argument, configConnectionString);
         }
 
-        private async Task RunTestAsync(Type testType, string testName, ICosmosDBServiceFactory factory, TraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr, bool includeDefaultConnectionString = true)
+        private async Task RunTestAsync(Type testType, string testName, ICosmosDBServiceFactory factory, object argument = null, string configConnectionString = ConfigConnStr, bool includeDefaultConnectionString = true)
         {
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
             JobHostConfiguration config = new JobHostConfiguration
             {
                 TypeLocator = locator,
+                LoggerFactory = _loggerFactory
             };
-
-            config.Tracing.Tracers.Add(testTrace);
 
             var arguments = new Dictionary<string, object>
             {

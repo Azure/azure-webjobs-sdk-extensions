@@ -36,8 +36,8 @@ namespace Microsoft.Azure.WebJobs
                     new SampleAttributeBindingProvider(),
                     new SampleTriggerAttributeBindingProvider());
 
-                IConverterManager converterManager = context.Config.GetService<IConverterManager>();
-                converterManager.AddConverter<CloudTable, Table<OpenType>, TableAttribute>(typeof(CustomTableBindingConverter<>));
+                context.AddBindingRule< TableAttribute>().
+                    AddOpenConverter<CloudTable, Table<OpenType>>(typeof(CustomTableBindingConverter<>));
             }
         }
 

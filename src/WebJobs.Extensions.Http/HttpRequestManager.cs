@@ -7,7 +7,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Http
 {
@@ -23,10 +23,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         /// </summary>
         /// <param name="httpConfiguration">The <see cref="HttpExtensionConfiguration"/>.</param>
         /// <param name="traceWriter">The <see cref="TraceWriter"/> to use.</param>
-        public HttpRequestManager(HttpExtensionConfiguration httpConfiguration, TraceWriter traceWriter)
+        public HttpRequestManager(HttpExtensionConfiguration httpConfiguration, ILoggerFactory loggerFactory)
         {
             Config = httpConfiguration;
-            TraceWriter = traceWriter;
+            Logger = loggerFactory?.CreateLogger("Host.Extensions.HttpRequestManager");
 
             if (Config.MaxOutstandingRequests != DataflowBlockOptions.Unbounded ||
                 Config.MaxConcurrentRequests != DataflowBlockOptions.Unbounded)
@@ -41,9 +41,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         protected HttpExtensionConfiguration Config { get; }
 
         /// <summary>
-        /// Gets the <see cref="TraceWriter"/>.
+        /// Gets the <see cref="ILogger"/>.
         /// </summary>
-        protected TraceWriter TraceWriter { get; }
+        protected ILogger Logger { get; }
 
         /// <summary>
         /// Processes the specified request.
@@ -76,7 +76,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 }
                 else
                 {
-                    TraceWriter.Info($"Http request queue limit of {Config.MaxOutstandingRequests} has been exceeded.");
+                    Logger?.LogInformation($"Http request queue limit of {Config.MaxOutstandingRequests} has been exceeded.");
                     return RejectRequest(request);
                 }
             }

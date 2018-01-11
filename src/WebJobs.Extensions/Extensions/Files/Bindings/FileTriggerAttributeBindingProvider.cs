@@ -9,29 +9,21 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Bindings;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Microsoft.Azure.WebJobs.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
     internal class FileTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
         private readonly FilesConfiguration _config;
-        private readonly TraceWriter _trace;
+        private readonly ILogger _logger;
 
-        public FileTriggerAttributeBindingProvider(FilesConfiguration config, TraceWriter trace)
+        public FileTriggerAttributeBindingProvider(FilesConfiguration config, ILoggerFactory loggerFactory)
         {
-            if (config == null)
-            {
-                throw new ArgumentNullException("config");
-            }
-            if (trace == null)
-            {
-                throw new ArgumentNullException("trace");
-            }
-
-            _config = config;
-            _trace = trace;
+            _config = config ?? throw new ArgumentNullException("config");
+            _logger = loggerFactory?.CreateLogger(LogCategories.CreateTriggerCategory("File"));
         }
 
         /// <inheritdoc/>
@@ -54,11 +46,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 .Union(new Type[] { typeof(FileStream), typeof(FileSystemEventArgs), typeof(FileInfo) });
             if (!ValueBinder.MatchParameterType(context.Parameter, types))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 
+                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture,
                     "Can't bind FileTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            return Task.FromResult<ITriggerBinding>(new FileTriggerBinding(_config, parameter, _trace));
+            return Task.FromResult<ITriggerBinding>(new FileTriggerBinding(_config, parameter, _logger));
         }
     }
 }

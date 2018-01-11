@@ -4,7 +4,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json;
@@ -19,18 +19,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         private const string HostContainerName = "azure-webjobs-hosts";
         private readonly JobHostConfiguration _hostConfig;
         private readonly JsonSerializer _serializer;
+        private readonly ILogger _logger;
         private CloudBlobDirectory _timerStatusDirectory;
-        private TraceWriter _trace;
 
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
         /// <param name="hostConfig">The <see cref="JobHostConfiguration"/>.</param>
-        /// <param name="trace">The <see cref="TraceWriter"/>.</param>
-        public StorageScheduleMonitor(JobHostConfiguration hostConfig, TraceWriter trace)
+        /// <param name="logger">The <see cref="ILogger"/>.</param>
+        public StorageScheduleMonitor(JobHostConfiguration hostConfig, ILogger logger)
         {
             _hostConfig = hostConfig;
-            _trace = trace;
+            _logger = logger;
 
             JsonSerializerSettings settings = new JsonSerializerSettings
             {
@@ -55,10 +55,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                         throw new InvalidOperationException("Unable to determine host ID.");
                     }
 
-                    CloudStorageAccount storageAccount = CloudStorageAccount.Parse(_hostConfig.StorageConnectionString);
-                    CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
+                    CloudBlobContainer container;
+                    var storage = _hostConfig.InternalStorageConfiguration;
+                    if (storage != null && storage.InternalContainer != null)
+                    {
+                        container = storage.InternalContainer;
+                    }
+                    else
+                    {
+                        CloudStorageAccount storageAccount = CloudStorageAccount.Parse(_hostConfig.StorageConnectionString);
+                        CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
+                        container = blobClient.GetContainerReference(HostContainerName);
+                    }
                     string timerStatusDirectoryPath = string.Format("timers/{0}", _hostConfig.HostId);
-                    _timerStatusDirectory = blobClient.GetContainerReference(HostContainerName).GetDirectoryReference(timerStatusDirectoryPath);
+                    _timerStatusDirectory = container.GetDirectoryReference(timerStatusDirectoryPath);
                 }
                 return _timerStatusDirectory;
             }
@@ -109,7 +119,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             catch (Exception ex)
             {
                 // best effort
-                _trace.Error(string.Format("Function '{0}' failed to update the timer trigger status.", timerName), ex);
+                _logger.LogError(ex, $"Function '{timerName}' failed to update the timer trigger status.");
             }
         }
 

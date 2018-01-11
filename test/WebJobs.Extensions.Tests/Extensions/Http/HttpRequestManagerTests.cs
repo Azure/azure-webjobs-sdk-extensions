@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -11,18 +10,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
-using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Extensions.Logging;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 {
     public class HttpRequestManagerTests
     {
-        private TestTraceWriter _traceWriter;
+        private readonly ILoggerFactory _loggerFactory = new LoggerFactory();
+        private readonly TestLoggerProvider _loggerProvider = new TestLoggerProvider();
 
         public HttpRequestManagerTests()
         {
-            _traceWriter = new TestTraceWriter(TraceLevel.Verbose);
+            _loggerFactory.AddProvider(_loggerProvider);
         }
 
         [Fact]
@@ -38,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 MaxOutstandingRequests = 10,
                 MaxConcurrentRequests = 5
             };
-            var manager = new HttpRequestManager(config, _traceWriter);
+            var manager = new HttpRequestManager(config, _loggerFactory);
 
             var resultEx = await Assert.ThrowsAsync<Exception>(async () =>
             {
@@ -57,7 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 return Task.FromResult(response);
             };
             var config = new HttpExtensionConfiguration();
-            var manager = new HttpRequestManager(config, _traceWriter);
+            var manager = new HttpRequestManager(config, _loggerFactory);
 
             var request = new HttpRequestMessage();
             var result = await manager.ProcessRequestAsync(request, process, CancellationToken.None);
@@ -86,7 +86,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             {
                 MaxConcurrentRequests = maxParallelism
             };
-            var manager = new HttpRequestManager(config, _traceWriter);
+            var manager = new HttpRequestManager(config, _loggerFactory);
 
             // expect all requests to succeed
             var tasks = new List<Task<HttpResponseMessage>>();
@@ -113,7 +113,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 MaxOutstandingRequests = maxQueueLength,
                 MaxConcurrentRequests = 1
             };
-            var manager = new HttpRequestManager(config, _traceWriter);
+            var manager = new HttpRequestManager(config, _loggerFactory);
 
             // expect requests past the threshold to be rejected
             var tasks = new List<Task<HttpResponseMessage>>();
@@ -128,8 +128,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             int rejectCount = 25 - countSuccess;
             Assert.Equal(rejectCount, tasks.Count(p => p.Result.StatusCode == (HttpStatusCode)429));
 
-            Assert.Equal(rejectCount, _traceWriter.Events.Count);
-            Assert.True(_traceWriter.Events.All(p => string.Compare("Http request queue limit of 10 has been exceeded.", p.Message) == 0));
+            IEnumerable<LogMessage> logMessages = _loggerProvider.GetAllLogMessages();
+            Assert.Equal(rejectCount, logMessages.Count());
+            Assert.True(logMessages.All(p => string.Compare("Http request queue limit of 10 has been exceeded.", p.FormattedMessage) == 0));
 
             // send a number of requests not exceeding the limit
             // expect all to succeed
@@ -158,7 +159,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 await Task.Delay(100);
                 return new HttpResponseMessage(HttpStatusCode.OK);
             };
-            var manager = new TestHttpRequestManager(config, _traceWriter, rejectAllRequests);
+            var manager = new TestHttpRequestManager(config, rejectAllRequests);
 
             var tasks = new List<Task<HttpResponseMessage>>();
             for (int i = 0; i < 10; i++)
@@ -195,7 +196,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             {
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
             };
-            var manager = new TestHttpRequestManager(config, _traceWriter, rejectAllRequests, rejectRequest);
+            var manager = new TestHttpRequestManager(config, rejectAllRequests, rejectRequest);
 
             var request = new HttpRequestMessage();
             var response = await manager.ProcessRequestAsync(request, process, CancellationToken.None);
@@ -209,7 +210,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             private readonly Func<bool> _rejectAllRequests;
             private readonly Func<HttpRequestMessage, HttpResponseMessage> _rejectRequest;
 
-            public TestHttpRequestManager(HttpExtensionConfiguration config, TraceWriter traceWriter, Func<bool> rejectAllRequests = null, Func<HttpRequestMessage, HttpResponseMessage> rejectRequest = null) : base(config, traceWriter)
+            public TestHttpRequestManager(HttpExtensionConfiguration config, Func<bool> rejectAllRequests = null, Func<HttpRequestMessage, HttpResponseMessage> rejectRequest = null)
+                : base(config, null)
             {
                 _rejectAllRequests = rejectAllRequests;
                 _rejectRequest = rejectRequest;
