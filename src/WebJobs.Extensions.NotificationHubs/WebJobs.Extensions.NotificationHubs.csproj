@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\build\common.props" />
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.NotificationHubs</AssemblyName>
+    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.NotificationHubs</RootNamespace>
+    <PackageId>Microsoft.Azure.WebJobs.Extensions.NotificationHubs</PackageId>
+    <Description>This package contains the runtime assemblies for Microsoft.Azure.WebJobs.Extensions. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources.</Description>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>bin\Debug\netstandard2.0\Microsoft.Azure.WebJobs.Extensions.NotificationHubs.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>bin\Release\netstandard2.0\Microsoft.Azure.WebJobs.Extensions.NotificationHubs.xml</DocumentationFile>
+  </PropertyGroup>
+</Project>
