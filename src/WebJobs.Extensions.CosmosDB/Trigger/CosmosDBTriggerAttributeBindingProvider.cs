@@ -110,7 +110,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             // -1 is allowed and indicates "infinite retries", but other negative values are not valid
             if (attribute.RetryCount < -1)
             {
-                throw new InvalidOperationException(string.Format("RetryCount value {0} is not valid, value must be either positive, or -1 for 'infinite retries'", attribute.RetryCount));
+                throw new InvalidOperationException($"{nameof(attribute.RetryCount)} value {attribute.RetryCount} is not valid. Value must be zero, positive, or -1 for infinite retries.");
             }
 
             return new CosmosDBTriggerBinding(parameter, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions, attribute.RetryCount);
