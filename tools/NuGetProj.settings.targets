@@ -4,15 +4,15 @@
     <WebJobsRootPath>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\'))</WebJobsRootPath>
     <WebJobsToolsPath>$(MSBuildThisFileDirectory)</WebJobsToolsPath>
     <WebJobsPackageEULA>http://www.microsoft.com/web/webpi/eula/aspnetcomponent_rtw_enu.htm</WebJobsPackageEULA>
-    <Version>2.1.0</Version>
-    <MobileAppsVersion>1.1.0</MobileAppsVersion>
-    <DocDBVersion>1.1.0</DocDBVersion>
-    <NotificationHubsVersion>1.1.0</NotificationHubsVersion>
-    <TwilioVersion>1.1.0</TwilioVersion>
+    <Version>2.2.0</Version>
+    <MobileAppsVersion>1.2.0</MobileAppsVersion>
+    <DocDBVersion>1.2.0</DocDBVersion>
+    <NotificationHubsVersion>1.2.0</NotificationHubsVersion>
+    <TwilioVersion>1.2.0</TwilioVersion>
     <ApiHubsVersion>1.0.0</ApiHubsVersion>
-    <HttpVersion>1.0.0</HttpVersion>
-    <ApiHubsPrereleaseTag>-beta7</ApiHubsPrereleaseTag>
-    <PrereleaseTag></PrereleaseTag>
+    <HttpVersion>1.1.0</HttpVersion>
+    <ApiHubsPrereleaseTag>-beta1</ApiHubsPrereleaseTag>
+    <PrereleaseTag>-beta1</PrereleaseTag>
   </PropertyGroup>
   <Choose>
     <When Condition=" '$(IncludeBuildNumberInVersion)' == '1'">
