@@ -11,7 +11,7 @@
     <TwilioVersion>1.1.0</TwilioVersion>
     <ApiHubsVersion>1.0.0</ApiHubsVersion>
     <HttpVersion>1.0.0</HttpVersion>
-    <ApiHubsPrereleaseTag>-beta6</ApiHubsPrereleaseTag>
+    <ApiHubsPrereleaseTag>-beta7</ApiHubsPrereleaseTag>
     <PrereleaseTag></PrereleaseTag>
   </PropertyGroup>
   <Choose>
