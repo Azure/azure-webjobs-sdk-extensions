@@ -75,7 +75,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             string fullTokenName = GetFullTokenName(firstTokenNameSegment, secondTokenNameSegment);
             string tokenName = secondTokenNameSegment ?? firstTokenNameSegment;
 
-            string sqlToken = GetSqlParameterName(fullTokenName);
+            bool needsEscaping = !string.IsNullOrEmpty(secondTokenNameSegment);
+            string sqlToken = "@" + (needsEscaping ? EscapeSqlParameterName(fullTokenName) : fullTokenName);
+
             paramCollection.Add(new SqlParameter(sqlToken, sqlParamValue));
             tokens.Add(tokenName, sqlToken);
         }
@@ -87,10 +89,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 $"{firstTokenNameSegment}.{secondTokenNameSegment}";
         }
 
-        private string GetSqlParameterName(string name)
+        private string EscapeSqlParameterName(string name)
         {
-            const string safeSeparator = "_";
-            return "@" + name.Replace(".", safeSeparator).Replace("-", safeSeparator);
+            return Guid.NewGuid().ToString("N");
         }
     }
 }

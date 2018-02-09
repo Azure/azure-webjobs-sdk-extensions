@@ -6,6 +6,7 @@ using System.Reflection;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 using Xunit;
+using System.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
 {
@@ -74,10 +75,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
             string result = policy.TemplateBind(propInfo, resolvedAttribute, bindingTemplate, bindingData);
 
             // Assert
-            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@headers_x_ms_client_principal_name" && p.Value.ToString() == "username");
-            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@id" && p.Value.ToString() == "foo");
+            var nameParameter = resolvedAttribute.SqlQueryParameters.Single(p => p.Value.ToString() == "username");
+            var idParameter = resolvedAttribute.SqlQueryParameters.Single(p => p.Value.ToString() == "foo");
             Assert.Equal(2, resolvedAttribute.SqlQueryParameters.Count); // should not contain more parameters than required
-            Assert.Equal("SELECT * FROM c WHERE c.id = @id and c.userId = @headers_x_ms_client_principal_name", result);
+            Assert.Equal($"SELECT * FROM c WHERE c.id = {idParameter.Name} and c.userId = {nameParameter.Name}", result);
         }
     }
 }
