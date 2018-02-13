@@ -5,7 +5,9 @@
 |master|[![Build status](https://ci.appveyor.com/api/projects/status/5mqrok4j3l89cnvx/branch/master?svg=true)](https://ci.appveyor.com/project/appsvc/azure-webjobs-sdk-extensions/branch/master)|
 
 
-This repo contains binding extensions for the **Azure WebJobs SDK**. See the [Azure WebJobs SDK repo](https://github.com/Azure/azure-webjobs-sdk) for more information. The binding extensions in this repo are available as the **Microsoft.Azure.WebJobs.Extensions** [nuget package](http://www.nuget.org/packages/Microsoft.Azure.WebJobs.Extensions). **Note**: some of the extensions in this repo (like SendGrid, etc.) live in their own separate nuget packages following a standard naming scheme (e.g. Microsoft.Azure.WebJobs.Extensions.SendGrid). Also note that some of the features discussed here or in the wiki may still be in **pre-release**. To access those features you may need to pull the very latest pre-release packages from our "nightlies" package feed ([instructions here](https://github.com/Azure/azure-webjobs-sdk/wiki/%22Nightly%22-Builds)).
+This repo contains binding extensions for the **Azure WebJobs SDK**, which support both [Azure Functions](https://docs.microsoft.com/azure/azure-functions/functions-overview) and [Azure Web Jobs](https://docs.microsoft.com/azure/app-service/web-sites-create-web-jobs). See the [Azure WebJobs SDK repo](https://github.com/Azure/azure-webjobs-sdk) for more information. The binding extensions in this repo are available as the **Microsoft.Azure.WebJobs.Extensions** [NuGet package](http://www.nuget.org/packages/Microsoft.Azure.WebJobs.Extensions).
+
+>**Note**: some of the extensions in this repo (like SendGrid, etc.) live in their own separate NuGet packages, following a standard naming scheme (e.g. Microsoft.Azure.WebJobs.Extensions.SendGrid). Also note that some of the features discussed here or in the wiki may still be in **pre-release**. To access those features you may need to pull the very latest pre-release packages from our "nightlies" package feed ([instructions here](https://github.com/Azure/azure-webjobs-sdk/wiki/%22Nightly%22-Builds)).
 
 The [wiki](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki) contains information on how to **author your own binding extensions**. See the [Binding Extensions Overview](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Binding-Extensions-Overview) for more details. A [sample project](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Program.cs) is also provided that demonstrates the bindings in action.
 
@@ -27,7 +29,7 @@ host.RunAndBlock();
 ```
 
 ## Other Extension Repositories
-Not all extensions for webjobs live here. Over time we expect them to move towards having their own ship cycle and repository. You can find other Azure owned extensions using [this github query](https://github.com/Azure?utf8=✓&q=functions%20extension). Right now there are:
+Not all extensions for WebJobs live here. Over time we expect them to move towards having their own ship cycle and repository. You can find other Azure owned extensions using [this github query](https://github.com/Azure?utf8=✓&q=functions%20extension). Right now there are:
 - https://github.com/Azure/azure-functions-durable-extension
 - https://github.com/Azure/azure-functions-eventing-extension
 - https://github.com/Azure/azure-functions-iothub-extension
@@ -236,13 +238,13 @@ public static void MobileTableSample(
     }
 }
 ```
-### DocumentDB
+### Azure Cosmos DB
 
-Use an [Azure DocumentDB](https://azure.microsoft.com/en-us/services/documentdb/) binding to easily create, read, and update JSON documents from a WebJob. This extension lives in **Microsoft.Azure.WebJobs.Extensions.DocumentDB** nuget package. To configure the binding, add the DocumentDB connection string as an app setting or environment variable using the setting name `AzureWebJobsDocumentDBConnectionString`.
+Use an [Azure Cosmos DB](https://azure.microsoft.com/services/cosmos-db) binding to easily create, read, and update JSON documents from a WebJob. This extension lives in **Microsoft.Azure.WebJobs.Extensions.DocumentDB** nuget package. Future versions of this package are renamed to **Microsoft.Azure.WebJobs.Extensions.CosmosDB**. To configure the binding, add the Azure Cosmos DB connection string as an app setting or environment variable using the setting name `AzureWebJobsDocumentDBConnectionString`.
 
-By default, the collection and database must exist before the binding runs or it will throw an Exception. You can configure the binding to automatically create your datatabase and collection by setting `CreateIfNotExists` to true. This property only applies to `out` parameters. For input (lookup) scenarios, if the database or collection do not exist, the parameter is returned as `null`. To define a partition key for automatically-created collections, set the `PartitionKey` property. To control the throughput of the collection, set the `CollectionThroughput` property. For more information on partition keys and throughput, see [Partitioning and scaling in Azure DocumentDB](https://azure.microsoft.com/en-us/documentation/articles/documentdb-partition-data/).
+By default, the collection and database must exist before the binding runs or it will throw an Exception. You can configure the binding to automatically create your database and collection by setting `CreateIfNotExists` to true. This property only applies to `out` parameters. For input (lookup) scenarios, if the database or collection do not exist, the parameter is returned as `null`. To define a partition key for automatically-created collections, set the `PartitionKey` property. To control the throughput of the collection, set the `CollectionThroughput` property. For more information on partition keys and throughput, see [Partitioning and scaling in Azure Cosmos DB](https://docs.microsoft.com/azure/cosmos-db/partition-data).
 
-In this example, the `newItem` object is upserted into the `ItemCollection` collection of the `ItemDb` DocumentDB database. The collection will be automatically created if it does not exist, with a partition key of `/mypartition` and a throughput of `12000`.
+In this example, the `newItem` object is upserted into the `ItemCollection` collection of the `ItemDb` database. The collection is automatically created if it does not exist, with a partition key of `/mypartition` and a throughput of `12000`.
 
 ```csharp
 public static void InsertDocument(
@@ -267,9 +269,9 @@ public static void ReadDocument(
 }
 ```
 
-#### Sql Query Support
+#### SQL Query Support
 
-If you need to make a query to return many Documents from Document DB, use the `SqlQuery` property on the `DocumentDBAttribute`. This property supports runtime binding, so the example below will replace `{QueueTrigger}` with the value from the queue message. In order to prevent injection attacks, any binding string used in the `SqlQuery` property is replaced with a [`SqlParameter`](https://azure.microsoft.com/en-us/blog/announcing-sql-parameterization-in-documentdb/) before being sent to your Document DB database. Queries must be of type `JArray` or `IEnumerable<T>`, where `T` is a type supported by Document DB (such as `Document`, `JObject`, or your own custom type). If you want to return all documents in a collection, you can remove the `SqlQuery` property and use `JArray` or `IEnumerable<T>` as your parameter type.
+If you need to make a query to return many Documents from Azure Cosmos DB, use the `SqlQuery` property on the `DocumentDBAttribute`. This property supports runtime binding, so the example below will replace `{QueueTrigger}` with the value from the queue message. In order to prevent injection attacks, any binding string used in the `SqlQuery` property is replaced with a [`SqlParameter`](https://azure.microsoft.com/en-us/blog/announcing-sql-parameterization-in-documentdb/) before being sent to your database. Queries must be of type `JArray` or `IEnumerable<T>`, where `T` is a supported type, such as `Document`, `JObject`, or your own custom type. If you want to return all documents in a collection, you can remove the `SqlQuery` property and use `JArray` or `IEnumerable<T>` as your parameter type.
 ```csharp
 public static void ReadDocument(
     [QueueTrigger("sample")] string trigger,
@@ -281,8 +283,6 @@ public static void ReadDocument(
     }
 }
 ```
-
-
 If you need more control, you can also specify a parameter of type `DocumentClient`. The following example uses DocumentClient to query for all documents in `ItemCollection` and log their ids.
 
 ```csharp
