@@ -9,4 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\WebJobs.Extensions\WebJobs.Extensions.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="StyleCop.Analyzers" Version="1.1.0-beta006" />
+  </ItemGroup>
 </Project>

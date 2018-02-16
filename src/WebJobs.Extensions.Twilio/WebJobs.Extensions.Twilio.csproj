@@ -9,11 +9,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Twilio" Version="5.6.3" />
+    <PackageReference Include="Twilio" Version="5.9.6" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\WebJobs.Extensions\WebJobs.Extensions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="StyleCop.Analyzers" Version="1.1.0-beta006" />
   </ItemGroup>
 
 </Project>
