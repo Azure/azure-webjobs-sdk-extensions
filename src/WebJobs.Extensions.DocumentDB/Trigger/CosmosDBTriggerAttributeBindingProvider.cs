@@ -9,6 +9,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
     using System.Threading.Tasks;
     using Config;
     using Microsoft.Azure.Documents.ChangeFeedProcessor;
+    using Microsoft.Azure.WebJobs.Host;
     using Microsoft.Azure.WebJobs.Host.Triggers;
 
     internal class CosmosDBTriggerAttributeBindingProvider : ITriggerBindingProvider
@@ -165,7 +166,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
         private string ResolveAttributeValue(string attributeValue)
         {
-            return _nameResolver.Resolve(attributeValue) ?? attributeValue;
+            return _nameResolver.ResolveWholeString(attributeValue) ?? attributeValue;
         }
     }
 }
