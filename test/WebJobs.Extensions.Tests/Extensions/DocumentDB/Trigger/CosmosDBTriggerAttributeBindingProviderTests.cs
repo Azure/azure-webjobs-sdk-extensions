@@ -68,8 +68,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Trigger
             var nameResolver = new TestNameResolver();
             nameResolver.Values[DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
             nameResolver.Values["CosmosDBConnectionString"] = "AccountEndpoint=https://fromSettings;AccountKey=someKey;";
-            nameResolver.Values["%aDatabase%"] = "myDatabase";
-            nameResolver.Values["%aCollection%"] = "myCollection";
+            nameResolver.Values["aDatabase"] = "myDatabase";
+            nameResolver.Values["aCollection"] = "myCollection";
 
             CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, CreateConfiguration());
 
