@@ -164,6 +164,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AuthenticatedUser.cs" />
+    <Compile Include="AuthenticatedUserBindingProvider.cs" />
     <Compile Include="AuthorizationLevel.cs" />
     <Compile Include="ClaimsIdentityBindingProvider.cs" />
     <Compile Include="ClaimsPrincipalBindingProvider.cs" />
