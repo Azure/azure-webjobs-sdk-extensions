@@ -12,10 +12,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
         public void MissingArguments_Fail()
         {
             ArgumentException missingDatabaseAndCollection = Assert.Throws<ArgumentException>(() => new CosmosDBTriggerAttribute(null, null));
-            Assert.Equal(missingDatabaseAndCollection.ParamName, "collectionName");
+            Assert.Equal("collectionName", missingDatabaseAndCollection.ParamName);
 
             ArgumentException missingDatabase = Assert.Throws<ArgumentException>(() => new CosmosDBTriggerAttribute(null, "someCollection"));
-            Assert.Equal(missingDatabase.ParamName, "databaseName");
+            Assert.Equal("databaseName", missingDatabase.ParamName);
         }
 
         [Fact]
