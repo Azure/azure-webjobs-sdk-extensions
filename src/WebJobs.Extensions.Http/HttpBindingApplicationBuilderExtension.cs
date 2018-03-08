@@ -40,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 var routeBuilder = new WebJobsRouteBuilder(builder, routeHandler);
                 routes.Invoke(routeBuilder);
 
-                router.AddFunctionRoute(routeBuilder.Build());
+                router.AddFunctionRoutes(routeBuilder.Build(), null);
             }
 
             builder.UseRouter(router);

@@ -13,26 +13,56 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
     {
         private readonly IInlineConstraintResolver _constraintResolver;
         private RouteCollection _routeCollection;
+        private RouteCollection _routeCollectionReverse;
 
         public WebJobsRouter(IInlineConstraintResolver constraintResolver)
         {
             _routeCollection = new RouteCollection();
+            _routeCollectionReverse = new RouteCollection();
             _constraintResolver = constraintResolver;
         }
 
         public IInlineConstraintResolver ConstraintResolver => _constraintResolver;
 
-        public void ClearRoutes() =>
+        public void ClearRoutes()
+        {
             _routeCollection = new RouteCollection();
+            _routeCollectionReverse = new RouteCollection();
+        }
 
         public VirtualPathData GetVirtualPath(VirtualPathContext context) =>
             _routeCollection.GetVirtualPath(context);
 
-        public Task RouteAsync(RouteContext context) =>
-            _routeCollection.RouteAsync(context);
+        public Task RouteAsync(RouteContext context)
+        {
+            // If this key is set in HttpContext, we first match against Function routes then Proxies.
+            if (context.HttpContext.Items.ContainsKey(HttpExtensionConstants.AzureWebJobsUseReverseRoutesKey) && _routeCollectionReverse.Count > 0)
+            {
+                return _routeCollectionReverse.RouteAsync(context);
+            }
 
-        public void AddFunctionRoute(IRouter route) =>
-            _routeCollection.Add(route);
+            return _routeCollection.RouteAsync(context);
+        }
+
+        public void AddFunctionRoutes(IRouter functionRoutes, IRouter proxyRoutes)
+        {
+            if (proxyRoutes != null)
+            {
+                _routeCollection.Add(proxyRoutes);
+            }
+
+            if (functionRoutes != null)
+            {
+                _routeCollection.Add(functionRoutes);
+            }
+
+            // We need the reverse collection only if both proxy and function routes are not null
+            if (proxyRoutes != null && functionRoutes != null)
+            {
+                _routeCollectionReverse.Add(functionRoutes);
+                _routeCollectionReverse.Add(proxyRoutes);
+            }
+        }
 
         public WebJobsRouteBuilder CreateBuilder(IWebJobsRouteHandler routeHandler, string routePrefix)
         {
