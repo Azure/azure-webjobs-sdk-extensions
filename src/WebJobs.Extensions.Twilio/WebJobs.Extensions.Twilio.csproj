@@ -165,6 +165,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Common\CommonAssemblyInfo.cs">
+      <Link>Properties\CommonAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="Bindings\TwilioSmsMessageAsyncCollector.cs" />
     <Compile Include="Config\TwilioJobHostConfigurationExtensions.cs" />
     <Compile Include="Config\TwilioSmsConfiguration.cs" />

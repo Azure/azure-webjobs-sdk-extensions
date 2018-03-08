@@ -77,7 +77,7 @@
       <PublishPath>$(PublishPath)\Packages</PublishPath>
     </Build>
   </ItemGroup>
-
+  
   <UsingTask TaskName="SkipStrongNames.CheckSkipStrongNamesStatus" AssemblyFile="$(SkipStrongNamesExe)" />
 
   <Target Name="DownloadNuGet">
@@ -128,7 +128,7 @@
     </ItemGroup>
   </Target>
 
-  <Target Name="Build" DependsOnTargets="RestorePackages;GetBinplace">
+  <Target Name="Build" DependsOnTargets="RestorePackages;GetBinplace;UpdateAssemblyInformationalVersion;UpdateAssemblyFileVersion">
     <MSBuild Projects="@(Binplace)"
              BuildInParallel="$(BuildInParallel)"/>
   </Target>
@@ -166,6 +166,39 @@
         <PublishPath>$([System.IO.Path]::GetFullPath('%(Build.PublishPath)'))</PublishPath>
       </OfficialProjects>
     </ItemGroup>
+  </Target>
+    
+  <Target Name="UpdateAssemblyFileVersion"      
+      Condition="'$(BuildNumber)' != ''">
+    <PropertyGroup>
+      <BuildMessage Condition="'$(BuildNumber)' != ''">build $(BuildNumber), </BuildMessage>
+      <CommitMessage Condition="'$(CommitHash)' != ''">$(BuildMessage)commit $(CommitHash)</CommitMessage>
+    </PropertyGroup>  
+    
+    <ItemGroup>
+       <AssemblyInfos Include="%(Build.RelativeDir)Properties\AssemblyInfo.cs" Condition="'%(Build.PublishType)'=='Assembly'" />
+    </ItemGroup>
+    
+    <ReplaceFileText
+      FileName="%(AssemblyInfos.Identity)"
+      MatchExpression="(?&lt;=\[assembly: AssemblyFileVersion\(&quot;\d+.\d+.)\d+(?=.\d+&quot;\)\])"      
+      ReplacementText="$(BuildNumber)"
+      LogMessage="Updating the file '%(AssemblyInfos.Identity)' to include the build number: $(BuildNumber)" />
+  </Target>  
+
+  <Target Name="UpdateAssemblyInformationalVersion"
+      Condition="'$(CommitHash)' != ''">
+    <PropertyGroup>
+      <CommonAssemblyInfoFile>$(MSBuildProjectDirectory)\src\Common\CommonAssemblyInfo.cs</CommonAssemblyInfoFile>
+      <BuildMessage Condition="'$(BuildNumber)' != ''">build $(BuildNumber), </BuildMessage>
+      <CommitMessage>$(BuildMessage)commit $(CommitHash)</CommitMessage>
+    </PropertyGroup>    
+ 
+    <ReplaceFileText       
+      FileName="$(CommonAssemblyInfoFile)"
+      MatchExpression="(?&lt;=\[assembly: AssemblyInformationalVersion\(&quot;).*(?=&quot;\)\])" 
+      ReplacementText="$(CommitMessage)"
+      LogMessage="Updating the AssemblyInformationalVersion to include: '$(CommitMessage)'" /> 
   </Target>
 
   <UsingTask TaskName="DownloadNuGet" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v12.0.dll">
@@ -240,6 +273,30 @@
                     return false;
                 }
             ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+  
+  <UsingTask TaskName="ReplaceFileText" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <ParameterGroup>
+      <FileName ParameterType="System.String" Required="true" />    
+      <MatchExpression ParameterType="System.String" Required="true" />
+      <ReplacementText ParameterType="System.String" Required="true" />
+      <LogMessage ParameterType="System.String" Required="false" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.Core" />
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+              if (LogMessage != null)
+              {
+                  Log.LogMessage(MessageImportance.High, LogMessage);
+              }
+              File.WriteAllText(FileName, Regex.Replace(File.ReadAllText(FileName), MatchExpression, ReplacementText));
+        ]]>
       </Code>
     </Task>
   </UsingTask>

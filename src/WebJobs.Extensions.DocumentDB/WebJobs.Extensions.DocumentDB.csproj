@@ -168,6 +168,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Common\CommonAssemblyInfo.cs">
+      <Link>Properties\CommonAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="Bindings\DocumentDBAsyncCollector.cs" />
     <Compile Include="Bindings\DocumentDBClientBuilder.cs" />
     <Compile Include="Bindings\DocumentDBCollectorBuilder.cs" />

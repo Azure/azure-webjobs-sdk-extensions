@@ -13,29 +13,14 @@
     <HttpVersion>1.1.0</HttpVersion>
     <ApiHubsPrereleaseTag>-beta1</ApiHubsPrereleaseTag>
     <PrereleaseTag>-beta1</PrereleaseTag>
+    
+    <!-- $(PackageSuffix), typically something like '-12345', is passed in as a build property. -->
+    <WebJobsPackageVersion>$(Version)$(PrereleaseTag)$(PackageSuffix)</WebJobsPackageVersion>
+    <MobileAppsPackageVersion>$(MobileAppsVersion)$(PrereleaseTag)$(PackageSuffix)</MobileAppsPackageVersion>
+    <DocDBPackageVersion>$(DocDBVersion)$(PrereleaseTag)$(PackageSuffix)</DocDBPackageVersion>
+    <NotificationHubsPackageVersion>$(NotificationHubsVersion)$(PrereleaseTag)$(PackageSuffix)</NotificationHubsPackageVersion>
+    <ApiHubPackageVersion>$(ApiHubsVersion)$(ApiHubsPrereleaseTag)$(PackageSuffix)</ApiHubPackageVersion>
+    <TwilioPackageVersion>$(TwilioVersion)$(PrereleaseTag)$(PackageSuffix)</TwilioPackageVersion>
+    <HttpPackageVersion>$(HttpVersion)$(PrereleaseTag)$(PackageSuffix)</HttpPackageVersion>
   </PropertyGroup>
-  <Choose>
-    <When Condition=" '$(IncludeBuildNumberInVersion)' == '1'">
-      <PropertyGroup>
-        <WebJobsPackageVersion>$(Version)$(PrereleaseTag)-$(BUILD_NUMBER)</WebJobsPackageVersion>
-        <MobileAppsPackageVersion>$(MobileAppsVersion)$(PrereleaseTag)-$(BUILD_NUMBER)</MobileAppsPackageVersion>
-        <DocDBPackageVersion>$(DocDBVersion)$(PrereleaseTag)-$(BUILD_NUMBER)</DocDBPackageVersion>
-        <NotificationHubsPackageVersion>$(NotificationHubsVersion)$(PrereleaseTag)-$(BUILD_NUMBER)</NotificationHubsPackageVersion>
-        <ApiHubPackageVersion>$(ApiHubsVersion)$(ApiHubsPrereleaseTag)-$(BUILD_NUMBER)</ApiHubPackageVersion>
-        <TwilioPackageVersion>$(TwilioVersion)$(PrereleaseTag)-$(BUILD_NUMBER)</TwilioPackageVersion>
-        <HttpPackageVersion>$(HttpVersion)$(PrereleaseTag)-$(BUILD_NUMBER)</HttpPackageVersion>
-    </PropertyGroup>
-    </When>
-    <Otherwise>
-      <PropertyGroup>
-        <WebJobsPackageVersion>$(Version)$(PrereleaseTag)</WebJobsPackageVersion>
-        <MobileAppsPackageVersion>$(MobileAppsVersion)$(PrereleaseTag)</MobileAppsPackageVersion>
-        <DocDBPackageVersion>$(DocDBVersion)$(PrereleaseTag)</DocDBPackageVersion>
-        <NotificationHubsPackageVersion>$(NotificationHubsVersion)$(PrereleaseTag)</NotificationHubsPackageVersion>
-        <ApiHubPackageVersion>$(ApiHubsVersion)$(ApiHubsPrereleaseTag)</ApiHubPackageVersion>
-        <TwilioPackageVersion>$(TwilioVersion)$(PrereleaseTag)</TwilioPackageVersion>
-        <HttpPackageVersion>$(HttpVersion)$(PrereleaseTag)</HttpPackageVersion>
-      </PropertyGroup>
-    </Otherwise>
-  </Choose>
 </Project>

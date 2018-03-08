@@ -186,6 +186,9 @@
       <Link>CustomDictionary.xml</Link>
       <SubType>Designer</SubType>
     </CodeAnalysisDictionary>
+    <Compile Include="..\Common\CommonAssemblyInfo.cs">
+      <Link>Properties\CommonAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="Bindings\MobileTableAsyncCollector.cs" />
     <Compile Include="Bindings\MobileTableCollectorBuilder.cs" />
     <Compile Include="Bindings\MobileTableJObjectTableBuilder.cs" />

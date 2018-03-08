@@ -164,6 +164,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Common\CommonAssemblyInfo.cs">
+      <Link>Properties\CommonAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="AuthorizationLevel.cs" />
     <Compile Include="Config\HttpExtensionConfiguration.cs" />
     <Compile Include="Config\HttpJobHostConfigurationExtensions.cs" />

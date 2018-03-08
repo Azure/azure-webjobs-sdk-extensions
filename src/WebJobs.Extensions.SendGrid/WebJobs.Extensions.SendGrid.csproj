@@ -181,6 +181,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Common\CommonAssemblyInfo.cs">
+      <Link>Properties\CommonAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="Bindings\SendGridHelpers.cs" />
     <Compile Include="Bindings\SendGridMessageAsyncCollector.cs" />
     <Compile Include="Client\SendGridClient.cs" />

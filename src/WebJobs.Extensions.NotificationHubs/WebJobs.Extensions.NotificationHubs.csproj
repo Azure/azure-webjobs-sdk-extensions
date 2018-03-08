@@ -40,6 +40,9 @@
     <DocumentationFile>bin\Release\Microsoft.Azure.WebJobs.Extensions.NotificationHubs.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\Common\CommonAssemblyInfo.cs">
+      <Link>Properties\CommonAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="Bindings\NotificationHubAsyncCollector.cs" />
     <Compile Include="Bindings\NotificationHubClientBuilder.cs" />
     <Compile Include="Config\Converter.cs" />
