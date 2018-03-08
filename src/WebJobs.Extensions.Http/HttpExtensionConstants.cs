@@ -24,5 +24,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         /// Key used for storing WebHook payload data in <see cref="HttpRequestMessage.Properties"/>.
         /// </summary>
         public const string AzureWebJobsWebHookDataKey = "MS_AzureWebJobs_WebHookData";
+
+        /// <summary>
+        /// Key used to have WebJobsRouter match against Function routes first then Proxies.
+        /// </summary>
+        public const string AzureWebJobsUseReverseRoutesKey = "MS_AzureWebJobs_UseReverseRoutes";
+
     }
 }

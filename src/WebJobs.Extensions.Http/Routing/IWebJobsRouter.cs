@@ -9,7 +9,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
     {
         IInlineConstraintResolver ConstraintResolver { get; }
 
-        void AddFunctionRoute(IRouter route);
+        void AddFunctionRoutes(IRouter functionRoutes, IRouter proxyRoutes);
 
         void ClearRoutes();
 
