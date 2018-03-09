@@ -135,12 +135,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
                 JobActivator = new ExplicitJobActivator(instance)
             };
             config.UseCore();
-            JobHost host = new JobHost(config);
-            await host.StartAsync();
 
             TestTraceWriter traceWriter = new TestTraceWriter();
             config.Tracing.Tracers.Add(traceWriter);
 
+            JobHost host = new JobHost(config);
+            await host.StartAsync();
+
+            traceWriter.Events.Clear();
             MethodInfo method = instance.GetType().GetMethod("Throw");
             await CallSafe(host, method);
 
@@ -181,12 +183,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Core
                 });
             config.Tracing.Tracers.Add(traceMonitor);
 
-            JobHost host = new JobHost(config);
-            await host.StartAsync();
-
             TestTraceWriter traceWriter = new TestTraceWriter();
             config.Tracing.Tracers.Add(traceWriter);
 
+            JobHost host = new JobHost(config);
+            await host.StartAsync();
+
+            traceWriter.Events.Clear();
             MethodInfo method = typeof(ErrorProgram).GetMethod("Throw");
             await CallSafe(host, method);
 

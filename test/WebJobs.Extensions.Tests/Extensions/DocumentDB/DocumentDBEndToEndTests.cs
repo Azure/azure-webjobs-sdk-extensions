@@ -246,12 +246,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             Assert.Equal("'Id' is required when binding to a JObject property.", ex.InnerException.Message);
         }
 
-        private Task RunTestAsync(string testName, IDocumentDBServiceFactory factory, TraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr)
+        private Task RunTestAsync(string testName, IDocumentDBServiceFactory factory, TestTraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr)
         {
             return RunTestAsync(typeof(DocumentDBEndToEndFunctions), testName, factory, testTrace, argument, configConnectionString);
         }
 
-        private async Task RunTestAsync(Type testType, string testName, IDocumentDBServiceFactory factory, TraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr, bool includeDefaultConnectionString = true)
+        private async Task RunTestAsync(Type testType, string testName, IDocumentDBServiceFactory factory, TestTraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr, bool includeDefaultConnectionString = true)
         {
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
             JobHostConfiguration config = new JobHostConfiguration
@@ -287,6 +287,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             JobHost host = new JobHost(config);
 
             await host.StartAsync();
+            testTrace.Events.Clear();
             await host.CallAsync(testType.GetMethod(testName), arguments);
             await host.StopAsync();
         }

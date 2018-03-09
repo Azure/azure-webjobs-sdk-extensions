@@ -20,10 +20,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core
     internal class ErrorTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
         private readonly JobHostConfiguration _config;
+        private readonly TraceMonitorDispatcher _traceMonitorDispatcher;
 
         public ErrorTriggerAttributeBindingProvider(JobHostConfiguration config)
         {
             _config = config;
+
+            // need to create the dispatcher and add it to the Tracers collection
+            // early in startup while the Tracers collection is still modifiable
+            _traceMonitorDispatcher = new TraceMonitorDispatcher();
+            _config.Tracing.Tracers.Add(_traceMonitorDispatcher);
         }
 
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
@@ -48,7 +54,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core
                     "Can't bind ErrorTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            return Task.FromResult<ITriggerBinding>(new ErrorTriggerBinding(_config, context.Parameter));
+            return Task.FromResult<ITriggerBinding>(new ErrorTriggerBinding(_config, context.Parameter, _traceMonitorDispatcher));
         }
 
         private class ErrorTriggerBinding : ITriggerBinding
@@ -56,11 +62,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core
             private readonly JobHostConfiguration _config;
             private readonly ParameterInfo _parameter;
             private readonly IReadOnlyDictionary<string, Type> _bindingContract;
+            private readonly TraceMonitorDispatcher _traceMonitorDispatcher;
 
-            public ErrorTriggerBinding(JobHostConfiguration config, ParameterInfo parameter)
+            public ErrorTriggerBinding(JobHostConfiguration config, ParameterInfo parameter, TraceMonitorDispatcher traceMonitorDispatcher)
             {
                 _config = config;
                 _parameter = parameter;
+                _traceMonitorDispatcher = traceMonitorDispatcher;
                 _bindingContract = CreateBindingDataContract();
             }
 
@@ -95,7 +103,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core
                     throw new ArgumentNullException("context");
                 }
 
-                return Task.FromResult<IListener>(new ErrorTriggerListener(_config, _parameter, context.Executor));
+                return Task.FromResult<IListener>(new ErrorTriggerListener(_config, _parameter, context.Executor, _traceMonitorDispatcher));
             }
 
             public ParameterDescriptor ToParameterDescriptor()

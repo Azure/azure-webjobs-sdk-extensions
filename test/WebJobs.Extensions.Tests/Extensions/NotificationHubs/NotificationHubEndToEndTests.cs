@@ -81,6 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
 
             // Act
             RunTest("Client", factoryMock.Object, testTrace, configConnectionString: null, configHubName: null);
+
             //Assert
             factoryMock.Verify(f => f.CreateService(DefaultConnStr, DefaultHubName, false), Times.Once());
             Assert.Equal("Client", testTrace.Events.Single().Message);
@@ -131,12 +132,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
             Assert.Equal(test, testTrace.Events.Single().Message);
         }
 
-        private void RunTest(string testName, INotificationHubClientServiceFactory factory, TraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr, string configHubName = ConfigHubName)
+        private void RunTest(string testName, INotificationHubClientServiceFactory factory, TestTraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr, string configHubName = ConfigHubName)
         {
             RunTest(typeof(NotificationHubEndToEndFunctions), testName, factory, testTrace, argument, configConnectionString, configHubName);
         }
 
-        private void RunTest(Type testType, string testName, INotificationHubClientServiceFactory factory, TraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr, string configHubName = ConfigHubName, bool includeDefaultConnectionString = true, bool includeDefaultHubName = true)
+        private void RunTest(Type testType, string testName, INotificationHubClientServiceFactory factory, TestTraceWriter testTrace, object argument = null, string configConnectionString = ConfigConnStr, string configHubName = ConfigHubName, bool includeDefaultConnectionString = true, bool includeDefaultHubName = true)
         {
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
             JobHostConfiguration config = new JobHostConfiguration
@@ -173,6 +174,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
 
             JobHost host = new JobHost(config);
             host.Start();
+            testTrace.Events.Clear();
             host.Call(testType.GetMethod(testName), arguments);
             host.Stop();
         }

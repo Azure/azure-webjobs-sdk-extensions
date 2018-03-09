@@ -27,11 +27,23 @@ namespace Microsoft.Azure.WebJobs
                 throw new ArgumentNullException("config");
             }
 
-            config.RegisterExtensionConfigProvider(new CoreExtensionConfig { AppDirectory = appDirectory });
+            config.RegisterExtensionConfigProvider(new CoreExtensionConfig(config, appDirectory));
         }
 
         internal class CoreExtensionConfig : IExtensionConfigProvider
         {
+            private readonly ErrorTriggerAttributeBindingProvider _errorTriggerBindingProvider;
+
+            public CoreExtensionConfig(JobHostConfiguration config, string appDirectory = null)
+            {
+                AppDirectory = appDirectory;
+
+                // because the ErrorTrigger binding adds a custom TraceWriter
+                // to the config, we need to create it early while the Tracers
+                // collection is still modifiable
+                _errorTriggerBindingProvider = new ErrorTriggerAttributeBindingProvider(config);
+            }
+
             public string AppDirectory { get; set; }
 
             public void Initialize(ExtensionConfigContext context)
@@ -43,7 +55,7 @@ namespace Microsoft.Azure.WebJobs
 
                 context.Config.RegisterBindingExtensions(
                     new ExecutionContextBindingProvider(this),
-                    new ErrorTriggerAttributeBindingProvider(context.Config));
+                    _errorTriggerBindingProvider);
             }
         }
     }

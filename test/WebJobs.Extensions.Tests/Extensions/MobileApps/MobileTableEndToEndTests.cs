@@ -285,7 +285,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             await host.StopAsync();
         }
 
-        private async Task RunTestAsync(string testName, IMobileServiceClientFactory factory, TraceWriter testTrace, object argument = null,
+        private async Task RunTestAsync(string testName, IMobileServiceClientFactory factory, TestTraceWriter testTrace, object argument = null,
             Uri configUri = null, string configKey = null, bool includeDefaultKey = true, bool includeDefaultUri = true, Type testType = null)
         {
             testType = testType ?? typeof(MobileTableEndToEndFunctions);
@@ -326,6 +326,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             JobHost host = new JobHost(config);
 
             await host.StartAsync();
+            testTrace.Events.Clear();
             await host.CallAsync(testType.GetMethod(testName), arguments);
             await host.StopAsync();
         }

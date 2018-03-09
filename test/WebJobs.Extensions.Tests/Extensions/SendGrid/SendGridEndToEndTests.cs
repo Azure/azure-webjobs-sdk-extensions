@@ -112,7 +112,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.SendGrid
                     .Returns(clientMock.Object);
         }
 
-        private async Task RunTestAsync(string testName, ISendGridClientFactory factory, TraceWriter testTrace, object argument = null,
+        private async Task RunTestAsync(string testName, ISendGridClientFactory factory, TestTraceWriter testTrace, object argument = null,
             string configApiKey = null, bool includeDefaultApiKey = true)
         {
             Type testType = typeof(SendGridEndToEndFunctions);
@@ -151,6 +151,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.SendGrid
             JobHost host = new JobHost(config);
 
             await host.StartAsync();
+            testTrace.Events.Clear();
             await host.CallAsync(testType.GetMethod(testName), arguments);
             await host.StopAsync();
         }

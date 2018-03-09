@@ -3,7 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,10 +24,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core.Listener
             ErrorHandlers = new HashSet<string>();
         }
 
-        public ErrorTriggerListener(JobHostConfiguration config, ParameterInfo parameter, ITriggeredFunctionExecutor executor)
+        public ErrorTriggerListener(JobHostConfiguration config, ParameterInfo parameter, ITriggeredFunctionExecutor executor, TraceMonitorDispatcher traceMonitorDispatcher)
         {
             _config = config;
             _traceMonitor = CreateTraceMonitor(parameter, executor);
+
+            // We register monitors early at index time before the host
+            // starts running, to avoid concurrency issues in the dispatcher.
+            // We initially create in a disabled state, to be enabled when
+            // the listener starts.
+            _traceMonitor.Level = TraceLevel.Off;
+            traceMonitorDispatcher.Register(_traceMonitor);
         }
 
         /// <summary>
@@ -114,14 +121,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Core.Listener
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _config.Tracing.Tracers.Add(_traceMonitor);
+            // enable the monitor to start processing events
+            _traceMonitor.Level = TraceLevel.Error;
 
             return Task.FromResult(true);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _config.Tracing.Tracers.Remove(_traceMonitor);
+            // disable the monitor
+            _traceMonitor.Level = TraceLevel.Off;
 
             return Task.FromResult(true);
         }
