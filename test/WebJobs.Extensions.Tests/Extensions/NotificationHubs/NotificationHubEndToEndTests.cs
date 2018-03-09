@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Azure.NotificationHubs;
 using Microsoft.Azure.WebJobs.Extensions.NotificationHubs;
@@ -29,6 +30,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.NotificationHubs
         private const string WindowsToastPayload = "<toast><visual><binding template=\"ToastText01\"><text id=\"1\">Test message</text></binding></visual></toast>";
         private const string UserIdTag = "myuserid123";
         private static Notification testNotification = Converter.BuildTemplateNotificationFromJsonString(MessagePropertiesJSON);
+
+        public NotificationHubEndToEndTests()
+        {
+            // disable the default warning from WebJobs.
+            ServicePointManager.DefaultConnectionLimit = 100;
+        }
 
         [Fact]
         public void OutputBindings()

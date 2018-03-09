@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
@@ -28,6 +29,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
         private const string AttributeConnStr = "AccountEndpoint=https://attribute;AccountKey=YXR0cmlidXRl;";
         private const string ConfigConnStr = "AccountEndpoint=https://config;AccountKey=Y29uZmln;";
         private const string DefaultConnStr = "AccountEndpoint=https://default;AccountKey=ZGVmYXVsdA==;";
+
+        public DocumentDBEndToEndTests()
+        {
+            // disable the default warning from WebJobs.
+            ServicePointManager.DefaultConnectionLimit = 100;
+        }
 
         [Fact]
         public async Task OutputBindings()
