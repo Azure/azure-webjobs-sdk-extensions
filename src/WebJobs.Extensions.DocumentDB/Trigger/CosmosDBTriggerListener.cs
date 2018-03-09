@@ -10,6 +10,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
     using Microsoft.Azure.Documents;
     using Microsoft.Azure.Documents.ChangeFeedProcessor;
     using Microsoft.Azure.Documents.Client;
+    using Microsoft.Azure.WebJobs.Host;
     using Microsoft.Azure.WebJobs.Host.Executors;
     using Microsoft.Azure.WebJobs.Host.Listeners;
 
@@ -17,16 +18,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
     {
         private readonly ITriggeredFunctionExecutor executor;
         private readonly ChangeFeedEventHost host;
+        private readonly TraceWriter trace;
         private readonly DocumentCollectionInfo monitorCollection;
         private readonly DocumentCollectionInfo leaseCollection;
 
-        public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, int? maxItemCount)
+        public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, int? maxItemCount, TraceWriter trace)
         {
+            this.trace = trace;
             this.executor = executor;
             string hostName = Guid.NewGuid().ToString();
 
-            monitorCollection = documentCollectionLocation;
-            leaseCollection = leaseCollectionLocation;
+            this.monitorCollection = documentCollectionLocation;
+            this.leaseCollection = leaseCollectionLocation;
 
             ChangeFeedOptions changeFeedOptions = new ChangeFeedOptions();
             if (maxItemCount.HasValue)
@@ -56,7 +59,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         {
             try
             {
-                await host.RegisterObserverFactoryAsync(this);
+                await this.host.RegisterObserverFactoryAsync(this);
             }
             catch (DocumentClientException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
@@ -66,9 +69,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             }
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
-            return host.UnregisterObserversAsync();
+            try
+            {
+                if (this.host != null)
+                {
+                    await this.host.UnregisterObserversAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                this.trace.Error("Stopping the observer failed, potentially it was never started.", ex);
+            }
         }
     }
 }

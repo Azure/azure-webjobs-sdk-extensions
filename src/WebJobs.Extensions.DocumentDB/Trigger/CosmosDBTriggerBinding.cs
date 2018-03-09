@@ -9,6 +9,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
     using System.Threading.Tasks;
     using Microsoft.Azure.Documents;
     using Microsoft.Azure.Documents.ChangeFeedProcessor;
+    using Microsoft.Azure.WebJobs.Host;
     using Microsoft.Azure.WebJobs.Host.Bindings;
     using Microsoft.Azure.WebJobs.Host.Listeners;
     using Microsoft.Azure.WebJobs.Host.Protocols;
@@ -21,16 +22,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         private readonly DocumentCollectionInfo _documentCollectionLocation;
         private readonly DocumentCollectionInfo _leaseCollectionLocation;
         private readonly ChangeFeedHostOptions _leaseHostOptions;
+        private readonly TraceWriter _trace;
         private readonly IBindingDataProvider _bindingDataProvider;
         private readonly int? _maxItemsPerCall;
 
-        public CosmosDBTriggerBinding(ParameterInfo parameter, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, int? maxItemsPerCall)
+        public CosmosDBTriggerBinding(ParameterInfo parameter, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, int? maxItemsPerCall, TraceWriter trace)
         {
             _bindingDataProvider = BindingDataProvider.FromType(parameter.ParameterType);
             _documentCollectionLocation = documentCollectionLocation;
             _leaseCollectionLocation = leaseCollectionLocation;
             _leaseHostOptions = leaseHostOptions;
             _parameter = parameter;
+            _trace = trace;
             _maxItemsPerCall = maxItemsPerCall;
         }
 
@@ -69,7 +72,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             {
                 throw new ArgumentNullException("context", "Missing listener context");
             }
-            return Task.FromResult<IListener>(new CosmosDBTriggerListener(context.Executor, this._documentCollectionLocation, this._leaseCollectionLocation, this._leaseHostOptions, this._maxItemsPerCall));
+            return Task.FromResult<IListener>(new CosmosDBTriggerListener(context.Executor, this._documentCollectionLocation, this._leaseCollectionLocation, this._leaseHostOptions, this._maxItemsPerCall, this._trace));
         }
 
         /// <summary>
