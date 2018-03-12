@@ -22,6 +22,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
     /// </remarks>
     internal class ClaimsIdentityBindingProvider : IBindingProvider
     {
+        private static Task<IBinding> nullBinding = Task.FromResult<IBinding>(null);
+
+        private static ISet<Type> supportedTypes = new HashSet<Type> { typeof(ClaimsIdentity), typeof(IEnumerable<ClaimsIdentity>) };
+
         public Task<IBinding> TryCreateAsync(BindingProviderContext context)
         {
             if (context == null)
@@ -29,21 +33,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 throw new ArgumentNullException("context");
             }
 
-            if (context.Parameter.ParameterType != typeof(ClaimsIdentity))
+            var bindingType = supportedTypes.FirstOrDefault(type => type == context.Parameter.ParameterType || context.Parameter.ParameterType.IsSubclassOf(type));
+
+            if (bindingType == null)
             {
-                return Task.FromResult<IBinding>(null);
+                return nullBinding;
             }
 
-            return Task.FromResult<IBinding>(new ClaimsIdentityBinding(context.Parameter));
+            return Task.FromResult<IBinding>(new ClaimsIdentityBinding(context.Parameter, bindingType));
         }
 
         private class ClaimsIdentityBinding : IBinding
         {
             private readonly ParameterInfo _parameter;
+            private readonly Type _bindingType;
 
-            public ClaimsIdentityBinding(ParameterInfo parameter)
+            public ClaimsIdentityBinding(ParameterInfo parameter, Type bindingType)
             {
                 _parameter = parameter;
+                _bindingType = bindingType;
             }
 
             public bool FromAttribute
@@ -51,44 +59,40 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 get { return false; }
             }
 
-            public async Task<IValueProvider> BindAsync(BindingContext context)
+            public Task<IValueProvider> BindAsync(BindingContext context)
             {
                 if (context == null)
                 {
                     throw new ArgumentNullException("context");
                 }
 
-                // if the request is EasyAuth authenticated, get the identity provider type
-                object value = null;
-                string identityProvider = null;
-                if (context.BindingData.TryGetValue(HttpTriggerAttributeBindingProvider.HttpHeadersKey, out value))
-                {
-                    IDictionary<string, string> headers = (IDictionary<string, string>)value;
-                    if (headers != null)
-                    {
-                        headers.TryGetValue(HttpConstants.AntaresEasyAuthProviderHeaderName, out identityProvider);
-                    }  
-                }
+                var bindingData = context.BindingData;
+                var claimsPrincipal = ClaimsPrincipalHelper.FromBindingData(bindingData);
 
-                var identity = GetPrimaryIdentity(ClaimsPrincipal.Current, identityProvider);
-                return await BindInternalAsync(identity);
+                if (_bindingType == typeof(ClaimsIdentity))
+                {
+                    if (claimsPrincipal.Identities.Count() == 1)
+                    {
+                        return Task.FromResult<IValueProvider>(new SingleClaimsIdentityValueProvider(claimsPrincipal.Identities.First()));
+                    }
+
+                    var identityProvider = GetIdentityProvider(bindingData);
+                    var identity = GetPrimaryIdentity(claimsPrincipal, identityProvider);
+                    return Task.FromResult<IValueProvider>(new SingleClaimsIdentityValueProvider(identity));
+                }
+                else if (_bindingType == typeof(IEnumerable<ClaimsIdentity>))
+                {
+                    return Task.FromResult<IValueProvider>(new ManyClaimsIdentityValueProvider(claimsPrincipal.Identities));
+                }
+                else
+                {
+                    throw new InvalidOperationException($"The type {_bindingType} is not supported");
+                }
             }
 
             public Task<IValueProvider> BindAsync(object value, ValueBindingContext context)
             {
-                if (context == null)
-                {
-                    throw new ArgumentNullException("context");
-                }
-
-                var identity = GetPrimaryIdentity(ClaimsPrincipal.Current);
-
-                return BindInternalAsync(identity);
-            }
-
-            private static Task<IValueProvider> BindInternalAsync(ClaimsIdentity identity)
-            {
-                return Task.FromResult<IValueProvider>(new ClaimsIdentityValueProvider(identity));
+                throw new NotImplementedException("This method doesn't have the necessary binding data.");
             }
 
             public ParameterDescriptor ToParameterDescriptor()
@@ -103,11 +107,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 };
             }
 
+            private static string GetIdentityProvider(IReadOnlyDictionary<string, object> bindingData)
+            {
+                if (bindingData.TryGetValue(HttpTriggerAttributeBindingProvider.HttpHeadersKey, out object value))
+                {
+                    IDictionary<string, string> headers = (IDictionary<string, string>)value;
+                    if (headers != null)
+                    {
+                        headers.TryGetValue(HttpConstants.AntaresEasyAuthProviderHeaderName, out string identityProvider);
+                        return identityProvider;
+                    }
+                }
+                return null;
+            }
+
             private static ClaimsIdentity GetPrimaryIdentity(ClaimsPrincipal claimsPrincipal, string identityProvider = null)
             {
                 // if the principal contains a key based identity that will take precedence
                 // over any other identity
-                var identity = claimsPrincipal.Identities.LastOrDefault(p => p.IsAuthenticated && string.Compare(p.AuthenticationType, "key", StringComparison.OrdinalIgnoreCase) == 0);
+                var identity = claimsPrincipal.Identities.LastOrDefault(p => p.IsAuthenticated && string.Equals(p.AuthenticationType, "key", StringComparison.OrdinalIgnoreCase));
                 if (identity != null)
                 {
                     return identity;
@@ -118,7 +136,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     foreach (var currIdentity in claimsPrincipal.Identities.Where(p => p.IsAuthenticated))
                     {
                         // if a specific identity provider is specified, look for a match
-                        if (string.Compare(currIdentity.AuthenticationType, identityProvider, StringComparison.OrdinalIgnoreCase) == 0)
+                        if (string.Equals(currIdentity.AuthenticationType, identityProvider, StringComparison.OrdinalIgnoreCase))
                         {
                             return currIdentity;
                         }
@@ -137,11 +155,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 return (ClaimsIdentity)claimsPrincipal.Identity;
             }
 
-            private class ClaimsIdentityValueProvider : IValueProvider
+            private class SingleClaimsIdentityValueProvider : IValueProvider
             {
-                private ClaimsIdentity _identity;
+                private readonly ClaimsIdentity _identity;
 
-                public ClaimsIdentityValueProvider(ClaimsIdentity identity)
+                public SingleClaimsIdentityValueProvider(ClaimsIdentity identity)
                 {
                     _identity = identity;
                 }
@@ -158,8 +176,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
                 public string ToInvokeString()
                 {
-                    // TODO: figure out right value here
-                    return ClaimsPrincipal.Current.ToString();
+                    return _identity.Name;
+                }
+            }
+
+            private class ManyClaimsIdentityValueProvider : IValueProvider
+            {
+                private readonly IEnumerable<ClaimsIdentity> _identities;
+
+                public ManyClaimsIdentityValueProvider(IEnumerable<ClaimsIdentity> identities)
+                {
+                    _identities = identities;
+                }
+
+                public Type Type => typeof(IEnumerable<ClaimsIdentity>);
+
+                public Task<object> GetValueAsync()
+                {
+                    return Task.FromResult<object>(_identities);
+                }
+
+                public string ToInvokeString()
+                {
+                    return "{" + string.Join(",", _identities.Select(id => id.Name)) + "}";
                 }
             }
         }

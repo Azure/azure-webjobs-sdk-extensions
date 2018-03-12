@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -15,6 +16,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
     /// </summary>
     internal class ClaimsPrincipalBindingProvider : IBindingProvider
     {
+        private static Task<IBinding> nullBinding = Task.FromResult<IBinding>(null);
+
         public Task<IBinding> TryCreateAsync(BindingProviderContext context)
         {
             if (context == null)
@@ -24,7 +27,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
             if (context.Parameter.ParameterType != typeof(ClaimsPrincipal))
             {
-                return Task.FromResult<IBinding>(null);
+                return nullBinding;
             }
 
             return Task.FromResult<IBinding>(new ClaimsIdentityBinding(context.Parameter));
@@ -51,24 +54,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     throw new ArgumentNullException("context");
                 }
 
-                return BindInternalAsync();
+                IReadOnlyDictionary<string, object> bindingData = context.BindingData;
+                return Task.FromResult<IValueProvider>(new ClaimsPrincipalValueProvider(ClaimsPrincipalHelper.FromBindingData(bindingData)));
             }
 
             public Task<IValueProvider> BindAsync(object value, ValueBindingContext context)
             {
-                if (context == null)
-                {
-                    throw new ArgumentNullException("context");
-                }
-
-                return BindInternalAsync();
+                throw new NotImplementedException("This method does not provide the necessary binding data.");
             }
             
-            private static Task<IValueProvider> BindInternalAsync()
-            {
-                return Task.FromResult<IValueProvider>(new ClaimsPrincipalValueProvider());
-            }
-
             public ParameterDescriptor ToParameterDescriptor()
             {
                 return new ParameterDescriptor
@@ -83,8 +77,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
             private class ClaimsPrincipalValueProvider : IValueProvider
             {
-                public ClaimsPrincipalValueProvider()
+                private readonly ClaimsPrincipal _claimsPrincipal;
+
+                public ClaimsPrincipalValueProvider(ClaimsPrincipal claimsPrincipal)
                 {
+                    _claimsPrincipal = claimsPrincipal;
                 }
 
                 public Type Type
@@ -94,13 +91,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
                 public Task<object> GetValueAsync()
                 {
-                    return Task.FromResult<object>(ClaimsPrincipal.Current);
+                    return Task.FromResult<object>(_claimsPrincipal);
                 }
 
                 public string ToInvokeString()
                 {
-                    // TODO: figure out right value here
-                    return ClaimsPrincipal.Current.ToString();
+                    // TODO: Decide if this is what we want invoke string to be.
+                    return _claimsPrincipal.Identity.Name;
                 }
             }
         }
