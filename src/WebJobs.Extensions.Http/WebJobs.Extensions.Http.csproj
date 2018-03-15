@@ -170,7 +170,7 @@
     <Compile Include="ClaimsIdentitySlim.cs" />
     <Compile Include="ClaimSlim.cs" />
     <Compile Include="ClaimsPrincipalBindingProvider.cs" />
-    <Compile Include="ClaimsPrincipalSerializer.cs" />
+    <Compile Include="ClaimsPrincipalHelper.cs" />
     <Compile Include="Config\HttpExtensionConfiguration.cs" />
     <Compile Include="Config\HttpJobHostConfigurationExtensions.cs" />
     <Compile Include="Extensions\HttpRequestMessageExtensions.cs" />

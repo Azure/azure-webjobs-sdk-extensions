@@ -22,9 +22,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
     /// </remarks>
     internal class ClaimsIdentityBindingProvider : IBindingProvider
     {
-        private static Task<IBinding> nullBinding = Task.FromResult<IBinding>(null);
+        private static readonly Task<IBinding> NullBinding = Task.FromResult<IBinding>(null);
 
-        private static ISet<Type> supportedTypes = new HashSet<Type> { typeof(ClaimsIdentity), typeof(IEnumerable<ClaimsIdentity>) };
+        private static readonly ISet<Type> SupportedTypes = new HashSet<Type> { typeof(ClaimsIdentity), typeof(IEnumerable<ClaimsIdentity>) };
 
         public Task<IBinding> TryCreateAsync(BindingProviderContext context)
         {
@@ -33,11 +33,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 throw new ArgumentNullException("context");
             }
 
-            var bindingType = supportedTypes.FirstOrDefault(type => type == context.Parameter.ParameterType || context.Parameter.ParameterType.IsSubclassOf(type));
+            var bindingType = SupportedTypes.FirstOrDefault(type => type == context.Parameter.ParameterType || context.Parameter.ParameterType.IsSubclassOf(type));
 
             if (bindingType == null)
             {
-                return nullBinding;
+                return NullBinding;
             }
 
             return Task.FromResult<IBinding>(new ClaimsIdentityBinding(context.Parameter, bindingType));

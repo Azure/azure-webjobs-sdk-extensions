@@ -25,7 +25,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 return new ClaimsPrincipal();
             }
 
-            var claimsPrincipalHeaderValue = GetClaimsPrincipalHeaderValue(req);
+            string claimsPrincipalHeaderValue = GetClaimsPrincipalHeaderValue(req);
             if (claimsPrincipalHeaderValue == null)
             {
                 return new ClaimsPrincipal();
@@ -54,18 +54,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             return new DataContractJsonSerializer(typeof(ClaimsIdentitySlim), settings);
         }
 
-
         private static string GetClaimsPrincipalHeaderValue(HttpRequestMessage request)
         {
-            var claimsPrincipalHeaders = request.Headers.Where(header => string.Equals(header.Key, "x-ms-client-principal", StringComparison.OrdinalIgnoreCase));
-            if (!claimsPrincipalHeaders.Any())
-            {
-                return null;
-            }
-            else
-            {
-                return claimsPrincipalHeaders.First().Value.First();
-            }
+            return request.Headers
+                .Where(header => string.Equals(header.Key, "x-ms-client-principal", StringComparison.OrdinalIgnoreCase))
+                .Select(header => header.Value.First())
+                .FirstOrDefault();
         }
     }
 }

@@ -16,7 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
     /// </summary>
     internal class ClaimsPrincipalBindingProvider : IBindingProvider
     {
-        private static Task<IBinding> nullBinding = Task.FromResult<IBinding>(null);
+        private static readonly Task<IBinding> NullBinding = Task.FromResult<IBinding>(null);
 
         public Task<IBinding> TryCreateAsync(BindingProviderContext context)
         {
@@ -27,7 +27,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
             if (context.Parameter.ParameterType != typeof(ClaimsPrincipal))
             {
-                return nullBinding;
+                return NullBinding;
             }
 
             return Task.FromResult<IBinding>(new ClaimsIdentityBinding(context.Parameter));
