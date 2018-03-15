@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.MobileApps;
@@ -29,6 +30,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         private const string DefaultKey = "Default";
         private const string AttributeKey = "Attribute";
         private const string ConfigKey = "Config";
+
+        public MobileTableEndToEndTests()
+        {
+            // disable the default warning from WebJobs.
+            ServicePointManager.DefaultConnectionLimit = 100;
+        }
 
         [Fact]
         public async Task OutputBindings()

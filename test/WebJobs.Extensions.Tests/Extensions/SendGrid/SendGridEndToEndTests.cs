@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Client;
 using Microsoft.Azure.WebJobs.Extensions.Config;
@@ -25,6 +26,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.SendGrid
         private const string ConfigApiKey = "Config";
         private const string AttributeApiKey1 = "Attribute1";
         private const string AttributeApiKey2 = "Attribute2";
+
+        public SendGridEndToEndTests()
+        {
+            // disable the default warning from WebJobs.
+            ServicePointManager.DefaultConnectionLimit = 100;
+        }
 
         [Fact]
         public async Task OutputBindings_WithKeysOnConfigAndAttribute()
