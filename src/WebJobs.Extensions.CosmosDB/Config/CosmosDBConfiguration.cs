@@ -62,47 +62,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             // Apply ValidateConnection to all on this rule. 
             var rule = context.AddBindingRule<CosmosDBAttribute>();
             rule.AddValidator(ValidateConnection);
-            rule.BindToCollector<OpenType>(typeof(CosmosDBCollectorBuilder<>), this);
-            rule.BindToCollector<JObject>(typeof(CosmosDBCollectorBuilder<>), this);
+            rule.BindToCollector<DocumentOpenType>(typeof(CosmosDBCollectorBuilder<>), this);
 
             rule.BindToInput<DocumentClient>(new CosmosDBClientBuilder(this));
-            rule.BindToInput<JArray>(typeof(CosmosDBJArrayBuilder), this);
 
-            rule.BindToInput<IEnumerable<OpenType>>(typeof(CosmosDBEnumerableBuilder<>), this).AddValidator(ValidateInputBinding);
+            // Enumerable inputs
+            rule.WhenIsNull(nameof(CosmosDBAttribute.Id))
+                .BindToInput<JArray>(typeof(CosmosDBJArrayBuilder), this);
 
-            rule.BindToValueProvider((attr, t) => BindForItemAsync(attr, t)).AddValidator(ValidateInputBinding);
+            rule.WhenIsNull(nameof(CosmosDBAttribute.Id))
+                .BindToInput<IEnumerable<DocumentOpenType>>(typeof(CosmosDBEnumerableBuilder<>), this);
+
+            // Single input
+            rule.WhenIsNotNull(nameof(CosmosDBAttribute.Id))
+                .WhenIsNull(nameof(CosmosDBAttribute.SqlQuery))
+                .BindToValueProvider<DocumentOpenType>((attr, t) => BindForItemAsync(attr, t));
 
             // Trigger
-            context.Config.RegisterBindingExtensions(new CosmosDBTriggerAttributeBindingProvider(nameResolver, this, LeaseOptions));
-
             var rule2 = context.AddBindingRule<CosmosDBTriggerAttribute>();
-            rule2.BindToTrigger<IReadOnlyList<Document>>();
+            rule2.BindToTrigger<IReadOnlyList<Document>>(new CosmosDBTriggerAttributeBindingProvider(nameResolver, this, LeaseOptions));
             rule2.AddConverter<string, IReadOnlyList<Document>>(str => JsonConvert.DeserializeObject<IReadOnlyList<Document>>(str));
             rule2.AddConverter<IReadOnlyList<Document>, JArray>(docList => JArray.FromObject(docList));
             rule2.AddConverter<IReadOnlyList<Document>, string>(docList => JArray.FromObject(docList).ToString());
-        }
-
-        internal static void ValidateInputBinding(CosmosDBAttribute attribute, Type parameterType)
-        {
-            bool hasSqlQuery = !string.IsNullOrEmpty(attribute.SqlQuery);
-            bool hasId = !string.IsNullOrEmpty(attribute.Id);
-
-            if (hasSqlQuery && hasId)
-            {
-                throw new InvalidOperationException($"Only one of 'SqlQuery' and '{nameof(CosmosDBAttribute.Id)}' can be specified.");
-            }
-
-            if (IsSupportedEnumerable(parameterType))
-            {
-                if (hasId)
-                {
-                    throw new InvalidOperationException($"'{nameof(CosmosDBAttribute.Id)}' cannot be specified when binding to an IEnumerable property.");
-                }
-            }
-            else if (!hasId)
-            {
-                throw new InvalidOperationException($"'{nameof(CosmosDBAttribute.Id)}' is required when binding to a {parameterType.Name} property.");
-            }
         }
 
         internal void ValidateConnection(CosmosDBAttribute attribute, Type paramType)
@@ -186,6 +167,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
 
             return false;
+        }
+
+        private class DocumentOpenType : OpenType.Poco
+        {
+            public override bool IsMatch(Type type, OpenTypeMatchContext context)
+            {
+                if (type.IsGenericType
+                    && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                {
+                    return false;
+                }
+
+                if (type.FullName == "System.Object")
+                {
+                    return true;
+                }
+
+                return base.IsMatch(type, context);
+            }
         }
     }
 }

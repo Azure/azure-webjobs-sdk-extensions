@@ -206,11 +206,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         }
 
         [Fact]
-        public async Task NoConnectionString()
+        public async Task NoConnectionStringSet()
         {
             // Act
             var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
-                () => RunTestAsync(typeof(CosmosDBNoConnectionStringFunctions), "Broken", new DefaultCosmosDBServiceFactory(), configConnectionString: null, includeDefaultConnectionString: false));
+                () => RunTestAsync(typeof(NoConnectionString), nameof(NoConnectionString.Broken), new DefaultCosmosDBServiceFactory(), configConnectionString: null, includeDefaultConnectionString: false));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex.InnerException);
@@ -219,29 +219,68 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         [Fact]
         public async Task InvalidEnumerableBindings()
         {
-            // Verify that the validator is properly wired up. Unit tests already check all other permutations.
-
             // Act
             var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
-                () => RunTestAsync(typeof(CosmosDBInvalidEnumerableBindingFunctions), "BrokenEnumerable", new DefaultCosmosDBServiceFactory()));
+                () => RunTestAsync(typeof(InvalidEnumerable), nameof(InvalidEnumerable.BrokenEnumerable), new DefaultCosmosDBServiceFactory()));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex.InnerException);
-            Assert.Equal("'Id' cannot be specified when binding to an IEnumerable property.", ex.InnerException.Message);
+
+            // TODO: Can WhenIsNull/NotNull provide better error messages?
+            Assert.StartsWith("Can't bind CosmosDB to type 'System.Collections.Generic.IEnumerable`1[Newtonsoft.Json.Linq.JObject]'.", ex.InnerException.Message);
         }
 
         [Fact]
         public async Task InvalidItemBindings()
         {
-            // Verify that the validator is properly wired up. Unit tests already check all other permutations.
-
             // Act
             var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
-                () => RunTestAsync(typeof(CosmosDBInvalidItemBindingFunctions), "BrokenItem", new DefaultCosmosDBServiceFactory()));
+                () => RunTestAsync(typeof(InvalidItem), nameof(InvalidItem.BrokenItem), new DefaultCosmosDBServiceFactory()));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex.InnerException);
-            Assert.Equal("'Id' is required when binding to a JObject property.", ex.InnerException.Message);
+
+            // TODO: Can WhenIsNull/NotNull provide better error messages?
+            Assert.StartsWith("Can't bind CosmosDB to type 'Newtonsoft.Json.Linq.JObject'.", ex.InnerException.Message);
+        }
+
+        [Fact]
+        public async Task NoByteArrayEnumerableBindings()
+        {
+            // byte[] isn't supported by DocumentClient, so we need to make sure we reject it early.
+            // Act
+            var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
+                () => RunTestAsync(typeof(InvalidByteArrayEnumerable), nameof(InvalidByteArrayEnumerable.BrokenEnumerable), new DefaultCosmosDBServiceFactory()));
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex.InnerException);
+            Assert.StartsWith("Can't bind CosmosDB to type 'System.Collections.Generic.IEnumerable`1[System.Byte[]]'.", ex.InnerException.Message);
+        }
+
+        [Fact]
+        public async Task NoByteArrayItemBindings()
+        {
+            // byte[] isn't supported by DocumentClient, so we need to make sure we reject it early.
+            // Act
+            var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
+                () => RunTestAsync(typeof(InvalidByteArrayItem), nameof(InvalidByteArrayItem.BrokenItem), new DefaultCosmosDBServiceFactory()));
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex.InnerException);
+            Assert.StartsWith("Can't bind CosmosDB to type 'System.Byte[]'.", ex.InnerException.Message);
+        }
+
+        [Fact]
+        public async Task NoByteArrayCollectorBindings()
+        {
+            // byte[] isn't supported by DocumentClient, so we need to make sure we reject it early.
+            // Act
+            var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
+                () => RunTestAsync(typeof(InvalidByteArrayCollector), nameof(InvalidByteArrayCollector.BrokenCollector), new DefaultCosmosDBServiceFactory()));
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex.InnerException);
+            Assert.StartsWith("Nested collections are not supported", ex.InnerException.Message);
         }
 
         private Task RunTestAsync(string testName, ICosmosDBServiceFactory factory, object argument = null, string configConnectionString = ConfigConnStr)
@@ -373,7 +412,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
             }
         }
 
-        private class CosmosDBNoConnectionStringFunctions
+        private class NoConnectionString
         {
             [NoAutomaticTrigger]
             public static void Broken(
@@ -382,7 +421,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
             }
         }
 
-        private class CosmosDBInvalidEnumerableBindingFunctions
+        private class InvalidEnumerable
         {
             [NoAutomaticTrigger]
             public static void BrokenEnumerable(
@@ -391,11 +430,40 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
             }
         }
 
-        private class CosmosDBInvalidItemBindingFunctions
+        private class InvalidItem
         {
             [NoAutomaticTrigger]
             public static void BrokenItem(
                 [CosmosDB(SqlQuery = "some query")] JObject item)
+            {
+            }
+        }
+
+        private class InvalidByteArrayEnumerable
+        {
+            [NoAutomaticTrigger]
+            [Disable]
+            public static void BrokenEnumerable(
+                [CosmosDB(DatabaseName, CollectionName, SqlQuery = "some query")] IEnumerable<byte[]> items)
+            {
+            }
+        }
+
+        private class InvalidByteArrayItem
+        {
+            [NoAutomaticTrigger]
+            [Disable]
+            public static void BrokenItem(
+                [CosmosDB(DatabaseName, CollectionName, Id = "id")] byte[] item)
+            {
+            }
+        }
+
+        private class InvalidByteArrayCollector
+        {
+            [NoAutomaticTrigger]
+            public static void BrokenCollector(
+            [CosmosDB(DatabaseName, CollectionName)] IAsyncCollector<byte[]> items)
             {
             }
         }
