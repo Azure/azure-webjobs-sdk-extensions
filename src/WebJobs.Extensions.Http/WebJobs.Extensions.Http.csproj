@@ -166,7 +166,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthorizationLevel.cs" />
-    <Compile Include="ClaimsIdentityBindingProvider.cs" />
     <Compile Include="ClaimsIdentitySlim.cs" />
     <Compile Include="ClaimSlim.cs" />
     <Compile Include="ClaimsPrincipalBindingProvider.cs" />

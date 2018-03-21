@@ -24,31 +24,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         private JobHostConfiguration _config;
         private JobHost _host;
 
-        private const string AuthType = "aad";
-        private const string ClaimType = "name";
-        private const string ClaimValue = "Sample";
-        private const string Name = "sample@microsoft.com";
-        //private const string ClaimPrincipalJson = $"{{\"auth_typ\": \"{AuthType}\",\"claims\": [{{\"typ\": \"{ClaimType}\",\"val\": \"{ClaimValue}\"}},{{\"typ\": \"http:\\/\\/schemas.xmlsoap.org\\/ws\\/2005\\/05\\/identity\\/claims\\/name\",\"val\": \"{Name}\"}},{{\"typ\": \"http:\\/\\/schemas.xmlsoap.org\\/ws\\/2005\\/05\\/identity\\/claims\\/upn\",\"val\": \"sample@microsoft.com\"}],\"name_typ\": \"http:\\/\\/schemas.xmlsoap.org\\/ws\\/2005\\/05\\/identity\\/claims\\/name\",\"role_typ\": \"http:\\/\\/schemas.microsoft.com\\/ws\\/2008\\/06\\/identity\\/claims\\/role\"}"
-        private const string ClaimPrincipalJson = @"{
-  ""auth_typ"": """ +  AuthType + @""",
-  ""claims"": [
-    {
-      ""typ"": """ + ClaimType + @""",
-      ""val"": """ + ClaimValue + @"""
-    },
-    {
-      ""typ"": ""http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"",
-      ""val"": """ + Name + @"""
-    },
-    {
-      ""typ"": ""http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"",
-      ""val"": """ + Name + @"""
-    }
-  ],
-  ""name_typ"": ""http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"",
-  ""role_typ"": ""http://schemas.microsoft.com/ws/2008/06/identity/claims/role""
-}";
-
         public HttpTriggerEndToEndTests()
         {
             var httpConfig = new HttpExtensionConfiguration();
@@ -132,17 +107,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         }
 
         [Fact]
-        public void ClaimsPrincipalBinding()
-        {
-            var request = new HttpRequestMessage(HttpMethod.Get, "http://functions.com/api/TestIdentityBindings");
-            string headerValue = Convert.ToBase64String(Encoding.UTF8.GetBytes(ClaimPrincipalJson));
-            request.Headers.Add("x-ms-client-principal", headerValue);
-
-            var method = typeof(TestFunctions).GetMethod(nameof(TestFunctions.TestIdentityBindings));
-            _host.Call(method, new { req = request });
-        }
-
-        [Fact]
         public async Task QueryHeaderBindingParameters()
         {
             string testId = Guid.NewGuid().ToString();
@@ -217,16 +181,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             {
                 // Return value becomes the HttpResponseMessage.
                 return Task.FromResult("test-response");
-            }
-
-            public static void TestIdentityBindings(
-                [HttpTrigger("get")] HttpRequestMessage req,
-                ClaimsPrincipal principal)
-            {
-                Assert.Equal(Name, principal.Identity.Name);
-                Assert.Equal(AuthType, principal.Identity.AuthenticationType);
-                Claim testClaim = principal.Claims.Where(claim => string.Equals(claim.Type, ClaimType)).First();
-                Assert.Equal(testClaim.Value, ClaimValue);
             }
 
             // Test that we can bind to both a Poco and the direct request message

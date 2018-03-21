@@ -4,7 +4,6 @@
 namespace Microsoft.Azure.WebJobs.Extensions.Http
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Net.Http;
@@ -12,33 +11,65 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
     using System.Runtime.Serialization.Json;
     using System.Security.Claims;
 
-    internal static class ClaimsPrincipalHelper
+    /// <summary>
+    /// Provides methods to grab the ClaimsPrincipal from an HTTP Request trigger
+    /// </summary>
+    public static class ClaimsIdentityHelper
     {
         // Shared serializer instance. This is safe for multi-threaded use.
         private static readonly DataContractJsonSerializer Serializer = GetCustomSerializer();
 
-        public static ClaimsPrincipal FromBindingData(IReadOnlyDictionary<string, object> bindingData)
+        private const string EasyAuthIdentity = "x-ms-client-principal";
+
+        /// <summary>
+        /// Retrieves a serialized ClaimsIdentity object from the http request of an HTTP Trigger
+        /// </summary>
+        /// <param name="request">The request message from the HTTP Trigger</param>
+        /// <param name="identityHeaderName">The name of the header the identity is stored on.</param>
+        /// <returns></returns>
+        public static ClaimsIdentity GetIdentityFromHttpRequest(HttpRequestMessage request, string identityHeaderName)
         {
-            var req = bindingData.Values.FirstOrDefault(val => val.GetType() == typeof(HttpRequestMessage)) as HttpRequestMessage;
-            if (req == null)
+            if (request == null)
             {
-                return new ClaimsPrincipal();
+                return null;
             }
 
-            string claimsPrincipalHeaderValue = GetClaimsPrincipalHeaderValue(req);
-            if (claimsPrincipalHeaderValue == null)
+            string claimsIdentityHeaderValue = GetClaimsIdentityHeaderValue(request, identityHeaderName);
+            if (claimsIdentityHeaderValue == null)
             {
-                return new ClaimsPrincipal();
+                return null;
             }
-            return FromBase64EncodedJson(claimsPrincipalHeaderValue);
+            return FromBase64EncodedJson(claimsIdentityHeaderValue);
         }
 
-        private static ClaimsPrincipal FromBase64EncodedJson(string payload)
+        /// <summary>
+        /// Adds a serialized ClaimsIdentity object to a specified http header
+        /// </summary>
+        /// <param name="request">The HTTP request to add the header to</param>
+        /// <param name="identity">The ClaimsIdentity to be serialized</param>
+        /// <param name="headerName">The name of the header to add the serialized value to</param>
+        public static void AddIdentityToHttpRequest(HttpRequestMessage request, ClaimsIdentity identity, string headerName)
+        {
+            if (request == null)
+            {
+                return;
+            }
+
+            ClaimsIdentitySlim identitySlim = ClaimsIdentitySlim.FromClaimsIdentity(identity);
+            using (var stream = new MemoryStream())
+            {
+                Serializer.WriteObject(stream, identitySlim);
+                string encodedValue = Convert.ToBase64String(stream.GetBuffer(), 0, (int)stream.Position);
+                request.Headers.Add(headerName, encodedValue);
+            }       
+        }
+
+        private static ClaimsIdentity FromBase64EncodedJson(string payload)
         {
             using (var buffer = new MemoryStream(Convert.FromBase64String(payload)))
             {
                 ClaimsIdentitySlim slim = (ClaimsIdentitySlim)Serializer.ReadObject(buffer);
-                return new ClaimsPrincipal(slim.ToClaimsIdentity());
+                return slim.ToClaimsIdentity();
             }
         }
 
@@ -54,10 +85,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             return new DataContractJsonSerializer(typeof(ClaimsIdentitySlim), settings);
         }
 
-        private static string GetClaimsPrincipalHeaderValue(HttpRequestMessage request)
+        private static string GetClaimsIdentityHeaderValue(HttpRequestMessage request, string headerName)
         {
             return request.Headers
-                .Where(header => string.Equals(header.Key, "x-ms-client-principal", StringComparison.OrdinalIgnoreCase))
+                .Where(header => string.Equals(header.Key, headerName, StringComparison.OrdinalIgnoreCase))
                 .Select(header => header.Value.First())
                 .FirstOrDefault();
         }

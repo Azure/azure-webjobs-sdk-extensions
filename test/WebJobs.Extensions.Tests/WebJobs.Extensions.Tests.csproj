@@ -275,6 +275,7 @@
     <Compile Include="Extensions\DocumentDB\TestDocumentDBServiceFactory.cs" />
     <Compile Include="Extensions\DocumentDB\Trigger\CosmosDBTriggerAttributeBindingProviderTests.cs" />
     <Compile Include="Extensions\DocumentDB\Trigger\CosmosDBTriggerAttributeTests.cs" />
+    <Compile Include="Extensions\Http\ClaimsPrincipalEndToEndTests.cs" />
     <Compile Include="Extensions\Http\HttpRequestManagerTests.cs" />
     <Compile Include="Extensions\Http\HttpRouteFactoryTests.cs" />
     <Compile Include="Extensions\Http\HttpTriggerAttributeBindingProviderTests.cs" />

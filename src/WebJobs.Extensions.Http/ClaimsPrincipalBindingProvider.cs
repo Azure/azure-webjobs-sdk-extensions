@@ -3,11 +3,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Protocols;
+using static Microsoft.Azure.WebJobs.Extensions.Http.HttpTriggerAttributeBindingProvider.HttpTriggerBinding;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Http
 {
@@ -17,6 +21,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
     internal class ClaimsPrincipalBindingProvider : IBindingProvider
     {
         private static readonly Task<IBinding> NullBinding = Task.FromResult<IBinding>(null);
+
+        private static readonly IReadOnlyCollection<string> PotentialIdentityHeaders = new ReadOnlyCollection<string>(new List<string>()
+        {
+            "x-ms-client-principal", 
+            "x-ms-functions-key-identity"
+        });
 
         public Task<IBinding> TryCreateAsync(BindingProviderContext context)
         {
@@ -55,12 +65,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 }
 
                 IReadOnlyDictionary<string, object> bindingData = context.BindingData;
-                return Task.FromResult<IValueProvider>(new ClaimsPrincipalValueProvider(ClaimsPrincipalHelper.FromBindingData(bindingData)));
+                HttpRequestMessage requestMessage = bindingData.Values.FirstOrDefault(val => val.GetType() == typeof(HttpRequestMessage)) as HttpRequestMessage;
+                ClaimsPrincipal principal = GetClaimsPrincipalFromHttpRequest(requestMessage);
+                var valueProvider = new SimpleValueProvider(typeof(ClaimsPrincipal), principal, principal?.Identity?.Name);
+                return Task.FromResult<IValueProvider>(valueProvider);
+            }
+
+            private static ClaimsPrincipal GetClaimsPrincipalFromHttpRequest(HttpRequestMessage request)
+            {
+                List<ClaimsIdentity> identities = PotentialIdentityHeaders
+                    .Select(header => ClaimsIdentityHelper.GetIdentityFromHttpRequest(request, header))
+                    .Where(id => id != null)
+                    .ToList();
+                return new ClaimsPrincipal(identities);
             }
 
             public Task<IValueProvider> BindAsync(object value, ValueBindingContext context)
             {
-                throw new NotImplementedException("This method does not provide the necessary binding data.");
+                var request = value as ClaimsPrincipal;
+                if (request != null)
+                {
+                    var binding = new SimpleValueProvider(typeof(ClaimsPrincipal), request, "request");
+                    return Task.FromResult<IValueProvider>(binding);
+                }
+                throw new InvalidOperationException("Value must be of type " + typeof(ClaimsPrincipal).ToString());
             }
             
             public ParameterDescriptor ToParameterDescriptor()
@@ -73,32 +101,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                         Description = "ClaimsPrincipal"
                     }
                 };
-            }
-
-            private class ClaimsPrincipalValueProvider : IValueProvider
-            {
-                private readonly ClaimsPrincipal _claimsPrincipal;
-
-                public ClaimsPrincipalValueProvider(ClaimsPrincipal claimsPrincipal)
-                {
-                    _claimsPrincipal = claimsPrincipal;
-                }
-
-                public Type Type
-                {
-                    get { return typeof(ClaimsPrincipal); }
-                }
-
-                public Task<object> GetValueAsync()
-                {
-                    return Task.FromResult<object>(_claimsPrincipal);
-                }
-
-                public string ToInvokeString()
-                {
-                    // TODO: Decide if this is what we want invoke string to be.
-                    return _claimsPrincipal.Identity.Name;
-                }
             }
         }
     }
