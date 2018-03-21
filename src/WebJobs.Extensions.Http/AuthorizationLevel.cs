@@ -14,23 +14,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         Anonymous = 0,
 
         /// <summary>
-        /// Allow access to requests that include a valid user authentication token
-        /// </summary>
-        User,
-
-        /// <summary>
         /// Allow access to requests that include a function key
         /// </summary>
-        Function,
+        Function = 1,
 
         /// <summary>
         /// Allows access to requests that include a system key
         /// </summary>
-        System,
+        System = 2,
 
         /// <summary>
         /// Allow access to requests that include the master key
         /// </summary>
-        Admin
+        Admin = 3,
+
+        /// <summary>
+        /// Allow access to requests that include a valid user authentication token
+        /// </summary>
+        User = 4
     }
 }
