@@ -63,5 +63,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
         public string FormattedMessage { get; set; }
 
         public string Category { get; set; }
+
+        public override string ToString()
+        {
+            return $"[{Category}] {FormattedMessage}";
+        }
     }
 }
