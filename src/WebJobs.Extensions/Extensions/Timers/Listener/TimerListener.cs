@@ -244,20 +244,39 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
         private void StartTimer(DateTime now)
         {
-            // We need to calculate the next interval based on the current
-            // time as we don't know how long the previous function invocation took.
-            // Example: if you have an hourly timer invoked at 12:00 and the invocation takes 1 minute,
-            // we want to calculate the interval for the next timer using 12:01 rather than at 12:00.
-            // Otherwise, you'd start a 1-hour timer at 12:01 when we really want it to be a 59-minute timer.
+            var nextInterval = GetNextTimerInterval(ScheduleStatus.Next, now);
+            StartTimer(nextInterval);
+        }
+
+        /// <summary>
+        /// Calculate the next timer interval based on the current (Local) time.
+        /// </summary>
+        /// <remarks>
+        /// We calculate based on the current time because we don't know how long
+        /// the previous function invocation took. Example: if you have an hourly timer
+        /// invoked at 12:00 and the invocation takes 1 minute, we want to calculate
+        /// the interval for the next timer using 12:01 rather than at 12:00. Otherwise, 
+        /// you'd start a 1-hour timer at 12:01 when we really want it to be a 59-minute timer.
+        /// </remarks>
+        /// <param name="next">The next schedule occurrence in Local time</param>
+        /// <param name="now">The current Local time</param>
+        /// <returns>The next timer interval</returns>
+        internal static TimeSpan GetNextTimerInterval(DateTime next, DateTime now)
+        {
+            // For calculations, we use DateTimeOffsets and TimeZoneInfo to ensure we honor time zone
+            // changes (e.g. Daylight Savings Time)
+            var nowOffset = new DateTimeOffset(now, TimeZoneInfo.Local.GetUtcOffset(now));
+            var nextOffset = new DateTimeOffset(next, TimeZoneInfo.Local.GetUtcOffset(next));
+            var nextInterval = nextOffset - nowOffset;
 
             // If the interval happens to be negative (due to slow storage, for example), adjust the
             // interval back up 1 Tick (Zero is invalid for a timer) for an immediate invocation.
-            TimeSpan nextInterval = ScheduleStatus.Next - now;
             if (nextInterval <= TimeSpan.Zero)
             {
                 nextInterval = TimeSpan.FromTicks(1);
             }
-            StartTimer(nextInterval);
+
+            return nextInterval;
         }
 
         private void StartTimer(TimeSpan interval)
