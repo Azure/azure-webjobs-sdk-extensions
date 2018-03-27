@@ -252,7 +252,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             // If the interval happens to be negative (due to slow storage, for example), adjust the
             // interval back up 1 Tick (Zero is invalid for a timer) for an immediate invocation.
-            TimeSpan nextInterval = ScheduleStatus.Next - now;
+            TimeSpan nextInterval = (DateTimeOffset)ScheduleStatus.Next - (DateTimeOffset)now;
             if (nextInterval <= TimeSpan.Zero)
             {
                 nextInterval = TimeSpan.FromTicks(1);
