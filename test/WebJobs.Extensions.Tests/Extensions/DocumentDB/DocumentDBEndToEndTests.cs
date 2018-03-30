@@ -48,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 
             var factoryMock = new Mock<IDocumentDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(ConfigConnStr))
+                .Setup(f => f.CreateService(ConfigConnStr, null))
                 .Returns(serviceMock.Object);
 
             var testTrace = new TestTraceWriter(TraceLevel.Warning);
@@ -57,7 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             await RunTestAsync("Outputs", factoryMock.Object, testTrace);
 
             // Assert
-            factoryMock.Verify(f => f.CreateService(ConfigConnStr), Times.Once());
+            factoryMock.Verify(f => f.CreateService(ConfigConnStr, null), Times.Once());
             serviceMock.Verify(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()), Times.Exactly(8));
             Assert.Equal("Outputs", testTrace.Events.Single().Message);
         }
@@ -68,8 +68,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             // Arrange
             var factoryMock = new Mock<IDocumentDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(DefaultConnStr))
-                .Returns<string>(connectionString => new DocumentDBService(connectionString));
+                .Setup(f => f.CreateService(DefaultConnStr, null))
+                .Returns<string, ConnectionMode?>((connectionString, connectionMode) => new DocumentDBService(connectionString, connectionMode));
 
             var testTrace = new TestTraceWriter(TraceLevel.Warning);
 
@@ -78,7 +78,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             await RunTestAsync("Client", factoryMock.Object, testTrace, configConnectionString: null);
 
             //Assert
-            factoryMock.Verify(f => f.CreateService(DefaultConnStr), Times.Once());
+            factoryMock.Verify(f => f.CreateService(DefaultConnStr, null), Times.Once());
             Assert.Equal("Client", testTrace.Events.Single().Message);
         }
 
@@ -159,7 +159,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 
             var factoryMock = new Mock<IDocumentDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(It.IsAny<string>()))
+                .Setup(f => f.CreateService(It.IsAny<string>(), null))
                 .Returns(serviceMock.Object);
 
             var testTrace = new TestTraceWriter(TraceLevel.Warning);
@@ -168,7 +168,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             await RunTestAsync(nameof(DocumentDBEndToEndFunctions.Inputs), factoryMock.Object, testTrace, item1Id);
 
             // Assert
-            factoryMock.Verify(f => f.CreateService(It.IsAny<string>()), Times.Once());
+            factoryMock.Verify(f => f.CreateService(It.IsAny<string>(), null), Times.Once());
             Assert.Equal(1, testTrace.Events.Count);
             Assert.Equal("Inputs", testTrace.Events[0].Message);
             serviceMock.VerifyAll();
@@ -191,7 +191,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
 
             var factoryMock = new Mock<IDocumentDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(AttributeConnStr))
+                .Setup(f => f.CreateService(AttributeConnStr, null))
                 .Returns(serviceMock.Object);
 
             var jobject = JObject.FromObject(new QueueData { DocumentId = "docid1", PartitionKey = "partkey1" });
@@ -202,7 +202,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             await RunTestAsync(nameof(DocumentDBEndToEndFunctions.TriggerObject), factoryMock.Object, testTrace, jobject.ToString());
 
             // Assert
-            factoryMock.Verify(f => f.CreateService(AttributeConnStr), Times.Once());
+            factoryMock.Verify(f => f.CreateService(AttributeConnStr, null), Times.Once());
             Assert.Equal(1, testTrace.Events.Count);
             Assert.Equal("TriggerObject", testTrace.Events[0].Message);
         }

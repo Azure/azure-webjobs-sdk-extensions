@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.DocumentDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host.Triggers;
@@ -43,6 +44,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Trigger
 
             Assert.Equal(binding.TriggerValueType, typeof(IReadOnlyList<Document>));
             Assert.Equal(binding.DocumentCollectionLocation.Uri, new Uri("https://fromEnvironment"));
+        }
+
+        [Theory]
+        [MemberData(nameof(ValidCosmosDBTriggerBindingsWithEnvironmentParameters))]
+        public async Task ValidParametersWithEnvironment_ConnectionMode_Succeed(ParameterInfo parameter)
+        {
+            var nameResolver = new TestNameResolver();
+            nameResolver.Values[DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
+            nameResolver.Values["CosmosDBConnectionString"] = "AccountEndpoint=https://fromSettings;AccountKey=someKey;";
+
+            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, CreateConfigurationWithConnectionMode());
+
+            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+
+            Assert.Equal(binding.TriggerValueType, typeof(IReadOnlyList<Document>));
+            Assert.Equal(binding.DocumentCollectionLocation.Uri, new Uri("https://fromEnvironment"));
+            Assert.Equal(binding.DocumentCollectionLocation.ConnectionPolicy.ConnectionMode, ConnectionMode.Direct);
         }
 
         [Theory]
@@ -382,6 +400,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Trigger
             return new DocumentDBConfiguration
             {
                 ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;",
+            };
+        }
+
+        private DocumentDBConfiguration CreateConfigurationWithConnectionMode()
+        {
+            return new DocumentDBConfiguration
+            {
+                ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;",
+                ConnectionMode = ConnectionMode.Direct
             };
         }
     }

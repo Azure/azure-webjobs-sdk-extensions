@@ -132,7 +132,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             Mock<IDocumentDBServiceFactory> mockServiceFactory = new Mock<IDocumentDBServiceFactory>(MockBehavior.Strict);
 
             mockServiceFactory
-                .Setup(m => m.CreateService(It.IsAny<string>()))
+                .Setup(m => m.CreateService(It.IsAny<string>(), null))
                 .Returns(mockService.Object);
 
             config.DocumentDBServiceFactory = mockServiceFactory.Object;
