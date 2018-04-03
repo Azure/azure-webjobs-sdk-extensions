@@ -16,34 +16,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
 {
     public class CosmosDBConfigurationTests
     {
-        public static IEnumerable<object[]> ValidInputBindings
-        {
-            get
-            {
-                return new[]
-                {
-                    new object[] { new CosmosDBAttribute(), typeof(IEnumerable<JObject>) },
-                    new object[] { new CosmosDBAttribute { Id = "SomeId" }, typeof(JObject) },
-                    new object[] { new CosmosDBAttribute { SqlQuery = "Some Query" }, typeof(IEnumerable<JObject>) }
-                };
-            }
-        }
-
-        public static IEnumerable<object[]> InvalidInputBindings
-        {
-            get
-            {
-                return new[]
-                {
-                    new object[] { new CosmosDBAttribute { Id = "SomeId", SqlQuery = "Some Query" }, typeof(JObject) },
-                    new object[] { new CosmosDBAttribute { Id = "SomeId" }, typeof(IEnumerable<JObject>) },
-                    new object[] { new CosmosDBAttribute { SqlQuery = "Some Query" }, typeof(JObject) },
-                    new object[] { new CosmosDBAttribute { SqlQuery = "Some Query" }, typeof(IList<JObject>) },
-                    new object[] { new CosmosDBAttribute { SqlQuery = "Some Query" }, typeof(List<JObject>) },
-                };
-            }
-        }
-
         [Fact]
         public async Task Configuration_Caches_Clients()
         {
@@ -112,20 +84,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         {
             bool actualResult = CosmosDBConfiguration.IsSupportedEnumerable(type);
             Assert.Equal(expectedResult, actualResult);
-        }
-
-        [Theory]
-        [MemberData(nameof(ValidInputBindings))]
-        public void ValidateInputBindings_Succeeds_WithValidBindings(CosmosDBAttribute attribute, Type parameterType)
-        {
-            CosmosDBConfiguration.ValidateInputBinding(attribute, parameterType);
-        }
-
-        [Theory]
-        [MemberData(nameof(InvalidInputBindings))]
-        public void ValidateInputBindings_Throws_WithInvalidBindings(CosmosDBAttribute attribute, Type parameterType)
-        {
-            Assert.Throws<InvalidOperationException>(() => CosmosDBConfiguration.ValidateInputBinding(attribute, parameterType));
         }
 
         private CosmosDBConfiguration InitializeConfig(string defaultConnStr)

@@ -10,5 +10,6 @@ csx
 /.vs
 /packages
 /TestResults
+/buildoutput
 
 /tools/NuGet.exe

@@ -10,9 +10,9 @@ using System.Threading.Tasks.Dataflow;
 using System.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Files.Listeners
 {
@@ -30,32 +30,16 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
         private System.Timers.Timer _cleanupTimer;
         private Random _rand = new Random();
         private FileSystemWatcher _watcher;
-        private TraceWriter _trace;
+        private readonly ILogger _logger;
         private bool _disposed;
 
-        public FileListener(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor triggerExecutor, TraceWriter trace)
+        public FileListener(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor triggerExecutor, ILogger logger)
         {
-            if (config == null)
-            {
-                throw new ArgumentNullException("config");
-            }
-            if (attribute == null)
-            {
-                throw new ArgumentNullException("attribute");
-            }
-            if (triggerExecutor == null)
-            {
-                throw new ArgumentNullException("triggerExecutor");
-            }
-            if (trace == null)
-            {
-                throw new ArgumentNullException("trace");
-            }
+            _config = config ?? throw new ArgumentNullException(nameof(config));
+            _attribute = attribute ?? throw new ArgumentNullException(nameof(attribute));
+            _triggerExecutor = triggerExecutor ?? throw new ArgumentNullException(nameof(triggerExecutor));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            _config = config;
-            _attribute = attribute;
-            _triggerExecutor = triggerExecutor;
-            _trace = trace;
             _cancellationTokenSource = new CancellationTokenSource();
 
             if (string.IsNullOrEmpty(_config.RootPath) || !Directory.Exists(_config.RootPath))
@@ -86,7 +70,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
             CreateFileWatcher();
 
-            FileProcessorFactoryContext context = new FileProcessorFactoryContext(_config, _attribute, _triggerExecutor, _trace);
+            FileProcessorFactoryContext context = new FileProcessorFactoryContext(_config, _attribute, _triggerExecutor, _logger);
             _processor = _config.ProcessorFactory.CreateFileProcessor(context);
 
             ExecutionDataflowBlockOptions options = new ExecutionDataflowBlockOptions
@@ -255,7 +239,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
             if (filesToProcess.Length > 0)
             {
-                _trace.Verbose(string.Format("Found {0} file(s) at path '{1}' for ready processing", filesToProcess.Length, _watchPath));
+                _logger.LogDebug($"Found {filesToProcess.Length} file(s) at path '{_watchPath}' for ready processing");
             }
 
             foreach (string fileToProcess in filesToProcess)

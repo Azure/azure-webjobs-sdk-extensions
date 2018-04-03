@@ -23,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         {
             _hostConfig = new JobHostConfiguration();
             _hostConfig.HostId = TestHostId;
-            _scheduleMonitor = new StorageScheduleMonitor(_hostConfig, new TestTraceWriter());
+            _scheduleMonitor = new StorageScheduleMonitor(_hostConfig, new TestLogger(null));
 
             Cleanup();
         }
@@ -40,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         public void TimerStatusDirectory_HostIdNull_Throws()
         {
             JobHostConfiguration config = new JobHostConfiguration();
-            StorageScheduleMonitor localScheduleMonitor = new StorageScheduleMonitor(config, new TestTraceWriter());
+            StorageScheduleMonitor localScheduleMonitor = new StorageScheduleMonitor(config, new TestLogger(null));
 
             CloudBlobDirectory directory = null;
             var ex = Assert.Throws<InvalidOperationException>(() =>
@@ -95,7 +95,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
                 currentToken: null,
                 options: null,
                 operationContext: null);
-            
+
             var statuses = segments.Results.Cast<CloudBlockBlob>().ToArray();
             Assert.Equal(3, statuses.Length);
             Assert.Equal("timers/testhostid/TestProgram.TestTimer0/status", statuses[0].Name);

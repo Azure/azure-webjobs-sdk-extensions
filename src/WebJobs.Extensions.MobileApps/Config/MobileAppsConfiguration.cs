@@ -12,6 +12,9 @@ using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.WindowsAzure.MobileServices;
+using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
 {
@@ -64,79 +67,60 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
 
             string uriString = _nameResolver.Resolve(AzureWebJobsMobileAppUriName);
             Uri.TryCreate(uriString, UriKind.Absolute, out _defaultMobileAppUri);
+            
+            var rule = context.AddBindingRule<MobileTableAttribute>();
+            rule.AddValidator(ValidateMobileAppUri);
 
-            BindingFactory factory = new BindingFactory(_nameResolver, converterManager);
+            rule.BindToCollector<OpenType>(typeof(MobileTableCollectorBuilder<>), this);
+            rule.BindToInput<IMobileServiceClient>(new MobileTableClientBuilder(this));
 
-            IBindingProvider outputProvider = factory.BindToCollector<MobileTableAttribute, OpenType>(typeof(MobileTableCollectorBuilder<>), this);
+            // MobileType matching needs to know whether the attribute defines 'TableName', but 
+            // OpenTypes can't get access to the attribute. So use filters to split into 2 cases. 
+            rule.WhenIsNotNull(nameof(MobileTableAttribute.TableName)).
+                BindToInput<IMobileServiceTableQuery<MobileTypeWithTableName>>(typeof(MobileTableQueryBuilder<>), this);
+            rule.WhenIsNull(nameof(MobileTableAttribute.TableName)).
+                BindToInput<IMobileServiceTableQuery<MobileTypeWithoutTableName>>(typeof(MobileTableQueryBuilder<>), this);
 
-            IBindingProvider clientProvider = factory.BindToInput<MobileTableAttribute, IMobileServiceClient>(new MobileTableClientBuilder(this));
+            rule.BindToInput<IMobileServiceTable>(new MobileTableJObjectTableBuilder(this));
 
-            IBindingProvider queryProvider = factory.BindToInput<MobileTableAttribute, IMobileServiceTableQuery<OpenType>>(typeof(MobileTableQueryBuilder<>), this);
-            queryProvider = factory.AddFilter<MobileTableAttribute>(IsQueryType, queryProvider);
-
-            IBindingProvider jObjectTableProvider = factory.BindToInput<MobileTableAttribute, IMobileServiceTable>(new MobileTableJObjectTableBuilder(this));
-
-            IBindingProvider tableProvider = factory.BindToInput<MobileTableAttribute, IMobileServiceTable<OpenType>>(typeof(MobileTablePocoTableBuilder<>), this);
-            tableProvider = factory.AddFilter<MobileTableAttribute>(IsTableType, tableProvider);
-
-            IBindingProvider itemProvider = factory.BindToGenericValueProvider<MobileTableAttribute>(BindForItemAsync);
-            itemProvider = factory.AddFilter<MobileTableAttribute>(IsItemType, itemProvider);
-
-            IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
-            extensions.RegisterBindingRules<MobileTableAttribute>(ValidateMobileAppUri, _nameResolver, outputProvider, clientProvider, jObjectTableProvider, queryProvider, tableProvider, itemProvider);
+            rule.WhenIsNotNull(nameof(MobileTableAttribute.TableName)).
+                BindToInput<IMobileServiceTable<MobileTypeWithTableName>>(typeof(MobileTablePocoTableBuilder<>), this);
+            rule.WhenIsNull(nameof(MobileTableAttribute.TableName)).
+                BindToInput<IMobileServiceTable<MobileTypeWithoutTableName>>(typeof(MobileTablePocoTableBuilder<>), this);
+                      
+            rule.WhenIsNotNull(nameof(MobileTableAttribute.TableName)).
+                BindToValueProvider<MobileTypeWithTableName>(BindForItemAsync).AddValidator(HasId);
+            rule.WhenIsNull(nameof(MobileTableAttribute.TableName)).
+                BindToValueProvider<MobileTypeWithoutTableName>(BindForItemAsync).AddValidator(HasId);
         }
 
-        internal static bool IsQueryType(MobileTableAttribute attribute, Type paramType)
+        private void HasId(MobileTableAttribute attribute, Type paramType)
         {
-            if (paramType.IsGenericType &&
-                paramType.GetGenericTypeDefinition() == typeof(IMobileServiceTableQuery<>))
-            {
-                Type tableType = paramType.GetGenericArguments().Single();
-                ThrowIfInvalidItemType(attribute, tableType);
-
-                return true;
-            }
-
-            return false;
-        }
-
-        internal bool IsTableType(MobileTableAttribute attribute, Type paramType)
-        {
-            // We will check if the argument is valid in a Validator
-            if (paramType.IsGenericType &&
-                paramType.GetGenericTypeDefinition() == typeof(IMobileServiceTable<>))
-            {
-                Type tableType = paramType.GetGenericArguments().Single();
-                ThrowIfInvalidItemType(attribute, tableType);
-
-                return true;
-            }
-
-            return false;
-        }
-
-        internal bool IsItemType(MobileTableAttribute attribute, Type paramType)
-        {
-            ThrowIfInvalidItemType(attribute, paramType);
-
             if (string.IsNullOrEmpty(attribute.Id))
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, "'Id' must be set when using a parameter of type '{0}'.", paramType.Name));
             }
-
-            return true;
         }
 
-        internal static void ThrowIfGenericArgumentIsInvalid(MobileTableAttribute attribute, Type paramType)
+        internal class MobileTypeWithoutTableName : OpenType
         {
-            // Assume IsQueryType or IsTableType has already run -- so we know there is only one argument
-            Type argumentType = paramType.GetGenericArguments().Single();
-            ThrowIfInvalidItemType(attribute, argumentType);
+            public override bool IsMatch(Type type, OpenTypeMatchContext context)
+            {
+                return ThrowIfInvalidItemType(false, type);
+            }
         }
 
-        internal static bool ThrowIfInvalidItemType(MobileTableAttribute attribute, Type paramType)
+        internal class MobileTypeWithTableName : OpenType
         {
-            if (!MobileAppUtility.IsValidItemType(paramType, attribute.TableName))
+            public override bool IsMatch(Type type, OpenTypeMatchContext context)
+            {
+                return ThrowIfInvalidItemType(true, type);
+            }
+        }
+                
+        internal static bool ThrowIfInvalidItemType(bool hasTableName, Type paramType)
+        {
+            if (!MobileAppUtility.IsValidItemType(paramType, hasTableName ? "true" : null))
             {
                 throw new ArgumentException(string.Format("The type '{0}' cannot be used in a MobileTable binding. The type must either be 'JObject' or have a public string 'Id' property.", paramType.Name));
             }

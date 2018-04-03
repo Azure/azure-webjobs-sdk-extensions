@@ -6,12 +6,13 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.ChangeFeedProcessor;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
@@ -24,7 +25,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         internal const string AzureWebJobsCosmosDBConnectionStringName = "AzureWebJobsCosmosDBConnectionString";
         internal readonly ConcurrentDictionary<string, ICosmosDBService> ClientCache = new ConcurrentDictionary<string, ICosmosDBService>();
         private string _defaultConnectionString;
-        private TraceWriter _trace;
 
         /// <summary>
         /// Constructs a new instance.
@@ -54,61 +54,36 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 throw new ArgumentNullException("context");
             }
 
-            _trace = context.Trace;
-
             INameResolver nameResolver = context.Config.GetService<INameResolver>();
-
-            IConverterManager converterManager = context.Config.GetService<IConverterManager>();
 
             // Use this if there is no other connection string set.
             _defaultConnectionString = nameResolver.Resolve(AzureWebJobsCosmosDBConnectionStringName);
 
-            BindingFactory factory = new BindingFactory(nameResolver, converterManager);
+            // Apply ValidateConnection to all on this rule. 
+            var rule = context.AddBindingRule<CosmosDBAttribute>();
+            rule.AddValidator(ValidateConnection);
+            rule.BindToCollector<DocumentOpenType>(typeof(CosmosDBCollectorBuilder<>), this);
 
-            IBindingProvider outputProvider = factory.BindToCollector<CosmosDBAttribute, OpenType>(typeof(CosmosDBCollectorBuilder<>), this);
+            rule.BindToInput<DocumentClient>(new CosmosDBClientBuilder(this));
 
-            IBindingProvider outputProviderJObject = factory.BindToCollector<CosmosDBAttribute, JObject>(typeof(CosmosDBCollectorBuilder<>), this);
+            // Enumerable inputs
+            rule.WhenIsNull(nameof(CosmosDBAttribute.Id))
+                .BindToInput<JArray>(typeof(CosmosDBJArrayBuilder), this);
 
-            IBindingProvider clientProvider = factory.BindToInput<CosmosDBAttribute, DocumentClient>(new CosmosDBClientBuilder(this));
+            rule.WhenIsNull(nameof(CosmosDBAttribute.Id))
+                .BindToInput<IEnumerable<DocumentOpenType>>(typeof(CosmosDBEnumerableBuilder<>), this);
 
-            IBindingProvider jArrayProvider = factory.BindToInput<CosmosDBAttribute, JArray>(typeof(CosmosDBJArrayBuilder), this);
+            // Single input
+            rule.WhenIsNotNull(nameof(CosmosDBAttribute.Id))
+                .WhenIsNull(nameof(CosmosDBAttribute.SqlQuery))
+                .BindToValueProvider<DocumentOpenType>((attr, t) => BindForItemAsync(attr, t));
 
-            IBindingProvider enumerableProvider = factory.BindToInput<CosmosDBAttribute, IEnumerable<OpenType>>(typeof(CosmosDBEnumerableBuilder<>), this);
-            enumerableProvider = factory.AddValidator<CosmosDBAttribute>(ValidateInputBinding, enumerableProvider);
-
-            IBindingProvider inputProvider = factory.BindToGenericValueProvider<CosmosDBAttribute>((attr, t) => BindForItemAsync(attr, t));
-            inputProvider = factory.AddValidator<CosmosDBAttribute>(ValidateInputBinding, inputProvider);
-
-            context.AddBindingRule<CosmosDBAttribute>()
-                .AddConverter<JObject, JObject>(s => s);
-
-            IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
-            extensions.RegisterBindingRules<CosmosDBAttribute>(ValidateConnection, nameResolver, outputProvider, outputProviderJObject, clientProvider, jArrayProvider, enumerableProvider, inputProvider);
-
-            context.Config.RegisterBindingExtensions(new CosmosDBTriggerAttributeBindingProvider(nameResolver, this, LeaseOptions));
-        }
-
-        internal static void ValidateInputBinding(CosmosDBAttribute attribute, Type parameterType)
-        {
-            bool hasSqlQuery = !string.IsNullOrEmpty(attribute.SqlQuery);
-            bool hasId = !string.IsNullOrEmpty(attribute.Id);
-
-            if (hasSqlQuery && hasId)
-            {
-                throw new InvalidOperationException($"Only one of 'SqlQuery' and '{nameof(CosmosDBAttribute.Id)}' can be specified.");
-            }
-
-            if (IsSupportedEnumerable(parameterType))
-            {
-                if (hasId)
-                {
-                    throw new InvalidOperationException($"'{nameof(CosmosDBAttribute.Id)}' cannot be specified when binding to an IEnumerable property.");
-                }
-            }
-            else if (!hasId)
-            {
-                throw new InvalidOperationException($"'{nameof(CosmosDBAttribute.Id)}' is required when binding to a {parameterType.Name} property.");
-            }
+            // Trigger
+            var rule2 = context.AddBindingRule<CosmosDBTriggerAttribute>();
+            rule2.BindToTrigger<IReadOnlyList<Document>>(new CosmosDBTriggerAttributeBindingProvider(nameResolver, this, LeaseOptions));
+            rule2.AddConverter<string, IReadOnlyList<Document>>(str => JsonConvert.DeserializeObject<IReadOnlyList<Document>>(str));
+            rule2.AddConverter<IReadOnlyList<Document>, JArray>(docList => JArray.FromObject(docList));
+            rule2.AddConverter<IReadOnlyList<Document>, string>(docList => JArray.FromObject(docList).ToString());
         }
 
         internal void ValidateConnection(CosmosDBAttribute attribute, Type paramType)
@@ -179,7 +154,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return new CosmosDBContext
             {
                 Service = service,
-                Trace = _trace,
                 ResolvedAttribute = attribute,
             };
         }
@@ -193,6 +167,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
 
             return false;
+        }
+
+        private class DocumentOpenType : OpenType.Poco
+        {
+            public override bool IsMatch(Type type, OpenTypeMatchContext context)
+            {
+                if (type.IsGenericType
+                    && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                {
+                    return false;
+                }
+
+                if (type.FullName == "System.Object")
+                {
+                    return true;
+                }
+
+                return base.IsMatch(type, context);
+            }
         }
     }
 }

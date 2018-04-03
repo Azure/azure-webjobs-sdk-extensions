@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents.ChangeFeedProcessor;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Config;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
@@ -165,7 +166,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         private string ResolveAttributeValue(string attributeValue)
         {
-            return _nameResolver.Resolve(attributeValue) ?? attributeValue;
+            return _nameResolver.ResolveWholeString(attributeValue) ?? attributeValue;
         }
     }
 }

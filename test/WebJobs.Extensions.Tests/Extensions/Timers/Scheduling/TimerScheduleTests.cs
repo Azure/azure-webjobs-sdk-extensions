@@ -129,7 +129,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
                 TimerSchedule.Create(attribute, new TestNameResolver());
             });
 
-            Assert.Equal("The schedule expression was not recognized as a valid cron expression or timespan string.", ex.Message);
+            Assert.Equal("The schedule expression 'invalid' was not recognized as a valid cron expression or timespan string.", ex.Message);
         }
 
         public class CustomSchedule : TimerSchedule
