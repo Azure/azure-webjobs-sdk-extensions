@@ -21,7 +21,7 @@ install:
 build_script:
 - ps: |
     $buildNumber = 0
-    if (!$env:APPVEYOR_REPO_TAG) {
+    if (![boolean]::Parse($env:APPVEYOR_REPO_TAG)) {
       $buildNumber = $env:APPVEYOR_BUILD_NUMBER
       Write-Host "No git tag found. Setting package suffix to '$buildNumber'"
     }    
