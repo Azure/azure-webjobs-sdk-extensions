@@ -21,7 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         private readonly TraceWriter trace;
         private readonly DocumentCollectionInfo monitorCollection;
         private readonly DocumentCollectionInfo leaseCollection;
-        private bool listernerStarted = false;
+        private bool listenerStarted = false;
 
         public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, int? maxItemCount, TraceWriter trace)
         {
@@ -58,15 +58,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            if (this.listernerStarted)
+            if (this.listenerStarted)
             {
-                return;
+                throw new InvalidOperationException("The listener has already been started.");
             }
 
             try
             {
                 await this.host.RegisterObserverFactoryAsync(this);
-                this.listernerStarted = true;
+                this.listenerStarted = true;
             }
             catch (DocumentClientException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
@@ -80,14 +80,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         {
             try
             {
-                if (this.host != null && this.listernerStarted)
+                if (this.host != null && this.listenerStarted)
                 {
                     await this.host.UnregisterObserversAsync();
+                    this.listenerStarted = false;
                 }
             }
             catch (Exception ex)
             {
-                this.trace.Error("Stopping the observer failed, potentially it was never started.", ex);
+                this.trace.Warning($"Stopping the observer failed, potentially it was never started. Exception: {ex.Message}.");
             }
         }
     }
