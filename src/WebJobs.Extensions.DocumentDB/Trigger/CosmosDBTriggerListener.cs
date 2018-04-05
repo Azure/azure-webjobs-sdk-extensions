@@ -21,6 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         private readonly TraceWriter trace;
         private readonly DocumentCollectionInfo monitorCollection;
         private readonly DocumentCollectionInfo leaseCollection;
+        private bool listernerStarted = false;
 
         public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, int? maxItemCount, TraceWriter trace)
         {
@@ -57,9 +58,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
+            if (this.listernerStarted)
+            {
+                return;
+            }
+
             try
             {
                 await this.host.RegisterObserverFactoryAsync(this);
+                this.listernerStarted = true;
             }
             catch (DocumentClientException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
@@ -73,7 +80,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         {
             try
             {
-                if (this.host != null)
+                if (this.host != null && this.listernerStarted)
                 {
                     await this.host.UnregisterObserversAsync();
                 }
