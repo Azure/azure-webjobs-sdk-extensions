@@ -38,6 +38,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         internal const string HttpQueryKey = "Query";
         internal const string HttpHeadersKey = "Headers";
 
+        // Name of binding data slot where we place the full HttpRequestMessage
+        internal const string RequestBindingName = "$request";
+
         private readonly Action<HttpRequest, object> _responseHook;
 
         public HttpTriggerAttributeBindingProvider(Action<HttpRequest, object> responseHook)
@@ -151,6 +154,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 // copy in any initial binding data from the poco
                 var aggregateBindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
                 aggregateBindingData.AddRange(userTypeBindingData);
+
+                aggregateBindingData[RequestBindingName] = request;
 
                 // Apply additional binding data coming from request route, query params, etc.
                 var requestBindingData = await GetRequestBindingDataAsync(request, _bindingDataContract);
@@ -275,14 +280,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             {
                 // apply binding data from request body if present
                 var bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                if (request.ContentLength != null && request.ContentLength > 0)
+                if (request.Body.Length > 0)
                 {
                     string body = await request.ReadAsStringAsync();
                     Utility.ApplyBindingData(body, bindingData);
                 }
 
                 // apply binding data from the query string
-                foreach (var pair in request.Query)
+                var queryParameters = request.GetQueryParameterDictionary();
+                foreach (var pair in queryParameters)
                 {
                     if (string.Compare("code", pair.Key, StringComparison.OrdinalIgnoreCase) == 0)
                     {
@@ -317,7 +323,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 // add query parameter collection to binding data
                 if (!bindingData.ContainsKey(HttpQueryKey))
                 {
-                    bindingData[HttpQueryKey] = request.GetQueryParameterDictionary();
+                    bindingData[HttpQueryKey] = queryParameters;
                 }
 
                 // add headers collection to binding data
@@ -507,7 +513,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 }
             }
 
-            private class SimpleValueProvider : IValueProvider
+            internal class SimpleValueProvider : IValueProvider
             {
                 private readonly Type _type;
                 private readonly object _value;

@@ -40,8 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         public static IDictionary<string, string> GetQueryParameterDictionary(this HttpRequest request)
         {
             // last one wins for any duplicate query parameters
-            return request.Query.GroupBy(p => p.Key, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(p => p.Key, s => s.Last().Value.ToString(), StringComparer.OrdinalIgnoreCase);
+            return request.Query.ToDictionary(p => p.Key, p => p.Value.Last());
         }
     }
 }
