@@ -280,7 +280,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             {
                 // apply binding data from request body if present
                 var bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                if (request.Body.Length > 0)
+                if (request.ContentLength != null && request.ContentLength > 0)
                 {
                     string body = await request.ReadAsStringAsync();
                     Utility.ApplyBindingData(body, bindingData);
