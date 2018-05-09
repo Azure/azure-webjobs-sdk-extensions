@@ -42,6 +42,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         public string ConnectionString { get; set; }
 
         /// <summary>
+        /// Gets or sets the ConnectionMode used in the DocumentClient instances.
+        /// </summary>
+        public ConnectionMode? ConnectionMode { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Protocol used in the DocumentClient instances.
+        /// </summary>
+        public Protocol? Protocol { get; set; }
+
+        /// <summary>
         /// Gets or sets the lease options for the DocumentDB Trigger. 
         /// </summary>
         public ChangeFeedHostOptions LeaseOptions { get; set; }
@@ -142,7 +152,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         internal ICosmosDBService GetService(string connectionString)
         {
-            return ClientCache.GetOrAdd(connectionString, (c) => CosmosDBServiceFactory.CreateService(c));
+            return ClientCache.GetOrAdd(connectionString, (c) => CosmosDBServiceFactory.CreateService(c, ConnectionMode, Protocol));
         }
 
         internal CosmosDBContext CreateContext(CosmosDBAttribute attribute)

@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host.Triggers;
@@ -105,6 +106,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
             Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
             Assert.Equal(binding.DocumentCollectionLocation.Uri, new Uri("https://fromSettings"));
             Assert.Equal(binding.LeaseCollectionLocation.Uri, new Uri("https://fromSettingsLease"));
+        }
+
+        [Theory]
+        [MemberData(nameof(ValidCosmosDBTriggerBindingsWithEnvironmentParameters))]
+        public async Task ValidParametersWithEnvironment_ConnectionMode_Succeed(ParameterInfo parameter)
+        {
+            var nameResolver = new TestNameResolver();
+            nameResolver.Values[CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
+            nameResolver.Values["CosmosDBConnectionString"] = "AccountEndpoint=https://fromSettings;AccountKey=someKey;";
+
+            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, CreateConfigurationWithConnectionMode());
+
+            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+
+            Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
+            Assert.Equal(binding.DocumentCollectionLocation.Uri, new Uri("https://fromEnvironment"));
+            Assert.Equal(ConnectionMode.Direct, binding.DocumentCollectionLocation.ConnectionPolicy.ConnectionMode);
+            Assert.Equal(binding.DocumentCollectionLocation.ConnectionPolicy.ConnectionProtocol, Protocol.Tcp);
         }
 
         [Fact]
@@ -207,6 +226,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
             return new CosmosDBConfiguration
             {
                 ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;",
+            };
+        }
+
+        private CosmosDBConfiguration CreateConfigurationWithConnectionMode()
+        {
+            return new CosmosDBConfiguration
+            {
+                ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;",
+                ConnectionMode = ConnectionMode.Direct,
+                Protocol = Protocol.Tcp
             };
         }
 

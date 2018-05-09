@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents.ChangeFeedProcessor;
+using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Config;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
@@ -42,6 +43,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 return null;
             }
+
+            ConnectionMode? desiredConnectionMode = _config.ConnectionMode;
+            Protocol? desiredConnectionProtocol = _config.Protocol;
 
             _monitorConnectionString = _nameResolver.Resolve(CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName);
             _leasesConnectionString = _nameResolver.Resolve(CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName);
@@ -81,6 +85,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
                 documentCollectionLocation.ConnectionPolicy.UserAgentSuffix = CosmosDBTriggerUserAgentSuffix;
 
+                if (desiredConnectionMode.HasValue)
+                {
+                    documentCollectionLocation.ConnectionPolicy.ConnectionMode = desiredConnectionMode.Value;
+                }
+
+                if (desiredConnectionProtocol.HasValue)
+                {
+                    documentCollectionLocation.ConnectionPolicy.ConnectionProtocol = desiredConnectionProtocol.Value;
+                }
+
                 leaseCollectionLocation = new DocumentCollectionInfo
                 {
                     Uri = leasesConnection.ServiceEndpoint,
@@ -90,6 +104,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 };
 
                 leaseCollectionLocation.ConnectionPolicy.UserAgentSuffix = CosmosDBTriggerUserAgentSuffix;
+
+                if (desiredConnectionMode.HasValue)
+                {
+                    leaseCollectionLocation.ConnectionPolicy.ConnectionMode = desiredConnectionMode.Value;
+                }
+
+                if (desiredConnectionProtocol.HasValue)
+                {
+                    leaseCollectionLocation.ConnectionPolicy.ConnectionProtocol = desiredConnectionProtocol.Value;
+                }
 
                 if (string.IsNullOrEmpty(documentCollectionLocation.DatabaseName)
                     || string.IsNullOrEmpty(documentCollectionLocation.CollectionName)
