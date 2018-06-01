@@ -2,6 +2,9 @@
   [string]$packageSuffix = "0"
 )
 
+# Disable .NET First run experience:
+$env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+
 dotnet --version
 
 dotnet build -v q
