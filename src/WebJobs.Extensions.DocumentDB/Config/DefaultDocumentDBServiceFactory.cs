@@ -7,9 +7,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 {
     internal class DefaultDocumentDBServiceFactory : IDocumentDBServiceFactory
     {
-        public IDocumentDBService CreateService(string connectionString, ConnectionMode? connectionMode)
+        public IDocumentDBService CreateService(string connectionString, ConnectionMode? connectionMode, Protocol? protocol)
         {
-            return new DocumentDBService(connectionString, connectionMode);
+            return new DocumentDBService(connectionString, connectionMode, protocol);
         }
     }
 }

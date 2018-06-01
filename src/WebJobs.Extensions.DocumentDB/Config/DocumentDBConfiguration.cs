@@ -51,6 +51,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         /// </summary>
         public ConnectionMode? ConnectionMode { get; set; }
 
+        /// <summary>
+        /// Gets or sets the Protocol used in the DocumentClient instances.
+        /// </summary>
+        public Protocol? Protocol { get; set; }
+
         /// <inheritdoc />
         public void Initialize(ExtensionConfigContext context)
         {
@@ -167,7 +172,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         
         internal IDocumentDBService GetService(string connectionString)
         {
-            return ClientCache.GetOrAdd(connectionString, (c) => DocumentDBServiceFactory.CreateService(c, ConnectionMode));
+            return ClientCache.GetOrAdd(connectionString, (c) => DocumentDBServiceFactory.CreateService(c, ConnectionMode, Protocol));
         }
 
         internal DocumentDBContext CreateContext(DocumentDBAttribute attribute)

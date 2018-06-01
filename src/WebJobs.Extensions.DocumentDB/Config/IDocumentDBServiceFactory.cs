@@ -7,6 +7,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 {
     internal interface IDocumentDBServiceFactory
     {
-        IDocumentDBService CreateService(string connectionString, ConnectionMode? connectionMode);
+        IDocumentDBService CreateService(string connectionString, ConnectionMode? connectionMode, Protocol? protocol);
     }
 }

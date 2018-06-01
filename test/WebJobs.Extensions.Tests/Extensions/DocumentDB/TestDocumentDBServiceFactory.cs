@@ -15,7 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB
             _service = service;
         }
 
-        public IDocumentDBService CreateService(string connectionString, ConnectionMode? connectionMode)
+        public IDocumentDBService CreateService(string connectionString, ConnectionMode? connectionMode, Protocol? protocol)
         {
             return _service;
         }

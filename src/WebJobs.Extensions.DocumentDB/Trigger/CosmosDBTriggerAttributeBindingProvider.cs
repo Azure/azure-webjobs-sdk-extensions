@@ -45,6 +45,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             }
 
             ConnectionMode? desiredConnectionMode = _config.ConnectionMode;
+            Protocol? desiredConnectionProtocol = _config.Protocol;
 
             _monitorConnectionString = _nameResolver.Resolve(DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName);
             _leasesConnectionString = _nameResolver.Resolve(DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName);
@@ -87,6 +88,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                     documentCollectionLocation.ConnectionPolicy.ConnectionMode = desiredConnectionMode.Value;
                 }
 
+                if (desiredConnectionProtocol.HasValue)
+                {
+                    documentCollectionLocation.ConnectionPolicy.ConnectionProtocol = desiredConnectionProtocol.Value;
+                }
+
                 documentCollectionLocation.ConnectionPolicy.UserAgentSuffix = CosmosDBTriggerUserAgentSuffix;
 
                 leaseCollectionLocation = new DocumentCollectionInfo
@@ -100,6 +106,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 if (desiredConnectionMode.HasValue)
                 {
                     leaseCollectionLocation.ConnectionPolicy.ConnectionMode = desiredConnectionMode.Value;
+                }
+
+                if (desiredConnectionProtocol.HasValue)
+                {
+                    leaseCollectionLocation.ConnectionPolicy.ConnectionProtocol = desiredConnectionProtocol.Value;
                 }
 
                 leaseCollectionLocation.ConnectionPolicy.UserAgentSuffix = CosmosDBTriggerUserAgentSuffix;

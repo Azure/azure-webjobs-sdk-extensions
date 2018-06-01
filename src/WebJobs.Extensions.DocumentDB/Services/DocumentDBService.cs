@@ -15,7 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         private bool _isDisposed;
         private DocumentClient _client;
 
-        public DocumentDBService(string connectionString, ConnectionMode? connectionMode)
+        public DocumentDBService(string connectionString, ConnectionMode? connectionMode, Protocol? protocol)
         {
             DocumentDBConnectionString connection = new DocumentDBConnectionString(connectionString);
             _client = new DocumentClient(connection.ServiceEndpoint, connection.AuthKey);
@@ -24,6 +24,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 // Default is Gateway
                 // Source: https://docs.microsoft.com/dotnet/api/microsoft.azure.documents.client.connectionpolicy.connectionmode
                 _client.ConnectionPolicy.ConnectionMode = connectionMode.Value;
+            }
+
+            if (protocol.HasValue)
+            {
+                _client.ConnectionPolicy.ConnectionProtocol = protocol.Value;
             }
         }
 

@@ -61,6 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Trigger
             Assert.Equal(binding.TriggerValueType, typeof(IReadOnlyList<Document>));
             Assert.Equal(binding.DocumentCollectionLocation.Uri, new Uri("https://fromEnvironment"));
             Assert.Equal(binding.DocumentCollectionLocation.ConnectionPolicy.ConnectionMode, ConnectionMode.Direct);
+            Assert.Equal(binding.DocumentCollectionLocation.ConnectionPolicy.ConnectionProtocol, Protocol.Tcp);
         }
 
         [Theory]
@@ -408,7 +409,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Trigger
             return new DocumentDBConfiguration
             {
                 ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;",
-                ConnectionMode = ConnectionMode.Direct
+                ConnectionMode = ConnectionMode.Direct,
+                Protocol = Protocol.Tcp
             };
         }
     }
