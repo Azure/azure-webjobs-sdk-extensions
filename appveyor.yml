@@ -18,6 +18,8 @@ clone_folder: c:\azure-webjobs-sdk-extensions
 install:
 - ps: >
     $env:CommitHash = "$env:APPVEYOR_REPO_COMMIT"
+
+    .\dotnet-install.ps1 -Version 2.1.300 -Architecture x86
 build_script:
 - ps: |
     $buildNumber = 0

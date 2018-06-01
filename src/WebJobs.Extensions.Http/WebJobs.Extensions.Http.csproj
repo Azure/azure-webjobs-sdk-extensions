@@ -10,10 +10,10 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.4" />
-    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Formatters.Json" Version="2.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.WebApiCompatShim" Version="2.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Routing" Version="2.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Formatters.Json" Version="2.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.WebApiCompatShim" Version="2.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Routing" Version="2.1.0" />
     <PackageReference Include="ncrontab" Version="3.3.0" />
   </ItemGroup>
 
