@@ -25,9 +25,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 throw new ArgumentNullException(nameof(bindingData));
             }
-
-            CosmosDBAttribute docDbAttribute = resolvedAttribute as CosmosDBAttribute;
-            if (docDbAttribute == null)
+            
+            if (!(resolvedAttribute is CosmosDBAttribute cosmosDBAttribute))
             {
                 throw new NotSupportedException($"This policy is only supported for {nameof(CosmosDBAttribute)}.");
             }
@@ -36,18 +35,63 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             SqlParameterCollection paramCollection = new SqlParameterCollection();
 
             // also build up a dictionary replacing '{token}' with '@token' 
-            IDictionary<string, string> replacements = new Dictionary<string, string>();
+            IDictionary<string, object> replacements = new Dictionary<string, object>();
             foreach (var token in bindingTemplate.ParameterNames.Distinct())
             {
-                string sqlToken = $"@{token}";
-                paramCollection.Add(new SqlParameter(sqlToken, bindingData[token]));
-                replacements.Add(token, sqlToken);
+                object tokenObject = bindingData[token];
+                if (tokenObject is string tokenString)
+                {
+                    AddParameter(paramCollection, replacements, tokenString, token);
+                }
+                else if (tokenObject is IDictionary<string, string> tokenDictionary)
+                {
+                    IDictionary<string, object> tokens = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var item in tokenDictionary)
+                    {
+                        if (IsTokenInUse(bindingTemplate, token, item.Key))
+                        {
+                            AddParameter(paramCollection, tokens, item.Value, token, item.Key);
+                        }
+                    }
+                    replacements.Add(token, tokens);
+                }
             }
 
-            docDbAttribute.SqlQueryParameters = paramCollection;
+            cosmosDBAttribute.SqlQueryParameters = paramCollection;
 
-            string replacement = bindingTemplate.Bind(new ReadOnlyDictionary<string, string>(replacements));
+            string replacement = bindingTemplate.Bind(new ReadOnlyDictionary<string, object>(replacements));
             return replacement;
+        }
+
+        private bool IsTokenInUse(BindingTemplate bindingTemplate, string firstTokenNameSegment, string secondTokenNameSegment)
+        {
+            string fullToken = GetFullTokenName(firstTokenNameSegment, secondTokenNameSegment);
+            return bindingTemplate.Pattern.Contains(fullToken);
+        }
+
+        private void AddParameter(SqlParameterCollection paramCollection, IDictionary<string, object> tokens, object sqlParamValue,
+            string firstTokenNameSegment, string secondTokenNameSegment = null)
+        {
+            string fullTokenName = GetFullTokenName(firstTokenNameSegment, secondTokenNameSegment);
+            string tokenName = secondTokenNameSegment ?? firstTokenNameSegment;
+
+            bool needsEscaping = !string.IsNullOrEmpty(secondTokenNameSegment);
+            string sqlToken = "@" + (needsEscaping ? EscapeSqlParameterName(fullTokenName) : fullTokenName);
+
+            paramCollection.Add(new SqlParameter(sqlToken, sqlParamValue));
+            tokens.Add(tokenName, sqlToken);
+        }
+
+        private string GetFullTokenName(string firstTokenNameSegment, string secondTokenNameSegment)
+        {
+            return string.IsNullOrEmpty(secondTokenNameSegment) ?
+                firstTokenNameSegment :
+                $"{firstTokenNameSegment}.{secondTokenNameSegment}";
+        }
+
+        private string EscapeSqlParameterName(string name)
+        {
+            return Guid.NewGuid().ToString("N");
         }
     }
 }

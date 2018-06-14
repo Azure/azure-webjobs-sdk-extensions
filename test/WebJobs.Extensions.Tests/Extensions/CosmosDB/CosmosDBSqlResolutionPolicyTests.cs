@@ -6,6 +6,7 @@ using System.Reflection;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 using Xunit;
+using System.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
 {
@@ -51,6 +52,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
             // Assert
             Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@foo" && p.Value.ToString() == "1234");
             Assert.Equal("SELECT * FROM c WHERE c.id = @foo AND c.value = @foo", result);
+        }
+
+        [Fact]
+        public void TemplateBind_StringParameterAndNestedParameter()
+        {
+            // Arrange
+            PropertyInfo propInfo = null;
+            CosmosDBAttribute resolvedAttribute = new CosmosDBAttribute();
+            BindingTemplate bindingTemplate =
+                BindingTemplate.FromString("SELECT * FROM c WHERE c.id = {id} and c.userId = {headers.x-ms-client-principal-name}");
+            Dictionary<string, object> bindingData = new Dictionary<string, object>();
+            bindingData.Add("headers", new Dictionary<string, string>
+            {
+                { "x-ms-client-principal-name", "username" },
+                { "x-ms-client-principal-id", "userid" }
+            });
+            bindingData.Add("id", "foo");
+            CosmosDBSqlResolutionPolicy policy = new CosmosDBSqlResolutionPolicy();
+
+            // Act
+            string result = policy.TemplateBind(propInfo, resolvedAttribute, bindingTemplate, bindingData);
+
+            // Assert
+            var nameParameter = resolvedAttribute.SqlQueryParameters.Single(p => p.Value.ToString() == "username");
+            var idParameter = resolvedAttribute.SqlQueryParameters.Single(p => p.Value.ToString() == "foo");
+            Assert.Equal(2, resolvedAttribute.SqlQueryParameters.Count); // should not contain more parameters than required
+            Assert.Equal($"SELECT * FROM c WHERE c.id = {idParameter.Name} and c.userId = {nameParameter.Name}", result);
         }
     }
 }
