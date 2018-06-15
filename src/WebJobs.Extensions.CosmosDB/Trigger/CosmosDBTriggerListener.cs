@@ -20,7 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly DocumentCollectionInfo monitorCollection;
         private readonly DocumentCollectionInfo leaseCollection;
 
-        public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions)
+        public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, int? maxItemCount)
         {
             this.executor = executor;
             string hostName = Guid.NewGuid().ToString();
@@ -28,7 +28,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             monitorCollection = documentCollectionLocation;
             leaseCollection = leaseCollectionLocation;
 
-            this.host = new ChangeFeedEventHost(hostName, documentCollectionLocation, leaseCollectionLocation, new ChangeFeedOptions(), leaseHostOptions);
+            ChangeFeedOptions changeFeedOptions = new ChangeFeedOptions();
+            if (maxItemCount.HasValue)
+            {
+                changeFeedOptions.MaxItemCount = maxItemCount;
+            }
+            
+            this.host = new ChangeFeedEventHost(hostName, documentCollectionLocation, leaseCollectionLocation, changeFeedOptions, leaseHostOptions);
         }
 
         public void Cancel()

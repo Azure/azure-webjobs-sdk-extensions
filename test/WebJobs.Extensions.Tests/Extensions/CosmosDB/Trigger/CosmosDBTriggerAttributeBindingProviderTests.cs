@@ -117,6 +117,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
         }
 
         [Fact]
+        public void ResolveTimeSpanFromMilliseconds_Succeed()
+        {
+            TimeSpan baseTimeSpan = TimeSpan.FromMilliseconds(10);
+            Assert.Equal(CosmosDBTriggerAttributeBindingProvider.ResolveTimeSpanFromMilliseconds("SomeAttribute", baseTimeSpan, null), baseTimeSpan);
+            int otherMilliseconds = 20;
+            TimeSpan otherTimeSpan = TimeSpan.FromMilliseconds(otherMilliseconds);
+            Assert.Equal(CosmosDBTriggerAttributeBindingProvider.ResolveTimeSpanFromMilliseconds("SomeAttribute", baseTimeSpan, otherMilliseconds), otherTimeSpan);
+        }
+        
+        [Fact]
+        public void ResolveTimeSpanFromMilliseconds_Fail()
+        {
+            int otherMilliseconds = -1;
+            TimeSpan baseTimeSpan = TimeSpan.FromMilliseconds(10);
+            Assert.Throws<InvalidOperationException>(() => CosmosDBTriggerAttributeBindingProvider.ResolveTimeSpanFromMilliseconds("SomeAttribute", baseTimeSpan, otherMilliseconds));
+        }
+
+        [Fact]
         public void TryAndConvertToDocumentList_Succeed()
         {
             IReadOnlyList<Document> convertedValue;
@@ -126,6 +144,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
             IReadOnlyList<Document> triggerValue = new List<Document>() { new Document() { Id = "123" } };
             Assert.True(CosmosDBTriggerBinding.TryAndConvertToDocumentList(triggerValue, out convertedValue));
             Assert.Equal(triggerValue[0].Id, convertedValue[0].Id);
+        }
+
+        [Theory]
+        [MemberData(nameof(ValidCosmosDBTriggerBindigsWithLeaseHostOptionsParameters))]
+        public async Task ValidLeaseHostOptions_Succeed(ParameterInfo parameter)
+        {
+            var nameResolver = new TestNameResolver();
+            nameResolver.Values[CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
+            nameResolver.Values["CosmosDBConnectionString"] = "AccountEndpoint=https://fromSettings;AccountKey=someKey;";
+            nameResolver.Values["dynamicLeasePrefix"] = "someLeasePrefix";
+
+            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, CreateConfiguration());
+
+            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+
+            Assert.Equal(binding.TriggerValueType, typeof(IReadOnlyList<Document>));
+            Assert.Equal(binding.DocumentCollectionLocation.Uri, new Uri("https://fromSettings"));
+            Assert.Equal(binding.ChangeFeedHostOptions.LeasePrefix, "someLeasePrefix");
+        }
+
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsWithLeaseHostOptionsParameters
+        {
+            get { return ValidCosmosDBTriggerBindigsWithLeaseHostOptions.GetParameters(); }
         }
 
         public static IEnumerable<object[]> InvalidCosmosDBTriggerParameters
@@ -167,6 +208,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
             {
                 ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;",
             };
+        }
+
+        private static class ValidCosmosDBTriggerBindigsWithLeaseHostOptions
+        {
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", LeaseCollectionPrefix = "someLeasePrefix")] IReadOnlyList<Document> docs)
+            {
+
+            }
+
+            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", LeaseCollectionPrefix = "%dynamicLeasePrefix%")] IReadOnlyList<Document> docs)
+            {
+
+            }
+
+            public static IEnumerable<ParameterInfo[]> GetParameters()
+            {
+                var type = typeof(ValidCosmosDBTriggerBindigsWithLeaseHostOptions);
+
+                return new[]
+                {
+                    new[] { GetFirstParameter(type, "Func1") },
+                    new[] { GetFirstParameter(type, "Func2") }
+                };
+            }
         }
 
         private static class InvalidCosmosDBTriggerBindigs

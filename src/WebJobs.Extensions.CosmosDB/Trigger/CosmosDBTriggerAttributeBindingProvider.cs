@@ -14,6 +14,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
     internal class CosmosDBTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
+        private const string CosmosDBTriggerUserAgentSuffix = "CosmosDBTriggerFunctions";
         private readonly ChangeFeedHostOptions _leasesOptions;
         private readonly INameResolver _nameResolver;
         private string _monitorConnectionString;
@@ -48,6 +49,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             DocumentCollectionInfo documentCollectionLocation;
             DocumentCollectionInfo leaseCollectionLocation;
             ChangeFeedHostOptions leaseHostOptions = ResolveLeaseOptions(attribute);
+            int ? maxItemCount = null;
+            if (attribute.MaxItemsPerInvocation > 0)
+            {
+                maxItemCount = attribute.MaxItemsPerInvocation;
+            }
 
             try
             {
@@ -73,6 +79,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     CollectionName = ResolveAttributeValue(attribute.CollectionName)
                 };
 
+                documentCollectionLocation.ConnectionPolicy.UserAgentSuffix = CosmosDBTriggerUserAgentSuffix;
+
                 leaseCollectionLocation = new DocumentCollectionInfo
                 {
                     Uri = leasesConnection.ServiceEndpoint,
@@ -80,6 +88,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     DatabaseName = ResolveAttributeValue(attribute.LeaseDatabaseName),
                     CollectionName = ResolveAttributeValue(attribute.LeaseCollectionName)
                 };
+
+                leaseCollectionLocation.ConnectionPolicy.UserAgentSuffix = CosmosDBTriggerUserAgentSuffix;
 
                 if (string.IsNullOrEmpty(documentCollectionLocation.DatabaseName)
                     || string.IsNullOrEmpty(documentCollectionLocation.CollectionName)
@@ -108,7 +118,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 throw new InvalidOperationException(string.Format("Cannot create Collection Information for {0} in database {1} with lease {2} in database {3} : {4}", attribute.CollectionName, attribute.DatabaseName, attribute.LeaseCollectionName, attribute.LeaseDatabaseName, ex.Message), ex);
             }
 
-            return new CosmosDBTriggerBinding(parameter, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions);
+            return new CosmosDBTriggerBinding(parameter, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions, maxItemCount);
+        }
+
+        internal static TimeSpan ResolveTimeSpanFromMilliseconds(string nameOfProperty, TimeSpan baseTimeSpan, int? attributeValue)
+        {
+            if (!attributeValue.HasValue || attributeValue.Value == 0)
+            {
+                return baseTimeSpan;
+            }
+    
+            if (attributeValue.Value< 0)
+            {
+                throw new InvalidOperationException($"'{nameOfProperty}' must be greater than 0.");
+            }
+    
+            return TimeSpan.FromMilliseconds(attributeValue.Value);
         }
 
         private string ResolveAttributeConnectionString(CosmosDBTriggerAttribute attribute)
@@ -150,7 +175,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         private ChangeFeedHostOptions ResolveLeaseOptions(CosmosDBTriggerAttribute attribute)
         {
-            return attribute.LeaseOptions ?? _leasesOptions;
+            
+            ChangeFeedHostOptions triggerChangeFeedHostOptions = new ChangeFeedHostOptions();
+            triggerChangeFeedHostOptions.LeasePrefix = ResolveAttributeValue(attribute.LeaseCollectionPrefix) ?? _leasesOptions.LeasePrefix;
+            triggerChangeFeedHostOptions.FeedPollDelay = ResolveTimeSpanFromMilliseconds(nameof(CosmosDBTriggerAttribute.FeedPollDelay), _leasesOptions.FeedPollDelay, attribute.FeedPollDelay);
+            triggerChangeFeedHostOptions.LeaseAcquireInterval = ResolveTimeSpanFromMilliseconds(nameof(CosmosDBTriggerAttribute.LeaseAcquireInterval), _leasesOptions.LeaseAcquireInterval, attribute.LeaseAcquireInterval);
+            triggerChangeFeedHostOptions.LeaseExpirationInterval = ResolveTimeSpanFromMilliseconds(nameof(CosmosDBTriggerAttribute.LeaseExpirationInterval), _leasesOptions.LeaseExpirationInterval, attribute.LeaseExpirationInterval);
+            triggerChangeFeedHostOptions.LeaseRenewInterval = ResolveTimeSpanFromMilliseconds(nameof(CosmosDBTriggerAttribute.LeaseRenewInterval), _leasesOptions.LeaseRenewInterval, attribute.LeaseRenewInterval);
+            triggerChangeFeedHostOptions.CheckpointFrequency = _leasesOptions.CheckpointFrequency ?? new CheckpointFrequency();
+            if (attribute.CheckpointInterval > 0)
+            {
+                triggerChangeFeedHostOptions.CheckpointFrequency.TimeInterval = TimeSpan.FromMilliseconds(attribute.CheckpointInterval);
+            }
+                
+            if (attribute.CheckpointDocumentCount > 0)
+            {
+                triggerChangeFeedHostOptions.CheckpointFrequency.ProcessedDocumentCount = attribute.CheckpointDocumentCount;
+            }
+                
+            return triggerChangeFeedHostOptions;
         }
 
         private bool TryReadFromSettings(string settingsKey, string defaultValue, out string settingsValue)
