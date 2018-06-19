@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.0-beta6-11316" />
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.0-beta7-11351" />
     <PackageReference Include="ncrontab" Version="3.3.0" />
   </ItemGroup>
 
