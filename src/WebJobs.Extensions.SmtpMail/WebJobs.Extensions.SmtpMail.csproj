@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\build\common.props" />
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.SmtpMail</AssemblyName>
+    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.SmtpMail</RootNamespace>
+    <PackageId>Microsoft.Azure.WebJobs.Extensions.SmtpMail</PackageId>
+    <Description>This package contains SmtpMail binding extensions.</Description>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WebJobs.Extensions\WebJobs.Extensions.csproj" />
+  </ItemGroup>
+
+</Project>
