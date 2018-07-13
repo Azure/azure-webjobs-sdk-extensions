@@ -10,6 +10,8 @@ using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Config;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Microsoft.Azure.WebJobs.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
@@ -18,15 +20,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private const string CosmosDBTriggerUserAgentSuffix = "CosmosDBTriggerFunctions";
         private readonly ChangeFeedHostOptions _leasesOptions;
         private readonly INameResolver _nameResolver;
+        private readonly ILogger _logger;
         private string _monitorConnectionString;
         private string _leasesConnectionString;
+        private TraceWriter _trace;
         private CosmosDBConfiguration _config;
 
-        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, CosmosDBConfiguration config, ChangeFeedHostOptions leasesOptions = null)
+        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, CosmosDBConfiguration config, ILoggerFactory loggerFactory, ChangeFeedHostOptions leasesOptions = null)
         {
             _nameResolver = nameResolver;
             _config = config;
             _leasesOptions = leasesOptions ?? new ChangeFeedHostOptions();
+            _logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("CosmosDB"));
         }
 
         public async Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
@@ -142,7 +147,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 throw new InvalidOperationException(string.Format("Cannot create Collection Information for {0} in database {1} with lease {2} in database {3} : {4}", attribute.CollectionName, attribute.DatabaseName, attribute.LeaseCollectionName, attribute.LeaseDatabaseName, ex.Message), ex);
             }
 
-            return new CosmosDBTriggerBinding(parameter, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions, maxItemCount);
+            return new CosmosDBTriggerBinding(parameter, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions, maxItemCount, _logger);
         }
 
         internal static TimeSpan ResolveTimeSpanFromMilliseconds(string nameOfProperty, TimeSpan baseTimeSpan, int? attributeValue)
