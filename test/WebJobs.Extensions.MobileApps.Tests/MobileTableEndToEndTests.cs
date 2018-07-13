@@ -256,7 +256,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         private async Task IndexBindings(Type testType, bool includeDefaultUri = true)
         {
             // Just start the jobhost -- this should fail if function indexing fails.
-
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
             var nameResolver = new TestNameResolver();
             if (includeDefaultUri)

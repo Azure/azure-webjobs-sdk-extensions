@@ -11,37 +11,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
     public class PublicSurfaceTests
     {
         [Fact]
-        public void ExtensionsPublicSurface_LimitedToSpecificTypes()
+        public void HttpPublicSurface_LimitedToSpecificTypes()
         {
-            var assembly = typeof(TimerTriggerAttribute).Assembly;
+            var assembly = typeof(HttpTriggerAttribute).Assembly;
 
             var expected = new[]
             {
-                "ConstantSchedule",
-                "CoreJobHostConfigurationExtensions",
-                "CronSchedule",
-                "DailySchedule",
-                "ExecutionContext",
-                "FileAttribute",
-                "FileProcessor",
-                "FileProcessorFactoryContext",
-                "FilesConfiguration",
-                "FilesJobHostConfigurationExtensions",
-                "FileSystemScheduleMonitor",
-                "StorageScheduleMonitor",
-                "FileTriggerAttribute",
-                "IFileProcessorFactory",
-                "JobHostConfigurationExtensions",
-                "ScheduleMonitor",
-                "ScheduleStatus",
-                "StreamValueBinder",
-                "TimerInfo",
-                "TimerJobHostConfigurationExtensions",
-                "TimerSchedule",
-                "TimersConfiguration",
-                "TimerTriggerAttribute",
-                "ValueBinder",
-                "WeeklySchedule"
+                "HttpExtensionConfiguration",
+                "HttpExtensionConstants",
+                "HttpJobHostConfigurationExtensions",
+                "AuthorizationLevel",
+                "HttpRequestManager",
+                "HttpTriggerAttribute",
+                "HttpBindingApplicationBuilderExtension",
+                "HttpBindingServiceCollectionExtensions",
+                "HttpRequestExtensions",
+                "IWebJobsRouteHandler",
+                "IWebJobsRouter",
+                "WebJobsRouteBuilder",
+                "WebJobsRouter"
             };
 
             AssertPublicTypes(expected, assembly);

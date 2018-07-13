@@ -3,8 +3,8 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <IsPackable>false</IsPackable>
-    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Tests</AssemblyName>
-    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Tests</RootNamespace>
+    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.MobileApps.Tests</AssemblyName>
+    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.MobileApps.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\WebJobs.Extensions\WebJobs.Extensions.csproj" />
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj" />
     <ProjectReference Include="..\WebJobs.Extensions.Tests.Common\WebJobs.Extensions.Tests.Common.csproj" />
   </ItemGroup>
 

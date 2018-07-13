@@ -3,11 +3,12 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <IsPackable>false</IsPackable>
-    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Tests</AssemblyName>
-    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Tests</RootNamespace>
+    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests</AssemblyName>
+    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.DocumentDB.ChangeFeedProcessor" Version="1.3.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.7.2" />
     <PackageReference Include="Moq" Version="4.7.145" />
     <PackageReference Include="xunit" Version="2.3.1" />
@@ -19,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\WebJobs.Extensions\WebJobs.Extensions.csproj" />
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.CosmosDB\WebJobs.Extensions.CosmosDB.csproj" />
     <ProjectReference Include="..\WebJobs.Extensions.Tests.Common\WebJobs.Extensions.Tests.Common.csproj" />
   </ItemGroup>
 

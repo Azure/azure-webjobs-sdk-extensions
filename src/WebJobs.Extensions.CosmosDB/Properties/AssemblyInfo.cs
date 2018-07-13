@@ -4,4 +4,4 @@
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
-[assembly: InternalsVisibleTo("Microsoft.Azure.WebJobs.Extensions.Tests")]
+[assembly: InternalsVisibleTo("Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests")]
