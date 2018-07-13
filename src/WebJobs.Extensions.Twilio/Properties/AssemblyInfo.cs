@@ -9,4 +9,4 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
-[assembly: InternalsVisibleTo("Microsoft.Azure.WebJobs.Extensions.Tests")]
+[assembly: InternalsVisibleTo("Microsoft.Azure.WebJobs.Extensions.Twilio.Tests")]

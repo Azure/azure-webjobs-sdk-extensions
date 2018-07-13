@@ -30,7 +30,7 @@ build_script:
     .\build.ps1 -packageSuffix "$buildNumber"
 test_script:
 - ps: >-
-    dotnet test .\test\WebJobs.Extensions.Tests\ -v q --no-build -p:ParallelizeTestCollections=false
+    .\run-tests.ps1
 artifacts:
 - path: buildoutput\*.nupkg
   name: Packages

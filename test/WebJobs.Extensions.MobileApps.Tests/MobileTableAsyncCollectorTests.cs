@@ -30,7 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps
         }
 
         [Theory]
-        [MemberData("TableNameScenarios")]
+        [MemberData(nameof(TableNameScenarios))]
         public Task AddAsync_TableName_Wins<T>(T item, string tableName, string expectedTableName)
         {
             return RunTableNameTest(item, tableName, expectedTableName);

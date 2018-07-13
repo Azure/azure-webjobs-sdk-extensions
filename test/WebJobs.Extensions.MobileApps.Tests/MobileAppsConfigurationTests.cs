@@ -283,6 +283,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             {
                 MobileAppUri = new Uri("https://someuri/")
             };
+
             // Act
             var tableBuilder = new MobileTablePocoTableBuilder<TodoItem>(config);
             var table = tableBuilder.Convert(attribute);
