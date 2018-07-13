@@ -20,12 +20,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         private readonly INameResolver _nameResolver;
         private string _monitorConnectionString;
         private string _leasesConnectionString;
+        private TraceWriter _trace;
         private DocumentDBConfiguration _config;
 
-        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, DocumentDBConfiguration config, ChangeFeedHostOptions leasesOptions = null)
+        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, TraceWriter trace, DocumentDBConfiguration config, ChangeFeedHostOptions leasesOptions = null)
         {
             _nameResolver = nameResolver;
             _config = config;
+            _trace = trace;
             _leasesOptions = leasesOptions ?? new ChangeFeedHostOptions();
         }
 
@@ -142,7 +144,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 throw new InvalidOperationException(string.Format("Cannot create Collection Information for {0} in database {1} with lease {2} in database {3} : {4}", attribute.CollectionName, attribute.DatabaseName, attribute.LeaseCollectionName, attribute.LeaseDatabaseName, ex.Message), ex);
             }
 
-            return new CosmosDBTriggerBinding(parameter, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions, maxItemCount);
+            return new CosmosDBTriggerBinding(parameter, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions, maxItemCount, _trace);
         }
 
         internal static TimeSpan ResolveTimeSpanFromMilliseconds(string nameOfProperty, TimeSpan baseTimeSpan, int? attributeValue)

@@ -16,8 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Trigger
 
             ArgumentException missingDatabase = Assert.Throws<ArgumentException>(() => new CosmosDBTriggerAttribute(null, "someCollection"));
             Assert.Equal(missingDatabase.ParamName, "databaseName");
-
-            }
+        }
 
         [Fact]
         public void CompleteArguments_Succeed()

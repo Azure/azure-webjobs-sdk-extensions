@@ -90,7 +90,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             IExtensionRegistry extensions = context.Config.GetService<IExtensionRegistry>();
             extensions.RegisterBindingRules<DocumentDBAttribute>(ValidateConnection, nameResolver, outputProvider, clientProvider, jArrayProvider, enumerableProvider, inputProvider);
 
-            context.Config.RegisterBindingExtensions(new CosmosDBTriggerAttributeBindingProvider(nameResolver, this, LeaseOptions));
+            context.Config.RegisterBindingExtensions(new CosmosDBTriggerAttributeBindingProvider(nameResolver, _trace, this, LeaseOptions));
         }
 
         internal static void ValidateInputBinding(DocumentDBAttribute attribute, Type parameterType)
