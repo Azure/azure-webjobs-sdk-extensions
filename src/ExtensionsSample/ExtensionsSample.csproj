@@ -17,7 +17,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Sample.Extension\Sample.Extension.csproj" />
     <ProjectReference Include="..\WebJobs.Extensions.CosmosDB\WebJobs.Extensions.CosmosDB.csproj" />
-    <ProjectReference Include="..\WebJobs.Extensions.Http\WebJobs.Extensions.Http.csproj" />
     <ProjectReference Include="..\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj" />
     <ProjectReference Include="..\WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.csproj" />
     <ProjectReference Include="..\WebJobs.Extensions.Twilio\WebJobs.Extensions.Twilio.csproj" />

@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
@@ -26,19 +27,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         }
 
         [Fact]
-        public async Task ProcessRequest_PropigatesExceptions()
+        public async Task ProcessRequest_PropagatesExceptions()
         {
             var ex = new Exception("Kaboom!");
             Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> process = (req, ct) =>
             {
                 throw ex;
             };
-            var config = new HttpExtensionConfiguration
+            var options = new HttpOptions
             {
                 MaxOutstandingRequests = 10,
                 MaxConcurrentRequests = 5
             };
-            var manager = new HttpRequestManager(config, _loggerFactory);
+            var manager = new HttpRequestManager(new OptionsWrapper<HttpOptions>(options), _loggerFactory);
 
             var resultEx = await Assert.ThrowsAsync<Exception>(async () =>
             {
@@ -56,8 +57,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             {
                 return Task.FromResult(response);
             };
-            var config = new HttpExtensionConfiguration();
-            var manager = new HttpRequestManager(config, _loggerFactory);
+            var options = new HttpOptions();
+            var manager = new HttpRequestManager(new OptionsWrapper<HttpOptions>(options), _loggerFactory);
 
             var request = new HttpRequestMessage();
             var result = await manager.ProcessRequestAsync(request, process, CancellationToken.None);
@@ -82,11 +83,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
                 return new HttpResponseMessage(HttpStatusCode.OK);
             };
-            var config = new HttpExtensionConfiguration
+
+            var options = new HttpOptions
             {
                 MaxConcurrentRequests = maxParallelism
             };
-            var manager = new HttpRequestManager(config, _loggerFactory);
+            var manager = new HttpRequestManager(new OptionsWrapper<HttpOptions>(options), _loggerFactory);
 
             // expect all requests to succeed
             var tasks = new List<Task<HttpResponseMessage>>();
@@ -108,12 +110,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 await Task.Delay(100);
                 return new HttpResponseMessage(HttpStatusCode.OK);
             };
-            var config = new HttpExtensionConfiguration
+            
+            var options = new HttpOptions
             {
                 MaxOutstandingRequests = maxQueueLength,
                 MaxConcurrentRequests = 1
             };
-            var manager = new HttpRequestManager(config, _loggerFactory);
+            var manager = new HttpRequestManager(new OptionsWrapper<HttpOptions>(options), _loggerFactory);
 
             // expect requests past the threshold to be rejected
             var tasks = new List<Task<HttpResponseMessage>>();
@@ -148,7 +151,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         public async Task ProcessRequest_HostIsOverloaded_RequestsAreRejected()
         {
             bool rejectRequests = false;
-            var config = new HttpExtensionConfiguration();
+            var options = new HttpOptions();
             Func<bool> rejectAllRequests = () =>
             {
                 return rejectRequests;
@@ -159,7 +162,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 await Task.Delay(100);
                 return new HttpResponseMessage(HttpStatusCode.OK);
             };
-            var manager = new TestHttpRequestManager(config, rejectAllRequests);
+            var manager = new TestHttpRequestManager(new OptionsWrapper<HttpOptions>(options), rejectAllRequests);
 
             var tasks = new List<Task<HttpResponseMessage>>();
             for (int i = 0; i < 10; i++)
@@ -181,7 +184,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         public async Task ProcessRequest_HostIsOverloaded_CustomRejectAction()
         {
             bool rejectOverrideCalled = false;
-            var config = new HttpExtensionConfiguration();
+            var options = new HttpOptions();
             Func<bool> rejectAllRequests = () =>
             {
                 return true;
@@ -196,7 +199,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             {
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
             };
-            var manager = new TestHttpRequestManager(config, rejectAllRequests, rejectRequest);
+            var manager = new TestHttpRequestManager(new OptionsWrapper<HttpOptions>(options), rejectAllRequests, rejectRequest);
 
             var request = new HttpRequestMessage();
             var response = await manager.ProcessRequestAsync(request, process, CancellationToken.None);
@@ -210,8 +213,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             private readonly Func<bool> _rejectAllRequests;
             private readonly Func<HttpRequestMessage, HttpResponseMessage> _rejectRequest;
 
-            public TestHttpRequestManager(HttpExtensionConfiguration config, Func<bool> rejectAllRequests = null, Func<HttpRequestMessage, HttpResponseMessage> rejectRequest = null)
-                : base(config, null)
+            public TestHttpRequestManager(IOptions<HttpOptions> options, Func<bool> rejectAllRequests = null, Func<HttpRequestMessage, HttpResponseMessage> rejectRequest = null)
+                : base(options, null)
             {
                 _rejectAllRequests = rejectAllRequests;
                 _rejectRequest = rejectRequest;

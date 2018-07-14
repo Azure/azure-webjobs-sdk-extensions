@@ -13,12 +13,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
     /// <summary>
     /// Defines the configuration options for the Http binding.
     /// </summary>
-    public class HttpExtensionConfiguration : IExtensionConfigProvider
+    public class HttpOptions
     {
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
-        public HttpExtensionConfiguration()
+        public HttpOptions()
         {
             MaxOutstandingRequests = DataflowBlockOptions.Unbounded;
             MaxConcurrentRequests = DataflowBlockOptions.Unbounded;
@@ -53,24 +53,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         public bool DynamicThrottlesEnabled { get; set; }
 
         /// <summary>
-        /// Hook to enable a host to receive the response
+        /// Gets or sets the Action used to receive the response
         /// </summary>
         [JsonIgnore]
         public Action<HttpRequest, object> SetResponse { get; set; }
-
-        /// <summary>
-        /// Initializes the extension.
-        /// </summary>
-        /// <param name="context">The <see cref="ExtensionConfigContext"/>.</param>
-        public void Initialize(ExtensionConfigContext context)
-        {
-            if (context == null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
-            context.Config.RegisterBindingExtension(new HttpTriggerAttributeBindingProvider(SetResponse));
-            context.Config.RegisterBindingExtension(new HttpDirectRequestBindingProvider());
-        }
     }
 }

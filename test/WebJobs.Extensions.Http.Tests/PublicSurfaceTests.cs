@@ -17,9 +17,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
 
             var expected = new[]
             {
-                "HttpExtensionConfiguration",
                 "HttpExtensionConstants",
-                "HttpJobHostConfigurationExtensions",
                 "AuthorizationLevel",
                 "HttpRequestManager",
                 "HttpTriggerAttribute",
@@ -29,7 +27,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
                 "IWebJobsRouteHandler",
                 "IWebJobsRouter",
                 "WebJobsRouteBuilder",
-                "WebJobsRouter"
+                "WebJobsRouter",
+                "HttpOptions",
+                "HttpHostBuilderExtensions",
+                "HttpWebJobsStartup",
             };
 
             AssertPublicTypes(expected, assembly);

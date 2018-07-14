@@ -11,7 +11,7 @@ namespace Microsoft.Azure.WebJobs
     public class ExecutionContext
     {
         /// <summary>
-        /// The job function invocation ID
+        /// Gets or sets the job function invocation ID
         /// </summary>
         public Guid InvocationId { get; set; }
 

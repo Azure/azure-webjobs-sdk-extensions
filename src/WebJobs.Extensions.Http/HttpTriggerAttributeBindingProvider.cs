@@ -17,7 +17,6 @@ using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.Internal;
 using Microsoft.AspNetCore.Mvc.WebApiCompatShim;
 using Microsoft.AspNetCore.Routing.Template;
 using Microsoft.AspNetCore.WebUtilities;
@@ -43,6 +42,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         internal const string RequestBindingName = "$request";
 
         private readonly Action<HttpRequest, object> _responseHook;
+        private static readonly Type[] _supportedTypes = new Type[]
+        {
+            typeof(Stream),
+            typeof(TextReader),
+            typeof(StreamReader),
+            typeof(string),
+            typeof(byte[]),
+            typeof(HttpRequest),
+            typeof(object),
+            typeof(HttpRequestMessage)
+        };
 
         public HttpTriggerAttributeBindingProvider(Action<HttpRequest, object> responseHook)
         {
@@ -63,11 +73,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 return Task.FromResult<ITriggerBinding>(null);
             }
 
-            // Can bind to user types, HttpRequestMessage, object (for dynamic binding support) and all the Read
-            // Types supported by StreamValueBinder
-            IEnumerable<Type> supportedTypes = StreamValueBinder.GetSupportedTypes(FileAccess.Read)
-                .Union(new Type[] { typeof(HttpRequest), typeof(object), typeof(HttpRequestMessage) });
-            bool isSupportedTypeBinding = ValueBinder.MatchParameterType(parameter, supportedTypes);
+            bool isSupportedTypeBinding = ValueBinder.MatchParameterType(parameter, _supportedTypes);
             bool isUserTypeBinding = !isSupportedTypeBinding && IsValidUserType(parameter.ParameterType);
             if (!isSupportedTypeBinding && !isUserTypeBinding)
             {

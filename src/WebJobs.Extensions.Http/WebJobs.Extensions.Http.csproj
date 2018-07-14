@@ -7,6 +7,10 @@
     <PackageId>Microsoft.Azure.WebJobs.Extensions.Http</PackageId>
     <Description>This package adds binding extensions for Http.</Description>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\WebJobs.Extensions\Framework\Bindings\StreamValueBinder.cs" Link="Binding\StreamValueBinder.cs" />
+    <Compile Include="..\WebJobs.Extensions\Framework\Bindings\ValueBinder.cs" Link="Binding\ValueBinder.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.4" />
@@ -14,11 +18,12 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Formatters.Json" Version="2.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.WebApiCompatShim" Version="2.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Routing" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.0-beta7-11385" />
     <PackageReference Include="ncrontab" Version="3.3.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\WebJobs.Extensions\WebJobs.Extensions.csproj" />
+    <Folder Include="Binding\" />
   </ItemGroup>
 
 </Project>
