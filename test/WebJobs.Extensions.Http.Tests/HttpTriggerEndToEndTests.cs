@@ -9,7 +9,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
+using Microsoft.Azure.WebJobs.Host.TestCommon;
 using Microsoft.Azure.WebJobs.Host.Timers;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Xunit;
@@ -19,21 +22,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
     [Trait("Category", "E2E")]
     public class HttpTriggerEndToEndTests
     {
-        private JobHostConfiguration _config;
         private JobHost _host;
 
         public HttpTriggerEndToEndTests()
         {
-            var httpConfig = new HttpExtensionConfiguration();
-            httpConfig.SetResponse = SetResultHook;
-            _config = new JobHostConfiguration
-            {
-                TypeLocator = new ExplicitTypeLocator(typeof(TestFunctions))
-            };
-            _config.UseHttp(httpConfig);
-            _config.UseHttp();
-            _config.AddService<IWebJobsExceptionHandler>(new TestExceptionHandler());
-            _host = new JobHost(_config);
+            var host = new HostBuilder()
+                .ConfigureDefaultTestHost(typeof(TestFunctions))
+                .AddHttp(o => 
+                {
+                    o.SetResponse = SetResultHook;
+                })
+                .AddAzureStorage()
+                .Build();
+
+            _host = host.GetJobHost();
         }
 
         private void SetResultHook(HttpRequest request, object result)
@@ -91,7 +93,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
             // verify blob was written
             string blobName = $"test-{testId}-{testSuffix}";
-            var account = CloudStorageAccount.Parse(_config.StorageConnectionString);
+            var account = CloudStorageAccount.Parse(Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
             CloudBlobClient client = account.CreateCloudBlobClient();
             CloudBlobContainer container = client.GetContainerReference("test-output");
             var blobRef = await container.GetBlobReferenceFromServerAsync(blobName);

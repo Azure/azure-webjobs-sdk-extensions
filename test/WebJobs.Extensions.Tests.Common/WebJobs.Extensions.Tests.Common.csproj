@@ -23,11 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\WebJobs.Extensions.CosmosDB\WebJobs.Extensions.CosmosDB.csproj" />
-    <ProjectReference Include="..\..\src\WebJobs.Extensions.Http\WebJobs.Extensions.Http.csproj" />
-    <ProjectReference Include="..\..\src\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj" />
-    <ProjectReference Include="..\..\src\WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.csproj" />
-    <ProjectReference Include="..\..\src\WebJobs.Extensions.Twilio\WebJobs.Extensions.Twilio.csproj" />
     <ProjectReference Include="..\..\src\WebJobs.Extensions\WebJobs.Extensions.csproj" />
   </ItemGroup>
 

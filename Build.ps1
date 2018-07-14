@@ -1,10 +1,13 @@
 ﻿param (
-  [string]$packageSuffix = "0"
+  [string]$packageSuffix = "0",
+  [bool]$isLocal = $false,
+  [string]$outputDirectory = "..\..\buildoutput"
 )
 
-# Disable .NET First run experience:
-$env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
-
+if ($isLocal){
+  $packageSuffix = "dev" + [datetime]::UtcNow.Ticks.ToString()
+  Write-Host "Local build - setting package suffixes to $packageSuffix" -ForegroundColor Yellow
+}
 dotnet --version
 
 dotnet build -v q
@@ -21,7 +24,7 @@ $projects =
 
 foreach ($project in $projects)
 {
-  $cmd = "pack", "src\$project\$project.csproj", "-o", "..\..\buildoutput", "--no-build"
+  $cmd = "pack", "src\$project\$project.csproj", "-o", $outputDirectory, "--no-build"
   
   if ($packageSuffix -ne "0")
   {

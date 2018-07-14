@@ -31,12 +31,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 {
     public class HttpTriggerBindingTests
     {
-        ILoggerFactory _loggerFactory;
-
         public HttpTriggerBindingTests()
         {
-            _loggerFactory = new LoggerFactory();
-            _loggerFactory.AddProvider(new TestLoggerProvider());
         }
 
         [Fact]

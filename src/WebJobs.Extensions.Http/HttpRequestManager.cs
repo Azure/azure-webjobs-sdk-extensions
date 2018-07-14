@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Http
 {
@@ -21,24 +22,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
-        /// <param name="httpConfiguration">The <see cref="HttpExtensionConfiguration"/>.</param>
+        /// <param name="httpOptions">The <see cref="Http.HttpOptions"/>.</param>
         /// <param name="traceWriter">The <see cref="TraceWriter"/> to use.</param>
-        public HttpRequestManager(HttpExtensionConfiguration httpConfiguration, ILoggerFactory loggerFactory)
+        public HttpRequestManager(IOptions<HttpOptions> httpOptions, ILoggerFactory loggerFactory)
         {
-            Config = httpConfiguration;
+            Options = httpOptions.Value;
             Logger = loggerFactory?.CreateLogger("Host.Extensions.HttpRequestManager");
 
-            if (Config.MaxOutstandingRequests != DataflowBlockOptions.Unbounded ||
-                Config.MaxConcurrentRequests != DataflowBlockOptions.Unbounded)
+            if (Options.MaxOutstandingRequests != DataflowBlockOptions.Unbounded ||
+                Options.MaxConcurrentRequests != DataflowBlockOptions.Unbounded)
             {
                 InitializeRequestQueue();
             }
         }
 
         /// <summary>
-        /// Gets the <see cref="HttpExtensionConfiguration"/>.
+        /// Gets the <see cref="HttpExtensionConfigProvider"/>.
         /// </summary>
-        protected HttpExtensionConfiguration Config { get; }
+        protected HttpOptions Options { get; }
 
         /// <summary>
         /// Gets the <see cref="ILogger"/>.
@@ -76,7 +77,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 }
                 else
                 {
-                    Logger?.LogInformation($"Http request queue limit of {Config.MaxOutstandingRequests} has been exceeded.");
+                    Logger?.LogInformation($"Http request queue limit of {Options.MaxOutstandingRequests} has been exceeded.");
                     return RejectRequest(request);
                 }
             }
@@ -113,8 +114,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         {
             var options = new ExecutionDataflowBlockOptions
             {
-                MaxDegreeOfParallelism = Config.MaxConcurrentRequests,
-                BoundedCapacity = Config.MaxOutstandingRequests
+                MaxDegreeOfParallelism = Options.MaxConcurrentRequests,
+                BoundedCapacity = Options.MaxOutstandingRequests
             };
 
             _requestQueue = new ActionBlock<HttpRequestItem>(async item =>
