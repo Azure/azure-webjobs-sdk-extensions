@@ -18,10 +18,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
             var expected = new[]
             {
                 "ConstantSchedule",
-                "CoreJobHostConfigurationExtensions",
                 "CronSchedule",
                 "DailySchedule",
-                "ExecutionContext",
                 "FileAttribute",
                 "FileProcessor",
                 "FileProcessorFactoryContext",

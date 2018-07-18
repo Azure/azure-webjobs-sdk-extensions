@@ -30,7 +30,6 @@ namespace ExtensionsSample
             config.UseSample();
             config.UseMobileApps();
             config.UseTwilioSms();
-            config.UseCore();
             config.UseCosmosDB();
 
             var sendGridConfiguration = new SendGridConfiguration()
