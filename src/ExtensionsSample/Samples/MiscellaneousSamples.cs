@@ -13,14 +13,15 @@ namespace ExtensionsSample
         /// <summary>
         /// Demonstrates use of the ExecutionContext binding
         /// </summary>
-        [NoAutomaticTrigger]
-        public static void ExecutionContext(
-            ExecutionContext context,
-            TextWriter log)
-        {
-            string msg = string.Format("Invocation ID: {0}", context.InvocationId);
-            Console.WriteLine(msg);
-            log.WriteLine(msg);
-        }
+        // Re-add this when we reference the latest SDK version.
+        //[NoAutomaticTrigger]
+        //public static void ExecutionContext(
+        //    ExecutionContext context,
+        //    TextWriter log)
+        //{
+        //    string msg = string.Format("Invocation ID: {0}", context.InvocationId);
+        //    Console.WriteLine(msg);
+        //    log.WriteLine(msg);
+        //}
     }
 }
