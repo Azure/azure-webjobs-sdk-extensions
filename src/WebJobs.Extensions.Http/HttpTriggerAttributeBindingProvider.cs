@@ -15,7 +15,6 @@ using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Http
@@ -263,6 +262,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 var bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
                 if (request.Content != null && request.Content.Headers.ContentLength > 0)
                 {
+                    if (request.Content.Headers.ContentType != null)
+                    {
+                        var charSet = request.Content.Headers.ContentType.CharSet;
+                        if (!string.IsNullOrEmpty(charSet))
+                        {
+                            char[] trimQuotes = new[] { '\'', '\"' };
+                            request.Content.Headers.ContentType.CharSet = charSet.Trim(trimQuotes);
+                        }
+                    }
                     string body = await request.Content.ReadAsStringAsync();
                     Utility.ApplyBindingData(body, bindingData);
                 }

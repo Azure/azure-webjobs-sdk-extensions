@@ -113,6 +113,38 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 "{headers.x-ms-id-aad}", "ey456");
         }
 
+        [Theory]
+        [InlineData("\"UTF-8\"")]
+        [InlineData("utf-8")]
+        [InlineData("'Utf-8'")]
+        [InlineData("'UTF-8'")]
+        public async Task GetRequestBindingDataAsync_ContentTypeHeader_ValidCharSet(string charSet)
+        {
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "http://functions/{test:alpha}/test?name=Amy");
+            string input = "{ name: 'body1', nestedObject: { name: 'body2' } }";
+            request.Content = new StringContent(input);
+            request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            request.Content.Headers.ContentType.Parameters.Add(new NameValueHeaderValue("charset", charSet));
+
+            var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
+            char[] trimQuotes = new[] { '\'', '\"' };
+            string expectedHeader = "application/json; charset=" + charSet.Trim(trimQuotes);
+            TestBindingData(bindingData, "{headers.Content-Type}", expectedHeader);
+        }
+
+        [Fact]
+        public async Task GetRequestBindingDataAsync_ContentTypeHeader_CharSet_NotSet()
+        {
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "http://functions/{test:alpha}/test?name=Amy");
+            string input = "{ name: 'body1', nestedObject: { name: 'body2' } }";
+            request.Content = new StringContent(input);
+            request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+            var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
+            string expectedHeader = "application/json";
+            TestBindingData(bindingData, "{headers.Content-Type}", expectedHeader);
+        }
+
         [Fact]
         public async Task BindAsync_Poco_FromRequestBody()
         {
