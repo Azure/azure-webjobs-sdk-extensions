@@ -130,6 +130,38 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 "{headers.x-ms-id-aad}", "ey456");
         }
 
+        [Theory]
+        [InlineData("application/json;Charset=\"UTF-8\"")]
+        [InlineData("application/json;Charset=utf-8")]
+        [InlineData("application/json;Charset='Utf-8'")]
+        [InlineData("application/json;Charset='UTF-8'")]
+        public async Task GetRequestBindingDataAsync_ContentTypeHeader_ValidCharSet(string contentTypeHeaderWithCharSet)
+        {
+            string input = "{ name: 'body1', nestedObject: { name: 'body2' } }";
+            var headers = new HeaderDictionary();
+            headers.Add("name", "Mathew");
+
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/{test:alpha}/test?name=Amy", headers, input);
+            request.ContentType = contentTypeHeaderWithCharSet;
+            
+            var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
+            TestBindingData(bindingData, "{headers.Content-Type}", request.ContentType);
+        }
+
+        [Fact]
+        public async Task GetRequestBindingDataAsync_ContentTypeHeader_CharSet_NotSet()
+        {
+            string input = "{ name: 'body1', nestedObject: { name: 'body2' } }";
+            var headers = new HeaderDictionary();
+            headers.Add("name", "Mathew");
+
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/{test:alpha}/test?name=Amy", headers, input);
+            request.ContentType = "application/json";
+
+            var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
+            TestBindingData(bindingData, "{headers.Content-Type}", request.ContentType);
+        }
+
         [Fact]
         public async Task BindAsync_Poco_FromRequestBody()
         {
