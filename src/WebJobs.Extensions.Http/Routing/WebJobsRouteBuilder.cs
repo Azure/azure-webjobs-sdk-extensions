@@ -56,7 +56,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         {
             var tokens = new RouteValueDictionary(dataTokens)
             {
-                { "AZUREWEBJOBS_FUNCTIONNAME", functionName }
+                { HttpExtensionConstants.FunctionNameRouteTokenKey, functionName }
             };
 
             template = BuildRouteTemplate(_routePrefix, template);
