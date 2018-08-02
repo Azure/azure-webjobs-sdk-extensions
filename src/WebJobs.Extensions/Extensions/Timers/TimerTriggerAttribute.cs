@@ -19,7 +19,7 @@ namespace Microsoft.Azure.WebJobs
         /// Constructs a new instance based on the schedule expression passed in.
         /// </summary>
         /// <param name="scheduleExpression">A schedule expression. This can either be a 6 field crontab expression
-        /// <a href="http://en.wikipedia.org/wiki/Cron#CRON_expression"/> or a <see cref="TimeSpan"/>
+        /// <a href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-timer#cron-expressions"/> or a <see cref="TimeSpan"/>
         /// string (e.g. "00:30:00"). On Azure Functions, a TimeSpan string is only supported 
         /// when running on an App Service Plan.</param>
         public TimerTriggerAttribute(string scheduleExpression)
