@@ -30,5 +30,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         /// </summary>
         public const string AzureWebJobsUseReverseRoutesKey = "MS_AzureWebJobs_UseReverseRoutes";
 
+        /// <summary>
+        /// Key used to set the function name on a route.
+        /// </summary>
+        public const string FunctionNameRouteTokenKey = "AZUREWEBJOBS_FUNCTIONNAME";
     }
 }

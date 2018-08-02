@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -70,6 +71,48 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             {
                 _functionRoutes.Add(functionRoutes);
             }
+        }
+
+        public string GetFunctionRouteTemplate(string functionName)
+        {
+            if (functionName == null)
+            {
+                throw new ArgumentNullException(nameof(functionName));
+            }
+
+            if (_functionRoutes == null)
+            {
+                return null;
+            }
+
+            return GetFunctionRouteTemplate(_functionRoutes, functionName);
+        }
+
+        private string GetFunctionRouteTemplate(RouteCollection routes, string functionName)
+        {
+            for (int i = 0; i < routes.Count; i++)
+            {
+                switch (routes[i])
+                {
+                    case Route functionRoute when IsFunctionRoute(functionRoute, functionName):
+                        return functionRoute.RouteTemplate;
+                    case RouteCollection collection:
+                        string template = GetFunctionRouteTemplate(collection, functionName);
+                        if (template != null)
+                        {
+                            return template;
+                        }
+                        break;
+                }
+            }
+
+            return null;
+        }
+
+        private bool IsFunctionRoute(Route functionRoute, string functionName)
+        {
+            return functionRoute.DataTokens.TryGetValue(HttpExtensionConstants.FunctionNameRouteTokenKey, out object routeFunctionName) &&
+                string.Equals((string)routeFunctionName, functionName, StringComparison.OrdinalIgnoreCase);
         }
 
         public WebJobsRouteBuilder CreateBuilder(IWebJobsRouteHandler routeHandler, string routePrefix)

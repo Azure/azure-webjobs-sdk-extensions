@@ -14,5 +14,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         void ClearRoutes();
 
         WebJobsRouteBuilder CreateBuilder(IWebJobsRouteHandler routeHandler, string routePrefix);
+
+        string GetFunctionRouteTemplate(string functionName);
     }
 }
