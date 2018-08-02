@@ -19,7 +19,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
     /// </summary>
     public class FileProcessor
     {
-        private readonly FilesConfiguration _config;
+        private readonly FilesOptions _options;
         private readonly FileTriggerAttribute _attribute;
         private readonly ILogger _logger;
         private readonly ITriggeredFunctionExecutor _executor;
@@ -38,13 +38,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
                 throw new ArgumentNullException("context");
             }
 
-            _config = context.Config;
+            _options = context.Options;
             _attribute = context.Attribute;
             _executor = context.Executor;
             _logger = context.Logger;
 
             string attributePath = _attribute.GetRootPath();
-            _filePath = Path.Combine(_config.RootPath, attributePath);
+            _filePath = Path.Combine(_options.RootPath, attributePath);
 
             JsonSerializerSettings settings = new JsonSerializerSettings
             {

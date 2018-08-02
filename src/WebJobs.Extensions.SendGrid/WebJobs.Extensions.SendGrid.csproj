@@ -9,11 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.0-beta7-11385" />
     <PackageReference Include="SendGrid" Version="9.9.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\WebJobs.Extensions\WebJobs.Extensions.csproj" />
   </ItemGroup>
 
 </Project>

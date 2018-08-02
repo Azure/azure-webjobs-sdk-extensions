@@ -13,16 +13,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
     internal class CosmosDBEnumerableBuilder<T> : IAsyncConverter<CosmosDBAttribute, IEnumerable<T>>
         where T : class
     {
-        private readonly CosmosDBConfiguration _config;
+        private readonly CosmosDBExtensionConfigProvider _configProvider;
 
-        public CosmosDBEnumerableBuilder(CosmosDBConfiguration config)
+        public CosmosDBEnumerableBuilder(CosmosDBExtensionConfigProvider configProvider)
         {
-            _config = config;
+            _configProvider = configProvider;
         }
 
         public async Task<IEnumerable<T>> ConvertAsync(CosmosDBAttribute attribute, CancellationToken cancellationToken)
         {
-            CosmosDBContext context = _config.CreateContext(attribute);
+            CosmosDBContext context = _configProvider.CreateContext(attribute);
 
             Uri collectionUri = UriFactory.CreateDocumentCollectionUri(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName);
 

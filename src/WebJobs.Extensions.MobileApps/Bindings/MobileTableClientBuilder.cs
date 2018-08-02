@@ -7,16 +7,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps.Bindings
 {
     internal class MobileTableClientBuilder : IConverter<MobileTableAttribute, IMobileServiceClient>
     {
-        private MobileAppsConfiguration _config;
+        private MobileAppsExtensionConfigProvider _configProvider;
 
-        public MobileTableClientBuilder(MobileAppsConfiguration config)
+        public MobileTableClientBuilder(MobileAppsExtensionConfigProvider configProvider)
         {
-            _config = config;
+            _configProvider = configProvider;
         }
 
         public IMobileServiceClient Convert(MobileTableAttribute attribute)
         {
-            MobileTableContext context = _config.CreateContext(attribute);
+            MobileTableContext context = _configProvider.CreateContext(attribute);
             return context.Client;
         }
     }

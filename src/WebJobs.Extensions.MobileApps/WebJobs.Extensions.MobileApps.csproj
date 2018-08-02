@@ -10,10 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Mobile.Client" Version="4.0.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\WebJobs.Extensions\WebJobs.Extensions.csproj" />
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.0-beta7-11385" />
   </ItemGroup>
 
 </Project>

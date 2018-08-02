@@ -11,13 +11,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 {
     internal class TimerTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
-        private readonly TimersConfiguration _config;
+        private readonly TimersOptions _options;
         private readonly INameResolver _nameResolver;
         private readonly ILogger _logger;
 
-        public TimerTriggerAttributeBindingProvider(TimersConfiguration config, INameResolver nameResolver, ILogger logger)
+        public TimerTriggerAttributeBindingProvider(TimersOptions options, INameResolver nameResolver, ILogger logger)
         {
-            _config = config;
+            _options = options;
             _nameResolver = nameResolver;
             _logger = logger;
         }
@@ -44,7 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 
             TimerSchedule schedule = TimerSchedule.Create(timerTriggerAttribute, _nameResolver);
 
-            return Task.FromResult<ITriggerBinding>(new TimerTriggerBinding(parameter, timerTriggerAttribute, schedule, _config, _logger));
+            return Task.FromResult<ITriggerBinding>(new TimerTriggerBinding(parameter, timerTriggerAttribute, schedule, _options, _logger));
         }
     }
 }

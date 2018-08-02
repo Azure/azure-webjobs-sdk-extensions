@@ -1,18 +1,17 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using Microsoft.Azure.WebJobs.Extensions.Bindings;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Files.Listeners;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
-using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
@@ -20,14 +19,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
     {
         private readonly ParameterInfo _parameter;
         private readonly FileTriggerAttribute _attribute;
-        private readonly FilesConfiguration _config;
+        private readonly FilesOptions _options;
         private readonly IReadOnlyDictionary<string, Type> _bindingContract;
         private readonly BindingDataProvider _bindingDataProvider;
         private readonly ILogger _logger;
 
-        public FileTriggerBinding(FilesConfiguration config, ParameterInfo parameter, ILogger logger)
+        public FileTriggerBinding(FilesOptions config, ParameterInfo parameter, ILogger logger)
         {
-            _config = config;
+            _options = config;
             _parameter = parameter;
             _logger = logger;
             _attribute = parameter.GetCustomAttribute<FileTriggerAttribute>(inherit: false);
@@ -83,13 +82,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             {
                 throw new ArgumentNullException("context");
             }
-            return Task.FromResult<IListener>(new FileListener(_config, _attribute, context.Executor, _logger));
+            return Task.FromResult<IListener>(new FileListener(_options, _attribute, context.Executor, _logger));
         }
 
         public ParameterDescriptor ToParameterDescriptor()
         {
             // These path values are validated later during startup.
-            string triggerPath = Path.Combine(_config.RootPath ?? string.Empty, _attribute.Path ?? string.Empty);
+            string triggerPath = Path.Combine(_options.RootPath ?? string.Empty, _attribute.Path ?? string.Empty);
 
             return new FileTriggerParameterDescriptor
             {

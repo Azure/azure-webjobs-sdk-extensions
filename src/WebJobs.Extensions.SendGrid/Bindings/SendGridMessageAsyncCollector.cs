@@ -13,14 +13,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
 {
     internal class SendGridMessageAsyncCollector : IAsyncCollector<SendGridMessage>
     {
-        private readonly SendGridConfiguration _config;
+        private readonly SendGridOptions _options;
         private readonly SendGridAttribute _attribute;
         private readonly Collection<SendGridMessage> _messages = new Collection<SendGridMessage>();
         private readonly ISendGridClient _sendGrid;
 
-        public SendGridMessageAsyncCollector(SendGridConfiguration config, SendGridAttribute attribute, ISendGridClient sendGrid)
+        public SendGridMessageAsyncCollector(SendGridOptions options, SendGridAttribute attribute, ISendGridClient sendGrid)
         {
-            _config = config;
+            _options = options;
             _attribute = attribute;
             _sendGrid = sendGrid;
         }
@@ -32,7 +32,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
                 throw new ArgumentNullException("item");
             }
 
-            SendGridHelpers.DefaultMessageProperties(item, _config, _attribute);
+            SendGridHelpers.DefaultMessageProperties(item, _options, _attribute);
 
             if (!SendGridHelpers.IsToValid(item))
             {

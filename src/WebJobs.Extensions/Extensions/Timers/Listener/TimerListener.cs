@@ -15,7 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
     internal sealed class TimerListener : IListener
     {
         private readonly TimerTriggerAttribute _attribute;
-        private readonly TimersConfiguration _config;
+        private readonly TimersOptions _options;
         private readonly ITriggeredFunctionExecutor _executor;
         private readonly ILogger _logger;
         private readonly CancellationTokenSource _cancellationTokenSource;
@@ -30,16 +30,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private bool _disposed;
         private TimeSpan _remainingInterval;
 
-        public TimerListener(TimerTriggerAttribute attribute, TimerSchedule schedule, string timerName, TimersConfiguration config, ITriggeredFunctionExecutor executor, ILogger logger)
+        public TimerListener(TimerTriggerAttribute attribute, TimerSchedule schedule, string timerName, TimersOptions options, ITriggeredFunctionExecutor executor, ILogger logger)
         {
             _attribute = attribute;
             _timerName = timerName;
-            _config = config;
+            _options = options;
             _executor = executor;
             _logger = logger;
             _cancellationTokenSource = new CancellationTokenSource();
             _schedule = schedule;
-            ScheduleMonitor = _attribute.UseMonitor ? _config.ScheduleMonitor : null;
+            ScheduleMonitor = _attribute.UseMonitor ? _options.ScheduleMonitor : null;
         }
 
         internal static TimeSpan MaxTimerInterval

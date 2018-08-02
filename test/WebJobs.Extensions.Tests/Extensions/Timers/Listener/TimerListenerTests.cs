@@ -21,7 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         private string _testTimerName = "Program.TestTimerJob";
         private TimerListener _listener;
         private Mock<ScheduleMonitor> _mockScheduleMonitor;
-        private TimersConfiguration _config;
+        private TimersOptions _config;
         private TimerTriggerAttribute _attribute;
         private TimerSchedule _schedule;
         private Mock<ITriggeredFunctionExecutor> _mockTriggerExecutor;
@@ -432,7 +432,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _attribute = new TimerTriggerAttribute(expression);
             _schedule = TimerSchedule.Create(_attribute, new TestNameResolver());
             _attribute.UseMonitor = useMonitor;
-            _config = new TimersConfiguration();
+            _config = new TimersOptions();
             _mockScheduleMonitor = new Mock<ScheduleMonitor>(MockBehavior.Strict);
             _config.ScheduleMonitor = _mockScheduleMonitor.Object;
             _mockTriggerExecutor = new Mock<ITriggeredFunctionExecutor>(MockBehavior.Strict);

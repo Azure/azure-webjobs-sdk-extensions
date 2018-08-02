@@ -23,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
         private readonly FileTriggerAttribute _attribute;
         private readonly ITriggeredFunctionExecutor _triggerExecutor;
         private readonly CancellationTokenSource _cancellationTokenSource;
-        private readonly FilesConfiguration _config;
+        private readonly FilesOptions _options;
         private readonly string _watchPath;
         private ActionBlock<FileSystemEventArgs> _workQueue;
         private FileProcessor _processor;
@@ -33,21 +33,21 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
         private readonly ILogger _logger;
         private bool _disposed;
 
-        public FileListener(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor triggerExecutor, ILogger logger)
+        public FileListener(FilesOptions options, FileTriggerAttribute attribute, ITriggeredFunctionExecutor triggerExecutor, ILogger logger)
         {
-            _config = config ?? throw new ArgumentNullException(nameof(config));
+            _options = options ?? throw new ArgumentNullException(nameof(options));
             _attribute = attribute ?? throw new ArgumentNullException(nameof(attribute));
             _triggerExecutor = triggerExecutor ?? throw new ArgumentNullException(nameof(triggerExecutor));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             _cancellationTokenSource = new CancellationTokenSource();
 
-            if (string.IsNullOrEmpty(_config.RootPath) || !Directory.Exists(_config.RootPath))
+            if (string.IsNullOrEmpty(_options.RootPath) || !Directory.Exists(_options.RootPath))
             {
-                throw new InvalidOperationException(string.Format("Path '{0}' is invalid. FilesConfiguration.RootPath must be set to a valid directory location.", _config.RootPath));
+                throw new InvalidOperationException(string.Format("Path '{0}' is invalid. FilesConfiguration.RootPath must be set to a valid directory location.", _options.RootPath));
             }
 
-            _watchPath = Path.Combine(_config.RootPath, _attribute.GetRootPath());
+            _watchPath = Path.Combine(_options.RootPath, _attribute.GetRootPath());
         }
 
         // for testing
@@ -70,8 +70,8 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
             CreateFileWatcher();
 
-            FileProcessorFactoryContext context = new FileProcessorFactoryContext(_config, _attribute, _triggerExecutor, _logger);
-            _processor = _config.ProcessorFactory.CreateFileProcessor(context);
+            FileProcessorFactoryContext context = new FileProcessorFactoryContext(_options, _attribute, _triggerExecutor, _logger);
+            _processor = _options.ProcessorFactory.CreateFileProcessor(context);
 
             ExecutionDataflowBlockOptions options = new ExecutionDataflowBlockOptions
             {

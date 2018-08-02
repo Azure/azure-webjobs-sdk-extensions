@@ -8,11 +8,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps.Bindings
 {
     internal class MobileTableQueryBuilder<T> : IConverter<MobileTableAttribute, IMobileServiceTableQuery<T>>
     {
-        private MobileAppsConfiguration _config;
+        private MobileAppsExtensionConfigProvider _configProvider;
 
-        public MobileTableQueryBuilder(MobileAppsConfiguration config)
+        public MobileTableQueryBuilder(MobileAppsExtensionConfigProvider configProvider)
         {
-            _config = config;
+            _configProvider = configProvider;
         }
 
         public IMobileServiceTableQuery<T> Convert(MobileTableAttribute attribute)
@@ -23,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps.Bindings
             }
 
             // The Table POCO rule already knows how to get the table
-            MobileTablePocoTableBuilder<T> tablePocoBuilder = new MobileTablePocoTableBuilder<T>(_config);
+            MobileTablePocoTableBuilder<T> tablePocoBuilder = new MobileTablePocoTableBuilder<T>(_configProvider);
             IMobileServiceTable<T> table = tablePocoBuilder.Convert(attribute);
 
             return table.CreateQuery();

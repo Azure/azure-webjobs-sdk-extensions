@@ -2,43 +2,38 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Host.Bindings;
+using Microsoft.Azure.WebJobs.Extensions.MobileApps;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.Extensions.Hosting
 {
     /// <summary>
-    /// Extension methods for Http integration
+    /// Extension methods for Mobile Apps integration
     /// </summary>
-    public static class HttpHostBuilderExtensions
+    public static class MobileAppsHostBuilderExtensions
     {
         /// <summary>
-        /// Adds the HTTP services and extension to the provided <see cref="IHostBuilder"/>.
+        /// Adds the Mobile Apps extension to the provided <see cref="IHostBuilder"/>.
         /// </summary>
         /// <param name="builder">The <see cref="IHostBuilder"/> to configure.</param>
-        public static IHostBuilder AddHttp(this IHostBuilder builder)
+        public static IHostBuilder AddMobileApps(this IHostBuilder builder)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            builder.AddExtension<HttpExtensionConfigProvider>();
-            builder.ConfigureServices(c =>
-            {
-                c.AddSingleton<IBindingProvider, HttpDirectRequestBindingProvider>();
-            });
+            builder.AddExtension<MobileAppsExtensionConfigProvider>();
 
             return builder;
         }
 
         /// <summary>
-        /// Adds the HTTP services and extension to the provided <see cref="IHostBuilder"/>.
+        /// Adds the Mobile Apps extension to the provided <see cref="IHostBuilder"/>.
         /// </summary>
         /// <param name="builder">The <see cref="IHostBuilder"/> to configure.</param>
-        /// <param name="configure">An <see cref="Action{HttpExtensionOptions}"/> to configure the provided <see cref="HttpOptions"/>.</param>
-        public static IHostBuilder AddHttp(this IHostBuilder builder, Action<HttpOptions> configure)
+        /// <param name="configure">An <see cref="Action{MobileAppsOptions}"/> to configure the provided <see cref="MobileAppsOptions"/>.</param>
+        public static IHostBuilder AddMobileApps(this IHostBuilder builder, Action<MobileAppsOptions> configure)
         {
             if (builder == null)
             {
@@ -50,7 +45,7 @@ namespace Microsoft.Extensions.Hosting
                 throw new ArgumentNullException(nameof(configure));
             }
 
-            builder.AddHttp()
+            builder.AddMobileApps()
                 .ConfigureServices(c => c.Configure(configure));
 
             return builder;

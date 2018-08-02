@@ -32,7 +32,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Bindings
             TimerTriggerAttribute attribute = parameter.GetCustomAttribute<TimerTriggerAttribute>();
             INameResolver nameResolver = new TestNameResolver();
             TimerSchedule schedule = TimerSchedule.Create(attribute, nameResolver);
-            TimersConfiguration config = new TimersConfiguration();
+            TimersOptions config = new TimersOptions();
             config.ScheduleMonitor = mockScheduleMonitor.Object;
 
             ILoggerFactory loggerFactory = new LoggerFactory();

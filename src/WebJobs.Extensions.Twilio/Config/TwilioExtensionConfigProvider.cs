@@ -5,9 +5,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Microsoft.Azure.WebJobs.Extensions.Bindings;
-using Microsoft.Azure.WebJobs.Host;
-using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using Twilio.Clients;
 using Twilio.Rest.Api.V2010.Account;
@@ -15,25 +14,23 @@ using Twilio.Types;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Twilio
 {
-    public class TwilioSmsConfiguration : IExtensionConfigProvider
+    internal class TwilioExtensionConfigProvider : IExtensionConfigProvider
     {
         internal const string AzureWebJobsTwilioAccountSidKeyName = "AzureWebJobsTwilioAccountSid";
         internal const string AzureWebJobsTwilioAccountAuthTokenName = "AzureWebJobsTwilioAuthToken";
 
+        private readonly IOptions<TwilioSmsOptions> _options;
+        private readonly INameResolver _nameResolver;
         private readonly ConcurrentDictionary<Tuple<string, string>, TwilioRestClient> _twilioClientCache = new ConcurrentDictionary<Tuple<string, string>, TwilioRestClient>();
 
         private string _defaultAccountSid;
         private string _defaultAuthToken;
 
-        public string AccountSid { get; set; }
-
-        public string AuthToken { get; set; }
-
-        public string Body { get; set; }
-
-        public string From { get; set; }
-
-        public string To { get; set; }
+        public TwilioExtensionConfigProvider(IOptions<TwilioSmsOptions> options, INameResolver nameResolver)
+        {
+            _options = options;
+            _nameResolver = nameResolver;
+        }
 
         public void Initialize(ExtensionConfigContext context)
         {
@@ -42,10 +39,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
                 throw new ArgumentNullException("context");
             }
 
-            INameResolver nameResolver = context.Config.GetService<INameResolver>();
-
-            _defaultAccountSid = nameResolver.Resolve(AzureWebJobsTwilioAccountSidKeyName);
-            _defaultAuthToken = nameResolver.Resolve(AzureWebJobsTwilioAccountAuthTokenName);
+            _defaultAccountSid = _nameResolver.Resolve(AzureWebJobsTwilioAccountSidKeyName);
+            _defaultAuthToken = _nameResolver.Resolve(AzureWebJobsTwilioAccountAuthTokenName);
 
             context.AddConverter<JObject, CreateMessageOptions>(CreateMessageOptions);
 
@@ -59,8 +54,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
 
         private void ValidateBinding(TwilioSmsAttribute attribute, Type type)
         {
-            string accountSid = Utility.FirstOrDefault(attribute.AccountSidSetting, AccountSid, _defaultAccountSid);
-            string authToken = Utility.FirstOrDefault(attribute.AuthTokenSetting, AuthToken, _defaultAuthToken);
+            string accountSid = Utility.FirstOrDefault(attribute.AccountSidSetting, _options.Value.AccountSid, _defaultAccountSid);
+            string authToken = Utility.FirstOrDefault(attribute.AuthTokenSetting, _options.Value.AuthToken, _defaultAuthToken);
             if (string.IsNullOrEmpty(accountSid))
             {
                 ThrowMissingSettingException("AccountSID", AzureWebJobsTwilioAccountSidKeyName, "AccountSID");
@@ -74,17 +69,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
 
         private TwilioSmsContext CreateContext(TwilioSmsAttribute attribute)
         {
-            string accountSid = Utility.FirstOrDefault(attribute.AccountSidSetting, AccountSid, _defaultAccountSid);
-            string authToken = Utility.FirstOrDefault(attribute.AuthTokenSetting, AuthToken, _defaultAuthToken);
+            string accountSid = Utility.FirstOrDefault(attribute.AccountSidSetting, _options.Value.AccountSid, _defaultAccountSid);
+            string authToken = Utility.FirstOrDefault(attribute.AuthTokenSetting, _options.Value.AuthToken, _defaultAuthToken);
 
             TwilioRestClient client = _twilioClientCache.GetOrAdd(new Tuple<string, string>(accountSid, authToken), t => new TwilioRestClient(t.Item1, t.Item2));
 
             var context = new TwilioSmsContext
             {
                 Client = client,
-                Body = Utility.FirstOrDefault(attribute.Body, Body),
-                From = Utility.FirstOrDefault(attribute.From, From),
-                To = Utility.FirstOrDefault(attribute.To, To)
+                Body = Utility.FirstOrDefault(attribute.Body, _options.Value.Body),
+                From = Utility.FirstOrDefault(attribute.From, _options.Value.From),
+                To = Utility.FirstOrDefault(attribute.To, _options.Value.To)
             };
 
             return context;

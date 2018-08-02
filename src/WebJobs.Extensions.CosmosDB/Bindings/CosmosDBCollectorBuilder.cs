@@ -5,16 +5,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings
 {
     internal class CosmosDBCollectorBuilder<T> : IConverter<CosmosDBAttribute, IAsyncCollector<T>>
     {
-        private CosmosDBConfiguration _config;
+        private readonly CosmosDBExtensionConfigProvider _configProvider;
 
-        public CosmosDBCollectorBuilder(CosmosDBConfiguration config)
+        public CosmosDBCollectorBuilder(CosmosDBExtensionConfigProvider configProvider)
         {
-            _config = config;
+            _configProvider = configProvider;
         }
 
         public IAsyncCollector<T> Convert(CosmosDBAttribute attribute)
         {
-            CosmosDBContext context = _config.CreateContext(attribute);
+            CosmosDBContext context = _configProvider.CreateContext(attribute);
             return new CosmosDBAsyncCollector<T>(context);
         }
     }

@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
@@ -17,7 +18,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     public class StorageScheduleMonitor : ScheduleMonitor
     {
         private const string HostContainerName = "azure-webjobs-hosts";
-        private readonly JobHostConfiguration _hostConfig;
+        private readonly JobHostOptions _hostOptions;
+        private readonly DistributedLockManagerContainerProvider _lockContainerProvider;
+        private readonly IConnectionStringProvider _connectionStringProvider;
         private readonly JsonSerializer _serializer;
         private readonly ILogger _logger;
         private CloudBlobDirectory _timerStatusDirectory;
@@ -25,11 +28,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
-        /// <param name="hostConfig">The <see cref="JobHostConfiguration"/>.</param>
+        /// <param name="hostOptions">The <see cref="JobHostOptions"/>.</param>
         /// <param name="logger">The <see cref="ILogger"/>.</param>
-        public StorageScheduleMonitor(JobHostConfiguration hostConfig, ILogger logger)
+        public StorageScheduleMonitor(JobHostOptions hostOptions, DistributedLockManagerContainerProvider lockContainerProvider, IConnectionStringProvider connectionStringProvider, ILogger logger)
         {
-            _hostConfig = hostConfig;
+            _hostOptions = hostOptions;
+            _lockContainerProvider = lockContainerProvider;
+            _connectionStringProvider = connectionStringProvider;
             _logger = logger;
 
             JsonSerializerSettings settings = new JsonSerializerSettings
@@ -50,24 +55,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 // be available AFTER the host as been started
                 if (_timerStatusDirectory == null)
                 {
-                    if (string.IsNullOrEmpty(_hostConfig.HostId))
+                    if (string.IsNullOrEmpty(_hostOptions.HostId))
                     {
                         throw new InvalidOperationException("Unable to determine host ID.");
                     }
 
                     CloudBlobContainer container;
-                    var storage = _hostConfig.InternalStorageConfiguration;
-                    if (storage != null && storage.InternalContainer != null)
+                    if (_lockContainerProvider.InternalContainer != null)
                     {
-                        container = storage.InternalContainer;
+                        container = _lockContainerProvider.InternalContainer;
                     }
                     else
                     {
-                        CloudStorageAccount storageAccount = CloudStorageAccount.Parse(_hostConfig.StorageConnectionString);
+                        CloudStorageAccount storageAccount = CloudStorageAccount.Parse(_connectionStringProvider.GetConnectionString(ConnectionStringNames.Storage));
                         CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
                         container = blobClient.GetContainerReference(HostContainerName);
                     }
-                    string timerStatusDirectoryPath = string.Format("timers/{0}", _hostConfig.HostId);
+                    string timerStatusDirectoryPath = string.Format("timers/{0}", _hostOptions.HostId);
                     _timerStatusDirectory = container.GetDirectoryReference(timerStatusDirectoryPath);
                 }
                 return _timerStatusDirectory;

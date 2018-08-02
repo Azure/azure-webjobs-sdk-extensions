@@ -12,6 +12,7 @@ using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
@@ -20,16 +21,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private const string CosmosDBTriggerUserAgentSuffix = "CosmosDBTriggerFunctions";
         private readonly ChangeFeedHostOptions _leasesOptions;
         private readonly INameResolver _nameResolver;
+        private readonly IOptions<CosmosDBOptions> _options;
         private readonly ILogger _logger;
+        private readonly CosmosDBExtensionConfigProvider _configProvider;
         private string _monitorConnectionString;
         private string _leasesConnectionString;
         private TraceWriter _trace;
-        private CosmosDBConfiguration _config;
 
-        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, CosmosDBConfiguration config, ILoggerFactory loggerFactory, ChangeFeedHostOptions leasesOptions = null)
+        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, IOptions<CosmosDBOptions> options, CosmosDBExtensionConfigProvider configProvider, ILoggerFactory loggerFactory, ChangeFeedHostOptions leasesOptions = null)
         {
             _nameResolver = nameResolver;
-            _config = config;
+            _options = options;
+            _configProvider = configProvider;
             _leasesOptions = leasesOptions ?? new ChangeFeedHostOptions();
             _logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("CosmosDB"));
         }
@@ -49,11 +52,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 return null;
             }
 
-            ConnectionMode? desiredConnectionMode = _config.ConnectionMode;
-            Protocol? desiredConnectionProtocol = _config.Protocol;
+            ConnectionMode? desiredConnectionMode = _options.Value.ConnectionMode;
+            Protocol? desiredConnectionProtocol = _options.Value.Protocol;
 
-            _monitorConnectionString = _nameResolver.Resolve(CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName);
-            _leasesConnectionString = _nameResolver.Resolve(CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName);
+            _monitorConnectionString = _nameResolver.Resolve(CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName);
+            _leasesConnectionString = _nameResolver.Resolve(CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName);
 
             DocumentCollectionInfo documentCollectionLocation;
             DocumentCollectionInfo leaseCollectionLocation;
@@ -138,7 +141,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 if (attribute.CreateLeaseCollectionIfNotExists)
                 {
                     // Not disposing this because it might be reused on other Trigger since Triggers could share lease collection
-                    ICosmosDBService service = _config.GetService(leasesConnectionString);
+                    ICosmosDBService service = _configProvider.GetService(leasesConnectionString);
                     await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(service, leaseCollectionLocation.DatabaseName, leaseCollectionLocation.CollectionName, null, attribute.LeasesCollectionThroughput);
                 }
             }
@@ -181,7 +184,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 throw new InvalidOperationException(
                     string.Format(CultureInfo.CurrentCulture,
                     "The CosmosDBTrigger connection string must be set either via a '{0}' app setting, via the CosmosDBTriggerAttribute.ConnectionStringSetting property or via DocumentDBConfiguration.ConnectionString.",
-                    CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName));
+                    CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName));
             }
 
             return connectionString;

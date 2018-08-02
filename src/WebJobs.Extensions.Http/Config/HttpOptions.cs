@@ -2,10 +2,8 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Net.Http;
 using System.Threading.Tasks.Dataflow;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.WebJobs.Host.Config;
 using Newtonsoft.Json;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Http

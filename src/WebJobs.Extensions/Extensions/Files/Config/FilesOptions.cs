@@ -11,12 +11,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files
     /// Configuration object for the Files extension. Governs the behavior of functions attributed
     /// with <see cref="FileTriggerAttribute"/> and <see cref="FileAttribute"/>.
     /// </summary>
-    public class FilesConfiguration
+    public class FilesOptions
     {
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
-        public FilesConfiguration()
+        public FilesOptions()
         {
             // default to the D:\HOME\DATA directory when running in Azure WebApps
             string home = Environment.GetEnvironmentVariable("HOME");

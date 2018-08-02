@@ -4,9 +4,9 @@
 namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
     /// <summary>
-    /// Configuration object for <see cref="TimerTriggerAttribute"/> decorated job functions.
+    /// Options object for <see cref="TimerTriggerAttribute"/> decorated job functions.
     /// </summary>
-    public class TimersConfiguration
+    public class TimersOptions
     {
         /// <summary>
         /// Gets or sets the schedule monitor used to persist

@@ -17,12 +17,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
     internal class FileTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
-        private readonly FilesConfiguration _config;
+        private readonly FilesOptions _options;
         private readonly ILogger _logger;
 
-        public FileTriggerAttributeBindingProvider(FilesConfiguration config, ILoggerFactory loggerFactory)
+        public FileTriggerAttributeBindingProvider(FilesOptions options, ILoggerFactory loggerFactory)
         {
-            _config = config ?? throw new ArgumentNullException("config");
+            _options = options ?? throw new ArgumentNullException("config");
             _logger = loggerFactory?.CreateLogger(LogCategories.CreateTriggerCategory("File"));
         }
 
@@ -50,7 +50,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                     "Can't bind FileTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            return Task.FromResult<ITriggerBinding>(new FileTriggerBinding(_config, parameter, _logger));
+            return Task.FromResult<ITriggerBinding>(new FileTriggerBinding(_options, parameter, _logger));
         }
     }
 }

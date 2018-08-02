@@ -15,22 +15,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// <summary>
         /// Constructs a new instance
         /// </summary>
-        /// <param name="config">The <see cref="FilesConfiguration"/></param>
+        /// <param name="options">The <see cref="FilesOptions"/></param>
         /// <param name="attribute">The <see cref="FileTriggerAttribute"/></param>
         /// <param name="executor">The function executor.</param>
         /// <param name="logger">The <see cref="ILogger"/>.</param>
-        public FileProcessorFactoryContext(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor executor, ILogger logger)
+        public FileProcessorFactoryContext(FilesOptions options, FileTriggerAttribute attribute, ITriggeredFunctionExecutor executor, ILogger logger)
         {
-            Config = config ?? throw new ArgumentNullException(nameof(config));
+            Options = options ?? throw new ArgumentNullException(nameof(options));
             Attribute = attribute ?? throw new ArgumentNullException(nameof(attribute));
             Executor = executor ?? throw new ArgumentNullException(nameof(executor));
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
-        /// Gets the <see cref="FilesConfiguration"/>
+        /// Gets the <see cref="FilesOptions"/>
         /// </summary>
-        public FilesConfiguration Config { get; private set; }
+        public FilesOptions Options { get; private set; }
 
         /// <summary>
         /// Gets the <see cref="FileTriggerAttribute"/>
