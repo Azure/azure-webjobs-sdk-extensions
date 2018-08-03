@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.Extensions.Hosting
@@ -11,6 +12,8 @@ namespace Microsoft.Extensions.Hosting
     /// </summary>
     public static class CosmosDBHostBuilderExtensions
     {
+        internal const string ConfigSectionName = "CosmosDB";
+
         /// <summary>
         /// Enables use of the CosmosDB extensions
         /// </summary>
@@ -22,6 +25,11 @@ namespace Microsoft.Extensions.Hosting
                 .ConfigureServices(services =>
                 {
                     services.AddSingleton<ICosmosDBServiceFactory, DefaultCosmosDBServiceFactory>();
+                    services.AddOptions<CosmosDBOptions>()
+                        .Configure<IConfiguration>((options, config) =>
+                        {
+                            config.GetSection(ConfigSectionName)?.Bind(options);
+                        });
                 });
         }
     }

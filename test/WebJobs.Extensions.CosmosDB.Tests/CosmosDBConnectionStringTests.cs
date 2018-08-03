@@ -4,7 +4,7 @@
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Config;
 using Xunit;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
+namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 {
     public class CosmosDBConnectionStringTests
     {

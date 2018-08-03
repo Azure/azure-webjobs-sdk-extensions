@@ -4,7 +4,7 @@
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
+namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 {
     internal class TestCosmosDBServiceFactory : ICosmosDBServiceFactory
     {

@@ -18,7 +18,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
+namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 {
     public class CosmosDBTriggerAttributeBindingProviderTests
     {
