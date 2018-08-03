@@ -65,7 +65,7 @@ namespace Microsoft.Azure.WebJobs
 
         /// <summary>
         /// Optional. A string value indicating the app setting to use as the CosmosDB connection string, if different
-        /// than the one specified in the <see cref="CosmosDBConfiguration"/>.
+        /// than the one specified in the <see cref="CosmosDBExtensionConfigProvider"/>.
         /// </summary>
         [AppSetting]
         public string ConnectionStringSetting { get; set; }

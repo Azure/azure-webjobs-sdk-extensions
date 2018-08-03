@@ -13,9 +13,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
     internal class CosmosDBEnumerableBuilder<T> : IAsyncConverter<CosmosDBAttribute, IEnumerable<T>>
         where T : class
     {
-        private readonly CosmosDBConfiguration _config;
+        private readonly CosmosDBExtensionConfigProvider _config;
 
-        public CosmosDBEnumerableBuilder(CosmosDBConfiguration config)
+        public CosmosDBEnumerableBuilder(CosmosDBExtensionConfigProvider config)
         {
             _config = config;
         }

@@ -8,15 +8,16 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
-using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
-using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
+namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 {
     // The EndToEnd tests require the AzureWebJobsCosmosDBConnectionString environment variable to be set.
     [Trait("Category", "E2E")]
@@ -29,16 +30,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         [Fact]
         public async Task CosmosDBEndToEnd()
         {
-            var client = await InitializeDocumentClientAsync();
             using (var host = await StartHostAsync(typeof(EndToEndTestClass)))
             {
+                var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>());
+
                 // Call the outputs function directly, which will write out 3 documents 
                 // using with the 'input' property set to the value we provide.
                 var input = Guid.NewGuid().ToString();
                 var parameter = new Dictionary<string, object>();
                 parameter["input"] = input;
 
-                await host.CallAsync(nameof(EndToEndTestClass.Outputs), parameter);
+                await host.GetJobHost().CallAsync(nameof(EndToEndTestClass.Outputs), parameter);
 
                 // Also insert a new Document so we can query on it.
                 var collectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseName, CollectionName);
@@ -54,7 +56,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
                 parameter.Clear();
                 parameter["item"] = JsonConvert.SerializeObject(queueInput);
 
-                await host.CallAsync(nameof(EndToEndTestClass.Inputs), parameter);
+                await host.GetJobHost().CallAsync(nameof(EndToEndTestClass.Inputs), parameter);
 
                 await TestHelpers.Await(() =>
                 {
@@ -62,11 +64,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
                 });
             }
         }
-        
-        private async Task<DocumentClient> InitializeDocumentClientAsync()
+
+        private async Task<DocumentClient> InitializeDocumentClientAsync(IConfiguration configuration)
         {
-            var builder = new DbConnectionStringBuilder();
-            builder.ConnectionString = AmbientConnectionStringProvider.Instance.GetConnectionString(CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName);
+            var builder = new DbConnectionStringBuilder
+            {
+                ConnectionString = configuration[CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName]
+            };
 
             var serviceUri = new Uri(builder["AccountEndpoint"].ToString());
             var client = new DocumentClient(serviceUri, builder["AccountKey"].ToString());
@@ -80,21 +84,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
             return client;
         }
 
-        private async Task<JobHost> StartHostAsync(Type testType)
+        private async Task<IHost> StartHostAsync(Type testType)
         {
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
-            ILoggerFactory loggerFactory = new LoggerFactory();
-            loggerFactory.AddProvider(_loggerProvider);
 
-            JobHostConfiguration config = new JobHostConfiguration
-            {
-                TypeLocator = locator,
-                LoggerFactory = loggerFactory
-            };
-
-            config.UseCosmosDB();
-
-            JobHost host = new JobHost(config);
+            IHost host = new HostBuilder()
+                .ConfigureWebJobsHost()
+                .AddAzureStorage()
+                .AddCosmosDB()
+                .ConfigureServices(services =>
+                {
+                    services.AddSingleton<ITypeLocator>(locator);
+                })
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    logging.AddProvider(_loggerProvider);
+                })
+                .Build();
 
             await host.StartAsync();
             return host;

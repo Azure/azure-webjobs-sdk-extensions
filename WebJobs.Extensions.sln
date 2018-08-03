@@ -47,6 +47,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.Twilio.T
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.MobileApps.Tests", "test\WebJobs.Extensions.MobileApps.Tests\WebJobs.Extensions.MobileApps.Tests.csproj", "{587D158D-D719-42EF-AE81-70E2E8142B46}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{33BB36A5-19B8-4FF2-BBCC-81F57B06F8DA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CosmosDBSample", "samples\CosmosDBSample\CosmosDBSample.csproj", "{56163A76-B797-4E8C-988F-8789DDF344BC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -113,6 +117,10 @@ Global
 		{587D158D-D719-42EF-AE81-70E2E8142B46}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{587D158D-D719-42EF-AE81-70E2E8142B46}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{587D158D-D719-42EF-AE81-70E2E8142B46}.Release|Any CPU.Build.0 = Release|Any CPU
+		{56163A76-B797-4E8C-988F-8789DDF344BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56163A76-B797-4E8C-988F-8789DDF344BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56163A76-B797-4E8C-988F-8789DDF344BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56163A76-B797-4E8C-988F-8789DDF344BC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -133,6 +141,7 @@ Global
 		{ED06F3EC-4663-46BF-ACF6-D218802F5610} = {6D6CF06F-EFCF-4E01-99F1-CB7991C279D8}
 		{021C005F-1A58-44D0-B891-52F2AAFAD8ED} = {6D6CF06F-EFCF-4E01-99F1-CB7991C279D8}
 		{587D158D-D719-42EF-AE81-70E2E8142B46} = {6D6CF06F-EFCF-4E01-99F1-CB7991C279D8}
+		{56163A76-B797-4E8C-988F-8789DDF344BC} = {33BB36A5-19B8-4FF2-BBCC-81F57B06F8DA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {821EF04F-5408-46AD-94ED-0E939B89D4B8}
