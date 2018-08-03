@@ -7,17 +7,18 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
-using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Indexers;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
+namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 {
     public class CosmosDBMockEndToEndTests
     {
@@ -290,21 +291,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         private async Task RunTestAsync(Type testType, string testName, ICosmosDBServiceFactory factory, object argument = null, string configConnectionString = ConfigConnStr, bool includeDefaultConnectionString = true)
         {
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
-            JobHostConfiguration config = new JobHostConfiguration
-            {
-                TypeLocator = locator,
-                LoggerFactory = _loggerFactory
-            };
 
             var arguments = new Dictionary<string, object>
             {
                 { "triggerData", argument }
-            };
-
-            var cosmosDBConfig = new CosmosDBConfiguration()
-            {
-                ConnectionString = configConnectionString,
-                CosmosDBServiceFactory = factory
             };
 
             var resolver = new TestNameResolver();
@@ -314,17 +304,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
             resolver.Values.Add("Query", "ResolvedQuery");
             if (includeDefaultConnectionString)
             {
-                resolver.Values.Add(CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName, DefaultConnStr);
+                resolver.Values.Add(CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName, DefaultConnStr);
             }
 
-            config.NameResolver = resolver;
+            IHost host = new HostBuilder()
+                .ConfigureWebJobsHost()
+                .AddAzureStorage()
+                .AddCosmosDB()
+                .ConfigureServices(services =>
+                {
+                    services.AddSingleton<ICosmosDBServiceFactory>(factory);
+                    services.AddSingleton<INameResolver>(resolver);
+                    services.AddSingleton<ITypeLocator>(locator);
 
-            config.UseCosmosDB(cosmosDBConfig);
-
-            JobHost host = new JobHost(config);
+                    services.Configure<CosmosDBOptions>(o => o.ConnectionString = configConnectionString);
+                })
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    logging.AddProvider(_loggerProvider);
+                })
+                .Build();
 
             await host.StartAsync();
-            await host.CallAsync(testType.GetMethod(testName), arguments);
+            await host.GetJobHost().CallAsync(testType.GetMethod(testName), arguments);
             await host.StopAsync();
         }
 

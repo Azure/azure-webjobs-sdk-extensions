@@ -26,6 +26,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         /// <summary>
         /// Gets or sets the lease options for the DocumentDB Trigger. 
         /// </summary>
-        public ChangeFeedHostOptions LeaseOptions { get; set; }
+        public ChangeFeedHostOptions LeaseOptions { get; set; } = new ChangeFeedHostOptions();
     }
 }

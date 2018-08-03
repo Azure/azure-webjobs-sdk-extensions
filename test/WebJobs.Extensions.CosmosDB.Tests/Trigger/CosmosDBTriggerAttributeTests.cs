@@ -4,7 +4,7 @@
 using System;
 using Xunit;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
+namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 {
     public class CosmosDBTriggerAttributeTests
     {

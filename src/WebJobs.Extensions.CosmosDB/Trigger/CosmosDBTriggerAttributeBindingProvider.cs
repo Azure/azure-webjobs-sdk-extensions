@@ -12,28 +12,25 @@ using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
     internal class CosmosDBTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
         private const string CosmosDBTriggerUserAgentSuffix = "CosmosDBTriggerFunctions";
-        private readonly ChangeFeedHostOptions _leasesOptions;
         private readonly INameResolver _nameResolver;
-        private readonly IOptions<CosmosDBOptions> _options;
+        private readonly CosmosDBOptions _options;
         private readonly ILogger _logger;
         private readonly CosmosDBExtensionConfigProvider _configProvider;
         private string _monitorConnectionString;
         private string _leasesConnectionString;
-        private TraceWriter _trace;
 
-        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, IOptions<CosmosDBOptions> options, CosmosDBExtensionConfigProvider configProvider, ILoggerFactory loggerFactory, ChangeFeedHostOptions leasesOptions = null)
+        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, CosmosDBOptions options,
+            CosmosDBExtensionConfigProvider configProvider, ILoggerFactory loggerFactory)
         {
             _nameResolver = nameResolver;
             _options = options;
             _configProvider = configProvider;
-            _leasesOptions = leasesOptions ?? new ChangeFeedHostOptions();
             _logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("CosmosDB"));
         }
 
@@ -52,8 +49,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 return null;
             }
 
-            ConnectionMode? desiredConnectionMode = _options.Value.ConnectionMode;
-            Protocol? desiredConnectionProtocol = _options.Value.Protocol;
+            ConnectionMode? desiredConnectionMode = _options.ConnectionMode;
+            Protocol? desiredConnectionProtocol = _options.Protocol;
 
             _monitorConnectionString = _nameResolver.Resolve(CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName);
             _leasesConnectionString = _nameResolver.Resolve(CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName);
@@ -61,7 +58,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             DocumentCollectionInfo documentCollectionLocation;
             DocumentCollectionInfo leaseCollectionLocation;
             ChangeFeedHostOptions leaseHostOptions = ResolveLeaseOptions(attribute);
-            int ? maxItemCount = null;
+            int? maxItemCount = null;
             if (attribute.MaxItemsPerInvocation > 0)
             {
                 maxItemCount = attribute.MaxItemsPerInvocation;
@@ -159,12 +156,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 return baseTimeSpan;
             }
-    
-            if (attributeValue.Value< 0)
+
+            if (attributeValue.Value < 0)
             {
                 throw new InvalidOperationException($"'{nameOfProperty}' must be greater than 0.");
             }
-    
+
             return TimeSpan.FromMilliseconds(attributeValue.Value);
         }
 
@@ -207,24 +204,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         private ChangeFeedHostOptions ResolveLeaseOptions(CosmosDBTriggerAttribute attribute)
         {
-            
+            ChangeFeedHostOptions leasesOptions = _options.LeaseOptions;
+
             ChangeFeedHostOptions triggerChangeFeedHostOptions = new ChangeFeedHostOptions();
-            triggerChangeFeedHostOptions.LeasePrefix = ResolveAttributeValue(attribute.LeaseCollectionPrefix) ?? _leasesOptions.LeasePrefix;
-            triggerChangeFeedHostOptions.FeedPollDelay = ResolveTimeSpanFromMilliseconds(nameof(CosmosDBTriggerAttribute.FeedPollDelay), _leasesOptions.FeedPollDelay, attribute.FeedPollDelay);
-            triggerChangeFeedHostOptions.LeaseAcquireInterval = ResolveTimeSpanFromMilliseconds(nameof(CosmosDBTriggerAttribute.LeaseAcquireInterval), _leasesOptions.LeaseAcquireInterval, attribute.LeaseAcquireInterval);
-            triggerChangeFeedHostOptions.LeaseExpirationInterval = ResolveTimeSpanFromMilliseconds(nameof(CosmosDBTriggerAttribute.LeaseExpirationInterval), _leasesOptions.LeaseExpirationInterval, attribute.LeaseExpirationInterval);
-            triggerChangeFeedHostOptions.LeaseRenewInterval = ResolveTimeSpanFromMilliseconds(nameof(CosmosDBTriggerAttribute.LeaseRenewInterval), _leasesOptions.LeaseRenewInterval, attribute.LeaseRenewInterval);
-            triggerChangeFeedHostOptions.CheckpointFrequency = _leasesOptions.CheckpointFrequency ?? new CheckpointFrequency();
+            triggerChangeFeedHostOptions.LeasePrefix = ResolveAttributeValue(attribute.LeaseCollectionPrefix) ?? leasesOptions.LeasePrefix;
+            triggerChangeFeedHostOptions.FeedPollDelay = ResolveTimeSpanFromMilliseconds(nameof(CosmosDBTriggerAttribute.FeedPollDelay), leasesOptions.FeedPollDelay, attribute.FeedPollDelay);
+            triggerChangeFeedHostOptions.LeaseAcquireInterval = ResolveTimeSpanFromMilliseconds(nameof(CosmosDBTriggerAttribute.LeaseAcquireInterval), leasesOptions.LeaseAcquireInterval, attribute.LeaseAcquireInterval);
+            triggerChangeFeedHostOptions.LeaseExpirationInterval = ResolveTimeSpanFromMilliseconds(nameof(CosmosDBTriggerAttribute.LeaseExpirationInterval), leasesOptions.LeaseExpirationInterval, attribute.LeaseExpirationInterval);
+            triggerChangeFeedHostOptions.LeaseRenewInterval = ResolveTimeSpanFromMilliseconds(nameof(CosmosDBTriggerAttribute.LeaseRenewInterval), leasesOptions.LeaseRenewInterval, attribute.LeaseRenewInterval);
+            triggerChangeFeedHostOptions.CheckpointFrequency = leasesOptions.CheckpointFrequency ?? new CheckpointFrequency();
             if (attribute.CheckpointInterval > 0)
             {
                 triggerChangeFeedHostOptions.CheckpointFrequency.TimeInterval = TimeSpan.FromMilliseconds(attribute.CheckpointInterval);
             }
-                
+
             if (attribute.CheckpointDocumentCount > 0)
             {
                 triggerChangeFeedHostOptions.CheckpointFrequency.ProcessedDocumentCount = attribute.CheckpointDocumentCount;
             }
-                
+
             return triggerChangeFeedHostOptions;
         }
 

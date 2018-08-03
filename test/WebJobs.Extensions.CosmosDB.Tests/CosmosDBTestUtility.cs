@@ -10,13 +10,12 @@ using System.Net;
 using System.Reflection;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
-using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Moq;
 using Newtonsoft.Json.Linq;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
+namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 {
     internal static class CosmosDBTestUtility
     {

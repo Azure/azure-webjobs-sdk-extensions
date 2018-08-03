@@ -3,11 +3,10 @@
 
 using System.Collections.Generic;
 using System.Reflection;
-using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 using Xunit;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
+namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 {
     public class CosmosDBSqlResolutionPolicyTests
     {

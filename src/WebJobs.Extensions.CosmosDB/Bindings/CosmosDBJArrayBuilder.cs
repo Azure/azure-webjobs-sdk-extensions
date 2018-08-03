@@ -10,7 +10,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings
 {
     internal class CosmosDBJArrayBuilder : IAsyncConverter<CosmosDBAttribute, JArray>
     {
-        private readonly CosmosDBExtensionConfigProvider _configProvider;
         private CosmosDBEnumerableBuilder<JObject> _builder;
 
         public CosmosDBJArrayBuilder(CosmosDBExtensionConfigProvider configProvider)

@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -14,20 +13,23 @@ using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
+namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 {
     public class CosmosDBTriggerAttributeBindingProviderTests
     {
         private readonly ILoggerFactory _loggerFactory = new LoggerFactory();
+        private readonly CosmosDBOptions _options = new CosmosDBOptions { ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;" };
 
         [Theory]
         [MemberData(nameof(InvalidCosmosDBTriggerParameters))]
         public async Task InvalidParameters_Fail(ParameterInfo parameter)
         {
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(new DefaultNameResolver(), CreateOptions(), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(new DefaultNameResolver(), _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
             InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None)));
 
@@ -39,10 +41,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
         public async Task ValidParametersWithEnvironment_Succeed(ParameterInfo parameter)
         {
             var nameResolver = new TestNameResolver();
-            nameResolver.Values[CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
+            nameResolver.Values[CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
             nameResolver.Values["CosmosDBConnectionString"] = "AccountEndpoint=https://fromSettings;AccountKey=someKey;";
 
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, CreateOptions(), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
             CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
@@ -55,12 +57,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
         public async Task ValidParametersWithAppSettings_Succeed(ParameterInfo parameter)
         {
             var nameResolver = new TestNameResolver();
-            nameResolver.Values[CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
+            nameResolver.Values[CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
             nameResolver.Values["CosmosDBConnectionString"] = "AccountEndpoint=https://fromSettings;AccountKey=someKey;";
             nameResolver.Values["aDatabase"] = "myDatabase";
             nameResolver.Values["aCollection"] = "myCollection";
 
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, CreateOptions(), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
             CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
@@ -77,12 +79,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
         public async Task ValidCosmosDBTriggerBindigsWithDatabaseAndCollectionSettings_Succeed(ParameterInfo parameter)
         {
             var nameResolver = new TestNameResolver();
-            nameResolver.Values[CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
+            nameResolver.Values[CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
             nameResolver.Values["CosmosDBConnectionString"] = "AccountEndpoint=https://fromSettings;AccountKey=someKey;";
             nameResolver.Values["aDatabase"] = "myDatabase";
             nameResolver.Values["aCollection"] = "myCollection";
 
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, CreateOptions(), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
             CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
@@ -99,11 +101,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
         public async Task ValidCosmosDBTriggerBindigsDifferentConnections_Succeed(ParameterInfo parameter)
         {
             var nameResolver = new TestNameResolver();
-            nameResolver.Values[CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
+            nameResolver.Values[CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
             nameResolver.Values["CosmosDBConnectionString"] = "AccountEndpoint=https://fromSettings;AccountKey=someKey;";
             nameResolver.Values["LeaseCosmosDBConnectionString"] = "AccountEndpoint=https://fromSettingsLease;AccountKey=someKey;";
 
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, CreateOptions(), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
             CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
@@ -117,10 +119,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
         public async Task ValidParametersWithEnvironment_ConnectionMode_Succeed(ParameterInfo parameter)
         {
             var nameResolver = new TestNameResolver();
-            nameResolver.Values[CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
+            nameResolver.Values[CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
             nameResolver.Values["CosmosDBConnectionString"] = "AccountEndpoint=https://fromSettings;AccountKey=someKey;";
 
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, CreatOptionsWithConnectionMode(), _loggerFactory);
+            _options.ConnectionMode = ConnectionMode.Direct;
+            _options.Protocol = Protocol.Tcp;
+
+            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
             CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
@@ -148,7 +153,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
             TimeSpan otherTimeSpan = TimeSpan.FromMilliseconds(otherMilliseconds);
             Assert.Equal(CosmosDBTriggerAttributeBindingProvider.ResolveTimeSpanFromMilliseconds("SomeAttribute", baseTimeSpan, otherMilliseconds), otherTimeSpan);
         }
-        
+
         [Fact]
         public void ResolveTimeSpanFromMilliseconds_Fail()
         {
@@ -174,11 +179,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
         public async Task ValidLeaseHostOptions_Succeed(ParameterInfo parameter)
         {
             var nameResolver = new TestNameResolver();
-            nameResolver.Values[CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
+            nameResolver.Values[CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
             nameResolver.Values["CosmosDBConnectionString"] = "AccountEndpoint=https://fromSettings;AccountKey=someKey;";
             nameResolver.Values["dynamicLeasePrefix"] = "someLeasePrefix";
 
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, CreateOptions(), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
             CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
@@ -187,7 +192,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
             Assert.Equal("someLeasePrefix", binding.ChangeFeedHostOptions.LeasePrefix);
         }
 
-        public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsWithLeaseHostOptionsParameters 
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsWithLeaseHostOptionsParameters
             => ValidCosmosDBTriggerBindigsWithLeaseHostOptions.GetParameters();
 
         public static IEnumerable<object[]> InvalidCosmosDBTriggerParameters
@@ -223,22 +228,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Trigger
             return paramInfo;
         }
 
-        private CosmosDBOptions CreateOptions()
+        private static CosmosDBExtensionConfigProvider CreateExtensionConfigProvider(CosmosDBOptions options)
         {
-            return new CosmosDBOptions
-            {
-                ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;",
-            };
-        }
-
-        private CosmosDBOptions CreatOptionsWithConnectionMode()
-        {
-            return new CosmosDBOptions
-            {
-                ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;",
-                ConnectionMode = ConnectionMode.Direct,
-                Protocol = Protocol.Tcp
-            };
+            return new CosmosDBExtensionConfigProvider(new OptionsWrapper<CosmosDBOptions>(options), new DefaultCosmosDBServiceFactory(), new TestNameResolver(), NullLoggerFactory.Instance);
         }
 
         private static class ValidCosmosDBTriggerBindigsWithLeaseHostOptions

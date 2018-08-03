@@ -3,15 +3,18 @@
 
 using System;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.Extensions.Hosting
 {
     /// <summary>
-    /// Extension methods for CosmosDB integration
+    /// Extension methods for CosmosDB integration.
     /// </summary>
     public static class CosmosDBHostBuilderExtensions
     {
+        internal const string ConfigSectionName = "CosmosDB";
+
         /// <summary>
         /// Adds the CosmosDB extension to the provided <see cref="IHostBuilder"/>.
         /// </summary>
@@ -23,13 +26,21 @@ namespace Microsoft.Extensions.Hosting
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            builder.AddExtension<CosmosDBExtensionConfigProvider>();
-
-            return builder;
+            return builder
+                .AddExtension<CosmosDBExtensionConfigProvider>()
+                .ConfigureServices(services =>
+                {
+                    services.AddSingleton<ICosmosDBServiceFactory, DefaultCosmosDBServiceFactory>();
+                    services.AddOptions<CosmosDBOptions>()
+                        .Configure<IConfiguration>((options, config) =>
+                        {
+                            config.GetSection(ConfigSectionName)?.Bind(options);
+                        });
+                });
         }
 
         /// <summary>
-        /// Adds the Timer extension to the provided <see cref="IHostBuilder"/>.
+        /// Adds the CosmosDB extension to the provided <see cref="IHostBuilder"/>.
         /// </summary>
         /// <param name="builder">The <see cref="IHostBuilder"/> to configure.</param>
         /// <param name="configure">An <see cref="Action{CosmosDBOptions}"/> to configure the provided <see cref="CosmosDBOptions"/>.</param>
