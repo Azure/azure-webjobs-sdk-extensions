@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
-    internal class DocumentQueryResponse<T>
+    public class DocumentQueryResponse<T>
     {
         public DocumentQueryResponse()
         {

@@ -10,7 +10,10 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
+using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 
@@ -121,21 +124,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         private static CosmosDBEnumerableBuilder<T> CreateBuilder<T>(out Mock<ICosmosDBService> mockService)
             where T : class
         {
-            CosmosDBConfiguration config = new CosmosDBConfiguration
-            {
-                ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;"
-            };
-
             mockService = new Mock<ICosmosDBService>(MockBehavior.Strict);
             Mock<ICosmosDBServiceFactory> mockServiceFactory = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
 
             mockServiceFactory
-                .Setup(m => m.CreateService(It.IsAny<string>(), null, null))
+                .Setup(m => m.CreateService(It.IsAny<string>(), It.IsAny<ConnectionMode?>(), It.IsAny<Protocol?>()))
                 .Returns(mockService.Object);
 
-            config.CosmosDBServiceFactory = mockServiceFactory.Object;
+            var options = new OptionsWrapper<CosmosDBOptions>(new CosmosDBOptions
+            {
+                ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;"
+            });
+            var configProvider = new CosmosDBExtensionConfigProvider(options, mockServiceFactory.Object, new TestNameResolver(), NullLoggerFactory.Instance);
 
-            return new CosmosDBEnumerableBuilder<T>(config);
+            return new CosmosDBEnumerableBuilder<T>(configProvider);
         }
     }
 }

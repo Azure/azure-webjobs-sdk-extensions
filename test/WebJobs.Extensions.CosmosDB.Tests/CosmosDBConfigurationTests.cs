@@ -8,7 +8,8 @@ using Microsoft.Azure.Documents;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
-using Microsoft.Azure.WebJobs.Host.Config;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
@@ -19,11 +20,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         [Fact]
         public async Task Configuration_Caches_Clients()
         {
-            // Arrange            
-            var config = new CosmosDBConfiguration
-            {
-                ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;",
-            };
+            // Arrange
+            var options = new CosmosDBOptions { ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;" };
+            var config = new CosmosDBExtensionConfigProvider(new OptionsWrapper<CosmosDBOptions>(options), new DefaultCosmosDBServiceFactory(), new TestNameResolver(), NullLoggerFactory.Instance);
             var attribute = new CosmosDBAttribute { Id = "abcdef" };
 
             // Act
@@ -38,8 +37,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         [Fact]
         public void Resolve_UsesAttribute_First()
         {
-            var config = InitializeConfig("Default");
-            config.ConnectionString = "Config";
+            var config = InitializeExtensionConfigProvider("Default", "Config");
 
             // Act
             var connString = config.ResolveConnectionString("Attribute");
@@ -51,8 +49,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         [Fact]
         public void Resolve_UsesConfig_Second()
         {
-            var config = InitializeConfig("Default");
-            config.ConnectionString = "Config";
+            var config = InitializeExtensionConfigProvider("Default", "Config");
 
             // Act
             var connString = config.ResolveConnectionString(null);
@@ -64,7 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         [Fact]
         public void Resolve_UsesDefault_Last()
         {
-            var config = InitializeConfig("Default");
+            var config = InitializeExtensionConfigProvider("Default");
 
             // Act
             var connString = config.ResolveConnectionString(null);
@@ -82,28 +79,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         [InlineData(typeof(List<Document>), false)]
         public void TryGetEnumerableType(Type type, bool expectedResult)
         {
-            bool actualResult = CosmosDBConfiguration.IsSupportedEnumerable(type);
+            bool actualResult = CosmosDBExtensionConfigProvider.IsSupportedEnumerable(type);
             Assert.Equal(expectedResult, actualResult);
         }
 
-        private CosmosDBConfiguration InitializeConfig(string defaultConnStr)
+        private CosmosDBExtensionConfigProvider InitializeExtensionConfigProvider(string defaultConnStr, string optionsConnStr = null)
         {
-            var config = new CosmosDBConfiguration();
-
+            var options = new OptionsWrapper<CosmosDBOptions>(new CosmosDBOptions { ConnectionString = optionsConnStr });
+            var factory = new DefaultCosmosDBServiceFactory();
             var nameResolver = new TestNameResolver();
-            nameResolver.Values[CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName] = defaultConnStr;
+            nameResolver.Values[CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName] = defaultConnStr;
 
-            var jobHostConfig = new JobHostConfiguration();
-            jobHostConfig.AddService<INameResolver>(nameResolver);
+            var configProvider = new CosmosDBExtensionConfigProvider(options, factory, nameResolver, NullLoggerFactory.Instance);
 
-            var context = new ExtensionConfigContext()
-            {
-                Config = jobHostConfig
-            };
+            var context = CosmosDBTestUtility.CreateExtensionConfigContext(nameResolver);
 
-            config.Initialize(context);
+            configProvider.Initialize(context);
 
-            return config;
+            return configProvider;
         }
     }
 }

@@ -3,7 +3,7 @@
 
 using Newtonsoft.Json;
 
-namespace ExtensionsSample.Models
+namespace CosmosDBSample
 {
     public class ItemDoc
     {

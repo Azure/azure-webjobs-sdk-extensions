@@ -12,7 +12,11 @@ using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
+using Microsoft.Azure.WebJobs.Host.Config;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Moq;
 using Newtonsoft.Json.Linq;
 
@@ -153,6 +157,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB
         private static void ClientInputParameters(
             [CosmosDB] DocumentClient client)
         {
+        }
+
+        public static JobHost GetJobHost(this IHost host)
+        {
+            return host.Services.GetService<IJobHost>() as JobHost;
+        }
+
+        public static ExtensionConfigContext CreateExtensionConfigContext(INameResolver resolver)
+        {
+            var mockWebHookProvider = new Mock<IWebHookProvider>();
+            var mockExtensionRegistry = new Mock<IExtensionRegistry>();
+
+            // TODO: ConverterManager needs to be fixed but this will work for now.
+            IHost host = new HostBuilder()
+                .ConfigureWebJobsHost()
+                .Build();
+
+            var converterManager = host.Services.GetRequiredService<IConverterManager>();
+
+            return new ExtensionConfigContext(resolver, converterManager, mockWebHookProvider.Object, mockExtensionRegistry.Object);
         }
     }
 }

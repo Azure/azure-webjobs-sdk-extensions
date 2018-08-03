@@ -8,9 +8,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings
 {
     internal class CosmosDBClientBuilder : IConverter<CosmosDBAttribute, DocumentClient>
     {
-        private CosmosDBConfiguration _config;
+        private CosmosDBExtensionConfigProvider _config;
 
-        public CosmosDBClientBuilder(CosmosDBConfiguration config)
+        public CosmosDBClientBuilder(CosmosDBExtensionConfigProvider config)
         {
             _config = config;
         }

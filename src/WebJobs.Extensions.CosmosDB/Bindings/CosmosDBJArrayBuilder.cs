@@ -12,7 +12,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings
     {
         private CosmosDBEnumerableBuilder<JObject> _builder;
 
-        public CosmosDBJArrayBuilder(CosmosDBConfiguration config)
+        public CosmosDBJArrayBuilder(CosmosDBExtensionConfigProvider config)
         {
             _builder = new CosmosDBEnumerableBuilder<JObject>(config);
         }

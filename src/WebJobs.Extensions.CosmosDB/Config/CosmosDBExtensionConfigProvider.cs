@@ -7,11 +7,12 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.ChangeFeedProcessor;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -20,41 +21,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
     /// <summary>
     /// Defines the configuration options for the CosmosDB binding.
     /// </summary>
-    public class CosmosDBConfiguration : IExtensionConfigProvider
+    internal class CosmosDBExtensionConfigProvider : IExtensionConfigProvider
     {
         internal const string AzureWebJobsCosmosDBConnectionStringName = "AzureWebJobsCosmosDBConnectionString";
         internal readonly ConcurrentDictionary<string, ICosmosDBService> ClientCache = new ConcurrentDictionary<string, ICosmosDBService>();
+        private readonly ICosmosDBServiceFactory _cosmosDBServiceFactory;
+        private readonly INameResolver _nameResolver;
+        private readonly CosmosDBOptions _options;
+        private readonly ILoggerFactory _loggerFactory;
         private string _defaultConnectionString;
 
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
-        public CosmosDBConfiguration()
+        public CosmosDBExtensionConfigProvider(IOptions<CosmosDBOptions> options, ICosmosDBServiceFactory cosmosDBServiceFactory, INameResolver nameResolver, ILoggerFactory loggerFactory)
         {
-            CosmosDBServiceFactory = new DefaultCosmosDBServiceFactory();
+            _cosmosDBServiceFactory = cosmosDBServiceFactory;
+            _nameResolver = nameResolver;
+            _options = options.Value;
+            _loggerFactory = loggerFactory;
         }
-
-        internal ICosmosDBServiceFactory CosmosDBServiceFactory { get; set; }
-
-        /// <summary>
-        /// Gets or sets the CosmosDB connection string.
-        /// </summary>
-        public string ConnectionString { get; set; }
-
-        /// <summary>
-        /// Gets or sets the ConnectionMode used in the DocumentClient instances.
-        /// </summary>
-        public ConnectionMode? ConnectionMode { get; set; }
-
-        /// <summary>
-        /// Gets or sets the Protocol used in the DocumentClient instances.
-        /// </summary>
-        public Protocol? Protocol { get; set; }
-
-        /// <summary>
-        /// Gets or sets the lease options for the DocumentDB Trigger. 
-        /// </summary>
-        public ChangeFeedHostOptions LeaseOptions { get; set; }
 
         /// <inheritdoc />
         public void Initialize(ExtensionConfigContext context)
@@ -64,10 +50,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 throw new ArgumentNullException("context");
             }
 
-            INameResolver nameResolver = context.Config.GetService<INameResolver>();
-
             // Use this if there is no other connection string set.
-            _defaultConnectionString = nameResolver.Resolve(AzureWebJobsCosmosDBConnectionStringName);
+            _defaultConnectionString = _nameResolver.Resolve(AzureWebJobsCosmosDBConnectionStringName);
 
             // Apply ValidateConnection to all on this rule. 
             var rule = context.AddBindingRule<CosmosDBAttribute>();
@@ -90,7 +74,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             // Trigger
             var rule2 = context.AddBindingRule<CosmosDBTriggerAttribute>();
-            rule2.BindToTrigger<IReadOnlyList<Document>>(new CosmosDBTriggerAttributeBindingProvider(nameResolver, this, context.Config.LoggerFactory, LeaseOptions));
+            rule2.BindToTrigger<IReadOnlyList<Document>>(new CosmosDBTriggerAttributeBindingProvider(_nameResolver, _options, this, _loggerFactory));
             rule2.AddConverter<string, IReadOnlyList<Document>>(str => JsonConvert.DeserializeObject<IReadOnlyList<Document>>(str));
             rule2.AddConverter<IReadOnlyList<Document>, JArray>(docList => JArray.FromObject(docList));
             rule2.AddConverter<IReadOnlyList<Document>, string>(docList => JArray.FromObject(docList).ToString());
@@ -98,7 +82,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         internal void ValidateConnection(CosmosDBAttribute attribute, Type paramType)
         {
-            if (string.IsNullOrEmpty(ConnectionString) &&
+            if (string.IsNullOrEmpty(_options.ConnectionString) &&
                 string.IsNullOrEmpty(attribute.ConnectionStringSetting) &&
                 string.IsNullOrEmpty(_defaultConnectionString))
             {
@@ -141,9 +125,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
 
             // Second, try the config's ConnectionString
-            if (!string.IsNullOrEmpty(ConnectionString))
+            if (!string.IsNullOrEmpty(_options.ConnectionString))
             {
-                return ConnectionString;
+                return _options.ConnectionString;
             }
 
             // Finally, fall back to the default.
@@ -152,7 +136,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         internal ICosmosDBService GetService(string connectionString)
         {
-            return ClientCache.GetOrAdd(connectionString, (c) => CosmosDBServiceFactory.CreateService(c, ConnectionMode, Protocol));
+            return ClientCache.GetOrAdd(connectionString, (c) => _cosmosDBServiceFactory.CreateService(c, _options.ConnectionMode, _options.Protocol));
         }
 
         internal CosmosDBContext CreateContext(CosmosDBAttribute attribute)
