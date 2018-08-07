@@ -2,10 +2,11 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Azure.WebJobs.Extensions.Bindings;
+using Microsoft.Azure.WebJobs.Extensions.Config;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 
 namespace Microsoft.Extensions.Hosting
 {
@@ -28,7 +29,12 @@ namespace Microsoft.Extensions.Hosting
             builder.AddExtension<SendGridExtensionConfigProvider>();
             builder.ConfigureServices(s =>
             {
-                s.TryAddEnumerable(ServiceDescriptor.Transient<IConfigureOptions<SendGridOptions>, SendGridOptions.Setup>());
+                s.AddSingleton<ISendGridClientFactory, DefaultSendGridClientFactory>();
+                s.AddOptions<SendGridOptions>()
+                    .Configure<IConfiguration>((options, config) =>
+                    {
+                        SendGridHelpers.ApplyConfigurationSection(config, options);
+                    });
             });
 
             return builder;

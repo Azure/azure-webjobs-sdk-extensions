@@ -5,7 +5,7 @@ using Client;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Config
 {
-    internal class SendGridClientFactory : ISendGridClientFactory
+    internal class DefaultSendGridClientFactory : ISendGridClientFactory
     {
         public ISendGridClient Create(string apiKey)
         {

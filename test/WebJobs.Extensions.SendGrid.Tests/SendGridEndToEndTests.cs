@@ -14,6 +14,8 @@ using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Indexers;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -94,7 +96,7 @@ namespace SendGridTests
             var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
                 () => RunTestAsync(functionName, factoryMock.Object, configApiKey: null, includeDefaultApiKey: false));
 
-            Assert.Equal("The SendGrid ApiKey must be set either via an 'AzureWebJobsSendGridApiKey' app setting, via an 'AzureWebJobsSendGridApiKey' environment variable, or directly in code via SendGridConfiguration.ApiKey or SendGridAttribute.ApiKey.", ex.InnerException.Message);
+            Assert.Equal("The SendGrid ApiKey must be set either via an 'AzureWebJobsSendGridApiKey' app setting, via an 'AzureWebJobsSendGridApiKey' environment variable, or directly in code via SendGridOptions.ApiKey or SendGridAttribute.ApiKey.", ex.InnerException.Message);
         }
 
         private void InitializeMocks(out Mock<ISendGridClientFactory> factoryMock, out Mock<ISendGridClient> clientMock)
@@ -114,27 +116,12 @@ namespace SendGridTests
         private async Task RunTestAsync(string testName, ISendGridClientFactory factory, object argument = null, string configApiKey = null, bool includeDefaultApiKey = true)
         {
             Type testType = typeof(SendGridEndToEndFunctions);
-            ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
-            JobHostConfiguration config = new JobHostConfiguration
-            {
-                TypeLocator = locator,
-            };
-
+            var locator = new ExplicitTypeLocator(testType);
             ILoggerFactory loggerFactory = new LoggerFactory();
             loggerFactory.AddProvider(_loggerProvider);
 
-            config.LoggerFactory = loggerFactory;
-
             var arguments = new Dictionary<string, object>();
             arguments.Add("triggerData", argument);
-
-            var sendGridConfig = new SendGridConfiguration
-            {
-                ApiKey = configApiKey,
-                ClientFactory = factory,
-                ToAddress = new EmailAddress("ToConfig@test.com"),
-                FromAddress = new EmailAddress("FromConfig@test.com")
-            };
 
             var resolver = new TestNameResolver();
             resolver.Values.Add("MyKey1", AttributeApiKey1);
@@ -142,23 +129,36 @@ namespace SendGridTests
 
             if (includeDefaultApiKey)
             {
-                resolver.Values.Add(SendGridConfiguration.AzureWebJobsSendGridApiKeyName, DefaultApiKey);
+                resolver.Values.Add(SendGridExtensionConfigProvider.AzureWebJobsSendGridApiKeyName, DefaultApiKey);
             }
 
-            config.NameResolver = resolver;
+            IHost host = new HostBuilder()
+                .ConfigureWebJobsHost()
+                .AddSendGrid(o =>
+                {
+                    o.ApiKey = configApiKey;
+                    o.ToAddress = new EmailAddress("ToConfig@test.com");
+                    o.FromAddress = new EmailAddress("FromConfig@test.com");
+                })
+                .ConfigureServices(services =>
+                {
+                    services.AddSingleton<ISendGridClientFactory>(factory);
+                    services.AddSingleton<INameResolver>(resolver);
+                    services.AddSingleton<ITypeLocator>(locator);
+                })
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    logging.AddProvider(_loggerProvider);
+                })
+                .Build();
 
-            config.UseSendGrid(sendGridConfig);
-
-            JobHost host = new JobHost(config);
-
-            await host.StartAsync();
-            await host.CallAsync(testType.GetMethod(testName), arguments);
-            await host.StopAsync();
+            await host.GetJobHost().CallAsync(testType.GetMethod(testName), arguments);
         }
 
         private class SendGridEndToEndFunctions
         {
-            /// This function verifies Attribute and Config behavior for ApiKey
+            // This function verifies Attribute and Config behavior for ApiKey
             public static void Outputs_AttributeAndConfig(
                 [SendGrid(ApiKey = "MyKey1")] out SendGridMessage message,
                 [SendGrid] out JObject jObject,

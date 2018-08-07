@@ -9,7 +9,6 @@ using Microsoft.Azure.WebJobs.Extensions.Bindings;
 using Microsoft.Azure.WebJobs.Extensions.Config;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SendGrid.Helpers.Mail;
 
@@ -29,11 +28,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
         /// <summary>
         /// Creates a new instance.
         /// </summary>
-        public SendGridExtensionConfigProvider(IOptions<SendGridOptions> options, INameResolver nameResolver)
+        public SendGridExtensionConfigProvider(IOptions<SendGridOptions> options, ISendGridClientFactory clientFactory, INameResolver nameResolver)
         {
             _options = options;
             _nameResolver = nameResolver;
-            ClientFactory = new SendGridClientFactory();
+            ClientFactory = clientFactory;
         }
 
         internal ISendGridClientFactory ClientFactory { get; set; }
@@ -79,7 +78,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
             if (string.IsNullOrEmpty(apiKey))
             {
                 throw new InvalidOperationException(
-                    $"The SendGrid ApiKey must be set either via an '{AzureWebJobsSendGridApiKeyName}' app setting, via an '{AzureWebJobsSendGridApiKeyName}' environment variable, or directly in code via {nameof(SendGridExtensionConfigProvider)}.{nameof(SendGridOptions.ApiKey)} or {nameof(SendGridAttribute)}.{nameof(SendGridAttribute.ApiKey)}.");
+                    $"The SendGrid ApiKey must be set either via an '{AzureWebJobsSendGridApiKeyName}' app setting, via an '{AzureWebJobsSendGridApiKeyName}' environment variable, or directly in code via {nameof(SendGridOptions)}.{nameof(SendGridOptions.ApiKey)} or {nameof(SendGridAttribute)}.{nameof(SendGridAttribute.ApiKey)}.");
             }
         }
 

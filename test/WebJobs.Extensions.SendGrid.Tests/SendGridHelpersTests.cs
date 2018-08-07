@@ -6,7 +6,7 @@ using System.Linq;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Bindings;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
-using Newtonsoft.Json.Linq;
+using Microsoft.Extensions.Configuration;
 using SendGrid.Helpers.Mail;
 using Xunit;
 
@@ -43,7 +43,7 @@ namespace SendGridTests
         public void DefaultMessageProperties_CreatesExpectedMessage()
         {
             SendGridAttribute attribute = new SendGridAttribute();
-            SendGridConfiguration config = new SendGridConfiguration
+            SendGridOptions options = new SendGridOptions
             {
                 ApiKey = "12345",
                 FromAddress = new EmailAddress("test2@test.com", "Test2"),
@@ -54,9 +54,9 @@ namespace SendGridTests
             message.Subject = "TestSubject";
             message.AddContent("text/plain", "TestText");
 
-            SendGridHelpers.DefaultMessageProperties(message, config, attribute);
+            SendGridHelpers.DefaultMessageProperties(message, options, attribute);
 
-            Assert.Same(config.FromAddress, config.FromAddress);
+            Assert.Same(options.FromAddress, options.FromAddress);
             Assert.Equal("test@test.com", message.Personalizations.Single().Tos.Single().Email);
             Assert.Equal("TestSubject", message.Subject);
             Assert.Equal("TestText", message.Contents.Single().Value);
@@ -143,29 +143,31 @@ namespace SendGridTests
         }
 
         [Fact]
-        public void CreateConfiguration_CreatesExpectedConfiguration()
+        public void ApplyConfigurationSection_CreatesExpectedOptions()
         {
-            JObject config = new JObject();
-            var result = SendGridHelpers.CreateConfiguration(config);
+            var options = new SendGridOptions();
+            var dict = new Dictionary<string, string>();
+            var builder = new ConfigurationBuilder();
+            builder.AddInMemoryCollection(dict);
+            var config = builder.Build();
+            SendGridHelpers.ApplyConfigurationSection(config, options);
+            Assert.Null(options.FromAddress);
+            Assert.Null(options.ToAddress);
 
-            Assert.Null(result.FromAddress);
-            Assert.Null(result.ToAddress);
-
-            config = new JObject
+            dict = new Dictionary<string, string>
             {
-                { "sendGrid", new JObject
-                    {
-                        { "to", "Testing1 <test1@test.com>" },
-                        { "from", "Testing2 <test2@test.com>" }
-                    }
-                }
+                { "sendGrid:to", "Testing1 <test1@test.com>" },
+                { "sendGrid:from", "Testing2 <test2@test.com>" },
             };
-            result = SendGridHelpers.CreateConfiguration(config);
+            builder = new ConfigurationBuilder();
+            builder.AddInMemoryCollection(dict);
+            config = builder.Build();
+            SendGridHelpers.ApplyConfigurationSection(config, options);
 
-            Assert.Equal("test1@test.com", result.ToAddress.Email);
-            Assert.Equal("Testing1", result.ToAddress.Name);
-            Assert.Equal("test2@test.com", result.FromAddress.Email);
-            Assert.Equal("Testing2", result.FromAddress.Name);
+            Assert.Equal("test1@test.com", options.ToAddress.Email);
+            Assert.Equal("Testing1", options.ToAddress.Name);
+            Assert.Equal("test2@test.com", options.FromAddress.Email);
+            Assert.Equal("Testing2", options.FromAddress.Name);
         }
 
         [Fact]

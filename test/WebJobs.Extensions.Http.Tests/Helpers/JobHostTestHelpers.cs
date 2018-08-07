@@ -10,7 +10,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Azure.WebJobs.Host.Indexers;
-using Microsoft.Azure.WebJobs.Host.Loggers;
 using Microsoft.Azure.WebJobs.Host.Timers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -175,16 +174,6 @@ namespace Microsoft.Azure.WebJobs.Host.TestCommon
         public static TExtension GetExtension<TExtension>(this IHost host)
         {
             return host.Services.GetServices<IExtensionConfigProvider>().OfType<TExtension>().SingleOrDefault();
-        }
-
-        public static JobHost GetJobHost(this IHost host)
-        {
-            return host.Services.GetService<IJobHost>() as JobHost;
-        }
-
-        public static TestJobHost<TProgram> GetJobHost<TProgram>(this IHost host)
-        {
-            return host.Services.GetService<IJobHost>() as TestJobHost<TProgram>;
         }
 
         public static void Call<T>(this JobHost host, string methodName, object arguments)

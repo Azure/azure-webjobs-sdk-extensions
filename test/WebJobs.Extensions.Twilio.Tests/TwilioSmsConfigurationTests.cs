@@ -20,7 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Twilio
                 { "body", "Knock knock." }
             };
 
-            var result = TwilioSmsConfiguration.CreateMessageOptions(options);
+            var result = TwilioExtensionConfigProvider.CreateMessageOptions(options);
             Assert.Equal(options["to"], result.To.ToString());
             Assert.Equal(options["from"], result.From.ToString());
             Assert.Equal(options["body"], result.Body.ToString());
@@ -46,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Twilio
                 { "mediaUrl", new JArray { "http://aaa", "http://bbb" } }
             };
 
-            var result = TwilioSmsConfiguration.CreateMessageOptions(options);
+            var result = TwilioExtensionConfigProvider.CreateMessageOptions(options);
             Assert.Equal(options["to"], result.To.ToString());
             Assert.Equal(options["from"], result.From.ToString());
             Assert.Equal(options["body"], result.Body.ToString());

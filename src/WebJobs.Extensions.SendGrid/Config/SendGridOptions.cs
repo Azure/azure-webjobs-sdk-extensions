@@ -1,9 +1,6 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using Microsoft.Azure.WebJobs.Extensions.Bindings;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 using SendGrid.Helpers.Mail;
 
 namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
@@ -37,25 +34,5 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
         /// This value can be overridden by job functions.
         /// </summary>
         public EmailAddress FromAddress { get; set; }
-
-        internal class Setup : IConfigureOptions<SendGridOptions>
-        {
-            private readonly IConfiguration _config;
-
-            public Setup(IConfiguration config)
-            {
-                _config = config;
-            }
-
-            public void Configure(SendGridOptions options)
-            {
-                // TODO: Need to access raw to/from strings from config
-                // and create EmailAddresses from them
-                string to = null;
-                string from = null;
-                options.ToAddress = SendGridHelpers.Apply(options.ToAddress, to);
-                options.FromAddress = SendGridHelpers.Apply(options.FromAddress, from);
-            }
-        }
     }
 }

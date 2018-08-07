@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using System.Net.Mail;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SendGrid.Helpers.Mail;
@@ -13,6 +14,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
 {
     internal class SendGridHelpers
     {
+        internal const string ConfigSectionName = "SendGrid";
+
         internal static EmailAddress Apply(EmailAddress current, string value)
         {
             EmailAddress mail;
@@ -123,6 +126,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
             return item.Personalizations != null &&
                 item.Personalizations.Count > 0 &&
                 item.Personalizations.All(p => p.Tos != null && !p.Tos.Any(t => string.IsNullOrEmpty(t.Email)));
+        }
+
+        internal static void ApplyConfigurationSection(IConfiguration config, SendGridOptions options)
+        {
+            var section = config.GetSection(ConfigSectionName);
+
+            if (section == null)
+            {
+                return;
+            }
+
+            section.Bind(options);
+
+            string to = section.GetValue<string>("to");
+            string from = section.GetValue<string>("from");
+            options.ToAddress = SendGridHelpers.Apply(options.ToAddress, to);
+            options.FromAddress = SendGridHelpers.Apply(options.FromAddress, from);
         }
     }
 }
