@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
+using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Extensions.Configuration;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Xunit;
 
@@ -16,14 +18,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
     {
         private const string TestTimerName = "TestProgram.TestTimer";
         private const string TestHostId = "testhostid";
-        private readonly JobHostConfiguration _hostConfig;
+        private readonly JobHostOptions _hostOptions;
         private readonly StorageScheduleMonitor _scheduleMonitor;
 
         public StorageScheduleMonitorTests()
         {
-            _hostConfig = new JobHostConfiguration();
-            _hostConfig.HostId = TestHostId;
-            _scheduleMonitor = new StorageScheduleMonitor(_hostConfig, new TestLogger(null));
+            _hostOptions = new JobHostOptions
+            {
+                HostId = TestHostId
+            };
+
+            _scheduleMonitor = CreateScheduleMonitor(_hostOptions);
 
             Cleanup();
         }
@@ -39,8 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         [Fact]
         public void TimerStatusDirectory_HostIdNull_Throws()
         {
-            JobHostConfiguration config = new JobHostConfiguration();
-            StorageScheduleMonitor localScheduleMonitor = new StorageScheduleMonitor(config, new TestLogger(null));
+            StorageScheduleMonitor localScheduleMonitor = CreateScheduleMonitor(new JobHostOptions());
 
             CloudBlobDirectory directory = null;
             var ex = Assert.Throws<InvalidOperationException>(() =>
@@ -121,6 +125,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         public void Dispose()
         {
             Cleanup();
+        }
+
+        private static StorageScheduleMonitor CreateScheduleMonitor(JobHostOptions options)
+        {
+            var config = new ConfigurationBuilder()
+                .AddEnvironmentVariables()
+                .Build();
+            var connStrProvider = new AmbientConnectionStringProvider(config);
+            var lockContainerManager = new DistributedLockManagerContainerProvider();
+
+            return new StorageScheduleMonitor(options, lockContainerManager, connStrProvider, new TestLogger(null));
         }
     }
 }

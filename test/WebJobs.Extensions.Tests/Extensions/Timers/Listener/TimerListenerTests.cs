@@ -444,8 +444,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                     functionAction?.Invoke();
                 })
                 .Returns(Task.FromResult(result));
-            JobHostConfiguration hostConfig = new JobHostConfiguration();
-            hostConfig.HostId = "testhostid";
             _logger = new TestLogger(null);
             _listener = new TimerListener(_attribute, _schedule, _testTimerName, _config, _mockTriggerExecutor.Object, _logger);
         }

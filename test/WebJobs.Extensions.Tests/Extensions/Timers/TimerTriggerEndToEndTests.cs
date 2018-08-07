@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Host.Timers;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -14,6 +16,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
     [Trait("Category", "E2E")]
     public class TimerTriggerEndToEndTests
     {
+        private readonly TestLoggerProvider _loggerProvider = new TestLoggerProvider();
+
         [Fact]
         public async Task CronScheduleJobTest()
         {
@@ -64,21 +68,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         private async Task RunTimerJobTest(Type jobClassType, Func<bool> condition)
         {
             ExplicitTypeLocator locator = new ExplicitTypeLocator(jobClassType);
-            JobHostConfiguration config = new JobHostConfiguration
-            {
-                TypeLocator = locator
-            };
-
+            var resolver = new TestNameResolver();
             ILoggerFactory loggerFactory = new LoggerFactory();
             TestLoggerProvider provider = new TestLoggerProvider();
             loggerFactory.AddProvider(provider);
 
-            config.LoggerFactory = loggerFactory;
-
-            config.AddService<IWebJobsExceptionHandler>(new TestExceptionHandler());
-            config.UseTimers();
-
-            JobHost host = new JobHost(config);
+            IHost host = new HostBuilder()
+                .ConfigureWebJobsHost()
+                .AddAzureStorageCoreServices()
+                .AddTimers()
+                .ConfigureServices(services =>
+                {
+                    services.AddSingleton<IWebJobsExceptionHandler>(new TestExceptionHandler());
+                    services.AddSingleton<INameResolver>(resolver);
+                    services.AddSingleton<ITypeLocator>(locator);
+                })
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    logging.AddProvider(_loggerProvider);
+                })
+                .Build();
 
             await host.StartAsync();
 

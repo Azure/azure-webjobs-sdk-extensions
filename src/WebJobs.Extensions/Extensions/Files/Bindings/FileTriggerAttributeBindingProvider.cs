@@ -12,17 +12,18 @@ using Microsoft.Azure.WebJobs.Extensions.Bindings;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
     internal class FileTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
-        private readonly FilesOptions _options;
+        private readonly IOptions<FilesOptions> _options;
         private readonly ILogger _logger;
 
-        public FileTriggerAttributeBindingProvider(FilesOptions options, ILoggerFactory loggerFactory)
+        public FileTriggerAttributeBindingProvider(IOptions<FilesOptions> options, ILoggerFactory loggerFactory)
         {
-            _options = options ?? throw new ArgumentNullException("config");
+            _options = options ?? throw new ArgumentNullException(nameof(options));
             _logger = loggerFactory?.CreateLogger(LogCategories.CreateTriggerCategory("File"));
         }
 

@@ -12,6 +12,7 @@ using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
@@ -19,14 +20,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
     {
         private readonly ParameterInfo _parameter;
         private readonly FileTriggerAttribute _attribute;
-        private readonly FilesOptions _options;
+        private readonly IOptions<FilesOptions> _options;
         private readonly IReadOnlyDictionary<string, Type> _bindingContract;
         private readonly BindingDataProvider _bindingDataProvider;
         private readonly ILogger _logger;
 
-        public FileTriggerBinding(FilesOptions config, ParameterInfo parameter, ILogger logger)
+        public FileTriggerBinding(IOptions<FilesOptions> options, ParameterInfo parameter, ILogger logger)
         {
-            _options = config;
+            _options = options;
             _parameter = parameter;
             _logger = logger;
             _attribute = parameter.GetCustomAttribute<FileTriggerAttribute>(inherit: false);
@@ -88,7 +89,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
         public ParameterDescriptor ToParameterDescriptor()
         {
             // These path values are validated later during startup.
-            string triggerPath = Path.Combine(_options.RootPath ?? string.Empty, _attribute.Path ?? string.Empty);
+            string triggerPath = Path.Combine(_options.Value.RootPath ?? string.Empty, _attribute.Path ?? string.Empty);
 
             return new FileTriggerParameterDescriptor
             {

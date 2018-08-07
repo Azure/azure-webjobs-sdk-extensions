@@ -60,7 +60,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Extensions.Files
 
             // Triggers
             var rule2 = context.AddBindingRule<FileTriggerAttribute>();
-            rule2.BindToTrigger<FileSystemEventArgs>(new FileTriggerAttributeBindingProvider(_options.Value, _loggerFactory));
+            rule2.BindToTrigger<FileSystemEventArgs>(new FileTriggerAttributeBindingProvider(_options, _loggerFactory));
 
             rule2.AddConverter<string, FileSystemEventArgs>(str => FileTriggerBinding.GetFileArgsFromString(str));
             rule2.AddConverter<FileSystemEventArgs, Stream>(args => File.OpenRead(args.FullPath));

@@ -13,6 +13,7 @@ using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Files.Listeners
 {
@@ -23,7 +24,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
         private readonly FileTriggerAttribute _attribute;
         private readonly ITriggeredFunctionExecutor _triggerExecutor;
         private readonly CancellationTokenSource _cancellationTokenSource;
-        private readonly FilesOptions _options;
+        private readonly IOptions<FilesOptions> _options;
         private readonly string _watchPath;
         private ActionBlock<FileSystemEventArgs> _workQueue;
         private FileProcessor _processor;
@@ -33,7 +34,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
         private readonly ILogger _logger;
         private bool _disposed;
 
-        public FileListener(FilesOptions options, FileTriggerAttribute attribute, ITriggeredFunctionExecutor triggerExecutor, ILogger logger)
+        public FileListener(IOptions<FilesOptions> options, FileTriggerAttribute attribute, ITriggeredFunctionExecutor triggerExecutor, ILogger logger)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _attribute = attribute ?? throw new ArgumentNullException(nameof(attribute));
@@ -42,12 +43,12 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
             _cancellationTokenSource = new CancellationTokenSource();
 
-            if (string.IsNullOrEmpty(_options.RootPath) || !Directory.Exists(_options.RootPath))
+            if (string.IsNullOrEmpty(_options.Value.RootPath) || !Directory.Exists(_options.Value.RootPath))
             {
-                throw new InvalidOperationException(string.Format("Path '{0}' is invalid. FilesConfiguration.RootPath must be set to a valid directory location.", _options.RootPath));
+                throw new InvalidOperationException(string.Format("Path '{0}' is invalid. FilesConfiguration.RootPath must be set to a valid directory location.", _options.Value.RootPath));
             }
 
-            _watchPath = Path.Combine(_options.RootPath, _attribute.GetRootPath());
+            _watchPath = Path.Combine(_options.Value.RootPath, _attribute.GetRootPath());
         }
 
         // for testing
@@ -70,8 +71,8 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
             CreateFileWatcher();
 
-            FileProcessorFactoryContext context = new FileProcessorFactoryContext(_options, _attribute, _triggerExecutor, _logger);
-            _processor = _options.ProcessorFactory.CreateFileProcessor(context);
+            FileProcessorFactoryContext context = new FileProcessorFactoryContext(_options.Value, _attribute, _triggerExecutor, _logger);
+            _processor = _options.Value.ProcessorFactory.CreateFileProcessor(context);
 
             ExecutionDataflowBlockOptions options = new ExecutionDataflowBlockOptions
             {

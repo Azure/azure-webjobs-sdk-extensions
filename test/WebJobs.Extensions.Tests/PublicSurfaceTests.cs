@@ -23,23 +23,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
                 "FileAttribute",
                 "FileProcessor",
                 "FileProcessorFactoryContext",
-                "FilesConfiguration",
-                "FilesJobHostConfigurationExtensions",
+                "FilesOptions",
+                "FilesHostBuilderExtensions",
                 "FileSystemScheduleMonitor",
                 "StorageScheduleMonitor",
                 "FileTriggerAttribute",
                 "IFileProcessorFactory",
-                "JobHostConfigurationExtensions",
                 "ScheduleMonitor",
                 "ScheduleStatus",
                 "StreamValueBinder",
                 "TimerInfo",
-                "TimerJobHostConfigurationExtensions",
+                "TimerHostBuilderExtensions",
                 "TimerSchedule",
-                "TimersConfiguration",
+                "TimersOptions",
                 "TimerTriggerAttribute",
                 "ValueBinder",
-                "WeeklySchedule"
+                "WeeklySchedule",
+                "ExtensionsWebJobsStartup"
             };
 
             AssertPublicTypes(expected, assembly);
