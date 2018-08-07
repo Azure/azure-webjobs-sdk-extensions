@@ -31,11 +31,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
-        public MobileAppsExtensionConfigProvider(IOptions<MobileAppsOptions> options, INameResolver nameResolver)
+        public MobileAppsExtensionConfigProvider(IOptions<MobileAppsOptions> options, IMobileServiceClientFactory clientFactory, INameResolver nameResolver)
         {
             _options = options;
             _nameResolver = nameResolver;
-            this.ClientFactory = new DefaultMobileServiceClientFactory();
+            this.ClientFactory = clientFactory;
         }
 
         internal IMobileServiceClientFactory ClientFactory { get; set; }

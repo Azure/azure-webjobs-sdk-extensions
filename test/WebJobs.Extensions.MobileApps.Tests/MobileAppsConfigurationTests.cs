@@ -11,6 +11,7 @@ using Microsoft.Azure.WebJobs.Extensions.MobileApps.Bindings;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Microsoft.Extensions.Options;
 using Microsoft.WindowsAzure.MobileServices;
 using Moq;
 using Xunit;
@@ -25,7 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         public void ResolveApiKey_ReturnsNull_IfAttributeEmpty()
         {
             // Arrange
-            var config = InitializeConfig("Config", _configUri);
+            var config = CreateConfigProvider("Config", _configUri);
 
             // Act
             var apiKey = config.ResolveApiKey(string.Empty);
@@ -38,7 +39,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         public void ResolveApiKey_UsesAttribute_First()
         {
             // Arrange
-            var config = InitializeConfig("Config", _configUri);
+            var config = CreateConfigProvider("Config", _configUri);
 
             // Act
             var apiKey = config.ResolveApiKey("Attribute");
@@ -51,7 +52,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         public void ResolveApiKey_UsesConfig_Second()
         {
             // Arrange
-            var config = InitializeConfig("Config", _configUri);
+            var config = CreateConfigProvider("Config", _configUri);
 
             // Act
             var apiKey = config.ResolveApiKey(null);
@@ -64,7 +65,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         public void ResolveApiKey_UsesDefault_Last()
         {
             // Arrange
-            var config = InitializeConfig(null, _configUri);
+            var config = CreateConfigProvider(null, _configUri);
 
             // Act
             var apiKey = config.ResolveApiKey(null);
@@ -77,7 +78,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         public void ResolveUri_UsesAttribute_First()
         {
             // Arrange
-            var config = InitializeConfig("Config", _configUri);
+            var config = CreateConfigProvider("Config", _configUri);
 
             // Act
             var uri = config.ResolveMobileAppUri("https://attribute/");
@@ -90,7 +91,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         public void ResolveUri_UsesConfig_Second()
         {
             // Arrange
-            var config = InitializeConfig("Config", _configUri);
+            var config = CreateConfigProvider("Config", _configUri);
 
             // Act
             var uri = config.ResolveMobileAppUri(null);
@@ -103,7 +104,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         public void ResolveUri_UsesDefault_Last()
         {
             // Arrange
-            var config = InitializeConfig("Config", null);
+            var config = CreateConfigProvider("Config", null);
 
             // Act
             var uri = config.ResolveMobileAppUri(null);
@@ -123,15 +124,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
                 .Setup(f => f.CreateClient(It.IsAny<Uri>(), null))
                 .Returns<Uri, HttpMessageHandler[]>((uri, handlers) => new MobileServiceClient(uri, handlers));
 
-            var config = new MobileAppsConfiguration
-            {
-                ClientFactory = mockFactory.Object
-            };
+            var configProvider = CreateConfigProvider("Default", _configUri, mockFactory.Object);
 
-            var client1 = config.GetClient(uri1, null);
-            var client2 = config.GetClient(uri1, null);
-            var client3 = config.GetClient(uri2, null);
-            var client4 = config.GetClient(uri1, null);
+            var client1 = configProvider.GetClient(uri1, null);
+            var client2 = configProvider.GetClient(uri1, null);
+            var client3 = configProvider.GetClient(uri2, null);
+            var client4 = configProvider.GetClient(uri1, null);
 
             Assert.Same(client1, client2);
             Assert.Same(client2, client4);
@@ -148,7 +146,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             // Arrange
             var handler = new TestHandler();
             var factory = new TestMobileServiceClientFactory(handler);
-            var client = MobileAppsConfiguration.CreateMobileServiceClient(factory, new Uri("https://someuri/"), apiKey);
+            var client = MobileAppsExtensionConfigProvider.CreateMobileServiceClient(factory, new Uri("https://someuri/"), apiKey);
             var table = client.GetTable("FakeTable");
 
             // Act
@@ -172,7 +170,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             Uri uri = new Uri("http://someuri");
 
             // Act
-            string key = MobileAppsConfiguration.GetCacheKey(uri, null);
+            string key = MobileAppsExtensionConfigProvider.GetCacheKey(uri, null);
 
             // Assert
             Assert.Equal(uri.ToString() + ";", key);
@@ -188,8 +186,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             string apiKey = "api_key";
 
             // Act
-            string key1 = MobileAppsConfiguration.GetCacheKey(uri1, apiKey);
-            string key2 = MobileAppsConfiguration.GetCacheKey(uri2, apiKey);
+            string key1 = MobileAppsExtensionConfigProvider.GetCacheKey(uri1, apiKey);
+            string key2 = MobileAppsExtensionConfigProvider.GetCacheKey(uri2, apiKey);
 
             // Assert
             Assert.Equal(key1, key2);
@@ -199,12 +197,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         public void BindForQuery_ReturnsCorrectType()
         {
             var attribute = new MobileTableAttribute();
-            var config = new MobileAppsConfiguration
-            {
-                MobileAppUri = new Uri("https://someuri/")
-            };
+            var configProvider = CreateConfigProvider("Default", new Uri("https://someuri/"));
 
-            var queryBuilder = new MobileTableQueryBuilder<TodoItem>(config);
+            var queryBuilder = new MobileTableQueryBuilder<TodoItem>(configProvider);
             var query = queryBuilder.Convert(attribute);
 
             Assert.True(typeof(IMobileServiceTableQuery<TodoItem>).IsAssignableFrom(query.GetType()));
@@ -217,13 +212,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             {
                 TableName = "SomeOtherTable"
             };
+            var configProvider = CreateConfigProvider("Default", new Uri("https://someuri/"));
 
-            var config = new MobileAppsConfiguration
-            {
-                MobileAppUri = new Uri("https://someuri/")
-            };
-
-            var queryBuilder = new MobileTableQueryBuilder<TodoItem>(config);
+            var queryBuilder = new MobileTableQueryBuilder<TodoItem>(configProvider);
             var query = queryBuilder.Convert(attribute);
 
             Assert.NotNull(query);
@@ -238,13 +229,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             {
                 TableName = "TodoItem"
             };
-            var config = new MobileAppsConfiguration
-            {
-                MobileAppUri = new Uri("https://someuri/")
-            };
+            var configProvider = CreateConfigProvider("Default", new Uri("https://someuri/"));
 
             // Act
-            var tableBuilder = new MobileTableJObjectTableBuilder(config);
+            var tableBuilder = new MobileTableJObjectTableBuilder(configProvider);
             var table = tableBuilder.Convert(attribute);
 
             // Assert
@@ -257,13 +245,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         {
             // Arrange
             var attribute = new MobileTableAttribute();
-            var config = new MobileAppsConfiguration
-            {
-                MobileAppUri = new Uri("https://someuri/")
-            };
+            var configProvider = CreateConfigProvider("Default", new Uri("https://someuri/"));
 
             // Act
-            var tableBuilder = new MobileTablePocoTableBuilder<TodoItem>(config);
+            var tableBuilder = new MobileTablePocoTableBuilder<TodoItem>(configProvider);
             var table = tableBuilder.Convert(attribute);
 
             // Assert
@@ -279,13 +264,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             {
                 TableName = "SomeOtherTable"
             };
-            var config = new MobileAppsConfiguration
-            {
-                MobileAppUri = new Uri("https://someuri/")
-            };
+            var configProvider = CreateConfigProvider("Default", new Uri("https://someuri/"));
 
             // Act
-            var tableBuilder = new MobileTablePocoTableBuilder<TodoItem>(config);
+            var tableBuilder = new MobileTablePocoTableBuilder<TodoItem>(configProvider);
             var table = tableBuilder.Convert(attribute);
 
             // Assert
@@ -293,30 +275,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             Assert.Equal("SomeOtherTable", table.TableName);
         }
 
-        private MobileAppsConfiguration InitializeConfig(string configApiKey, Uri configMobileAppUri)
+        private MobileAppsExtensionConfigProvider CreateConfigProvider(string configApiKey, Uri configMobileAppUri, IMobileServiceClientFactory clientFactory = null)
         {
-            var config = new MobileAppsConfiguration
+            var options = new MobileAppsOptions
             {
                 ApiKey = configApiKey,
                 MobileAppUri = configMobileAppUri
             };
 
             var nameResolver = new TestNameResolver();
-            nameResolver.Values[MobileAppsConfiguration.AzureWebJobsMobileAppApiKeyName] = "Default";
-            nameResolver.Values[MobileAppsConfiguration.AzureWebJobsMobileAppUriName] = "https://default";
+            nameResolver.Values[MobileAppsExtensionConfigProvider.AzureWebJobsMobileAppApiKeyName] = "Default";
+            nameResolver.Values[MobileAppsExtensionConfigProvider.AzureWebJobsMobileAppUriName] = "https://default";
             nameResolver.Values["Attribute"] = "ResolvedAttribute";
 
-            var jobHostConfig = new JobHostConfiguration();
-            jobHostConfig.NameResolver = nameResolver;
+            clientFactory = clientFactory ?? new DefaultMobileServiceClientFactory();
+            var configProvider = new MobileAppsExtensionConfigProvider(new OptionsWrapper<MobileAppsOptions>(options), clientFactory, nameResolver);
+            var context = TestHelpers.CreateExtensionConfigContext(nameResolver);
+            configProvider.Initialize(context);
 
-            var context = new ExtensionConfigContext
-            {
-                Config = jobHostConfig
-            };
-
-            config.Initialize(context);
-
-            return config;
+            return configProvider;
         }
     }
 }

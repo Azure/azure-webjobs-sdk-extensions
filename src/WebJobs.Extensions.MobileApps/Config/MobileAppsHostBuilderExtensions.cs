@@ -3,6 +3,7 @@
 
 using System;
 using Microsoft.Azure.WebJobs.Extensions.MobileApps;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.Extensions.Hosting
@@ -12,6 +13,8 @@ namespace Microsoft.Extensions.Hosting
     /// </summary>
     public static class MobileAppsHostBuilderExtensions
     {
+        internal const string ConfigSectionName = "MobileApps";
+
         /// <summary>
         /// Adds the Mobile Apps extension to the provided <see cref="IHostBuilder"/>.
         /// </summary>
@@ -24,6 +27,15 @@ namespace Microsoft.Extensions.Hosting
             }
 
             builder.AddExtension<MobileAppsExtensionConfigProvider>();
+            builder.ConfigureServices(services =>
+             {
+                 services.AddSingleton<IMobileServiceClientFactory, DefaultMobileServiceClientFactory>();
+                 services.AddOptions<MobileAppsOptions>()
+                     .Configure<IConfiguration>((options, config) =>
+                     {
+                         config.GetSection(ConfigSectionName)?.Bind(options);
+                     });
+             });
 
             return builder;
         }

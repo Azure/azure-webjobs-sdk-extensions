@@ -189,7 +189,7 @@ namespace SendGridTests
                 trace.Warning(nameof(Outputs_AttributeAndConfig));
             }
 
-            /// This function verifies Default (NameResolver) behavior for ApiKey
+            // This function verifies Default (NameResolver) behavior for ApiKey
             public static void Outputs_NameResolver(
                 [SendGrid] out SendGridMessage message,
                 TraceWriter trace)
