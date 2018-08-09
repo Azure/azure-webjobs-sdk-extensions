@@ -133,12 +133,14 @@ namespace SendGridTests
             }
 
             IHost host = new HostBuilder()
-                .ConfigureWebJobsHost()
-                .AddSendGrid(o =>
+                .ConfigureWebJobs(builder =>
                 {
-                    o.ApiKey = configApiKey;
-                    o.ToAddress = new EmailAddress("ToConfig@test.com");
-                    o.FromAddress = new EmailAddress("FromConfig@test.com");
+                    builder.AddSendGrid(o =>
+                    {
+                        o.ApiKey = configApiKey;
+                        o.ToAddress = new EmailAddress("ToConfig@test.com");
+                        o.FromAddress = new EmailAddress("FromConfig@test.com");
+                    });
                 })
                 .ConfigureServices(services =>
                 {

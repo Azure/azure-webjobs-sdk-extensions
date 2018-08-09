@@ -74,9 +74,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             loggerFactory.AddProvider(provider);
 
             IHost host = new HostBuilder()
-                .ConfigureWebJobsHost()
-                .AddAzureStorageCoreServices()
-                .AddTimers()
+                .ConfigureWebJobs(builder =>
+                {
+                    builder.AddAzureStorageCoreServices()
+                    .AddTimers();
+                })
                 .ConfigureServices(services =>
                 {
                     services.AddSingleton<IWebJobsExceptionHandler>(new TestExceptionHandler());

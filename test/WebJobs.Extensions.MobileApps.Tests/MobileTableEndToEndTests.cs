@@ -266,8 +266,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             }
 
             IHost host = new HostBuilder()
-                .ConfigureWebJobsHost()
-                .AddMobileApps()
+                .ConfigureWebJobs(builder =>
+                {
+                    builder.AddMobileApps();
+                })
                 .ConfigureServices(services =>
                 {
                     services.AddSingleton<INameResolver>(resolver);
@@ -306,12 +308,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             }
 
             IHost host = new HostBuilder()
-                .ConfigureWebJobsHost()
-                .AddAzureStorage()
-                .AddMobileApps(o =>
+                .ConfigureWebJobs(builder =>
                 {
-                    o.MobileAppUri = configUri;
-                    o.ApiKey = configKey;
+                    builder.AddAzureStorage()
+                    .AddMobileApps(o =>
+                    {
+                        o.MobileAppUri = configUri;
+                        o.ApiKey = configKey;
+                    });
                 })
                 .ConfigureServices(services =>
                 {

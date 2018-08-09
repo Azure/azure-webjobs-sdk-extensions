@@ -26,16 +26,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                      {
                          InitialData = new Dictionary<string, string>
                         {
-                            { "cosmosDB:Protocol", "Tcp" },
-                            { "CosmosDB:LeaseOptions:leaseRenewInterval", "11:11:11" },
-                            { "CosmosDB:LeaseOptions:LeasePrefix", "pre1" },
-                            { "cosmosdb:leaseoptions:CheckpointFrequency:ProcessedDocumentCount", "1234" }
+                            { "AzureWebJobs:extensions:cosmosDB:Protocol", "Tcp" },
+                            { "AzureWebJobs:extensions:CosmosDB:LeaseOptions:leaseRenewInterval", "11:11:11" },
+                            { "AzureWebJobs:extensions:CosmosDB:LeaseOptions:LeasePrefix", "pre1" },
+                            { "AzureWebJobs:extensions:cosmosdb:leaseoptions:CheckpointFrequency:ProcessedDocumentCount", "1234" }
                         }
                      };
 
                      c.Add(source);
                  })
-                .AddCosmosDB()
+                 .ConfigureWebJobs(builder =>
+                 {
+                     builder.AddCosmosDB();
+                 })
                 .ConfigureServices(s =>
                 {
                     // Verifies that you can modify the bound options

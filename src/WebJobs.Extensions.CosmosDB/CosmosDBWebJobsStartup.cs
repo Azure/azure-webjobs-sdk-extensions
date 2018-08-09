@@ -11,7 +11,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
     public class CosmosDBWebJobsStartup : IWebJobsStartup
     {
-        public void Configure(IHostBuilder builder)
+        public void Configure(IWebJobsBuilder builder)
         {
             builder.AddCosmosDB();
         }

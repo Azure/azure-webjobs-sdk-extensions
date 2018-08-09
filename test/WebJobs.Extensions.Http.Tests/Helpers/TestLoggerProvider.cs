@@ -12,16 +12,9 @@ namespace Microsoft.Azure.WebJobs.Host.TestCommon
 {
     public class TestLoggerProvider : ILoggerProvider
     {
-        private readonly Func<string, LogLevel, bool> _filter;
-
-        public TestLoggerProvider(Func<string, LogLevel, bool> filter = null)
-        {
-            _filter = filter ?? new LogCategoryFilter().Filter;
-        }
-
         public ILogger CreateLogger(string categoryName)
         {
-            return new TestLogger(categoryName, _filter);
+            return new TestLogger(categoryName);
         }
 
         public void Dispose()

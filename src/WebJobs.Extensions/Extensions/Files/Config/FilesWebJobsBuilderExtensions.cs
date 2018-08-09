@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,13 +12,13 @@ namespace Microsoft.Extensions.Hosting
     /// <summary>
     /// Extension methods for Files integration
     /// </summary>
-    public static class FilesHostBuilderExtensions
+    public static class FilesWebJobsBuilderExtensions
     {
         /// <summary>
-        /// Adds the Files extension to the provided <see cref="IHostBuilder"/>.
+        /// Adds the Files extension to the provided <see cref="IWebJobsBuilder"/>.
         /// </summary>
-        /// <param name="builder">The <see cref="IHostBuilder"/> to configure.</param>
-        public static IHostBuilder AddFiles(this IHostBuilder builder)
+        /// <param name="builder">The <see cref="IWebJobsBuilder"/> to configure.</param>
+        public static IWebJobsBuilder AddFiles(this IWebJobsBuilder builder)
         {
             if (builder == null)
             {
@@ -30,11 +31,11 @@ namespace Microsoft.Extensions.Hosting
         }
 
         /// <summary>
-        /// Adds the Files extension to the provided <see cref="IHostBuilder"/>.
+        /// Adds the Files extension to the provided <see cref="IWebJobsBuilder"/>.
         /// </summary>
-        /// <param name="builder">The <see cref="IHostBuilder"/> to configure.</param>
+        /// <param name="builder">The <see cref="IWebJobsBuilder"/> to configure.</param>
         /// <param name="configure">An <see cref="Action{FilesOptions}"/> to configure the provided <see cref="FilesOptions"/>.</param>
-        public static IHostBuilder AddFiles(this IHostBuilder builder, Action<FilesOptions> configure)
+        public static IWebJobsBuilder AddFiles(this IWebJobsBuilder builder, Action<FilesOptions> configure)
         {
             if (builder == null)
             {
@@ -46,8 +47,8 @@ namespace Microsoft.Extensions.Hosting
                 throw new ArgumentNullException(nameof(configure));
             }
 
-            builder.AddFiles()
-                .ConfigureServices(c => c.Configure(configure));
+            builder.AddFiles();
+            builder.Services.Configure(configure);
 
             return builder;
         }

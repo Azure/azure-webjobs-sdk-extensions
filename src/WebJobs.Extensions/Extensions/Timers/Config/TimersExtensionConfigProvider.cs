@@ -2,16 +2,19 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Bindings;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Extensions.Timers
 {
+    [Extension("Timers")]
     internal class TimersExtensionConfigProvider : IExtensionConfigProvider
     {
         private readonly IOptions<TimersOptions> _options;
@@ -20,8 +23,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Extensions.Timers
         private readonly INameResolver _nameResolver;
         private readonly DistributedLockManagerContainerProvider _lockContainerProvider;
         private readonly IConnectionStringProvider _connectionStringProvider;
+        private readonly IHostIdProvider _hostIdProvider;
 
-        public TimersExtensionConfigProvider(IOptions<TimersOptions> options, IOptions<JobHostOptions> hostOptions, DistributedLockManagerContainerProvider lockContainerProvider, IConnectionStringProvider connectionStringProvider, ILoggerFactory loggerFactory, INameResolver nameResolver)
+        public TimersExtensionConfigProvider(IOptions<TimersOptions> options, IOptions<JobHostOptions> hostOptions, DistributedLockManagerContainerProvider lockContainerProvider,
+           IHostIdProvider hostIdProvider, IConnectionStringProvider connectionStringProvider, ILoggerFactory loggerFactory, INameResolver nameResolver)
         {
             _options = options;
             _hostOptions = hostOptions;
@@ -29,6 +34,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Extensions.Timers
             _nameResolver = nameResolver;
             _lockContainerProvider = lockContainerProvider;
             _connectionStringProvider = connectionStringProvider;
+            _hostIdProvider = hostIdProvider;
         }
 
         public void Initialize(ExtensionConfigContext context)
@@ -42,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Extensions.Timers
 
             if (_options.Value.ScheduleMonitor == null)
             {
-                _options.Value.ScheduleMonitor = new StorageScheduleMonitor(_hostOptions.Value, _lockContainerProvider, _connectionStringProvider, logger);
+                _options.Value.ScheduleMonitor = new StorageScheduleMonitor(_hostOptions.Value, _lockContainerProvider, _hostIdProvider, _connectionStringProvider, logger);
             }
 
             var bindingProvider = new TimerTriggerAttributeBindingProvider(_options.Value, _nameResolver, logger);

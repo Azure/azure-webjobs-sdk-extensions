@@ -3,8 +3,10 @@
 
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
@@ -23,6 +25,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         private readonly IConnectionStringProvider _connectionStringProvider;
         private readonly JsonSerializer _serializer;
         private readonly ILogger _logger;
+        private readonly IHostIdProvider _hostIdProvider;
         private CloudBlobDirectory _timerStatusDirectory;
 
         /// <summary>
@@ -30,12 +33,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// </summary>
         /// <param name="hostOptions">The <see cref="JobHostOptions"/>.</param>
         /// <param name="logger">The <see cref="ILogger"/>.</param>
-        public StorageScheduleMonitor(JobHostOptions hostOptions, DistributedLockManagerContainerProvider lockContainerProvider, IConnectionStringProvider connectionStringProvider, ILogger logger)
+        public StorageScheduleMonitor(JobHostOptions hostOptions, DistributedLockManagerContainerProvider lockContainerProvider,
+            IHostIdProvider hostIdProvider, IConnectionStringProvider connectionStringProvider, ILogger logger)
         {
-            _hostOptions = hostOptions;
-            _lockContainerProvider = lockContainerProvider;
-            _connectionStringProvider = connectionStringProvider;
-            _logger = logger;
+            _hostOptions = hostOptions ?? throw new ArgumentNullException(nameof(hostOptions));
+            _lockContainerProvider = lockContainerProvider ?? throw new ArgumentNullException(nameof(lockContainerProvider));
+            _connectionStringProvider = connectionStringProvider ?? throw new ArgumentNullException(nameof(connectionStringProvider));
+            _hostIdProvider = hostIdProvider ?? throw new ArgumentNullException(nameof(hostIdProvider));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             JsonSerializerSettings settings = new JsonSerializerSettings
             {
@@ -55,7 +60,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 // be available AFTER the host as been started
                 if (_timerStatusDirectory == null)
                 {
-                    if (string.IsNullOrEmpty(_hostOptions.HostId))
+                    string hostId = _hostIdProvider.GetHostIdAsync(CancellationToken.None).GetAwaiter().GetResult();
+                    if (string.IsNullOrEmpty(hostId))
                     {
                         throw new InvalidOperationException("Unable to determine host ID.");
                     }
@@ -71,7 +77,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                         CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
                         container = blobClient.GetContainerReference(HostContainerName);
                     }
-                    string timerStatusDirectoryPath = string.Format("timers/{0}", _hostOptions.HostId);
+                    string timerStatusDirectoryPath = string.Format("timers/{0}", hostId);
                     _timerStatusDirectory = container.GetDirectoryReference(timerStatusDirectoryPath);
                 }
                 return _timerStatusDirectory;

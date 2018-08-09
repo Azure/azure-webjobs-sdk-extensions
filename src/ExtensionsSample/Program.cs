@@ -28,25 +28,25 @@ namespace ExtensionsSample
 
             var builder = new HostBuilder()
                .UseEnvironment("Development")
-               .ConfigureWebJobsHost(o =>
+               .ConfigureWebJobs(webJobsBuilder =>
                {
-                    // TEMP - remove once https://github.com/Azure/azure-webjobs-sdk/issues/1802 is fixed
-                    o.HostId = "cead61-62cf-47f4-93b4-6efcded6";
-               })
-               .AddAzureStorageCoreServices()
-               .AddAzureStorage()
-               .AddFiles(o =>
-               {
-                   o.RootPath = filesTestPath;
-               })
-               .AddTimers()
-               .AddMobileApps()
-               .AddTwilioSms()
-               .AddCosmosDB()
-               .AddSendGrid(o =>
-               {
-                   o.ToAddress = new EmailAddress("admin@webjobssamples.com", "WebJobs Extensions Samples");
-                   o.FromAddress = new EmailAddress("samples@webjobssamples.com", "WebJobs Extensions Samples");
+                   // TEMP - remove setting host id once https://github.com/Azure/azure-webjobs-sdk/issues/1802 is fixed
+                   webJobsBuilder.UseHostId("cead61-62cf-47f4-93b4-6efcded6")
+                   .AddAzureStorageCoreServices()
+                   .AddAzureStorage()
+                   .AddFiles(o =>
+                   {
+                       o.RootPath = filesTestPath;
+                   })
+                   .AddTimers()
+                   .AddMobileApps()
+                   .AddTwilioSms()
+                   .AddCosmosDB()
+                   .AddSendGrid(o =>
+                   {
+                       o.ToAddress = new EmailAddress("admin@webjobssamples.com", "WebJobs Extensions Samples");
+                       o.FromAddress = new EmailAddress("samples@webjobssamples.com", "WebJobs Extensions Samples");
+                   });
                })
                .ConfigureLogging(b =>
                {

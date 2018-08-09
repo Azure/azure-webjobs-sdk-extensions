@@ -14,8 +14,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
 {
     internal class SendGridHelpers
     {
-        internal const string ConfigSectionName = "SendGrid";
-
         internal static EmailAddress Apply(EmailAddress current, string value)
         {
             EmailAddress mail;
@@ -128,19 +126,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
                 item.Personalizations.All(p => p.Tos != null && !p.Tos.Any(t => string.IsNullOrEmpty(t.Email)));
         }
 
-        internal static void ApplyConfigurationSection(IConfiguration config, SendGridOptions options)
+        internal static void ApplyConfiguration(IConfiguration config, SendGridOptions options)
         {
-            var section = config.GetSection(ConfigSectionName);
-
-            if (section == null)
+            if (config == null)
             {
                 return;
             }
 
-            section.Bind(options);
+            config.Bind(options);
 
-            string to = section.GetValue<string>("to");
-            string from = section.GetValue<string>("from");
+            string to = config.GetValue<string>("to");
+            string from = config.GetValue<string>("from");
             options.ToAddress = SendGridHelpers.Apply(options.ToAddress, to);
             options.FromAddress = SendGridHelpers.Apply(options.FromAddress, from);
         }

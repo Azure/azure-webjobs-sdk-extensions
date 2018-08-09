@@ -5,13 +5,13 @@ using Microsoft.Azure.WebJobs.Extensions;
 using Microsoft.Azure.WebJobs.Hosting;
 using Microsoft.Extensions.Hosting;
 
-[assembly: WebJobsStartup(typeof(ExtensionsWebJobsStartup))]
+[assembly: WebJobsStartup(typeof(ExtensionsWebJobsStartup), "Timers and Files")]
 
 namespace Microsoft.Azure.WebJobs.Extensions
 {
     public class ExtensionsWebJobsStartup : IWebJobsStartup
     {
-        public void Configure(IHostBuilder builder)
+        public void Configure(IWebJobsBuilder builder)
         {
             builder.AddTimers();
             builder.AddFiles();

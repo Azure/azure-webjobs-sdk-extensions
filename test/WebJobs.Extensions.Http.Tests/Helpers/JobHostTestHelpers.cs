@@ -105,9 +105,14 @@ namespace Microsoft.Azure.WebJobs.Host.TestCommon
             Assert.True(false, "Invoker should have failed");
         }
 
-        public static IHostBuilder ConfigureDefaultTestHost(this IHostBuilder builder, params Type[] types)
+        public static IHostBuilder ConfigureDefaultTestHost(this IHostBuilder builder, Action<IWebJobsBuilder> configure,  params Type[] types)
         {
-            return builder.ConfigureWebJobsHost()
+            if (configure == null)
+            {
+                configure = b => { };
+            }
+
+            return builder.ConfigureWebJobs(configure)
                .ConfigureServices(services =>
                {
                    services.AddSingleton<ITypeLocator>(new FakeTypeLocator(types));

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using Client;
+using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.Bindings;
 using Microsoft.Azure.WebJobs.Extensions.Config;
 using Microsoft.Azure.WebJobs.Host.Config;
@@ -17,6 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
     /// <summary>
     /// Defines the configuration options for the SendGrid binding.
     /// </summary>
+    [Extension("SendGrid")]
     internal class SendGridExtensionConfigProvider : IExtensionConfigProvider
     {
         internal const string AzureWebJobsSendGridApiKeyName = "AzureWebJobsSendGridApiKey";

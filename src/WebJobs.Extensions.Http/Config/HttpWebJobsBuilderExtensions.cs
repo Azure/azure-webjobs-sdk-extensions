@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,13 +12,13 @@ namespace Microsoft.Extensions.Hosting
     /// <summary>
     /// Extension methods for Http integration
     /// </summary>
-    public static class HttpHostBuilderExtensions
+    public static class HttpWebJobsBuilderExtensions
     {
         /// <summary>
-        /// Adds the HTTP services and extension to the provided <see cref="IHostBuilder"/>.
+        /// Adds the HTTP services and extension to the provided <see cref="IWebJobsBuilder"/>.
         /// </summary>
-        /// <param name="builder">The <see cref="IHostBuilder"/> to configure.</param>
-        public static IHostBuilder AddHttp(this IHostBuilder builder)
+        /// <param name="builder">The <see cref="IWebJobsBuilder"/> to configure.</param>
+        public static IWebJobsBuilder AddHttp(this IWebJobsBuilder builder)
         {
             if (builder == null)
             {
@@ -25,20 +26,17 @@ namespace Microsoft.Extensions.Hosting
             }
 
             builder.AddExtension<HttpExtensionConfigProvider>();
-            builder.ConfigureServices(c =>
-            {
-                c.AddSingleton<IBindingProvider, HttpDirectRequestBindingProvider>();
-            });
+            builder.Services.AddSingleton<IBindingProvider, HttpDirectRequestBindingProvider>();
 
             return builder;
         }
 
         /// <summary>
-        /// Adds the HTTP services and extension to the provided <see cref="IHostBuilder"/>.
+        /// Adds the HTTP services and extension to the provided <see cref="IWebJobsBuilder"/>.
         /// </summary>
-        /// <param name="builder">The <see cref="IHostBuilder"/> to configure.</param>
+        /// <param name="builder">The <see cref="IWebJobsBuilder"/> to configure.</param>
         /// <param name="configure">An <see cref="Action{HttpExtensionOptions}"/> to configure the provided <see cref="HttpOptions"/>.</param>
-        public static IHostBuilder AddHttp(this IHostBuilder builder, Action<HttpOptions> configure)
+        public static IWebJobsBuilder AddHttp(this IWebJobsBuilder builder, Action<HttpOptions> configure)
         {
             if (builder == null)
             {
@@ -50,8 +48,8 @@ namespace Microsoft.Extensions.Hosting
                 throw new ArgumentNullException(nameof(configure));
             }
 
-            builder.AddHttp()
-                .ConfigureServices(c => c.Configure(configure));
+            builder.AddHttp();
+            builder.Services.Configure(configure);
 
             return builder;
         }
