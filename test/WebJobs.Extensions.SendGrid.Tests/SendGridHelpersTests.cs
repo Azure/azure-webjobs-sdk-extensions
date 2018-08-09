@@ -150,19 +150,20 @@ namespace SendGridTests
             var builder = new ConfigurationBuilder();
             builder.AddInMemoryCollection(dict);
             var config = builder.Build();
-            SendGridHelpers.ApplyConfigurationSection(config, options);
+            SendGridHelpers.ApplyConfiguration(config, options);
             Assert.Null(options.FromAddress);
             Assert.Null(options.ToAddress);
 
             dict = new Dictionary<string, string>
             {
-                { "sendGrid:to", "Testing1 <test1@test.com>" },
-                { "sendGrid:from", "Testing2 <test2@test.com>" },
+                { "to", "Testing1 <test1@test.com>" },
+                { "from", "Testing2 <test2@test.com>" },
             };
             builder = new ConfigurationBuilder();
             builder.AddInMemoryCollection(dict);
             config = builder.Build();
-            SendGridHelpers.ApplyConfigurationSection(config, options);
+
+            SendGridHelpers.ApplyConfiguration(config, options);
 
             Assert.Equal("test1@test.com", options.ToAddress.Email);
             Assert.Equal("Testing1", options.ToAddress.Name);

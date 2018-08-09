@@ -24,12 +24,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         public HttpTriggerEndToEndTests()
         {
             var host = new HostBuilder()
-                .ConfigureDefaultTestHost(typeof(TestFunctions))
-                .AddHttp(o => 
+                .ConfigureDefaultTestHost(builder =>
                 {
-                    o.SetResponse = SetResultHook;
-                })
-                .AddAzureStorage()
+                    builder.AddHttp(o =>
+                    {
+                        o.SetResponse = SetResultHook;
+                    })
+                    .AddAzureStorage();
+                }, typeof(TestFunctions))
                 .Build();
 
             _host = host.GetJobHost();

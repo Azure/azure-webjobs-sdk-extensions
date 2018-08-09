@@ -46,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
 
             // TODO: ConverterManager needs to be fixed but this will work for now.
             IHost host = new HostBuilder()
-                .ConfigureWebJobsHost()
+                .ConfigureWebJobs()
                 .Build();
 
             var converterManager = host.Services.GetRequiredService<IConverterManager>();

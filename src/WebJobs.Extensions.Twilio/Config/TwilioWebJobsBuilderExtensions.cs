@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Twilio;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -10,13 +11,13 @@ namespace Microsoft.Extensions.Hosting
     /// <summary>
     /// Extension methods for Twilio integration
     /// </summary>
-    public static class TwilioHostBuilderExtensions
+    public static class TwilioWebJobsBuilderExtensions
     {
         /// <summary>
-        /// Adds the Twilio SMS extension to the provided <see cref="IHostBuilder"/>.
+        /// Adds the Twilio SMS extension to the provided <see cref="IWebJobsBuilder"/>.
         /// </summary>
-        /// <param name="builder">The <see cref="IHostBuilder"/> to configure.</param>
-        public static IHostBuilder AddTwilioSms(this IHostBuilder builder)
+        /// <param name="builder">The <see cref="IWebJobsBuilder"/> to configure.</param>
+        public static IWebJobsBuilder AddTwilioSms(this IWebJobsBuilder builder)
         {
             if (builder == null)
             {
@@ -29,11 +30,11 @@ namespace Microsoft.Extensions.Hosting
         }
 
         /// <summary>
-        /// Adds the Twilo SMS extension to the provided <see cref="IHostBuilder"/>.
+        /// Adds the Twilo SMS extension to the provided <see cref="IWebJobsBuilder"/>.
         /// </summary>
-        /// <param name="builder">The <see cref="IHostBuilder"/> to configure.</param>
+        /// <param name="builder">The <see cref="IWebJobsBuilder"/> to configure.</param>
         /// <param name="configure">An <see cref="Action{TwilioSmsOptions}"/> to configure the provided <see cref="TwilioSmsOptions"/>.</param>
-        public static IHostBuilder AddTwilioSms(this IHostBuilder builder, Action<TwilioSmsOptions> configure)
+        public static IWebJobsBuilder AddTwilioSms(this IWebJobsBuilder builder, Action<TwilioSmsOptions> configure)
         {
             if (builder == null)
             {
@@ -45,8 +46,8 @@ namespace Microsoft.Extensions.Hosting
                 throw new ArgumentNullException(nameof(configure));
             }
 
-            builder.AddTwilioSms()
-                .ConfigureServices(c => c.Configure(configure));
+            builder.AddTwilioSms();
+            builder.Services.Configure(configure);
 
             return builder;
         }

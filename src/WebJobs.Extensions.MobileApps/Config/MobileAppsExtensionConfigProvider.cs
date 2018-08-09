@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.MobileApps.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
@@ -17,6 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
     /// <summary>
     /// Defines the configuration options for the motile table binding.
     /// </summary>
+    [Extension("MobileApps")]
     internal class MobileAppsExtensionConfigProvider : IExtensionConfigProvider
     {
         internal const string AzureWebJobsMobileAppUriName = "AzureWebJobsMobileAppUri";

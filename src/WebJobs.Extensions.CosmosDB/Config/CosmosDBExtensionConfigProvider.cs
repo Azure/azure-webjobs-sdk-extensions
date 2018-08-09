@@ -8,6 +8,7 @@ using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
@@ -21,6 +22,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
     /// <summary>
     /// Defines the configuration options for the CosmosDB binding.
     /// </summary>
+    [Extension("CosmosDB")]
     internal class CosmosDBExtensionConfigProvider : IExtensionConfigProvider
     {
         internal const string AzureWebJobsCosmosDBConnectionStringName = "AzureWebJobsCosmosDBConnectionString";

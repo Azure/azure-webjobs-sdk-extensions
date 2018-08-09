@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.Files.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Extensions.Files
 {
+    [Extension("Files")]
     internal class FilesExtensionConfigProvider : IExtensionConfigProvider, IConverter<FileAttribute, Stream>
     {
         private readonly IOptions<FilesOptions> _options;

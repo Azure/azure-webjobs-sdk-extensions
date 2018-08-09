@@ -333,7 +333,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await _listener.StartAsync(CancellationToken.None);
             await _listener.StopAsync(CancellationToken.None);
 
-            Assert.True(_logger.LogMessages.Single(m => m.Level == LogLevel.Information).FormattedMessage.StartsWith("The next 5 occurrences of the schedule will be:"));
+            Assert.True(_logger.GetLogMessages().Single(m => m.Level == LogLevel.Information).FormattedMessage.StartsWith("The next 5 occurrences of the schedule will be:"));
         }
 
         [Fact]
@@ -424,7 +424,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await _listener.StopAsync(CancellationToken.None);
             _listener.Dispose();
 
-            Assert.Equal(expected, _logger.LogMessages.Single(m => m.Level == LogLevel.Debug).FormattedMessage);
+            Assert.Equal(expected, _logger.GetLogMessages().Single(m => m.Level == LogLevel.Debug).FormattedMessage);
         }
 
         private void CreateTestListener(string expression, bool useMonitor = true, Action functionAction = null)

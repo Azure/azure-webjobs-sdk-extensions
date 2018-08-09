@@ -29,7 +29,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
                 "WebJobsRouteBuilder",
                 "WebJobsRouter",
                 "HttpOptions",
-                "HttpHostBuilderExtensions",
+                "HttpWebJobsBuilderExtensions",
                 "HttpWebJobsStartup",
             };
 

@@ -89,9 +89,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
 
             IHost host = new HostBuilder()
-                .ConfigureWebJobsHost()
-                .AddAzureStorage()
-                .AddCosmosDB()
+                .ConfigureWebJobs(builder => 
+                {
+                    builder.AddAzureStorage()
+                    .AddCosmosDB();
+                })
                 .ConfigureServices(services =>
                 {
                     services.AddSingleton<ITypeLocator>(locator);

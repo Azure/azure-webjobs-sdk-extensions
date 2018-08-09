@@ -15,7 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
     /// </summary>
     public class HttpWebJobsStartup : IWebJobsStartup
     {
-        public void Configure(IHostBuilder builder)
+        public void Configure(IWebJobsBuilder builder)
         {
             builder.AddHttp();
         }

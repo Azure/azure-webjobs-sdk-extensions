@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Extensions.Options;
@@ -14,6 +15,7 @@ using Twilio.Types;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Twilio
 {
+    [Extension("Twilio")]
     internal class TwilioExtensionConfigProvider : IExtensionConfigProvider
     {
         internal const string AzureWebJobsTwilioAccountSidKeyName = "AzureWebJobsTwilioAccountSid";

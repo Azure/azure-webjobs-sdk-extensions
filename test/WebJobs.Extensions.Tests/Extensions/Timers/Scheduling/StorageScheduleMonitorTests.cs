@@ -3,6 +3,7 @@
 
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
@@ -23,12 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
 
         public StorageScheduleMonitorTests()
         {
-            _hostOptions = new JobHostOptions
-            {
-                HostId = TestHostId
-            };
-
-            _scheduleMonitor = CreateScheduleMonitor(_hostOptions);
+            _scheduleMonitor = CreateScheduleMonitor(TestHostId);
 
             Cleanup();
         }
@@ -44,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         [Fact]
         public void TimerStatusDirectory_HostIdNull_Throws()
         {
-            StorageScheduleMonitor localScheduleMonitor = CreateScheduleMonitor(new JobHostOptions());
+            StorageScheduleMonitor localScheduleMonitor = CreateScheduleMonitor(null);
 
             CloudBlobDirectory directory = null;
             var ex = Assert.Throws<InvalidOperationException>(() =>
@@ -127,7 +123,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             Cleanup();
         }
 
-        private static StorageScheduleMonitor CreateScheduleMonitor(JobHostOptions options)
+        private static StorageScheduleMonitor CreateScheduleMonitor(string hostId = null)
         {
             var config = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
@@ -135,7 +131,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             var connStrProvider = new AmbientConnectionStringProvider(config);
             var lockContainerManager = new DistributedLockManagerContainerProvider();
 
-            return new StorageScheduleMonitor(options, lockContainerManager, connStrProvider, new TestLogger(null));
+            return new StorageScheduleMonitor(new JobHostOptions(), lockContainerManager, new TestIdProvider(hostId), connStrProvider, new TestLogger(null));
+        }
+
+        private class TestIdProvider : Host.Executors.IHostIdProvider
+        {
+            private readonly string _hostId;
+
+            public TestIdProvider(string hostId)
+            {
+                _hostId = hostId;
+            }
+
+            public Task<string> GetHostIdAsync(CancellationToken cancellationToken)
+            {
+                return Task.FromResult<string>(_hostId);
+            }
         }
     }
 }

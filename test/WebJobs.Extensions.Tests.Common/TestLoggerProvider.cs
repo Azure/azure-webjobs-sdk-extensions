@@ -12,31 +12,46 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
 {
     public class TestLoggerProvider : ILoggerProvider
     {
-        private readonly Func<string, LogLevel, bool> _filter;
+        private readonly LoggerFilterOptions _filter;
+        private readonly Action<LogMessage> _logAction;
         private readonly Regex userCategoryRegex = new Regex(@"^Function\.\w+\.User$");
 
-        public IList<TestLogger> CreatedLoggers = new List<TestLogger>();
-
-        public TestLoggerProvider(Func<string, LogLevel, bool> filter = null)
+        public TestLoggerProvider(Action<LogMessage> logAction = null)
         {
-            _filter = filter ?? new LogCategoryFilter().Filter;
+            _filter = new LoggerFilterOptions();
+            _logAction = logAction;
         }
+
+        private Dictionary<string, TestLogger> _loggerCache { get; } = new Dictionary<string, TestLogger>();
+
+        public IList<TestLogger> CreatedLoggers => _loggerCache.Values.ToList();
 
         public ILogger CreateLogger(string categoryName)
         {
-            var logger = new TestLogger(categoryName, _filter);
-            CreatedLoggers.Add(logger);
+            if (!_loggerCache.TryGetValue(categoryName, out TestLogger logger))
+            {
+                logger = new TestLogger(categoryName, _logAction);
+                _loggerCache.Add(categoryName, logger);
+            }
+
             return logger;
         }
 
-        public IEnumerable<LogMessage> GetAllLogMessages()
-        {
-            return CreatedLoggers.SelectMany(l => l.LogMessages);
-        }
+        public IEnumerable<LogMessage> GetAllLogMessages() => CreatedLoggers.SelectMany(l => l.GetLogMessages()).OrderBy(p => p.Timestamp);
 
         public IEnumerable<LogMessage> GetAllUserLogMessages()
         {
             return GetAllLogMessages().Where(p => userCategoryRegex.IsMatch(p.Category));
+        }
+
+        public string GetLogString() => string.Join(Environment.NewLine, GetAllLogMessages());
+
+        public void ClearAllLogMessages()
+        {
+            foreach (TestLogger logger in CreatedLoggers)
+            {
+                logger.ClearLogMessages();
+            }
         }
 
         public void Dispose()

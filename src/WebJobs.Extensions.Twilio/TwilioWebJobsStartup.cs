@@ -11,7 +11,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
 {
     public class TwilioWebJobsStartup : IWebJobsStartup
     {
-        public void Configure(IHostBuilder builder)
+        public void Configure(IWebJobsBuilder builder)
         {
             builder.AddTwilioSms();
         }

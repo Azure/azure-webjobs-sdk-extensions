@@ -11,7 +11,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
 {
     public class SendGridWebJobsStartup : IWebJobsStartup
     {
-        public void Configure(IHostBuilder builder)
+        public void Configure(IWebJobsBuilder builder)
         {
             builder.AddSendGrid();
         }

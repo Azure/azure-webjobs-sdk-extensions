@@ -19,8 +19,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         {
             // Simulate startup discovery
             IHost host = new HostBuilder()
-                .ConfigureWebJobsHost()
-                .UseExternalStartup(new TestStartupTypeDiscoverer())
+                .ConfigureWebJobs(builder =>
+                {
+                    builder.UseExternalStartup(new TestStartupTypeDiscoverer());
+                })
                 .Build();
 
             var extensionConfig = host.Services.GetServices<IExtensionConfigProvider>().Single();
