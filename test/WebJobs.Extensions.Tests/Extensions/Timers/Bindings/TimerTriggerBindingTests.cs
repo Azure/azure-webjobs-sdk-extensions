@@ -32,13 +32,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Bindings
             TimerTriggerAttribute attribute = parameter.GetCustomAttribute<TimerTriggerAttribute>();
             INameResolver nameResolver = new TestNameResolver();
             TimerSchedule schedule = TimerSchedule.Create(attribute, nameResolver);
-            TimersOptions config = new TimersOptions();
-            config.ScheduleMonitor = mockScheduleMonitor.Object;
+            TimersOptions options = new TimersOptions();
 
             ILoggerFactory loggerFactory = new LoggerFactory();
             loggerFactory.AddProvider(new TestLoggerProvider());
 
-            TimerTriggerBinding binding = new TimerTriggerBinding(parameter, attribute, schedule, config, loggerFactory.CreateLogger("Test"));
+            TimerTriggerBinding binding = new TimerTriggerBinding(parameter, attribute, schedule, options, loggerFactory.CreateLogger("Test"), mockScheduleMonitor.Object);
 
             // when we bind to a non-TimerInfo (e.g. in a Dashboard invocation) a new
             // TimerInfo is created, with the ScheduleStatus populated

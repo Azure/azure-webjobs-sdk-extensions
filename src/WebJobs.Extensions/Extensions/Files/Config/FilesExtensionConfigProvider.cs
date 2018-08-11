@@ -6,6 +6,7 @@ using System.IO;
 using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.Files.Bindings;
+using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -17,11 +18,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Extensions.Files
     {
         private readonly IOptions<FilesOptions> _options;
         private readonly ILoggerFactory _loggerFactory;
+        private readonly IFileProcessorFactory _fileProcessorFactory;
 
-        public FilesExtensionConfigProvider(IOptions<FilesOptions> options, ILoggerFactory loggerFactory)
+        public FilesExtensionConfigProvider(IOptions<FilesOptions> options, ILoggerFactory loggerFactory, IFileProcessorFactory fileProcessorFactory)
         {
             _options = options;
             _loggerFactory = loggerFactory;
+            _fileProcessorFactory = fileProcessorFactory;
         }
 
         private FileInfo GetFileInfo(FileAttribute attribute)
@@ -62,7 +65,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Extensions.Files
 
             // Triggers
             var rule2 = context.AddBindingRule<FileTriggerAttribute>();
-            rule2.BindToTrigger<FileSystemEventArgs>(new FileTriggerAttributeBindingProvider(_options, _loggerFactory));
+            rule2.BindToTrigger<FileSystemEventArgs>(new FileTriggerAttributeBindingProvider(_options, _loggerFactory, _fileProcessorFactory));
 
             rule2.AddConverter<string, FileSystemEventArgs>(str => FileTriggerBinding.GetFileArgsFromString(str));
             rule2.AddConverter<FileSystemEventArgs, Stream>(args => File.OpenRead(args.FullPath));

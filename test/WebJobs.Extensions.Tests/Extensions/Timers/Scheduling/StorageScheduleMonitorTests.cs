@@ -9,6 +9,8 @@ using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Xunit;
 
@@ -19,7 +21,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
     {
         private const string TestTimerName = "TestProgram.TestTimer";
         private const string TestHostId = "testhostid";
-        private readonly JobHostOptions _hostOptions;
         private readonly StorageScheduleMonitor _scheduleMonitor;
 
         public StorageScheduleMonitorTests()
@@ -130,8 +131,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
                 .Build();
             var connStrProvider = new AmbientConnectionStringProvider(config);
             var lockContainerManager = new DistributedLockManagerContainerProvider();
+            ILoggerFactory loggerFactory = new LoggerFactory();
+            loggerFactory.AddProvider(new TestLoggerProvider());
 
-            return new StorageScheduleMonitor(new JobHostOptions(), lockContainerManager, new TestIdProvider(hostId), connStrProvider, new TestLogger(null));
+            return new StorageScheduleMonitor(lockContainerManager, new TestIdProvider(hostId), connStrProvider, loggerFactory);
         }
 
         private class TestIdProvider : Host.Executors.IHostIdProvider

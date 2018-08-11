@@ -5,7 +5,7 @@ using System;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
+namespace Microsoft.Azure.WebJobs.Extensions.Files
 {
     /// <summary>
     /// Context input for <see cref="IFileProcessorFactory"/>

@@ -3,7 +3,6 @@
 
 using System;
 using System.IO;
-using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Files
 {
@@ -24,8 +23,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files
             {
                 RootPath = Path.Combine(home, "data");
             }
-
-            ProcessorFactory = new DefaultFileProcessorFactory();
         }
 
         /// <summary>
@@ -33,11 +30,5 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files
         /// and created.
         /// </summary>
         public string RootPath { get; set; }
-
-        /// <summary>
-        /// Gets or sets the <see cref="IFileProcessorFactory"/> that will be used
-        /// to create <see cref="FileProcessor"/> instances.
-        /// </summary>
-        public IFileProcessorFactory ProcessorFactory { get; set; }
     }
 }

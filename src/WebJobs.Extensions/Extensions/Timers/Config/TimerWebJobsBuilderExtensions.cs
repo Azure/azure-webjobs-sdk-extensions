@@ -25,7 +25,9 @@ namespace Microsoft.Extensions.Hosting
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            builder.AddExtension<TimersExtensionConfigProvider>();
+            builder.AddExtension<TimersExtensionConfigProvider>()
+                .BindOptions<TimersOptions>();
+            builder.Services.AddSingleton<ScheduleMonitor, StorageScheduleMonitor>();
 
             return builder;
         }

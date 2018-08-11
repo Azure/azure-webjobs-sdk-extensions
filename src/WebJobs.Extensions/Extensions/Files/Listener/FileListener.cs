@@ -26,20 +26,22 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly IOptions<FilesOptions> _options;
         private readonly string _watchPath;
+        private readonly ILogger _logger;
+        private readonly IFileProcessorFactory _fileProcessorFactory;
         private ActionBlock<FileSystemEventArgs> _workQueue;
         private FileProcessor _processor;
         private System.Timers.Timer _cleanupTimer;
         private Random _rand = new Random();
         private FileSystemWatcher _watcher;
-        private readonly ILogger _logger;
         private bool _disposed;
 
-        public FileListener(IOptions<FilesOptions> options, FileTriggerAttribute attribute, ITriggeredFunctionExecutor triggerExecutor, ILogger logger)
+        public FileListener(IOptions<FilesOptions> options, FileTriggerAttribute attribute, ITriggeredFunctionExecutor triggerExecutor, ILogger logger, IFileProcessorFactory fileProcessorFactory)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _attribute = attribute ?? throw new ArgumentNullException(nameof(attribute));
             _triggerExecutor = triggerExecutor ?? throw new ArgumentNullException(nameof(triggerExecutor));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _fileProcessorFactory = fileProcessorFactory ?? throw new ArgumentNullException(nameof(fileProcessorFactory));
 
             _cancellationTokenSource = new CancellationTokenSource();
 
@@ -72,7 +74,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
             CreateFileWatcher();
 
             FileProcessorFactoryContext context = new FileProcessorFactoryContext(_options.Value, _attribute, _triggerExecutor, _logger);
-            _processor = _options.Value.ProcessorFactory.CreateFileProcessor(context);
+            _processor = _fileProcessorFactory.CreateFileProcessor(context);
 
             ExecutionDataflowBlockOptions options = new ExecutionDataflowBlockOptions
             {

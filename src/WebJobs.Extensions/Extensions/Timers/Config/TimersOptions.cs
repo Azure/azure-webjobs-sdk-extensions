@@ -8,10 +8,5 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     /// </summary>
     public class TimersOptions
     {
-        /// <summary>
-        /// Gets or sets the schedule monitor used to persist
-        /// schedule occurrences and monitor execution.
-        /// </summary>
-        public ScheduleMonitor ScheduleMonitor { get; set; }
     }
 }

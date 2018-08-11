@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
 using Microsoft.Azure.WebJobs.Files.Listeners;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
@@ -23,13 +24,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
         private readonly IOptions<FilesOptions> _options;
         private readonly IReadOnlyDictionary<string, Type> _bindingContract;
         private readonly BindingDataProvider _bindingDataProvider;
+        private readonly IFileProcessorFactory _fileProcessorFactory;
         private readonly ILogger _logger;
 
-        public FileTriggerBinding(IOptions<FilesOptions> options, ParameterInfo parameter, ILogger logger)
+        public FileTriggerBinding(IOptions<FilesOptions> options, ParameterInfo parameter, ILogger logger, IFileProcessorFactory fileProcessorFactory)
         {
             _options = options;
             _parameter = parameter;
             _logger = logger;
+            _fileProcessorFactory = fileProcessorFactory;
             _attribute = parameter.GetCustomAttribute<FileTriggerAttribute>(inherit: false);
             _bindingDataProvider = BindingDataProvider.FromTemplate(_attribute.Path);
             _bindingContract = CreateBindingContract();
@@ -83,7 +86,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             {
                 throw new ArgumentNullException("context");
             }
-            return Task.FromResult<IListener>(new FileListener(_options, _attribute, context.Executor, _logger));
+            return Task.FromResult<IListener>(new FileListener(_options, _attribute, context.Executor, _logger, _fileProcessorFactory));
         }
 
         public ParameterDescriptor ToParameterDescriptor()

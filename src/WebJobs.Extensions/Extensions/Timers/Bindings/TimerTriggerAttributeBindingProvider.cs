@@ -14,12 +14,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
         private readonly TimersOptions _options;
         private readonly INameResolver _nameResolver;
         private readonly ILogger _logger;
+        private readonly ScheduleMonitor _scheduleMonitor;
 
-        public TimerTriggerAttributeBindingProvider(TimersOptions options, INameResolver nameResolver, ILogger logger)
+        public TimerTriggerAttributeBindingProvider(TimersOptions options, INameResolver nameResolver, ILogger logger, ScheduleMonitor scheduleMonitor)
         {
             _options = options;
             _nameResolver = nameResolver;
             _logger = logger;
+            _scheduleMonitor = scheduleMonitor;
         }
 
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
@@ -44,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 
             TimerSchedule schedule = TimerSchedule.Create(timerTriggerAttribute, _nameResolver);
 
-            return Task.FromResult<ITriggerBinding>(new TimerTriggerBinding(parameter, timerTriggerAttribute, schedule, _options, _logger));
+            return Task.FromResult<ITriggerBinding>(new TimerTriggerBinding(parameter, timerTriggerAttribute, schedule, _options, _logger, _scheduleMonitor));
         }
     }
 }

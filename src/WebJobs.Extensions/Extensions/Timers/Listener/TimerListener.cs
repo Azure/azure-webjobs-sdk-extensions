@@ -30,7 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private bool _disposed;
         private TimeSpan _remainingInterval;
 
-        public TimerListener(TimerTriggerAttribute attribute, TimerSchedule schedule, string timerName, TimersOptions options, ITriggeredFunctionExecutor executor, ILogger logger)
+        public TimerListener(TimerTriggerAttribute attribute, TimerSchedule schedule, string timerName, TimersOptions options, ITriggeredFunctionExecutor executor, ILogger logger, ScheduleMonitor scheduleMonitor)
         {
             _attribute = attribute;
             _timerName = timerName;
@@ -39,7 +39,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             _logger = logger;
             _cancellationTokenSource = new CancellationTokenSource();
             _schedule = schedule;
-            ScheduleMonitor = _attribute.UseMonitor ? _options.ScheduleMonitor : null;
+            ScheduleMonitor = _attribute.UseMonitor ? scheduleMonitor : null;
         }
 
         internal static TimeSpan MaxTimerInterval

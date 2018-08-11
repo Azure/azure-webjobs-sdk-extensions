@@ -21,16 +21,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
         private readonly TimerSchedule _schedule;
         private readonly TimersOptions _options;
         private readonly ILogger _logger;
+        private readonly ScheduleMonitor _scheduleMonitor;
         private IReadOnlyDictionary<string, Type> _bindingContract;
         private string _timerName;
 
-        public TimerTriggerBinding(ParameterInfo parameter, TimerTriggerAttribute attribute, TimerSchedule schedule, TimersOptions options, ILogger logger)
+        public TimerTriggerBinding(ParameterInfo parameter, TimerTriggerAttribute attribute, TimerSchedule schedule, TimersOptions options, ILogger logger, ScheduleMonitor scheduleMonitor)
         {
             _attribute = attribute;
             _schedule = schedule;
             _parameter = parameter;
             _options = options;
             _logger = logger;
+            _scheduleMonitor = scheduleMonitor;
             _bindingContract = CreateBindingDataContract();
 
             MethodInfo methodInfo = (MethodInfo)parameter.Member;
@@ -56,9 +58,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             if (timerInfo == null)
             {
                 ScheduleStatus status = null;
-                if (_attribute.UseMonitor && _options.ScheduleMonitor != null)
+                if (_attribute.UseMonitor && _scheduleMonitor != null)
                 {
-                    status = await _options.ScheduleMonitor.GetStatusAsync(_timerName);
+                    status = await _scheduleMonitor.GetStatusAsync(_timerName);
                 }
                 timerInfo = new TimerInfo(_schedule, status);
             }
@@ -75,7 +77,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             {
                 throw new ArgumentNullException("context");
             }
-            return Task.FromResult<IListener>(new TimerListener(_attribute, _schedule, _timerName, _options, context.Executor, _logger));
+            return Task.FromResult<IListener>(new TimerListener(_attribute, _schedule, _timerName, _options, context.Executor, _logger, _scheduleMonitor));
         }
 
         public ParameterDescriptor ToParameterDescriptor()

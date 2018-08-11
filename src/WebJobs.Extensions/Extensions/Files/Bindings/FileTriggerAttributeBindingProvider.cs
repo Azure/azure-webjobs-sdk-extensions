@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Bindings;
+using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.Logging;
@@ -20,11 +21,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
     {
         private readonly IOptions<FilesOptions> _options;
         private readonly ILogger _logger;
+        private readonly IFileProcessorFactory _fileProcessorFactory;
 
-        public FileTriggerAttributeBindingProvider(IOptions<FilesOptions> options, ILoggerFactory loggerFactory)
+        public FileTriggerAttributeBindingProvider(IOptions<FilesOptions> options, ILoggerFactory loggerFactory, IFileProcessorFactory fileProcessorFactory)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _logger = loggerFactory?.CreateLogger(LogCategories.CreateTriggerCategory("File"));
+            _fileProcessorFactory = fileProcessorFactory ?? throw new ArgumentNullException(nameof(fileProcessorFactory));
         }
 
         /// <inheritdoc/>
@@ -51,7 +54,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                     "Can't bind FileTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            return Task.FromResult<ITriggerBinding>(new FileTriggerBinding(_options, parameter, _logger));
+            return Task.FromResult<ITriggerBinding>(new FileTriggerBinding(_options, parameter, _logger, _fileProcessorFactory));
         }
     }
 }

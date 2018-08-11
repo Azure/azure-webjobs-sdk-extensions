@@ -8,11 +8,12 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
+namespace Microsoft.Azure.WebJobs.Extensions.Files
 {
     /// <summary>
     /// Default file processor used by <see cref="FileTriggerAttribute"/>.

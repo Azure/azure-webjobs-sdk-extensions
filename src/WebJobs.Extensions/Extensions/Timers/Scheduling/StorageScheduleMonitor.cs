@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
+using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
@@ -20,7 +21,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     public class StorageScheduleMonitor : ScheduleMonitor
     {
         private const string HostContainerName = "azure-webjobs-hosts";
-        private readonly JobHostOptions _hostOptions;
         private readonly DistributedLockManagerContainerProvider _lockContainerProvider;
         private readonly IConnectionStringProvider _connectionStringProvider;
         private readonly JsonSerializer _serializer;
@@ -31,16 +31,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
-        /// <param name="hostOptions">The <see cref="JobHostOptions"/>.</param>
-        /// <param name="logger">The <see cref="ILogger"/>.</param>
-        public StorageScheduleMonitor(JobHostOptions hostOptions, DistributedLockManagerContainerProvider lockContainerProvider,
-            IHostIdProvider hostIdProvider, IConnectionStringProvider connectionStringProvider, ILogger logger)
+        /// <param name="lockContainerProvider"></param>
+        /// <param name="hostIdProvider"></param>
+        /// <param name="connectionStringProvider"></param>
+        /// <param name="loggerFactory"></param>
+        public StorageScheduleMonitor(DistributedLockManagerContainerProvider lockContainerProvider, IHostIdProvider hostIdProvider, 
+            IConnectionStringProvider connectionStringProvider, ILoggerFactory loggerFactory)
         {
-            _hostOptions = hostOptions ?? throw new ArgumentNullException(nameof(hostOptions));
             _lockContainerProvider = lockContainerProvider ?? throw new ArgumentNullException(nameof(lockContainerProvider));
             _connectionStringProvider = connectionStringProvider ?? throw new ArgumentNullException(nameof(connectionStringProvider));
             _hostIdProvider = hostIdProvider ?? throw new ArgumentNullException(nameof(hostIdProvider));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Timer"));
 
             JsonSerializerSettings settings = new JsonSerializerSettings
             {
@@ -77,6 +78,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                         CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
                         container = blobClient.GetContainerReference(HostContainerName);
                     }
+
                     string timerStatusDirectoryPath = string.Format("timers/{0}", hostId);
                     _timerStatusDirectory = container.GetDirectoryReference(timerStatusDirectoryPath);
                 }

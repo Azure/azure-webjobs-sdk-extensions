@@ -1,9 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using System.Threading;
-
-namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
+namespace Microsoft.Azure.WebJobs.Extensions.Files
 {
     /// <summary>
     /// Factory interface for creating <see cref="FileProcessor"/> instances. This factory pattern allows

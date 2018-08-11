@@ -5,6 +5,7 @@ using System;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.Files;
+using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.Extensions.Hosting
@@ -25,7 +26,9 @@ namespace Microsoft.Extensions.Hosting
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            builder.AddExtension<FilesExtensionConfigProvider>();
+            builder.AddExtension<FilesExtensionConfigProvider>()
+                .BindOptions<FilesOptions>();
+            builder.Services.AddSingleton<IFileProcessorFactory, DefaultFileProcessorFactory>();
 
             return builder;
         }
