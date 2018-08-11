@@ -25,6 +25,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         private readonly ILoggerFactory _loggerFactory = new LoggerFactory();
         private readonly CosmosDBOptions _options = new CosmosDBOptions { ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;" };
 
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsWithLeaseHostOptionsParameters
+            => ValidCosmosDBTriggerBindigsWithLeaseHostOptions.GetParameters();
+
+        public static IEnumerable<object[]> InvalidCosmosDBTriggerParameters
+        {
+            get { return InvalidCosmosDBTriggerBindigs.GetParameters(); }
+        }
+
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsWithAppSettingsParameters
+        {
+            get { return ValidCosmosDBTriggerBindigsWithAppSettings.GetParameters(); }
+        }
+
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsWithDatabaseAndCollectionSettingsParameters
+        {
+            get { return ValidCosmosDBTriggerBindingsWithDatabaseAndCollectionSettings.GetParameters(); }
+        }
+
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsDifferentConnectionsParameters
+        {
+            get { return ValidCosmosDBTriggerBindigsDifferentConnections.GetParameters(); }
+        }
+
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsWithEnvironmentParameters
+        {
+            get { return ValidCosmosDBTriggerBindigsWithEnvironment.GetParameters(); }
+        }
+
         [Theory]
         [MemberData(nameof(InvalidCosmosDBTriggerParameters))]
         public async Task InvalidParameters_Fail(ParameterInfo parameter)
@@ -190,34 +218,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
             Assert.Equal(new Uri("https://fromSettings"), binding.DocumentCollectionLocation.Uri);
             Assert.Equal("someLeasePrefix", binding.ChangeFeedHostOptions.LeasePrefix);
-        }
-
-        public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsWithLeaseHostOptionsParameters
-            => ValidCosmosDBTriggerBindigsWithLeaseHostOptions.GetParameters();
-
-        public static IEnumerable<object[]> InvalidCosmosDBTriggerParameters
-        {
-            get { return InvalidCosmosDBTriggerBindigs.GetParameters(); }
-        }
-
-        public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsWithAppSettingsParameters
-        {
-            get { return ValidCosmosDBTriggerBindigsWithAppSettings.GetParameters(); }
-        }
-
-        public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsWithDatabaseAndCollectionSettingsParameters
-        {
-            get { return ValidCosmosDBTriggerBindingsWithDatabaseAndCollectionSettings.GetParameters(); }
-        }
-
-        public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsDifferentConnectionsParameters
-        {
-            get { return ValidCosmosDBTriggerBindigsDifferentConnections.GetParameters(); }
-        }
-
-        public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsWithEnvironmentParameters
-        {
-            get { return ValidCosmosDBTriggerBindigsWithEnvironment.GetParameters(); }
         }
 
         private static ParameterInfo GetFirstParameter(Type type, string methodName)

@@ -15,14 +15,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
         private readonly LoggerFilterOptions _filter;
         private readonly Action<LogMessage> _logAction;
         private readonly Regex userCategoryRegex = new Regex(@"^Function\.\w+\.User$");
+        private readonly Dictionary<string, TestLogger> _loggerCache = new Dictionary<string, TestLogger>();
 
         public TestLoggerProvider(Action<LogMessage> logAction = null)
         {
             _filter = new LoggerFilterOptions();
             _logAction = logAction;
         }
-
-        private Dictionary<string, TestLogger> _loggerCache { get; } = new Dictionary<string, TestLogger>();
 
         public IList<TestLogger> CreatedLoggers => _loggerCache.Values.ToList();
 

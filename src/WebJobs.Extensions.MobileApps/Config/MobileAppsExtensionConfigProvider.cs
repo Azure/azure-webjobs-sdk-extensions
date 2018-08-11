@@ -23,8 +23,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
     {
         internal const string AzureWebJobsMobileAppUriName = "AzureWebJobsMobileAppUri";
         internal const string AzureWebJobsMobileAppApiKeyName = "AzureWebJobsMobileAppApiKey";
-        internal readonly ConcurrentDictionary<string, IMobileServiceClient> ClientCache = new ConcurrentDictionary<string, IMobileServiceClient>();
-
         private readonly INameResolver _nameResolver;
         private readonly IOptions<MobileAppsOptions> _options;
         private string _defaultApiKey;
@@ -37,10 +35,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
         {
             _options = options;
             _nameResolver = nameResolver;
-            this.ClientFactory = clientFactory;
+            ClientFactory = clientFactory;
         }
 
         internal IMobileServiceClientFactory ClientFactory { get; set; }
+
+        internal ConcurrentDictionary<string, IMobileServiceClient> ClientCache { get; } = new ConcurrentDictionary<string, IMobileServiceClient>();
 
         /// <inheritdoc />
         public void Initialize(ExtensionConfigContext context)

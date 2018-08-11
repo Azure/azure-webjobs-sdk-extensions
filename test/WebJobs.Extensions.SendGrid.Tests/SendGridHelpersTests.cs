@@ -133,7 +133,7 @@ namespace SendGridTests
             result = SendGridHelpers.CreateMessage(mail);
             p = result.Personalizations.Single();
 
-            Assert.Equal(1, p.Tos.Count);
+            Assert.Single(p.Tos);
             Assert.Equal("test2@acme.com", p.Tos[0].Email);
             Assert.Equal("Test Account 2", p.Tos[0].Name);
             Assert.Equal("test3@contoso.com", result.From.Email);

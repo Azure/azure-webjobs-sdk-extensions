@@ -31,13 +31,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
                 "IFileProcessorFactory",
                 "ScheduleMonitor",
                 "ScheduleStatus",
-                "StreamValueBinder",
                 "TimerInfo",
                 "TimerWebJobsBuilderExtensions",
                 "TimerSchedule",
                 "TimersOptions",
                 "TimerTriggerAttribute",
-                "ValueBinder",
                 "WeeklySchedule",
                 "ExtensionsWebJobsStartup"
             };

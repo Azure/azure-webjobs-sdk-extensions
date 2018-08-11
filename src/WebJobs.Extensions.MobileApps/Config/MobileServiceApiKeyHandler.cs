@@ -14,18 +14,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps
     internal class MobileServiceApiKeyHandler : DelegatingHandler
     {
         internal const string ZumoApiKeyHeaderName = "ZUMO-API-KEY";
-        internal readonly string ApiKey;
 
         public MobileServiceApiKeyHandler(string apiKey)
         {
             ApiKey = apiKey;
         }
 
+        internal string ApiKey { get; }
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             if (request == null)
             {
-                throw new ArgumentNullException("request");
+                throw new ArgumentNullException(nameof(request));
             }
 
             request.Headers.Add(ZumoApiKeyHeaderName, ApiKey);

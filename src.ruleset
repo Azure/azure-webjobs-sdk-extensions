@@ -40,6 +40,7 @@
     <Rule Id="SA1204" Action="None" />
     <Rule Id="SA1202" Action="None" />
     <Rule Id="SA1616" Action="None" />
+    <Rule Id="SA1402" Action="None" />
   </Rules>
   <Rules AnalyzerId="xunit.analyzers" RuleNamespace="xunit.analyzers">
     <Rule Id="xUnit2009" Action="None" />

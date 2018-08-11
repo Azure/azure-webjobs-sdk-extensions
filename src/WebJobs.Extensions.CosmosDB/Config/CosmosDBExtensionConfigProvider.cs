@@ -26,7 +26,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
     internal class CosmosDBExtensionConfigProvider : IExtensionConfigProvider
     {
         internal const string AzureWebJobsCosmosDBConnectionStringName = "AzureWebJobsCosmosDBConnectionString";
-        internal readonly ConcurrentDictionary<string, ICosmosDBService> ClientCache = new ConcurrentDictionary<string, ICosmosDBService>();
         private readonly ICosmosDBServiceFactory _cosmosDBServiceFactory;
         private readonly INameResolver _nameResolver;
         private readonly CosmosDBOptions _options;
@@ -40,6 +39,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             _options = options.Value;
             _loggerFactory = loggerFactory;
         }
+
+        internal ConcurrentDictionary<string, ICosmosDBService> ClientCache { get; } = new ConcurrentDictionary<string, ICosmosDBService>();
 
         /// <inheritdoc />
         public void Initialize(ExtensionConfigContext context)
