@@ -5,9 +5,9 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Logging;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
@@ -22,10 +22,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     {
         private const string HostContainerName = "azure-webjobs-hosts";
         private readonly DistributedLockManagerContainerProvider _lockContainerProvider;
-        private readonly IConnectionStringProvider _connectionStringProvider;
         private readonly JsonSerializer _serializer;
         private readonly ILogger _logger;
         private readonly IHostIdProvider _hostIdProvider;
+        private readonly IConfiguration _configuration;
         private CloudBlobDirectory _timerStatusDirectory;
 
         /// <summary>
@@ -33,13 +33,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// </summary>
         /// <param name="lockContainerProvider"></param>
         /// <param name="hostIdProvider"></param>
-        /// <param name="connectionStringProvider"></param>
+        /// <param name="configuration"></param>
         /// <param name="loggerFactory"></param>
         public StorageScheduleMonitor(DistributedLockManagerContainerProvider lockContainerProvider, IHostIdProvider hostIdProvider, 
-            IConnectionStringProvider connectionStringProvider, ILoggerFactory loggerFactory)
+            IConfiguration configuration, ILoggerFactory loggerFactory)
         {
             _lockContainerProvider = lockContainerProvider ?? throw new ArgumentNullException(nameof(lockContainerProvider));
-            _connectionStringProvider = connectionStringProvider ?? throw new ArgumentNullException(nameof(connectionStringProvider));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _hostIdProvider = hostIdProvider ?? throw new ArgumentNullException(nameof(hostIdProvider));
             _logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Timer"));
 
@@ -74,7 +74,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                     }
                     else
                     {
-                        CloudStorageAccount storageAccount = CloudStorageAccount.Parse(_connectionStringProvider.GetConnectionString(ConnectionStringNames.Storage));
+                        var connectionString = _configuration.GetWebJobsConnectionString(ConnectionStringNames.Storage);
+                        CloudStorageAccount storageAccount = CloudStorageAccount.Parse(connectionString);
                         CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
                         container = blobClient.GetContainerReference(HostContainerName);
                     }
