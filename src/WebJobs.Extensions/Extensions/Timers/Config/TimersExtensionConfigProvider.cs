@@ -20,7 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Extensions.Timers
         private readonly INameResolver _nameResolver;
         private readonly ScheduleMonitor _scheduleMonitor;
 
-        public TimersExtensionConfigProvider(IOptions<TimersOptions> options,ILoggerFactory loggerFactory,
+        public TimersExtensionConfigProvider(IOptions<TimersOptions> options, ILoggerFactory loggerFactory,
             INameResolver nameResolver, ScheduleMonitor scheduleMonitor)
         {
             _options = options;

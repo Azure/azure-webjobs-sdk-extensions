@@ -25,7 +25,9 @@ namespace Microsoft.Extensions.Hosting
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            builder.AddExtension<HttpExtensionConfigProvider>();
+            builder.AddExtension<HttpExtensionConfigProvider>()
+                .BindOptions<HttpOptions>();
+
             builder.Services.AddSingleton<IBindingProvider, HttpDirectRequestBindingProvider>();
 
             return builder;
