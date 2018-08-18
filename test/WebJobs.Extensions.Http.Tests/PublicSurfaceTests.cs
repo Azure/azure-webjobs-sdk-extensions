@@ -19,7 +19,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
             {
                 "HttpExtensionConstants",
                 "AuthorizationLevel",
-                "HttpRequestManager",
+                "HttpThrottleMiddleware",
                 "HttpTriggerAttribute",
                 "HttpBindingApplicationBuilderExtension",
                 "HttpBindingServiceCollectionExtensions",
