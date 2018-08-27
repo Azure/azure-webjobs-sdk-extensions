@@ -55,10 +55,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             DocumentCollectionInfo documentCollectionLocation;
             DocumentCollectionInfo leaseCollectionLocation;
             ChangeFeedHostOptions leaseHostOptions = ResolveLeaseOptions(attribute);
-            int? maxItemCount = null;
+            ChangeFeedOptions changeFeedOptions = new ChangeFeedOptions();
+            changeFeedOptions.StartFromBeginning = attribute.StartFromBeginning;
             if (attribute.MaxItemsPerInvocation > 0)
             {
-                maxItemCount = attribute.MaxItemsPerInvocation;
+                changeFeedOptions.MaxItemCount = attribute.MaxItemsPerInvocation;
             }
 
             try
@@ -144,7 +145,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
                 throw new InvalidOperationException(string.Format("Cannot create Collection Information for {0} in database {1} with lease {2} in database {3} : {4}", attribute.CollectionName, attribute.DatabaseName, attribute.LeaseCollectionName, attribute.LeaseDatabaseName, ex.Message), ex);
             }
 
-            return new CosmosDBTriggerBinding(parameter, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions, maxItemCount, _trace);
+            return new CosmosDBTriggerBinding(parameter, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions, changeFeedOptions, _trace);
         }
 
         internal static TimeSpan ResolveTimeSpanFromMilliseconds(string nameOfProperty, TimeSpan baseTimeSpan, int? attributeValue)
