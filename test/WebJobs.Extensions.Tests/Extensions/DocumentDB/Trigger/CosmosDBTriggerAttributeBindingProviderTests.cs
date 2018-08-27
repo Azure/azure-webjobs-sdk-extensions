@@ -151,9 +151,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Trigger
             Assert.Equal(binding.TriggerValueType, typeof(IReadOnlyList<Document>));
             Assert.Equal(binding.DocumentCollectionLocation.Uri, new Uri("https://fromSettings"));
             Assert.Equal(binding.ChangeFeedHostOptions.LeasePrefix, "someLeasePrefix");
+            Assert.Null(binding.ChangeFeedOptions.MaxItemCount);
+            Assert.False(binding.ChangeFeedOptions.StartFromBeginning);
         }
 
-        [Fact]
+        [Theory]
+        [MemberData(nameof(ValidCosmosDBTriggerBindigsWithChangeFeedOptionsParameters))]
+        public async Task ValidChangeFeedOptions_Succeed(ParameterInfo parameter)
+        {
+            var testTrace = new TestTraceWriter(TraceLevel.Verbose);
+            var nameResolver = new TestNameResolver();
+            nameResolver.Values[DocumentDBConfiguration.AzureWebJobsDocumentDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
+            nameResolver.Values["CosmosDBConnectionString"] = "AccountEndpoint=https://fromSettings;AccountKey=someKey;";
+            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, testTrace, CreateConfiguration());
+            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+            Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
+            Assert.Equal(new Uri("https://fromSettings"), binding.DocumentCollectionLocation.Uri);
+            Assert.Equal(10, binding.ChangeFeedOptions.MaxItemCount);
+            Assert.True(binding.ChangeFeedOptions.StartFromBeginning);
+        }
+
+    [Fact]
         public void TryAndConvertToDocumentList_Fail()
         {
             IReadOnlyList<Document> convertedValue;
@@ -220,6 +238,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Trigger
         public static IEnumerable<ParameterInfo[]> ValidCosmosDBTriggerBindigsWithLeaseHostOptionsParameters
         {
             get { return ValidCosmosDBTriggerBindigsWithLeaseHostOptions.GetParameters(); }
+        }
+
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsWithChangeFeedOptionsParameters
+        {
+            get { return ValidCosmosDBTriggerBindigsWithChangeFeedOptions.GetParameters(); }
         }
 
         private static ParameterInfo GetFirstParameter(Type type, string methodName)
@@ -317,6 +340,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.DocumentDB.Trigger
                 {
                     new[] { GetFirstParameter(type, "Func1") },
                     new[] { GetFirstParameter(type, "Func2") }
+                };
+            }
+        }
+
+        private static class ValidCosmosDBTriggerBindigsWithChangeFeedOptions
+        {
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", MaxItemsPerInvocation = 10, StartFromBeginning = true)] IReadOnlyList<Document> docs)
+            {
+            }
+            public static IEnumerable<ParameterInfo[]> GetParameters()
+            {
+                var type = typeof(ValidCosmosDBTriggerBindigsWithChangeFeedOptions);
+                return new[]
+                {
+                    new[] { GetFirstParameter(type, "Func1") }
                 };
             }
         }

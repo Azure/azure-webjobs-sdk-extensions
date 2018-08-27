@@ -9,6 +9,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
     using System.Threading.Tasks;
     using Microsoft.Azure.Documents;
     using Microsoft.Azure.Documents.ChangeFeedProcessor;
+    using Microsoft.Azure.Documents.Client;
     using Microsoft.Azure.WebJobs.Host;
     using Microsoft.Azure.WebJobs.Host.Bindings;
     using Microsoft.Azure.WebJobs.Host.Listeners;
@@ -24,9 +25,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         private readonly ChangeFeedHostOptions _leaseHostOptions;
         private readonly TraceWriter _trace;
         private readonly IBindingDataProvider _bindingDataProvider;
-        private readonly int? _maxItemsPerCall;
+        private readonly ChangeFeedOptions _changeFeedOptions;
 
-        public CosmosDBTriggerBinding(ParameterInfo parameter, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, int? maxItemsPerCall, TraceWriter trace)
+        public CosmosDBTriggerBinding(ParameterInfo parameter, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, ChangeFeedOptions changeFeedOptions, TraceWriter trace)
         {
             _bindingDataProvider = BindingDataProvider.FromType(parameter.ParameterType);
             _documentCollectionLocation = documentCollectionLocation;
@@ -34,7 +35,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             _leaseHostOptions = leaseHostOptions;
             _parameter = parameter;
             _trace = trace;
-            _maxItemsPerCall = maxItemsPerCall;
+            _changeFeedOptions = changeFeedOptions;
         }
 
         /// <summary>
@@ -47,6 +48,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         internal DocumentCollectionInfo LeaseCollectionLocation => _leaseCollectionLocation;
 
         internal ChangeFeedHostOptions ChangeFeedHostOptions => _leaseHostOptions;
+
+        internal ChangeFeedOptions ChangeFeedOptions => _changeFeedOptions;
 
         public IReadOnlyDictionary<string, Type> BindingDataContract
         {
@@ -72,7 +75,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             {
                 throw new ArgumentNullException("context", "Missing listener context");
             }
-            return Task.FromResult<IListener>(new CosmosDBTriggerListener(context.Executor, this._documentCollectionLocation, this._leaseCollectionLocation, this._leaseHostOptions, this._maxItemsPerCall, this._trace));
+            return Task.FromResult<IListener>(new CosmosDBTriggerListener(context.Executor, this._documentCollectionLocation, this._leaseCollectionLocation, this._leaseHostOptions, this._changeFeedOptions, this._trace));
         }
 
         /// <summary>

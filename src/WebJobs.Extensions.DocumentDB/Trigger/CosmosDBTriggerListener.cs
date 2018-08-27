@@ -16,6 +16,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
     internal class CosmosDBTriggerListener : IListener, IChangeFeedObserverFactory
     {
+        private const int ListenerNotRegistered = 0;
+        private const int ListenerRegistering = 1;
+        private const int ListenerRegistered = 2;
+
         private readonly ITriggeredFunctionExecutor executor;
         private readonly TraceWriter trace;
         private readonly DocumentCollectionInfo monitorCollection;
@@ -24,9 +28,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         private readonly ChangeFeedOptions changeFeedOptions;
         private readonly ChangeFeedHostOptions leaseHostOptions;
         private ChangeFeedEventHost host;
-        private bool listenerStarted = false;
+        private int _listenerStatus;
 
-        public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, int? maxItemCount, TraceWriter trace)
+        public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, ChangeFeedOptions changeFeedOptions, TraceWriter trace)
         {
             this.trace = trace;
             this.executor = executor;
@@ -35,13 +39,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             this.monitorCollection = documentCollectionLocation;
             this.leaseCollection = leaseCollectionLocation;
             this.leaseHostOptions = leaseHostOptions;
-
-            ChangeFeedOptions changeFeedOptions = new ChangeFeedOptions();
-            if (maxItemCount.HasValue)
-            {
-                changeFeedOptions.MaxItemCount = maxItemCount;
-            }
-
             this.changeFeedOptions = changeFeedOptions;
         }
 
@@ -62,9 +59,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            if (this.listenerStarted)
+            if (Interlocked.CompareExchange(ref this._listenerStatus, ListenerRegistering, ListenerNotRegistered) != ListenerNotRegistered)
             {
-                throw new InvalidOperationException("The listener has already been started.");
+                throw new InvalidOperationException("The listener has already been started or is starting.");
             }
 
             this.InitializeHost();
@@ -72,7 +69,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
             try
             {
                 await this.host.RegisterObserverFactoryAsync(this);
-                this.listenerStarted = true;
+                Interlocked.CompareExchange(ref this._listenerStatus, ListenerRegistered, ListenerRegistering);
             }
             catch (DocumentClientException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
@@ -87,10 +84,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.DocumentDB
         {
             try
             {
-                if (this.host != null && this.listenerStarted)
+                if (this.host != null)
                 {
                     await this.host.UnregisterObserversAsync();
-                    this.listenerStarted = false;
+                    this._listenerStatus = ListenerNotRegistered;
                 }
             }
             catch (Exception ex)
