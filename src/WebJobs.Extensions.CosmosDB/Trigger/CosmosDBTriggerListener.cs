@@ -16,6 +16,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
     internal class CosmosDBTriggerListener : IListener, IChangeFeedObserverFactory
     {
+        private const int ListenerNotRegistered = 0;
+        private const int ListenerRegistering = 1;
+        private const int ListenerRegistered = 2;
+
         private readonly ITriggeredFunctionExecutor _executor;
         private readonly ILogger _logger;
         private readonly DocumentCollectionInfo _monitorCollection;
@@ -24,9 +28,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly ChangeFeedOptions _changeFeedOptions;
         private readonly ChangeFeedHostOptions _leaseHostOptions;
         private ChangeFeedEventHost _host;
-        private bool _listenerStarted = false;
+        private int _listenerStatus;
 
-        public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, int? maxItemCount, ILogger logger)
+        public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, ChangeFeedOptions changeFeedOptions, ILogger logger)
         {
             this._logger = logger;
             this._executor = executor;
@@ -35,13 +39,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             this._monitorCollection = documentCollectionLocation;
             this._leaseCollection = leaseCollectionLocation;
             this._leaseHostOptions = leaseHostOptions;
-
-            ChangeFeedOptions changeFeedOptions = new ChangeFeedOptions();
-            if (maxItemCount.HasValue)
-            {
-                changeFeedOptions.MaxItemCount = maxItemCount;
-            }
-
             this._changeFeedOptions = changeFeedOptions;
         }
 
@@ -62,9 +59,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            if (this._listenerStarted)
+            if (Interlocked.CompareExchange(ref this._listenerStatus, ListenerRegistering, ListenerNotRegistered) != ListenerNotRegistered)
             {
-                throw new InvalidOperationException("The listener has already been started.");
+                throw new InvalidOperationException("The listener has already been started or is starting.");
             }
 
             this.InitializeHost();
@@ -72,7 +69,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             try
             {
                 await this._host.RegisterObserverFactoryAsync(this);
-                this._listenerStarted = true;
+                Interlocked.CompareExchange(ref this._listenerStatus, ListenerRegistered, ListenerRegistering);
             }
             catch (DocumentClientException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
@@ -87,10 +84,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         {
             try
             {
-                if (this._host != null && this._listenerStarted)
+                if (this._host != null)
                 {
                     await this._host.UnregisterObserversAsync();
-                    this._listenerStarted = false;
+                    this._listenerStatus = ListenerNotRegistered;
                 }
             }
             catch (Exception ex)

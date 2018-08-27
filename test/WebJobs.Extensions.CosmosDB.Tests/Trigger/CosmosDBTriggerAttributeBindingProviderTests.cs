@@ -28,6 +28,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsWithLeaseHostOptionsParameters
             => ValidCosmosDBTriggerBindigsWithLeaseHostOptions.GetParameters();
 
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsWithChangeFeedOptionsParameters
+            => ValidCosmosDBTriggerBindigsWithChangeFeedOptions.GetParameters();
+
         public static IEnumerable<object[]> InvalidCosmosDBTriggerParameters
         {
             get { return InvalidCosmosDBTriggerBindigs.GetParameters(); }
@@ -218,6 +221,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
             Assert.Equal(new Uri("https://fromSettings"), binding.DocumentCollectionLocation.Uri);
             Assert.Equal("someLeasePrefix", binding.ChangeFeedHostOptions.LeasePrefix);
+            Assert.Null(binding.ChangeFeedOptions.MaxItemCount);
+            Assert.False(binding.ChangeFeedOptions.StartFromBeginning);
+        }
+
+        [Theory]
+        [MemberData(nameof(ValidCosmosDBTriggerBindigsWithChangeFeedOptionsParameters))]
+        public async Task ValidChangeFeedOptions_Succeed(ParameterInfo parameter)
+        {
+            var nameResolver = new TestNameResolver();
+            nameResolver.Values[CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName] = "AccountEndpoint=https://fromEnvironment;AccountKey=someKey;";
+            nameResolver.Values["CosmosDBConnectionString"] = "AccountEndpoint=https://fromSettings;AccountKey=someKey;";
+
+            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+
+            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+
+            Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
+            Assert.Equal(new Uri("https://fromSettings"), binding.DocumentCollectionLocation.Uri);
+            Assert.Equal(10, binding.ChangeFeedOptions.MaxItemCount);
+            Assert.True(binding.ChangeFeedOptions.StartFromBeginning);
         }
 
         private static ParameterInfo GetFirstParameter(Type type, string methodName)
@@ -251,6 +274,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 {
                     new[] { GetFirstParameter(type, "Func1") },
                     new[] { GetFirstParameter(type, "Func2") }
+                };
+            }
+        }
+
+        private static class ValidCosmosDBTriggerBindigsWithChangeFeedOptions
+        {
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", MaxItemsPerInvocation = 10, StartFromBeginning = true)] IReadOnlyList<Document> docs)
+            {
+            }
+
+            public static IEnumerable<ParameterInfo[]> GetParameters()
+            {
+                var type = typeof(ValidCosmosDBTriggerBindigsWithChangeFeedOptions);
+
+                return new[]
+                {
+                    new[] { GetFirstParameter(type, "Func1") }
                 };
             }
         }
