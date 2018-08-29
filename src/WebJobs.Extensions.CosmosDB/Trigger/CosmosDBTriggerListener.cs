@@ -59,25 +59,46 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            if (Interlocked.CompareExchange(ref this._listenerStatus, ListenerRegistering, ListenerNotRegistered) != ListenerNotRegistered)
+            int previousStatus = Interlocked.CompareExchange(ref this._listenerStatus, ListenerRegistering, ListenerNotRegistered);
+
+            if (previousStatus == ListenerRegistering)
             {
-                throw new InvalidOperationException("The listener has already been started or is starting.");
+                throw new InvalidOperationException("The listener is already starting.");
+            }
+            else if (previousStatus == ListenerRegistered)
+            {
+                throw new InvalidOperationException("The listener has already started.");
             }
 
             this.InitializeHost();
 
             try
             {
-                await this._host.RegisterObserverFactoryAsync(this);
+                await RegisterObserverFactoryAsync();
                 Interlocked.CompareExchange(ref this._listenerStatus, ListenerRegistered, ListenerRegistering);
             }
-            catch (DocumentClientException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            catch (Exception ex)
             {
-                // Throw a custom error so that it's easier to decipher.
-                string message = $"Either the source collection '{_monitorCollection.CollectionName}' (in database '{_monitorCollection.DatabaseName}')  or the lease collection '{_leaseCollection.CollectionName}' (in database '{_leaseCollection.DatabaseName}') does not exist. Both collections must exist before the listener starts. To automatically create the lease collection, set '{nameof(CosmosDBTriggerAttribute.CreateLeaseCollectionIfNotExists)}' to 'true'.";
-                this._host = null;
-                throw new InvalidOperationException(message, ex);
+                // Reset to NotRegistered
+                this._listenerStatus = ListenerNotRegistered;
+
+                // Throw a custom error if NotFound.
+                if (ex is DocumentClientException docEx && docEx.StatusCode == HttpStatusCode.NotFound)
+                {
+                    // Throw a custom error so that it's easier to decipher.
+                    string message = $"Either the source collection '{_monitorCollection.CollectionName}' (in database '{_monitorCollection.DatabaseName}')  or the lease collection '{_leaseCollection.CollectionName}' (in database '{_leaseCollection.DatabaseName}') does not exist. Both collections must exist before the listener starts. To automatically create the lease collection, set '{nameof(CosmosDBTriggerAttribute.CreateLeaseCollectionIfNotExists)}' to 'true'.";
+                    this._host = null;
+                    throw new InvalidOperationException(message, ex);
+                }
+
+                throw;
             }
+        }
+
+        // For test mocking
+        internal virtual Task RegisterObserverFactoryAsync()
+        {
+            return this._host.RegisterObserverFactoryAsync(this);
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
@@ -100,10 +121,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         {
             if (this._host == null)
             {
-                this._host = new ChangeFeedEventHost(this._hostName, 
-                    this._monitorCollection, 
-                    this._leaseCollection, 
-                    this._changeFeedOptions, 
+                this._host = new ChangeFeedEventHost(this._hostName,
+                    this._monitorCollection,
+                    this._leaseCollection,
+                    this._changeFeedOptions,
                     this._leaseHostOptions);
             }
         }
