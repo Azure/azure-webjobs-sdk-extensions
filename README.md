@@ -237,18 +237,21 @@ public static void MobileTableSample(
     }
 }
 ```
-### DocumentDB
+### CosmosDB
 
-Use an [Azure DocumentDB](https://azure.microsoft.com/en-us/services/documentdb/) binding to easily create, read, and update JSON documents from a WebJob. This extension lives in **Microsoft.Azure.WebJobs.Extensions.DocumentDB** nuget package. To configure the binding, add the DocumentDB connection string as an app setting or environment variable using the setting name `AzureWebJobsDocumentDBConnectionString`.
+Use an [Azure CosmosDB](https://azure.microsoft.com/en-us/services/documentdb/) binding to easily create, read, and update JSON documents from a WebJob. This extension lives in **Microsoft.Azure.WebJobs.Extensions.CosmosDB** nuget package. To configure the binding, add the DocumentDB connection string as an app setting or environment variable using the setting name `AzureWebJobsDocumentDBConnectionString`.
 
 By default, the collection and database must exist before the binding runs or it will throw an Exception. You can configure the binding to automatically create your datatabase and collection by setting `CreateIfNotExists` to true. This property only applies to `out` parameters. For input (lookup) scenarios, if the database or collection do not exist, the parameter is returned as `null`. To define a partition key for automatically-created collections, set the `PartitionKey` property. To control the throughput of the collection, set the `CollectionThroughput` property. For more information on partition keys and throughput, see [Partitioning and scaling in Azure DocumentDB](https://azure.microsoft.com/en-us/documentation/articles/documentdb-partition-data/).
 
 In this example, the `newItem` object is upserted into the `ItemCollection` collection of the `ItemDb` DocumentDB database. The collection will be automatically created if it does not exist, with a partition key of `/mypartition` and a throughput of `12000`.
 
 ```csharp
+//... 
+using Microsoft.Azure.WebJobs.Extensions.CosmosDB; 
+
 public static void InsertDocument(
     [QueueTrigger("sample")] QueueData trigger,
-    [DocumentDB("ItemDb", "ItemCollection", CreateIfNotExists = true, PartitionKey = "/mypartition", CollectionThroughput = 12000)] out ItemDoc newItem)
+    [CosmosDB("ItemDb", "ItemCollection", CreateIfNotExists = true, PartitionKey = "/mypartition", CollectionThroughput = 12000)] out ItemDoc newItem)
 {
     newItem = new ItemDoc()
     {
@@ -260,9 +263,12 @@ public static void InsertDocument(
 The following sample performs a lookup based on the data in the queue trigger. The `DocumentId` and `PartitionKey` properties value of the `QueueData` object are used to query the `ItemCollection` document collection. The `PartitionKey` property is optional and does not need to be specified unless your collection has a partition key. If the document exists, it is provided in the `item` parameter. If not, the `item` parameter will be `null`. Inside the method, the `item` object is changed. This change is automatically sent back to the document collection when the method exits.
 
 ```csharp
+//... 
+using Microsoft.Azure.WebJobs.Extensions.CosmosDB; 
+
 public static void ReadDocument(
     [QueueTrigger("sample")] QueueData trigger,
-    [DocumentDB("ItemDb", "ItemCollection", Id = "{DocumentId}", PartitionKey = "{PartitionKey}")] JObject item)
+    [CosmosDB("ItemDb", "ItemCollection", Id = "{DocumentId}", PartitionKey = "{PartitionKey}")] JObject item)
 {
     item["text"] = "Text changed!";
 }
