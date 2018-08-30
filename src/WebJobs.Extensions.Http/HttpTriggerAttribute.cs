@@ -67,10 +67,5 @@ namespace Microsoft.Azure.WebJobs
         /// Gets the authorization level for the function.
         /// </summary>
         public AuthorizationLevel AuthLevel { get; private set; }
-
-        /// <summary>
-        /// Gets or sets the WebHook type, if this function represents a WebHook.
-        /// </summary>
-        public string WebHookType { get; set; }
     }
 }
