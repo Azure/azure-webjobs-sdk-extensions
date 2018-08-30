@@ -128,6 +128,7 @@
       <HintPath>..\..\packages\System.Runtime.InteropServices.RuntimeInformation.4.3.0\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Security.Cryptography.Algorithms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\..\packages\System.Security.Cryptography.Algorithms.4.3.0\lib\net46\System.Security.Cryptography.Algorithms.dll</HintPath>
       <Private>True</Private>
@@ -170,9 +171,14 @@
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="AuthorizationLevel.cs" />
+    <Compile Include="ClaimsIdentitySlim.cs" />
+    <Compile Include="ClaimSlim.cs" />
+    <Compile Include="ClaimsPrincipalBindingProvider.cs" />
+    <Compile Include="ClaimsPrincipalHelper.cs" />
     <Compile Include="Config\HttpExtensionConfiguration.cs" />
     <Compile Include="Config\HttpJobHostConfigurationExtensions.cs" />
     <Compile Include="Extensions\HttpRequestMessageExtensions.cs" />
+    <Compile Include="HttpConstants.cs" />
     <Compile Include="HttpDirectRequestBindingProvider.cs" />
     <Compile Include="HttpExtensionConstants.cs" />
     <Compile Include="Extensions\IDictionaryExtensions.cs" />

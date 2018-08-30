@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
@@ -13,6 +14,7 @@ using Microsoft.WindowsAzure.Storage.Blob;
 using Xunit;
 using Newtonsoft.Json;
 using System.Text;
+using System.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 {
@@ -173,12 +175,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             {
                 blob = headers["testValue"];
             }
-                        
+
             public static Task<string> TestResponse(
                 [HttpTrigger("get", "post")] HttpRequestMessage req)
             {
                 // Return value becomes the HttpResponseMessage.
-                return Task.FromResult("test-response"); 
+                return Task.FromResult("test-response");
             }
 
             // Test that we can bind to both a Poco and the direct request message
