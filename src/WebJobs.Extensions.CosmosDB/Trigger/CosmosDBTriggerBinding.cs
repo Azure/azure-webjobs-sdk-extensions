@@ -27,7 +27,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly ILogger _logger;
         private readonly IReadOnlyDictionary<string, Type> _emptyBindingContract = new Dictionary<string, Type>();
         private readonly IReadOnlyDictionary<string, object> _emptyBindingData = new Dictionary<string, object>();
-        private readonly int? _maxItemsPerCall;
 
         public CosmosDBTriggerBinding(ParameterInfo parameter, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, ChangeFeedOptions changeFeedOptions, ILogger logger)
         {
