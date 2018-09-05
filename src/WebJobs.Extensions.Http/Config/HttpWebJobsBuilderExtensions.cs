@@ -33,6 +33,7 @@ namespace Microsoft.Extensions.Hosting
                 .BindOptions<HttpOptions>();
 
             builder.Services.AddSingleton<IBindingProvider, HttpDirectRequestBindingProvider>();
+            builder.Services.AddSingleton<IBindingProvider, ClaimsPrincipalBindingProvider>();
 
             // Compatibility shim configuration and services
             builder.Services.TryAddSingleton<IContentNegotiator, DefaultContentNegotiator>();
