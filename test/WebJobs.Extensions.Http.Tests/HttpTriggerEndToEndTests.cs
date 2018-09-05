@@ -138,12 +138,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             {
                 blob = headers["testValue"];
             }
-                        
+
             public static Task<string> TestResponse(
                 [HttpTrigger("get", "post")] HttpRequest req)
             {
                 // Return value becomes the HttpResponseMessage.
-                return Task.FromResult("test-response"); 
+                return Task.FromResult("test-response");
             }
         }
     }

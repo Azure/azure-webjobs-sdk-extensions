@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
+using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,6 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
     {
         internal const string HttpQueryKey = "Query";
         internal const string HttpHeadersKey = "Headers";
+        internal const string IdentitiesKey = "Identities";
 
         // Name of binding data slot where we place the full HttpRequestMessage
         internal const string RequestBindingName = "$request";
@@ -96,8 +98,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             private readonly bool _isUserTypeBinding;
             private readonly Dictionary<string, Type> _bindingDataContract;
             private readonly Action<HttpRequest, object> _responseHook;
+            private readonly bool _isEasyAuthEnabled;
 
-            public HttpTriggerBinding(HttpTriggerAttribute attribute, ParameterInfo parameter, bool isUserTypeBinding, Action<HttpRequest, object> responseHook = null)
+            public HttpTriggerBinding(HttpTriggerAttribute attribute, ParameterInfo parameter, bool isUserTypeBinding, Action<HttpRequest, object> responseHook = null, bool isEasyAuthEnabled = false)
             {
                 _responseHook = responseHook;
                 _parameter = parameter;
@@ -113,6 +116,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 }
 
                 _bindingDataContract = GetBindingDataContract(attribute, parameter);
+                _isEasyAuthEnabled = isEasyAuthEnabled;
             }
 
             public IReadOnlyDictionary<string, Type> BindingDataContract
@@ -165,7 +169,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 aggregateBindingData[RequestBindingName] = request;
 
                 // Apply additional binding data coming from request route, query params, etc.
-                var requestBindingData = await GetRequestBindingDataAsync(request, _bindingDataContract);
+                var requestBindingData = await GetRequestBindingDataAsync(request, _bindingDataContract, _isEasyAuthEnabled);
                 aggregateBindingData.AddRange(requestBindingData);
 
                 // apply binding data to the user type
@@ -280,10 +284,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     aggregateDataContract.Add(HttpQueryKey, typeof(IDictionary<string, string>));
                 }
 
+                if (!aggregateDataContract.ContainsKey(IdentitiesKey))
+                {
+                    aggregateDataContract.Add(IdentitiesKey, typeof(JObject[]));
+                }
+
                 return aggregateDataContract;
             }
 
-            internal static async Task<IReadOnlyDictionary<string, object>> GetRequestBindingDataAsync(HttpRequest request, Dictionary<string, Type> bindingDataContract = null)
+            internal static async Task<IReadOnlyDictionary<string, object>> GetRequestBindingDataAsync(HttpRequest request, Dictionary<string, Type> bindingDataContract = null, bool isEasyAuthEnabled = false)
             {
                 // apply binding data from request body if present
                 var bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
@@ -337,6 +346,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 if (!bindingData.ContainsKey(HttpHeadersKey))
                 {
                     bindingData[HttpHeadersKey] = request.Headers.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString(), StringComparer.OrdinalIgnoreCase);
+                }
+
+                if (!bindingData.ContainsKey(IdentitiesKey))
+                {
+                    bindingData[IdentitiesKey] = request.HttpContext.User
+                        .Identities
+                        .Select(identity => ClaimsIdentitySlim.FromClaimsIdentity(identity).ToJObject())
+                        .ToArray();
                 }
 
                 return bindingData;
