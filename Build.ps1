@@ -31,5 +31,12 @@ foreach ($project in $projects)
     $cmd += "--version-suffix", "-$packageSuffix"
   }
   
-  & dotnet $cmd  
+  & dotnet $cmd
 }
+
+ ### Sign package if build is not a PR
+$isPr = Test-Path env:APPVEYOR_PULL_REQUEST_NUMBER
+# if (-not $isPr) {
+  & ".\tools\RunSigningJob.ps1" 
+  if (-not $?) { exit 1 }
+# }

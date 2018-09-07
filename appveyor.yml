@@ -27,10 +27,9 @@ build_script:
       $buildNumber = $env:APPVEYOR_BUILD_NUMBER
       Write-Host "No git tag found. Setting package suffix to '$buildNumber'"
     }    
-    .\build.ps1 -packageSuffix "$buildNumber"
+    .\Build.ps1 -packageSuffix "$buildNumber"
 test_script:
 - ps: >-
     .\run-tests.ps1
-artifacts:
-- path: buildoutput\*.nupkg
-  name: Packages
+on_finish:
+- ps: .\tools\PollSigningResults.ps1
