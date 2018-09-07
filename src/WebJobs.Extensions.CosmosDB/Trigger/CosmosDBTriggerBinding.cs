@@ -39,7 +39,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         }
 
         /// <summary>
-        /// Type of value that the Trigger receives from the Executor
+        /// Gets the type of the value the Trigger receives from the Executor
         /// </summary>
         public Type TriggerValueType => typeof(IReadOnlyList<Document>);
 
