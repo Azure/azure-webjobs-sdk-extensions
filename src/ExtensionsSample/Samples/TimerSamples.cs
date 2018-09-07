@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Threading;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 
@@ -37,16 +36,6 @@ namespace WebJobsSandbox
         public static void TimerJob([TimerTrigger("01:00:00")] TimerInfo timerInfo)
         {
             Console.WriteLine("Timer job fired!");
-        }
-
-        /// <summary>
-        /// Example job triggered by a timespan schedule.
-        /// </summary>
-        public static void TimerJobLong([TimerTrigger("0 */1 * * * *", RunOnStartup = true)] TimerInfo timerInfo)
-        {
-            Console.WriteLine("Timer job sleeper is firing!");
-            Thread.Sleep(70000);
-            Console.WriteLine("Timer job sleeper is done!");
         }
 
         /// <summary>
