@@ -27,9 +27,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly string _hostName;
         private readonly ChangeFeedOptions _changeFeedOptions;
         private readonly ChangeFeedHostOptions _leaseHostOptions;
+        private readonly int _retryCount;
         private ChangeFeedEventHost _host;
         private int _listenerStatus;
-        private readonly int ;
 
         public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, ChangeFeedOptions changeFeedOptions, ILogger logger, int retryCount)
         {

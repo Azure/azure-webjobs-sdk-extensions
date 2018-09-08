@@ -25,7 +25,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             var hostOptions = new ChangeFeedHostOptions();
             var feedOptions = new ChangeFeedOptions();
 
-            var listener = new MockListener(mockExecutor.Object, collInfo, leaseInfo, hostOptions, feedOptions, NullLogger.Instance);
+            var listener = new MockListener(mockExecutor.Object, collInfo, leaseInfo, hostOptions, feedOptions, NullLogger.Instance, 0);
 
             // Ensure that we can call StartAsync() multiple times to retry if there is an error.
             for (int i = 0; i < 3; i++)
@@ -42,8 +42,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
         {
             private int _retries = 0;
 
-            public MockListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, ChangeFeedOptions changeFeedOptions, ILogger logger)
-                : base(executor, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions, changeFeedOptions, logger)
+            public MockListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, ChangeFeedOptions changeFeedOptions, ILogger logger, int retryCount)
+                : base(executor, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions, changeFeedOptions, logger, retryCount)
             {
             }
 
