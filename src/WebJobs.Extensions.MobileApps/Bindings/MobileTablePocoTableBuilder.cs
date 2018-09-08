@@ -7,16 +7,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps.Bindings
 {
     internal class MobileTablePocoTableBuilder<T> : IConverter<MobileTableAttribute, IMobileServiceTable<T>>
     {
-        private MobileAppsConfiguration _config;
+        private MobileAppsExtensionConfigProvider _configProvider;
 
-        public MobileTablePocoTableBuilder(MobileAppsConfiguration config)
+        public MobileTablePocoTableBuilder(MobileAppsExtensionConfigProvider configProvider)
         {
-            _config = config;
+            _configProvider = configProvider;
         }
 
         public IMobileServiceTable<T> Convert(MobileTableAttribute attribute)
         {
-            MobileTableContext context = _config.CreateContext(attribute);
+            MobileTableContext context = _configProvider.CreateContext(attribute);
 
             // If TableName is specified, add it to the internal table cache. Now items of this type
             // will operate on the specified TableName.

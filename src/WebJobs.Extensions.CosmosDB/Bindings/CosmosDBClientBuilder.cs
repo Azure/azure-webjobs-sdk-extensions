@@ -8,11 +8,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings
 {
     internal class CosmosDBClientBuilder : IConverter<CosmosDBAttribute, DocumentClient>
     {
-        private CosmosDBConfiguration _config;
+        private readonly CosmosDBExtensionConfigProvider _configProvider;
 
-        public CosmosDBClientBuilder(CosmosDBConfiguration config)
+        public CosmosDBClientBuilder(CosmosDBExtensionConfigProvider configProvider)
         {
-            _config = config;
+            _configProvider = configProvider;
         }
 
         public DocumentClient Convert(CosmosDBAttribute attribute)
@@ -22,8 +22,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings
                 throw new ArgumentNullException(nameof(attribute));
             }
 
-            string resolvedConnectionString = _config.ResolveConnectionString(attribute.ConnectionStringSetting);
-            ICosmosDBService service = _config.GetService(resolvedConnectionString);
+            string resolvedConnectionString = _configProvider.ResolveConnectionString(attribute.ConnectionStringSetting);
+            ICosmosDBService service = _configProvider.GetService(resolvedConnectionString);
 
             return service.GetClient();
         }

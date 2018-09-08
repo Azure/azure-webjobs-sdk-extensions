@@ -1,10 +1,42 @@
-﻿if (Test-Path "env:ProgramFiles(x86)")
-{
-    $ProgramFiles = "${env:ProgramFiles(x86)}"
+﻿param (
+  [string]$packageSuffix = "0",
+  [bool]$isLocal = $false,
+  [string]$outputDirectory = "..\..\buildoutput"
+)
+
+if ($isLocal){
+  $packageSuffix = "dev" + [datetime]::UtcNow.Ticks.ToString()
+  Write-Host "Local build - setting package suffixes to $packageSuffix" -ForegroundColor Yellow
 }
-else
+dotnet --version
+
+dotnet build -v q
+
+if (-not $?) { exit 1 }
+
+$projects =
+    "WebJobs.Extensions",
+    "WebJobs.Extensions.CosmosDB",
+    "WebJobs.Extensions.Http",
+    "WebJobs.Extensions.MobileApps",
+    "WebJobs.Extensions.Twilio",
+    "WebJobs.Extensions.SendGrid"
+
+foreach ($project in $projects)
 {
-    $ProgramFiles = "$env:ProgramFiles"
+  $cmd = "pack", "src\$project\$project.csproj", "-o", $outputDirectory, "--no-build"
+  
+  if ($packageSuffix -ne "0")
+  {
+    $cmd += "--version-suffix", "-$packageSuffix"
+  }
+  
+  & dotnet $cmd
 }
 
-& "$ProgramFiles\MSBuild\12.0\Bin\MSBuild.exe" WebJobs.Extensions.proj $Args
+ ### Sign package if build is not a PR
+$isPr = Test-Path env:APPVEYOR_PULL_REQUEST_NUMBER
+if (-not $isPr) {
+  & ".\tools\RunSigningJob.ps1" 
+  if (-not $?) { exit 1 }
+}

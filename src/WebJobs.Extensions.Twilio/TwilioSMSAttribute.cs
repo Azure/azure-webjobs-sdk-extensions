@@ -16,14 +16,14 @@ namespace Microsoft.Azure.WebJobs
     {
         /// <summary>
         /// Gets or sets an optional string value indicating the app setting to use as the Twilio Account SID, 
-        /// if different than the one specified in the <see cref="Extensions.Twilio.TwilioSmsConfiguration"/>.
+        /// if different than the one specified in the <see cref="Extensions.Twilio.TwilioSmsOptions"/>.
         /// </summary>
         [AppSetting]
         public string AccountSidSetting { get; set; }
 
         /// <summary>
         /// Gets or sets an optional string value indicating the app setting to use as the Twilio Auth Token, 
-        /// if different than the one specified in the <see cref="Extensions.Twilio.TwilioSmsConfiguration"/>.
+        /// if different than the one specified in the <see cref="Extensions.Twilio.TwilioSmsOptions"/>.
         /// </summary>
         [AppSetting]
         public string AuthTokenSetting { get; set; }

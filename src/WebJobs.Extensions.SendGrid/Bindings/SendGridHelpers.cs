@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using System.Net.Mail;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SendGrid.Helpers.Mail;
@@ -46,7 +47,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
             }
         }
 
-        internal static void DefaultMessageProperties(SendGridMessage mail, SendGridConfiguration config, SendGridAttribute attribute)
+        internal static void DefaultMessageProperties(SendGridMessage mail, SendGridOptions options, SendGridAttribute attribute)
         {
             // Apply message defaulting
             if (mail.From == null)
@@ -60,9 +61,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
                     }
                     mail.From = from;
                 }
-                else if (config.FromAddress != null)
+                else if (options.FromAddress != null)
                 {
-                    mail.From = config.FromAddress;
+                    mail.From = options.FromAddress;
                 }
             }
 
@@ -78,9 +79,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
 
                     mail.AddTo(to);
                 }
-                else if (config.ToAddress != null)
+                else if (options.ToAddress != null)
                 {
-                    mail.AddTo(config.ToAddress);
+                    mail.AddTo(options.ToAddress);
                 }
             }
 
@@ -125,29 +126,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
                 item.Personalizations.All(p => p.Tos != null && !p.Tos.Any(t => string.IsNullOrEmpty(t.Email)));
         }
 
-        internal static SendGridConfiguration CreateConfiguration(JObject metadata)
+        internal static void ApplyConfiguration(IConfiguration config, SendGridOptions options)
         {
-            SendGridConfiguration sendGridConfig = new SendGridConfiguration();
-
-            JObject configSection = (JObject)metadata.GetValue("sendGrid", StringComparison.OrdinalIgnoreCase);
-            JToken value = null;
-            if (configSection != null)
+            if (config == null)
             {
-                EmailAddress mailAddress = null;
-                if (configSection.TryGetValue("from", StringComparison.OrdinalIgnoreCase, out value) &&
-                    TryParseAddress((string)value, out mailAddress))
-                {
-                    sendGridConfig.FromAddress = mailAddress;
-                }
-
-                if (configSection.TryGetValue("to", StringComparison.OrdinalIgnoreCase, out value) &&
-                    TryParseAddress((string)value, out mailAddress))
-                {
-                    sendGridConfig.ToAddress = mailAddress;
-                }
+                return;
             }
 
-            return sendGridConfig;
+            config.Bind(options);
+
+            string to = config.GetValue<string>("to");
+            string from = config.GetValue<string>("from");
+            options.ToAddress = SendGridHelpers.Apply(options.ToAddress, to);
+            options.FromAddress = SendGridHelpers.Apply(options.FromAddress, from);
         }
     }
 }

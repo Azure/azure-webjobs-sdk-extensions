@@ -16,7 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
     /// <summary>
     /// Flexible binder that can handle automatic mappings from <see cref="Stream"/> to various other types.
     /// </summary>
-    public abstract class StreamValueBinder : ValueBinder
+    internal abstract class StreamValueBinder : ValueBinder
     {
         // collection of Types that this binder supports binding
         // input parameters to

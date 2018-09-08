@@ -35,6 +35,15 @@ namespace Microsoft.Azure.WebJobs
         /// Constructs a new instance.
         /// </summary>
         /// <param name="authLevel">The <see cref="AuthorizationLevel"/> to apply.</param>
+        public HttpTriggerAttribute(AuthorizationLevel authLevel)
+        {
+            AuthLevel = authLevel;
+        }
+
+        /// <summary>
+        /// Constructs a new instance.
+        /// </summary>
+        /// <param name="authLevel">The <see cref="AuthorizationLevel"/> to apply.</param>
         /// <param name="methods">The http methods to allow.</param>
         public HttpTriggerAttribute(AuthorizationLevel authLevel, params string[] methods)
         {
@@ -58,10 +67,5 @@ namespace Microsoft.Azure.WebJobs
         /// Gets the authorization level for the function.
         /// </summary>
         public AuthorizationLevel AuthLevel { get; private set; }
-
-        /// <summary>
-        /// Gets or sets the WebHook type, if this function represents a WebHook.
-        /// </summary>
-        public string WebHookType { get; set; }
     }
 }

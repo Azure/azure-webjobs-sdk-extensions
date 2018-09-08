@@ -15,10 +15,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private bool _isDisposed;
         private DocumentClient _client;
 
-        public CosmosDBService(string connectionString)
+        public CosmosDBService(string connectionString, ConnectionMode? connectionMode, Protocol? protocol)
         {
             CosmosDBConnectionString connection = new CosmosDBConnectionString(connectionString);
             _client = new DocumentClient(connection.ServiceEndpoint, connection.AuthKey);
+            if (connectionMode.HasValue)
+            {
+                // Default is Gateway
+                // Source: https://docs.microsoft.com/dotnet/api/microsoft.azure.documents.client.connectionpolicy.connectionmode
+                _client.ConnectionPolicy.ConnectionMode = connectionMode.Value;
+            }
+
+            if (protocol.HasValue)
+            {
+                _client.ConnectionPolicy.ConnectionProtocol = protocol.Value;
+            }
         }
 
         public DocumentClient GetClient()

@@ -6,11 +6,11 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Listeners;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 {
@@ -19,18 +19,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
         private readonly ParameterInfo _parameter;
         private readonly TimerTriggerAttribute _attribute;
         private readonly TimerSchedule _schedule;
-        private readonly TimersConfiguration _config;
-        private readonly TraceWriter _trace;
+        private readonly TimersOptions _options;
+        private readonly ILogger _logger;
+        private readonly ScheduleMonitor _scheduleMonitor;
         private IReadOnlyDictionary<string, Type> _bindingContract;
         private string _timerName;
 
-        public TimerTriggerBinding(ParameterInfo parameter, TimerTriggerAttribute attribute, TimerSchedule schedule, TimersConfiguration config, TraceWriter trace)
+        public TimerTriggerBinding(ParameterInfo parameter, TimerTriggerAttribute attribute, TimerSchedule schedule, TimersOptions options, ILogger logger, ScheduleMonitor scheduleMonitor)
         {
             _attribute = attribute;
             _schedule = schedule;
             _parameter = parameter;
-            _config = config;
-            _trace = trace;
+            _options = options;
+            _logger = logger;
+            _scheduleMonitor = scheduleMonitor;
             _bindingContract = CreateBindingDataContract();
 
             MethodInfo methodInfo = (MethodInfo)parameter.Member;
@@ -56,9 +58,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             if (timerInfo == null)
             {
                 ScheduleStatus status = null;
-                if (_attribute.UseMonitor && _config.ScheduleMonitor != null)
+                if (_attribute.UseMonitor && _scheduleMonitor != null)
                 {
-                    status = await _config.ScheduleMonitor.GetStatusAsync(_timerName);
+                    status = await _scheduleMonitor.GetStatusAsync(_timerName);
                 }
                 timerInfo = new TimerInfo(_schedule, status);
             }
@@ -75,7 +77,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             {
                 throw new ArgumentNullException("context");
             }
-            return Task.FromResult<IListener>(new TimerListener(_attribute, _schedule, _timerName, _config, context.Executor, _trace));
+            return Task.FromResult<IListener>(new TimerListener(_attribute, _schedule, _timerName, _options, context.Executor, _logger, _scheduleMonitor));
         }
 
         public ParameterDescriptor ToParameterDescriptor()

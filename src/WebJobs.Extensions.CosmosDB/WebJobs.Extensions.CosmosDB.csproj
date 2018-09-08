@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\..\build\common.props" />
   <PropertyGroup>
-    <Version>3.0.0-beta6$(VersionSuffix)</Version>
+    <Version>3.0.1-rc1$(VersionSuffix)</Version>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions.CosmosDB</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.CosmosDB</RootNamespace>
@@ -9,11 +9,9 @@
     <Description>This package contains binding extensions for Azure Cosmos DB.</Description>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.DocumentDB.ChangeFeedProcessor" Version="1.2.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\WebJobs.Extensions\WebJobs.Extensions.csproj" />
+    <PackageReference Include="Microsoft.Azure.DocumentDB.ChangeFeedProcessor" Version="2.0.6" />
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.0-rc1" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
   </ItemGroup>
 
 </Project>

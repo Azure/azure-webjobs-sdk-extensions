@@ -3,8 +3,12 @@
 
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Azure.WebJobs.Host.Executors;
+using Microsoft.Azure.WebJobs.Logging;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json;
@@ -17,20 +21,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     public class StorageScheduleMonitor : ScheduleMonitor
     {
         private const string HostContainerName = "azure-webjobs-hosts";
-        private readonly JobHostConfiguration _hostConfig;
+        private readonly DistributedLockManagerContainerProvider _lockContainerProvider;
         private readonly JsonSerializer _serializer;
+        private readonly ILogger _logger;
+        private readonly IHostIdProvider _hostIdProvider;
+        private readonly IConfiguration _configuration;
         private CloudBlobDirectory _timerStatusDirectory;
-        private TraceWriter _trace;
 
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
-        /// <param name="hostConfig">The <see cref="JobHostConfiguration"/>.</param>
-        /// <param name="trace">The <see cref="TraceWriter"/>.</param>
-        public StorageScheduleMonitor(JobHostConfiguration hostConfig, TraceWriter trace)
+        /// <param name="lockContainerProvider"></param>
+        /// <param name="hostIdProvider"></param>
+        /// <param name="configuration"></param>
+        /// <param name="loggerFactory"></param>
+        public StorageScheduleMonitor(DistributedLockManagerContainerProvider lockContainerProvider, IHostIdProvider hostIdProvider, 
+            IConfiguration configuration, ILoggerFactory loggerFactory)
         {
-            _hostConfig = hostConfig;
-            _trace = trace;
+            _lockContainerProvider = lockContainerProvider ?? throw new ArgumentNullException(nameof(lockContainerProvider));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _hostIdProvider = hostIdProvider ?? throw new ArgumentNullException(nameof(hostIdProvider));
+            _logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Timer"));
 
             JsonSerializerSettings settings = new JsonSerializerSettings
             {
@@ -50,15 +61,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 // be available AFTER the host as been started
                 if (_timerStatusDirectory == null)
                 {
-                    if (string.IsNullOrEmpty(_hostConfig.HostId))
+                    string hostId = _hostIdProvider.GetHostIdAsync(CancellationToken.None).GetAwaiter().GetResult();
+                    if (string.IsNullOrEmpty(hostId))
                     {
                         throw new InvalidOperationException("Unable to determine host ID.");
                     }
 
-                    CloudStorageAccount storageAccount = CloudStorageAccount.Parse(_hostConfig.StorageConnectionString);
-                    CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
-                    string timerStatusDirectoryPath = string.Format("timers/{0}", _hostConfig.HostId);
-                    _timerStatusDirectory = blobClient.GetContainerReference(HostContainerName).GetDirectoryReference(timerStatusDirectoryPath);
+                    CloudBlobContainer container;
+                    if (_lockContainerProvider.InternalContainer != null)
+                    {
+                        container = _lockContainerProvider.InternalContainer;
+                    }
+                    else
+                    {
+                        var connectionString = _configuration.GetWebJobsConnectionString(ConnectionStringNames.Storage);
+                        CloudStorageAccount storageAccount = CloudStorageAccount.Parse(connectionString);
+                        CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
+                        container = blobClient.GetContainerReference(HostContainerName);
+                    }
+
+                    string timerStatusDirectoryPath = string.Format("timers/{0}", hostId);
+                    _timerStatusDirectory = container.GetDirectoryReference(timerStatusDirectoryPath);
                 }
                 return _timerStatusDirectory;
             }
@@ -109,7 +132,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             catch (Exception ex)
             {
                 // best effort
-                _trace.Error(string.Format("Function '{0}' failed to update the timer trigger status.", timerName), ex);
+                _logger.LogError(ex, $"Function '{timerName}' failed to update the timer trigger status.");
             }
         }
 

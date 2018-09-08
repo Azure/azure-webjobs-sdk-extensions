@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,7 +9,9 @@ using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Listeners;
 using Microsoft.Azure.WebJobs.Host.Executors;
+using Microsoft.Extensions.Logging;
 using Moq;
+using NCrontab;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
@@ -20,12 +21,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         private string _testTimerName = "Program.TestTimerJob";
         private TimerListener _listener;
         private Mock<ScheduleMonitor> _mockScheduleMonitor;
-        private TimersConfiguration _config;
+        private TimersOptions _options;
         private TimerTriggerAttribute _attribute;
         private TimerSchedule _schedule;
         private Mock<ITriggeredFunctionExecutor> _mockTriggerExecutor;
         private TriggeredFunctionData _triggeredFunctionData;
-        private TestTraceWriter _traceWriter;
+        private TestLogger _logger;
 
         public TimerListenerTests()
         {
@@ -332,7 +333,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await _listener.StartAsync(CancellationToken.None);
             await _listener.StopAsync(CancellationToken.None);
 
-            Assert.True(_traceWriter.Events.Single(m => m.Level == TraceLevel.Info).Message.StartsWith("The next 5 occurrences of the schedule will be:"));
+            Assert.True(_logger.GetLogMessages().Single(m => m.Level == LogLevel.Information).FormattedMessage.StartsWith("The next 5 occurrences of the schedule will be:"));
         }
 
         [Fact]
@@ -355,6 +356,61 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await RunInitialStatusTestAsync(null, "Function 'Program.TestTimerJob' initial status: Last='', Next='', LastUpdated=''");
         }
 
+        /// <summary>
+        /// Situation where the DST transition happens in the middle of the schedule, with the
+        /// next occurrence AFTER the DST transition.
+        /// </summary>
+        [Fact]
+        public void GetNextInterval_NextAfterDST_ReturnsExpectedValue()
+        {
+            // Running on the Friday before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
+            // Note: this test uses Local time, so if you're running in a timezone where
+            // DST doesn't transition the test might not be valid.
+            var now = new DateTime(2018, 3, 9, 18, 0, 0, DateTimeKind.Local);
+
+            // Configure schedule to run again on the next Friday (3/16) at 6 PM (Pacific Daylight Time)
+            var schedule = CrontabSchedule.Parse("0 0 18 * * 5", new CrontabSchedule.ParseOptions() { IncludingSeconds = true });
+
+            var next = schedule.GetNextOccurrence(now);
+            var interval = TimerListener.GetNextTimerInterval(next, now);
+
+            // One week is normally 168 hours, but it's 167 hours across DST
+            Assert.Equal(167, interval.TotalHours);
+        }
+
+        /// <summary>
+        /// Situation where the next occurrence falls within the hour that will be skipped
+        /// as part of the DST transition (i.e. an invalid time).
+        /// </summary>
+        [Fact]
+        public void GetNextInterval_NextWithinDST_ReturnsExpectedValue()
+        {
+            // Running at 1:59 AM, i.e. one minute before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
+            // Note: this test uses Local time, so if you're running in a timezone where
+            // DST doesn't transition the test might not be valid.
+            var now = new DateTime(2018, 3, 11, 1, 59, 0, DateTimeKind.Local);
+
+            // Configure schedule to run on the 59th minute of every hour
+            var schedule = CrontabSchedule.Parse("0 59 * * * *", new CrontabSchedule.ParseOptions() { IncludingSeconds = true });
+
+            // Note: NCronTab actually gives us an invalid next occurrence of 2:59 AM, which doesn't actually
+            // exist because the DST switch skips from 2 to 3
+            var next = schedule.GetNextOccurrence(now);
+
+            var interval = TimerListener.GetNextTimerInterval(next, now);
+            Assert.Equal(1, interval.TotalHours);
+        }
+
+        [Fact]
+        public void GetNextInterval_NegativeInterval_ReturnsOneTick()
+        {
+            var now = DateTime.Now;
+            var next = now.Subtract(TimeSpan.FromSeconds(1));
+
+            var interval = TimerListener.GetNextTimerInterval(next, now);
+            Assert.Equal(1, interval.Ticks);
+        }
+
         public async Task RunInitialStatusTestAsync(ScheduleStatus initialStatus, string expected)
         {
             _mockScheduleMonitor
@@ -368,7 +424,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await _listener.StopAsync(CancellationToken.None);
             _listener.Dispose();
 
-            Assert.Equal(expected, _traceWriter.Events.Single(m => m.Level == TraceLevel.Verbose).Message);
+            Assert.Equal(expected, _logger.GetLogMessages().Single(m => m.Level == LogLevel.Debug).FormattedMessage);
         }
 
         private void CreateTestListener(string expression, bool useMonitor = true, Action functionAction = null)
@@ -376,9 +432,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _attribute = new TimerTriggerAttribute(expression);
             _schedule = TimerSchedule.Create(_attribute, new TestNameResolver());
             _attribute.UseMonitor = useMonitor;
-            _config = new TimersConfiguration();
+            _options = new TimersOptions();
             _mockScheduleMonitor = new Mock<ScheduleMonitor>(MockBehavior.Strict);
-            _config.ScheduleMonitor = _mockScheduleMonitor.Object;
             _mockTriggerExecutor = new Mock<ITriggeredFunctionExecutor>(MockBehavior.Strict);
             FunctionResult result = new FunctionResult(true);
             _mockTriggerExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
@@ -388,10 +443,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                     functionAction?.Invoke();
                 })
                 .Returns(Task.FromResult(result));
-            JobHostConfiguration hostConfig = new JobHostConfiguration();
-            hostConfig.HostId = "testhostid";
-            _traceWriter = new TestTraceWriter();
-            _listener = new TimerListener(_attribute, _schedule, _testTimerName, _config, _mockTriggerExecutor.Object, _traceWriter);
+            _logger = new TestLogger(null);
+            _listener = new TimerListener(_attribute, _schedule, _testTimerName, _options, _mockTriggerExecutor.Object, _logger, _mockScheduleMonitor.Object);
         }
     }
 }

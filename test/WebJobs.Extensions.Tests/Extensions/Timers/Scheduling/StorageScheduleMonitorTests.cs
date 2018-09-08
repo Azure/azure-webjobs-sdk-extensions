@@ -3,9 +3,12 @@
 
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Xunit;
 
@@ -16,14 +19,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
     {
         private const string TestTimerName = "TestProgram.TestTimer";
         private const string TestHostId = "testhostid";
-        private readonly JobHostConfiguration _hostConfig;
         private readonly StorageScheduleMonitor _scheduleMonitor;
 
         public StorageScheduleMonitorTests()
         {
-            _hostConfig = new JobHostConfiguration();
-            _hostConfig.HostId = TestHostId;
-            _scheduleMonitor = new StorageScheduleMonitor(_hostConfig, new TestTraceWriter());
+            _scheduleMonitor = CreateScheduleMonitor(TestHostId);
 
             Cleanup();
         }
@@ -39,8 +39,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         [Fact]
         public void TimerStatusDirectory_HostIdNull_Throws()
         {
-            JobHostConfiguration config = new JobHostConfiguration();
-            StorageScheduleMonitor localScheduleMonitor = new StorageScheduleMonitor(config, new TestTraceWriter());
+            StorageScheduleMonitor localScheduleMonitor = CreateScheduleMonitor(null);
 
             CloudBlobDirectory directory = null;
             var ex = Assert.Throws<InvalidOperationException>(() =>
@@ -95,7 +94,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
                 currentToken: null,
                 options: null,
                 operationContext: null);
-            
+
             var statuses = segments.Results.Cast<CloudBlockBlob>().ToArray();
             Assert.Equal(3, statuses.Length);
             Assert.Equal("timers/testhostid/TestProgram.TestTimer0/status", statuses[0].Name);
@@ -121,6 +120,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         public void Dispose()
         {
             Cleanup();
+        }
+
+        private static StorageScheduleMonitor CreateScheduleMonitor(string hostId = null)
+        {
+            var config = new ConfigurationBuilder()
+                .AddEnvironmentVariables()
+                .Build();
+            var lockContainerManager = new DistributedLockManagerContainerProvider();
+            ILoggerFactory loggerFactory = new LoggerFactory();
+            loggerFactory.AddProvider(new TestLoggerProvider());
+
+            return new StorageScheduleMonitor(lockContainerManager, new TestIdProvider(hostId), config, loggerFactory);
+        }
+
+        private class TestIdProvider : Host.Executors.IHostIdProvider
+        {
+            private readonly string _hostId;
+
+            public TestIdProvider(string hostId)
+            {
+                _hostId = hostId;
+            }
+
+            public Task<string> GetHostIdAsync(CancellationToken cancellationToken)
+            {
+                return Task.FromResult<string>(_hostId);
+            }
         }
     }
 }

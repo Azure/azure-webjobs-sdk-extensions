@@ -1,7 +1,6 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -19,71 +18,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
             var expected = new[]
             {
                 "ConstantSchedule",
-                "CoreJobHostConfigurationExtensions",
                 "CronSchedule",
                 "DailySchedule",
-                "ErrorTriggerAttribute",
-                "ExecutionContext",
                 "FileAttribute",
                 "FileProcessor",
                 "FileProcessorFactoryContext",
-                "FilesConfiguration",
-                "FilesJobHostConfigurationExtensions",
+                "FilesOptions",
+                "FilesWebJobsBuilderExtensions",
                 "FileSystemScheduleMonitor",
                 "StorageScheduleMonitor",
                 "FileTriggerAttribute",
                 "IFileProcessorFactory",
-                "JobHostConfigurationExtensions",
                 "ScheduleMonitor",
                 "ScheduleStatus",
-                "SlidingWindowTraceFilter",
-                "StreamValueBinder",
                 "TimerInfo",
-                "TimerJobHostConfigurationExtensions",
+                "TimerWebJobsBuilderExtensions",
                 "TimerSchedule",
-                "TimersConfiguration",
+                "TimersOptions",
                 "TimerTriggerAttribute",
-                "TraceFilter",
-                "TraceMonitor",
-                "ValueBinder",
-                "WeeklySchedule"
+                "WeeklySchedule",
+                "ExtensionsWebJobsStartup"
             };
 
             AssertPublicTypes(expected, assembly);
-        }
-
-        [Fact]
-        public void HttpPublicSurface_LimitedToSpecificTypes()
-        {
-            var assembly = typeof(HttpTriggerAttribute).Assembly;
-
-            var expected = new[]
-            {
-                "HttpExtensionConfiguration",
-                "HttpExtensionConstants",
-                "HttpJobHostConfigurationExtensions",
-                "AuthorizationLevel",
-                "HttpRequestManager",
-                "HttpTriggerAttribute",
-                "HttpBindingApplicationBuilderExtension",
-                "HttpBindingServiceCollectionExtensions",
-                "HttpRequestExtensions",
-                "IWebJobsRouteHandler",
-                "IWebJobsRouter",
-                "WebJobsRouteBuilder",
-                "WebJobsRouter"
-            };
-
-            AssertPublicTypes(expected, assembly);
-        }
-
-        private static List<string> GetAssemblyReferences(Assembly assembly)
-        {
-            var assemblyRefs = assembly.GetReferencedAssemblies();
-            var names = (from assemblyRef in assemblyRefs
-                         orderby assemblyRef.Name.ToUpperInvariant()
-                         select assemblyRef.Name).ToList();
-            return names;
         }
 
         private static void AssertPublicTypes(IEnumerable<string> expected, Assembly assembly)

@@ -1,8 +1,7 @@
-﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.Azure.Documents.ChangeFeedProcessor;
 using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 
@@ -72,11 +71,6 @@ namespace Microsoft.Azure.WebJobs
         public string LeaseDatabaseName { get; set; }
 
         /// <summary>
-        /// Gets or sets the lease options for this particular DocumentDB Trigger. Overrides any value defined in <see cref="DocumentDBConfiguration" /> 
-        /// </summary>
-        public ChangeFeedHostOptions LeaseOptions { get; set; }
-
-        /// <summary>
         /// Optional.
         /// Only applies to lease collection.
         /// If true, the database and collection for leases will be automatically created if it does not exist.
@@ -89,6 +83,60 @@ namespace Microsoft.Azure.WebJobs
         /// collection.
         /// </summary>
         public int LeasesCollectionThroughput { get; set; }
+
+        /// <summary>
+        /// Optional.
+        /// Defines a prefix to be used within a Leases collection for this Trigger. Useful when sharing the same Lease collection among multiple Triggers
+        /// </summary>
+        public string LeaseCollectionPrefix { get; set; }
+        
+        /// <summary>
+        /// Optional.
+        /// Customizes the amount of milliseconds between lease checkpoints. Default is always after a Function call.
+        /// </summary>
+        public int CheckpointInterval { get; set; }
+        
+        /// <summary>
+        /// Optional.
+        /// Customizes the amount of documents between lease checkpoints. Default is always after a Function call.
+        /// </summary>
+        public int CheckpointDocumentCount { get; set; }
+        
+        /// <summary>
+        /// Optional.
+        /// Customizes the delay in milliseconds in between polling a partition for new changes on the feed, after all current changes are drained.  Default is 5000 (5 seconds).
+        /// </summary>
+        public int FeedPollDelay { get; set; }
+        
+        /// <summary>
+        /// Optional.
+        /// Customizes the renew interval in milliseconds for all leases for partitions currently held by the Trigger. Default is 17000 (17 seconds).
+        /// </summary>
+        public int LeaseRenewInterval { get; set; }
+        
+        /// <summary>
+        /// Optional.
+        /// Customizes the interval in milliseconds to kick off a task to compute if partitions are distributed evenly among known host instances. Default is 13000 (13 seconds).
+        /// </summary>
+        public int LeaseAcquireInterval { get; set; }
+        
+        /// <summary>
+        /// Optional.
+        /// Customizes the interval in milliseconds for which the lease is taken on a lease representing a partition. If the lease is not renewed within this interval, it will cause it to expire and ownership of the partition will move to another Trigger instance. Default is 60000 (60 seconds).
+        /// </summary>
+        public int LeaseExpirationInterval { get; set; }
+        
+        /// <summary>
+        /// Optional.
+        /// Customizes the maximum amount of items received in an invocation
+        /// </summary>
+        public int MaxItemsPerInvocation { get; set; }
+
+        /// <summary>
+        /// Optional.
+        /// Gets or sets whether change feed in the Azure Cosmos DB service should start from beginning (true) or from current (false). By default it's start from current (false).
+        /// </summary>
+        public bool StartFromBeginning { get; set; } = false;
 
         /// <summary>
         /// Optional, defaults to 0

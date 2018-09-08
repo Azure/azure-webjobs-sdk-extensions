@@ -5,9 +5,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 {
@@ -15,9 +15,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
     internal sealed class TimerListener : IListener
     {
         private readonly TimerTriggerAttribute _attribute;
-        private readonly TimersConfiguration _config;
+        private readonly TimersOptions _options;
         private readonly ITriggeredFunctionExecutor _executor;
-        private readonly TraceWriter _trace;
+        private readonly ILogger _logger;
         private readonly CancellationTokenSource _cancellationTokenSource;
 
         // Since Timer uses an integer internally for it's interval,
@@ -30,16 +30,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private bool _disposed;
         private TimeSpan _remainingInterval;
 
-        public TimerListener(TimerTriggerAttribute attribute, TimerSchedule schedule, string timerName, TimersConfiguration config, ITriggeredFunctionExecutor executor, TraceWriter trace)
+        public TimerListener(TimerTriggerAttribute attribute, TimerSchedule schedule, string timerName, TimersOptions options, ITriggeredFunctionExecutor executor, ILogger logger, ScheduleMonitor scheduleMonitor)
         {
             _attribute = attribute;
             _timerName = timerName;
-            _config = config;
+            _options = options;
             _executor = executor;
-            _trace = trace;
+            _logger = logger;
             _cancellationTokenSource = new CancellationTokenSource();
             _schedule = schedule;
-            ScheduleMonitor = _attribute.UseMonitor ? _config.ScheduleMonitor : null;
+            ScheduleMonitor = _attribute.UseMonitor ? scheduleMonitor : null;
         }
 
         internal static TimeSpan MaxTimerInterval
@@ -84,7 +84,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // check to see if we've missed an occurrence since we last started.
                 // If we have, invoke it immediately.
                 ScheduleStatus = await ScheduleMonitor.GetStatusAsync(_timerName);
-                _trace.Verbose($"Function '{_timerName}' initial status: Last='{ScheduleStatus?.Last.ToString("o")}', Next='{ScheduleStatus?.Next.ToString("o")}', LastUpdated='{ScheduleStatus?.LastUpdated.ToString("o")}'");
+                _logger.LogDebug($"Function '{_timerName}' initial status: Last='{ScheduleStatus?.Last.ToString("o")}', Next='{ScheduleStatus?.Next.ToString("o")}', LastUpdated='{ScheduleStatus?.LastUpdated.ToString("o")}'");
                 TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerName, now, _schedule, ScheduleStatus);
                 isPastDue = pastDueDuration != TimeSpan.Zero;
             }
@@ -101,19 +101,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             if (isPastDue)
             {
-                _trace.Verbose(string.Format("Function '{0}' is past due on startup. Executing now.", _timerName));
+                _logger.LogDebug($"Function '{_timerName}' is past due on startup. Executing now.");
                 await InvokeJobFunction(now, isPastDue: true);
             }
             else if (_attribute.RunOnStartup)
             {
                 // The job is configured to run immediately on startup
-                _trace.Verbose(string.Format("Function '{0}' is configured to run on startup. Executing now.", _timerName));
+                _logger.LogDebug($"Function '{_timerName}' is configured to run on startup. Executing now.");
                 await InvokeJobFunction(now, runOnStartup: true);
             }
 
             // log the next several occurrences to console for visibility
             string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5);
-            _trace.Info(nextOccurrences);
+            _logger.LogInformation(nextOccurrences);
 
             StartTimer(DateTime.Now);
         }
@@ -238,26 +238,45 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             if (ScheduleMonitor != null)
             {
                 await ScheduleMonitor.UpdateStatusAsync(_timerName, ScheduleStatus);
-                _trace.Verbose($"Function '{_timerName}' updated status: Last='{ScheduleStatus.Last.ToString("o")}', Next='{ScheduleStatus.Next.ToString("o")}', LastUpdated='{ScheduleStatus.LastUpdated}'");
+                _logger.LogDebug($"Function '{_timerName}' updated status: Last='{ScheduleStatus.Last.ToString("o")}', Next='{ScheduleStatus.Next.ToString("o")}', LastUpdated='{ScheduleStatus.LastUpdated.ToString("o")}'");
             }
         }
 
         private void StartTimer(DateTime now)
         {
-            // We need to calculate the next interval based on the current
-            // time as we don't know how long the previous function invocation took.
-            // Example: if you have an hourly timer invoked at 12:00 and the invocation takes 1 minute,
-            // we want to calculate the interval for the next timer using 12:01 rather than at 12:00.
-            // Otherwise, you'd start a 1-hour timer at 12:01 when we really want it to be a 59-minute timer.
+            var nextInterval = GetNextTimerInterval(ScheduleStatus.Next, now);
+            StartTimer(nextInterval);
+        }
+
+        /// <summary>
+        /// Calculate the next timer interval based on the current (Local) time.
+        /// </summary>
+        /// <remarks>
+        /// We calculate based on the current time because we don't know how long
+        /// the previous function invocation took. Example: if you have an hourly timer
+        /// invoked at 12:00 and the invocation takes 1 minute, we want to calculate
+        /// the interval for the next timer using 12:01 rather than at 12:00. Otherwise, 
+        /// you'd start a 1-hour timer at 12:01 when we really want it to be a 59-minute timer.
+        /// </remarks>
+        /// <param name="next">The next schedule occurrence in Local time</param>
+        /// <param name="now">The current Local time</param>
+        /// <returns>The next timer interval</returns>
+        internal static TimeSpan GetNextTimerInterval(DateTime next, DateTime now)
+        {
+            // For calculations, we use DateTimeOffsets and TimeZoneInfo to ensure we honor time zone
+            // changes (e.g. Daylight Savings Time)
+            var nowOffset = new DateTimeOffset(now, TimeZoneInfo.Local.GetUtcOffset(now));
+            var nextOffset = new DateTimeOffset(next, TimeZoneInfo.Local.GetUtcOffset(next));
+            var nextInterval = nextOffset - nowOffset;
 
             // If the interval happens to be negative (due to slow storage, for example), adjust the
             // interval back up 1 Tick (Zero is invalid for a timer) for an immediate invocation.
-            TimeSpan nextInterval = ScheduleStatus.Next - now;
             if (nextInterval <= TimeSpan.Zero)
             {
                 nextInterval = TimeSpan.FromTicks(1);
             }
-            StartTimer(nextInterval);
+
+            return nextInterval;
         }
 
         private void StartTimer(TimeSpan interval)

@@ -10,7 +10,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{28647E2E-EF79-47A7-85EC-10F2F67AEAFE}"
 	ProjectSection(SolutionItems) = preProject
 		.nuget\NuGet.Config = .nuget\NuGet.Config
-		.nuget\packages.config = .nuget\packages.config
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{9C98036B-0901-45FA-A18B-0D8E226B6A61}"
@@ -21,8 +20,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExtensionsSample", "src\ExtensionsSample\ExtensionsSample.csproj", "{1CFEAA1A-F726-482E-ACD1-96D21DB10837}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.Tests", "test\WebJobs.Extensions.Tests\WebJobs.Extensions.Tests.csproj", "{1729561F-D598-4208-9154-3A5497523D54}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Extension", "src\Sample.Extension\Sample.Extension.csproj", "{55EDABA0-8D31-43C9-AB3C-2A40D0EFF28A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions", "src\WebJobs.Extensions\WebJobs.Extensions.csproj", "{7719584E-9863-405A-9D26-2CC02AFC2427}"
 EndProject
@@ -35,6 +32,18 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.Twilio", "src\WebJobs.Extensions.Twilio\WebJobs.Extensions.Twilio.csproj", "{4F335FB9-2BE8-4B51-9CE9-01465CCF05CB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.CosmosDB", "src\WebJobs.Extensions.CosmosDB\WebJobs.Extensions.CosmosDB.csproj", "{A0DE3BF4-AD56-44D9-8404-8E0778AE5CA0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.CosmosDB.Tests", "test\WebJobs.Extensions.CosmosDB.Tests\WebJobs.Extensions.CosmosDB.Tests.csproj", "{0FFB6F9E-B187-4707-9FCD-EEF314116DFB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.Tests.Common", "test\WebJobs.Extensions.Tests.Common\WebJobs.Extensions.Tests.Common.csproj", "{D86272BE-7A41-4E45-8E13-79CC7E252899}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.Http.Tests", "test\WebJobs.Extensions.Http.Tests\WebJobs.Extensions.Http.Tests.csproj", "{5A130772-4916-4631-AC07-ED4812F898C7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.SendGrid.Tests", "test\WebJobs.Extensions.SendGrid.Tests\WebJobs.Extensions.SendGrid.Tests.csproj", "{ED06F3EC-4663-46BF-ACF6-D218802F5610}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.Twilio.Tests", "test\WebJobs.Extensions.Twilio.Tests\WebJobs.Extensions.Twilio.Tests.csproj", "{021C005F-1A58-44D0-B891-52F2AAFAD8ED}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.MobileApps.Tests", "test\WebJobs.Extensions.MobileApps.Tests\WebJobs.Extensions.MobileApps.Tests.csproj", "{587D158D-D719-42EF-AE81-70E2E8142B46}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -50,10 +59,6 @@ Global
 		{1729561F-D598-4208-9154-3A5497523D54}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1729561F-D598-4208-9154-3A5497523D54}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1729561F-D598-4208-9154-3A5497523D54}.Release|Any CPU.Build.0 = Release|Any CPU
-		{55EDABA0-8D31-43C9-AB3C-2A40D0EFF28A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{55EDABA0-8D31-43C9-AB3C-2A40D0EFF28A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{55EDABA0-8D31-43C9-AB3C-2A40D0EFF28A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{55EDABA0-8D31-43C9-AB3C-2A40D0EFF28A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7719584E-9863-405A-9D26-2CC02AFC2427}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7719584E-9863-405A-9D26-2CC02AFC2427}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7719584E-9863-405A-9D26-2CC02AFC2427}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -78,6 +83,30 @@ Global
 		{A0DE3BF4-AD56-44D9-8404-8E0778AE5CA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0DE3BF4-AD56-44D9-8404-8E0778AE5CA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A0DE3BF4-AD56-44D9-8404-8E0778AE5CA0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0FFB6F9E-B187-4707-9FCD-EEF314116DFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0FFB6F9E-B187-4707-9FCD-EEF314116DFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0FFB6F9E-B187-4707-9FCD-EEF314116DFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0FFB6F9E-B187-4707-9FCD-EEF314116DFB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D86272BE-7A41-4E45-8E13-79CC7E252899}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D86272BE-7A41-4E45-8E13-79CC7E252899}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D86272BE-7A41-4E45-8E13-79CC7E252899}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D86272BE-7A41-4E45-8E13-79CC7E252899}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A130772-4916-4631-AC07-ED4812F898C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A130772-4916-4631-AC07-ED4812F898C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A130772-4916-4631-AC07-ED4812F898C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A130772-4916-4631-AC07-ED4812F898C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED06F3EC-4663-46BF-ACF6-D218802F5610}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED06F3EC-4663-46BF-ACF6-D218802F5610}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED06F3EC-4663-46BF-ACF6-D218802F5610}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED06F3EC-4663-46BF-ACF6-D218802F5610}.Release|Any CPU.Build.0 = Release|Any CPU
+		{021C005F-1A58-44D0-B891-52F2AAFAD8ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{021C005F-1A58-44D0-B891-52F2AAFAD8ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{021C005F-1A58-44D0-B891-52F2AAFAD8ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{021C005F-1A58-44D0-B891-52F2AAFAD8ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{587D158D-D719-42EF-AE81-70E2E8142B46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{587D158D-D719-42EF-AE81-70E2E8142B46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{587D158D-D719-42EF-AE81-70E2E8142B46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{587D158D-D719-42EF-AE81-70E2E8142B46}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -85,13 +114,18 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{1CFEAA1A-F726-482E-ACD1-96D21DB10837} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{1729561F-D598-4208-9154-3A5497523D54} = {6D6CF06F-EFCF-4E01-99F1-CB7991C279D8}
-		{55EDABA0-8D31-43C9-AB3C-2A40D0EFF28A} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{7719584E-9863-405A-9D26-2CC02AFC2427} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{47B3ECC3-DDDB-4C80-8A13-E6279A2EB835} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{FB65E11F-97B3-42A5-991A-190D6CD3208F} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{4B1CA665-5F3E-4A0A-BEFC-FC174BB1BABA} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{4F335FB9-2BE8-4B51-9CE9-01465CCF05CB} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 		{A0DE3BF4-AD56-44D9-8404-8E0778AE5CA0} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
+		{0FFB6F9E-B187-4707-9FCD-EEF314116DFB} = {6D6CF06F-EFCF-4E01-99F1-CB7991C279D8}
+		{D86272BE-7A41-4E45-8E13-79CC7E252899} = {6D6CF06F-EFCF-4E01-99F1-CB7991C279D8}
+		{5A130772-4916-4631-AC07-ED4812F898C7} = {6D6CF06F-EFCF-4E01-99F1-CB7991C279D8}
+		{ED06F3EC-4663-46BF-ACF6-D218802F5610} = {6D6CF06F-EFCF-4E01-99F1-CB7991C279D8}
+		{021C005F-1A58-44D0-B891-52F2AAFAD8ED} = {6D6CF06F-EFCF-4E01-99F1-CB7991C279D8}
+		{587D158D-D719-42EF-AE81-70E2E8142B46} = {6D6CF06F-EFCF-4E01-99F1-CB7991C279D8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {821EF04F-5408-46AD-94ED-0E939B89D4B8}

@@ -3,6 +3,7 @@
 |Branch|Status|
 |---|---|
 |master|[![Build status](https://ci.appveyor.com/api/projects/status/5mqrok4j3l89cnvx/branch/master?svg=true)](https://ci.appveyor.com/project/appsvc/azure-webjobs-sdk-extensions/branch/master)|
+|dev|[![Build status](https://ci.appveyor.com/api/projects/status/5mqrok4j3l89cnvx/branch/dev?svg=true)](https://ci.appveyor.com/project/appsvc/azure-webjobs-sdk-extensions/branch/dev)|
 
 
 This repo contains binding extensions for the **Azure WebJobs SDK**. See the [Azure WebJobs SDK repo](https://github.com/Azure/azure-webjobs-sdk) for more information. The binding extensions in this repo are available as the **Microsoft.Azure.WebJobs.Extensions** [nuget package](http://www.nuget.org/packages/Microsoft.Azure.WebJobs.Extensions). **Note**: some of the extensions in this repo (like SendGrid, etc.) live in their own separate nuget packages following a standard naming scheme (e.g. Microsoft.Azure.WebJobs.Extensions.SendGrid). Also note that some of the features discussed here or in the wiki may still be in **pre-release**. To access those features you may need to pull the very latest pre-release packages from our "nightlies" package feed ([instructions here](https://github.com/Azure/azure-webjobs-sdk/wiki/%22Nightly%22-Builds)).

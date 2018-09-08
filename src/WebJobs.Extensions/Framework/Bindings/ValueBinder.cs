@@ -14,7 +14,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
     /// <summary>
     /// Base class for value binders.
     /// </summary>
-    public abstract class ValueBinder : IOrderedValueBinder
+    internal abstract class ValueBinder : IOrderedValueBinder
     {
         private readonly Type _type;
         private readonly BindStepOrder _bindStepOrder;

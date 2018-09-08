@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +14,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
     internal class TwilioSmsMessageAsyncCollector : IAsyncCollector<CreateMessageOptions>
     {
         private readonly TwilioSmsContext _context;
-        private readonly Collection<CreateMessageOptions> _messageOptionsCollection = new Collection<CreateMessageOptions>();
+        private readonly ConcurrentQueue<CreateMessageOptions> _messages = new ConcurrentQueue<CreateMessageOptions>();
 
         public TwilioSmsMessageAsyncCollector(TwilioSmsContext context)
         {
@@ -39,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
                 throw new InvalidOperationException("A 'Body' must be specified for the message.");
             }
 
-            _messageOptionsCollection.Add(messageOptions);
+            _messages.Enqueue(messageOptions);
 
             return Task.CompletedTask;
         }
@@ -59,7 +60,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
 
         public async Task FlushAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            foreach (var message in _messageOptionsCollection)
+            while (_messages.TryDequeue(out CreateMessageOptions message))
             {
                 // this create will initiate the send operation
                 await MessageResource.CreateAsync(message, client: _context.Client);

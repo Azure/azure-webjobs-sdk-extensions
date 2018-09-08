@@ -2,11 +2,10 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.IO;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
+using Microsoft.Extensions.Logging;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
+namespace Microsoft.Azure.WebJobs.Extensions.Files
 {
     /// <summary>
     /// Context input for <see cref="IFileProcessorFactory"/>
@@ -16,42 +15,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         /// <summary>
         /// Constructs a new instance
         /// </summary>
-        /// <param name="config">The <see cref="FilesConfiguration"/></param>
+        /// <param name="options">The <see cref="FilesOptions"/></param>
         /// <param name="attribute">The <see cref="FileTriggerAttribute"/></param>
         /// <param name="executor">The function executor.</param>
-        /// <param name="trace">The <see cref="TraceWriter"/>.</param>
-        public FileProcessorFactoryContext(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor executor, TraceWriter trace)
+        /// <param name="logger">The <see cref="ILogger"/>.</param>
+        public FileProcessorFactoryContext(FilesOptions options, FileTriggerAttribute attribute, ITriggeredFunctionExecutor executor, ILogger logger)
         {
-            if (config == null)
-            {
-                throw new ArgumentNullException("config");
-            }
-            if (attribute == null)
-            {
-                throw new ArgumentNullException("attribute");
-            }
-            if (executor == null)
-            {
-                throw new ArgumentNullException("executor");
-            }
-            if (trace == null)
-            {
-                throw new ArgumentNullException("trace");
-            }
-
-            Config = config;
-            Attribute = attribute;
-            Executor = executor;
-            Trace = trace;
+            Options = options ?? throw new ArgumentNullException(nameof(options));
+            Attribute = attribute ?? throw new ArgumentNullException(nameof(attribute));
+            Executor = executor ?? throw new ArgumentNullException(nameof(executor));
+            Logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
-        /// The <see cref="FilesConfiguration"/>
+        /// Gets the <see cref="FilesOptions"/>
         /// </summary>
-        public FilesConfiguration Config { get; private set; }
+        public FilesOptions Options { get; private set; }
 
         /// <summary>
-        /// The <see cref="FileTriggerAttribute"/>
+        /// Gets the <see cref="FileTriggerAttribute"/>
         /// </summary>
         public FileTriggerAttribute Attribute { get; private set; }
 
@@ -61,8 +43,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Listener
         public ITriggeredFunctionExecutor Executor { get; private set; }
 
         /// <summary>
-        /// Gets the <see cref="TraceWriter"/>.
+        /// Gets the <see cref="ILogger"/>.
         /// </summary>
-        public TraceWriter Trace { get; private set; }
+        public ILogger Logger { get; private set; }
     }
 }

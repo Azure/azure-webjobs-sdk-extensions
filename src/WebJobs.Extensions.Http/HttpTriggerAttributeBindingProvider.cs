@@ -16,7 +16,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.AspNetCore.Mvc.Internal;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.WebApiCompatShim;
 using Microsoft.AspNetCore.Routing.Template;
 using Microsoft.AspNetCore.WebUtilities;
@@ -38,7 +38,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         internal const string HttpQueryKey = "Query";
         internal const string HttpHeadersKey = "Headers";
 
+        // Name of binding data slot where we place the full HttpRequestMessage
+        internal const string RequestBindingName = "$request";
+
         private readonly Action<HttpRequest, object> _responseHook;
+        private static readonly Type[] _supportedTypes = new Type[]
+        {
+            typeof(Stream),
+            typeof(TextReader),
+            typeof(StreamReader),
+            typeof(string),
+            typeof(byte[]),
+            typeof(HttpRequest),
+            typeof(object),
+            typeof(HttpRequestMessage)
+        };
 
         public HttpTriggerAttributeBindingProvider(Action<HttpRequest, object> responseHook)
         {
@@ -59,11 +73,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 return Task.FromResult<ITriggerBinding>(null);
             }
 
-            // Can bind to user types, HttpRequestMessage, object (for dynamic binding support) and all the Read
-            // Types supported by StreamValueBinder
-            IEnumerable<Type> supportedTypes = StreamValueBinder.GetSupportedTypes(FileAccess.Read)
-                .Union(new Type[] { typeof(HttpRequest), typeof(object), typeof(HttpRequestMessage) });
-            bool isSupportedTypeBinding = ValueBinder.MatchParameterType(parameter, supportedTypes);
+            bool isSupportedTypeBinding = ValueBinder.MatchParameterType(parameter, _supportedTypes);
             bool isUserTypeBinding = !isSupportedTypeBinding && IsValidUserType(parameter.ParameterType);
             if (!isSupportedTypeBinding && !isUserTypeBinding)
             {
@@ -151,6 +161,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 // copy in any initial binding data from the poco
                 var aggregateBindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
                 aggregateBindingData.AddRange(userTypeBindingData);
+
+                aggregateBindingData[RequestBindingName] = request;
 
                 // Apply additional binding data coming from request route, query params, etc.
                 var requestBindingData = await GetRequestBindingDataAsync(request, _bindingDataContract);
@@ -282,7 +294,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 }
 
                 // apply binding data from the query string
-                foreach (var pair in request.Query)
+                var queryParameters = request.GetQueryParameterDictionary();
+                foreach (var pair in queryParameters)
                 {
                     if (string.Compare("code", pair.Key, StringComparison.OrdinalIgnoreCase) == 0)
                     {
@@ -317,7 +330,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 // add query parameter collection to binding data
                 if (!bindingData.ContainsKey(HttpQueryKey))
                 {
-                    bindingData[HttpQueryKey] = request.GetQueryParameterDictionary();
+                    bindingData[HttpQueryKey] = queryParameters;
                 }
 
                 // add headers collection to binding data
@@ -507,7 +520,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 }
             }
 
-            private class SimpleValueProvider : IValueProvider
+            internal class SimpleValueProvider : IValueProvider
             {
                 private readonly Type _type;
                 private readonly object _value;

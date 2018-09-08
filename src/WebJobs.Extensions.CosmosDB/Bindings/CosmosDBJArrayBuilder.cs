@@ -12,9 +12,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings
     {
         private CosmosDBEnumerableBuilder<JObject> _builder;
 
-        public CosmosDBJArrayBuilder(CosmosDBConfiguration config)
+        public CosmosDBJArrayBuilder(CosmosDBExtensionConfigProvider configProvider)
         {
-            _builder = new CosmosDBEnumerableBuilder<JObject>(config);
+            _builder = new CosmosDBEnumerableBuilder<JObject>(configProvider);
         }
 
         public async Task<JArray> ConvertAsync(CosmosDBAttribute attribute, CancellationToken cancellationToken)

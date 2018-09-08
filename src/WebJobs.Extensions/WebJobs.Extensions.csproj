@@ -1,15 +1,19 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\..\build\common.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions</RootNamespace>
     <PackageId>Microsoft.Azure.WebJobs.Extensions</PackageId>
-    <Description>This package contains the runtime assemblies for Microsoft.Azure.WebJobs.Extensions. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources.</Description>
+    <Description>This package contains Timers and File triggers. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources.</Description>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG;NETSTANDARD;NETSTANDARD2_0</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.0-beta4-11097" />
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.0-rc1" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Host.Storage" Version="3.0.0-rc1" />
     <PackageReference Include="ncrontab" Version="3.3.0" />
   </ItemGroup>
 

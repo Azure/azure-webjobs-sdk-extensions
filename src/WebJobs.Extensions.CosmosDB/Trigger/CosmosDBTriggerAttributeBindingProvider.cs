@@ -1,4 +1,4 @@
-﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
@@ -6,24 +6,32 @@ using System.Globalization;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents.ChangeFeedProcessor;
+using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Config;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Microsoft.Azure.WebJobs.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
     internal class CosmosDBTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
-        private readonly ChangeFeedHostOptions _leasesOptions;
+        private const string CosmosDBTriggerUserAgentSuffix = "CosmosDBTriggerFunctions";
         private readonly INameResolver _nameResolver;
+        private readonly CosmosDBOptions _options;
+        private readonly ILogger _logger;
+        private readonly CosmosDBExtensionConfigProvider _configProvider;
         private string _monitorConnectionString;
         private string _leasesConnectionString;
-        private CosmosDBConfiguration _config;
 
-        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, CosmosDBConfiguration config, ChangeFeedHostOptions leasesOptions = null)
+        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, CosmosDBOptions options,
+            CosmosDBExtensionConfigProvider configProvider, ILoggerFactory loggerFactory)
         {
             _nameResolver = nameResolver;
-            _config = config;
-            _leasesOptions = leasesOptions ?? new ChangeFeedHostOptions();
+            _options = options;
+            _configProvider = configProvider;
+            _logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("CosmosDB"));
         }
 
         public async Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
@@ -41,12 +49,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 return null;
             }
 
-            _monitorConnectionString = _nameResolver.Resolve(CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName);
-            _leasesConnectionString = _nameResolver.Resolve(CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName);
+            ConnectionMode? desiredConnectionMode = _options.ConnectionMode;
+            Protocol? desiredConnectionProtocol = _options.Protocol;
+
+            _monitorConnectionString = _nameResolver.Resolve(CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName);
+            _leasesConnectionString = _nameResolver.Resolve(CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName);
 
             DocumentCollectionInfo documentCollectionLocation;
             DocumentCollectionInfo leaseCollectionLocation;
             ChangeFeedHostOptions leaseHostOptions = ResolveLeaseOptions(attribute);
+
+            ChangeFeedOptions changeFeedOptions = new ChangeFeedOptions();
+            changeFeedOptions.StartFromBeginning = attribute.StartFromBeginning;
+            if (attribute.MaxItemsPerInvocation > 0)
+            {
+                changeFeedOptions.MaxItemCount = attribute.MaxItemsPerInvocation;
+            }
 
             try
             {
@@ -72,6 +90,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     CollectionName = ResolveAttributeValue(attribute.CollectionName)
                 };
 
+                documentCollectionLocation.ConnectionPolicy.UserAgentSuffix = CosmosDBTriggerUserAgentSuffix;
+
+                if (desiredConnectionMode.HasValue)
+                {
+                    documentCollectionLocation.ConnectionPolicy.ConnectionMode = desiredConnectionMode.Value;
+                }
+
+                if (desiredConnectionProtocol.HasValue)
+                {
+                    documentCollectionLocation.ConnectionPolicy.ConnectionProtocol = desiredConnectionProtocol.Value;
+                }
+
                 leaseCollectionLocation = new DocumentCollectionInfo
                 {
                     Uri = leasesConnection.ServiceEndpoint,
@@ -79,6 +109,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     DatabaseName = ResolveAttributeValue(attribute.LeaseDatabaseName),
                     CollectionName = ResolveAttributeValue(attribute.LeaseCollectionName)
                 };
+
+                leaseCollectionLocation.ConnectionPolicy.UserAgentSuffix = CosmosDBTriggerUserAgentSuffix;
+
+                if (desiredConnectionMode.HasValue)
+                {
+                    leaseCollectionLocation.ConnectionPolicy.ConnectionMode = desiredConnectionMode.Value;
+                }
+
+                if (desiredConnectionProtocol.HasValue)
+                {
+                    leaseCollectionLocation.ConnectionPolicy.ConnectionProtocol = desiredConnectionProtocol.Value;
+                }
 
                 if (string.IsNullOrEmpty(documentCollectionLocation.DatabaseName)
                     || string.IsNullOrEmpty(documentCollectionLocation.CollectionName)
@@ -98,7 +140,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 if (attribute.CreateLeaseCollectionIfNotExists)
                 {
                     // Not disposing this because it might be reused on other Trigger since Triggers could share lease collection
-                    ICosmosDBService service = _config.GetService(leasesConnectionString);
+                    ICosmosDBService service = _configProvider.GetService(leasesConnectionString);
                     await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(service, leaseCollectionLocation.DatabaseName, leaseCollectionLocation.CollectionName, null, attribute.LeasesCollectionThroughput);
                 }
             }
@@ -113,7 +155,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 throw new InvalidOperationException($"{nameof(attribute.RetryCount)} value {attribute.RetryCount} is not valid. Value must be zero, positive, or -1 for infinite retries.");
             }
 
-            return new CosmosDBTriggerBinding(parameter, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions, attribute.RetryCount);
+            return new CosmosDBTriggerBinding(parameter, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions, changeFeedOptions, _logger, attribute.RetryCount);
+        }
+
+        internal static TimeSpan ResolveTimeSpanFromMilliseconds(string nameOfProperty, TimeSpan baseTimeSpan, int? attributeValue)
+        {
+            if (!attributeValue.HasValue || attributeValue.Value == 0)
+            {
+                return baseTimeSpan;
+            }
+
+            if (attributeValue.Value < 0)
+            {
+                throw new InvalidOperationException($"'{nameOfProperty}' must be greater than 0.");
+            }
+
+            return TimeSpan.FromMilliseconds(attributeValue.Value);
         }
 
         private string ResolveAttributeConnectionString(CosmosDBTriggerAttribute attribute)
@@ -132,7 +189,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 throw new InvalidOperationException(
                     string.Format(CultureInfo.CurrentCulture,
                     "The CosmosDBTrigger connection string must be set either via a '{0}' app setting, via the CosmosDBTriggerAttribute.ConnectionStringSetting property or via DocumentDBConfiguration.ConnectionString.",
-                    CosmosDBConfiguration.AzureWebJobsCosmosDBConnectionStringName));
+                    CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName));
             }
 
             return connectionString;
@@ -155,7 +212,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         private ChangeFeedHostOptions ResolveLeaseOptions(CosmosDBTriggerAttribute attribute)
         {
-            return attribute.LeaseOptions ?? _leasesOptions;
+            ChangeFeedHostOptions leasesOptions = _options.LeaseOptions;
+
+            ChangeFeedHostOptions triggerChangeFeedHostOptions = new ChangeFeedHostOptions();
+            triggerChangeFeedHostOptions.LeasePrefix = ResolveAttributeValue(attribute.LeaseCollectionPrefix) ?? leasesOptions.LeasePrefix;
+            triggerChangeFeedHostOptions.FeedPollDelay = ResolveTimeSpanFromMilliseconds(nameof(CosmosDBTriggerAttribute.FeedPollDelay), leasesOptions.FeedPollDelay, attribute.FeedPollDelay);
+            triggerChangeFeedHostOptions.LeaseAcquireInterval = ResolveTimeSpanFromMilliseconds(nameof(CosmosDBTriggerAttribute.LeaseAcquireInterval), leasesOptions.LeaseAcquireInterval, attribute.LeaseAcquireInterval);
+            triggerChangeFeedHostOptions.LeaseExpirationInterval = ResolveTimeSpanFromMilliseconds(nameof(CosmosDBTriggerAttribute.LeaseExpirationInterval), leasesOptions.LeaseExpirationInterval, attribute.LeaseExpirationInterval);
+            triggerChangeFeedHostOptions.LeaseRenewInterval = ResolveTimeSpanFromMilliseconds(nameof(CosmosDBTriggerAttribute.LeaseRenewInterval), leasesOptions.LeaseRenewInterval, attribute.LeaseRenewInterval);
+            triggerChangeFeedHostOptions.CheckpointFrequency = leasesOptions.CheckpointFrequency ?? new CheckpointFrequency();
+            if (attribute.CheckpointInterval > 0)
+            {
+                triggerChangeFeedHostOptions.CheckpointFrequency.TimeInterval = TimeSpan.FromMilliseconds(attribute.CheckpointInterval);
+            }
+
+            if (attribute.CheckpointDocumentCount > 0)
+            {
+                triggerChangeFeedHostOptions.CheckpointFrequency.ProcessedDocumentCount = attribute.CheckpointDocumentCount;
+            }
+
+            return triggerChangeFeedHostOptions;
         }
 
         private bool TryReadFromSettings(string settingsKey, string defaultValue, out string settingsValue)
@@ -171,7 +247,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         private string ResolveAttributeValue(string attributeValue)
         {
-            return _nameResolver.Resolve(attributeValue) ?? attributeValue;
+            return _nameResolver.ResolveWholeString(attributeValue) ?? attributeValue;
         }
     }
 }
