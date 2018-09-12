@@ -26,7 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
         [Fact]
         public void FormatNextOccurrences_ReturnsExpectedString()
-        {
+        {            
             DateTime now = new DateTime(2015, 9, 16, 10, 30, 00);
             TimerInfo timerInfo = new TimerInfo(new CronSchedule(CrontabSchedule.Parse("0 * * * *")), null);
             string result = timerInfo.FormatNextOccurrences(10, now);
@@ -42,8 +42,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
             Assert.Equal(expected, result);
 
-            timerInfo = new TimerInfo(new DailySchedule("2:00:00"), null);
-            result = timerInfo.FormatNextOccurrences(5, now);
+            // Test the internal method with timer name specified
+            string timerName = "TestTimer";
+            TimerSchedule schedule = new DailySchedule("2:00:00");
+            result = TimerInfo.FormatNextOccurrences(schedule, 5, now, timerName);
 
             expectedDates = Enumerable.Range(17, 5)
                 .Select(day => new DateTime(2015, 09, day, 02, 00, 00))
@@ -51,7 +53,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 .ToArray();
 
             expected =
-                "The next 5 occurrences of the schedule will be:\r\n" +
+                "The next 5 occurrences of the 'TestTimer' schedule will be:\r\n" +
                 string.Join(string.Empty, expectedDates);
             Assert.Equal(expected, result);
 
@@ -61,12 +63,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             weeklySchedule.Add(DayOfWeek.Wednesday, new TimeSpan(21, 30, 0));
             weeklySchedule.Add(DayOfWeek.Friday, new TimeSpan(10, 0, 0));
 
-            timerInfo = new TimerInfo(weeklySchedule, null);
-            
-            result = timerInfo.FormatNextOccurrences(5, now);
+            schedule = weeklySchedule;
+
+            result = TimerInfo.FormatNextOccurrences(schedule, 5, now, timerName);
 
             expected =
-                "The next 5 occurrences of the schedule will be:\r\n" +
+                "The next 5 occurrences of the 'TestTimer' schedule will be:\r\n" +
                 new DateTime(2015, 09, 16, 21, 30, 00).ToString() + "\r\n" +
                 new DateTime(2015, 09, 18, 10, 00, 00).ToString() + "\r\n" +
                 new DateTime(2015, 09, 21, 08, 00, 00).ToString() + "\r\n" +

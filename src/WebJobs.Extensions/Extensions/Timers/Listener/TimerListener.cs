@@ -79,6 +79,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             // we use DateTime.Now rather than DateTime.UtcNow to allow the local machine to set the time zone. In Azure this will be
             // UTC by default, but can be configured to use any time zone if it makes scheduling easier.
             DateTime now = DateTime.Now;
+            _logger.LogDebug($"The '{_timerName}' timer is using the local time zone: '{TimeZoneInfo.Local.DisplayName}'");
+
             if (ScheduleMonitor != null)
             {
                 // check to see if we've missed an occurrence since we last started.
@@ -112,7 +114,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             }
 
             // log the next several occurrences to console for visibility
-            string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5);
+            string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5, timerName: _timerName);           
             _logger.LogInformation(nextOccurrences);
 
             StartTimer(DateTime.Now);
