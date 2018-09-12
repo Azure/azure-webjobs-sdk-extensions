@@ -33,14 +33,14 @@ namespace Microsoft.Azure.WebJobs
         public TimerSchedule Schedule { get; private set; }
 
         /// <summary>
-        /// Gets or sets the current schedule status for this timer.
+        /// Gets the current schedule status for this timer.
         /// If schedule monitoring is not enabled for this timer (see <see cref="TimerTriggerAttribute.UseMonitor"/>)
         /// this property will return null.
         /// </summary>
         public ScheduleStatus ScheduleStatus { get; private set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether this timer invocation
+        /// Gets a value indicating whether this timer invocation
         /// is due to a missed schedule occurrence.
         /// </summary>
         public bool IsPastDue { get; private set; }
@@ -57,16 +57,22 @@ namespace Microsoft.Azure.WebJobs
             return FormatNextOccurrences(Schedule, count, now);
         }
 
-        internal static string FormatNextOccurrences(TimerSchedule schedule, int count, DateTime? now = null)
+        internal static string FormatNextOccurrences(TimerSchedule schedule, int count, DateTime? now = null, string timerName = null)
         {
             if (schedule == null)
             {
                 throw new ArgumentNullException("schedule");
             }
 
+            // If we've got a timer name, format it
+            if (timerName != null)
+            {
+                timerName = $"'{timerName}' ";
+            }
+
             IEnumerable<DateTime> nextOccurrences = schedule.GetNextOccurrences(count, now);
             StringBuilder builder = new StringBuilder();
-            builder.AppendLine(string.Format("The next {0} occurrences of the schedule will be:", count));
+            builder.AppendLine($"The next {count} occurrences of the {timerName}schedule will be:");
             foreach (DateTime occurrence in nextOccurrences)
             {
                 builder.AppendLine(occurrence.ToString());

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Listeners;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -333,7 +334,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await _listener.StartAsync(CancellationToken.None);
             await _listener.StopAsync(CancellationToken.None);
 
-            Assert.True(_logger.GetLogMessages().Single(m => m.Level == LogLevel.Information).FormattedMessage.StartsWith("The next 5 occurrences of the schedule will be:"));
+            string actualMessage = _logger.GetLogMessages().Single(m => m.Level == LogLevel.Information).FormattedMessage;
+            Assert.StartsWith($"The next 5 occurrences of the '{_testTimerName}' schedule will be:", actualMessage);
         }
 
         [Fact]
@@ -424,7 +426,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await _listener.StopAsync(CancellationToken.None);
             _listener.Dispose();
 
-            Assert.Equal(expected, _logger.GetLogMessages().Single(m => m.Level == LogLevel.Debug).FormattedMessage);
+            LogMessage[] verboseTraces = _logger.GetLogMessages()
+                .Where(m => m.Level == LogLevel.Debug)
+                .OrderBy(t => t.Timestamp)
+                .ToArray();
+
+            Assert.Equal(2, verboseTraces.Length);
+            Assert.Contains("timer is using the local time zone:", verboseTraces[0].FormattedMessage);
+            Assert.Equal(expected, verboseTraces[1].FormattedMessage);
         }
 
         private void CreateTestListener(string expression, bool useMonitor = true, Action functionAction = null)
