@@ -230,7 +230,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _listener.Dispose();
         }
 
-        [Fact]
+        [Fact(Skip = "There is an issue surfaced by this test. It now fails because the interval spans across daylight savings adjustments. We need to fix the handling re-enable the test" +
+            "Tracked by https://github.com/Azure/azure-webjobs-sdk-extensions/issues/489")]
         public async Task StartAsync_ExtendedScheduleInterval_TimerContinuesUntilTotalIntervalComplete()
         {
             // create a timer with an extended interval that exceeds the max

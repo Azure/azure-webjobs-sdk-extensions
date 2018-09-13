@@ -18,7 +18,6 @@ $projects =
     "WebJobs.Extensions",
     "WebJobs.Extensions.CosmosDB",
     "WebJobs.Extensions.Http",
-    "WebJobs.Extensions.MobileApps",
     "WebJobs.Extensions.Twilio",
     "WebJobs.Extensions.SendGrid"
 
