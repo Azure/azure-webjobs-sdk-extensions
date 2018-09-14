@@ -81,9 +81,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
         public static DocumentClientException CreateDocumentClientException(HttpStatusCode status)
         {
-            var headers = new NameValueCollection();
-            var parameters = new object[] { null, null, headers, status, null };
-            return Activator.CreateInstance(typeof(DocumentClientException), BindingFlags.NonPublic | BindingFlags.Instance, null, parameters, null) as DocumentClientException;
+            Type t = typeof(DocumentClientException);
+
+            var constructor = t.GetConstructor(
+               BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic,
+               null, new[] { typeof(string), typeof(Exception), typeof(HttpStatusCode?), typeof(Uri), typeof(string) }, null);
+
+            object ex = constructor.Invoke(new object[] { string.Empty, new Exception(), status, null, string.Empty });
+            return ex as DocumentClientException;
         }
 
         public static ParameterInfo GetInputParameter<T>()
