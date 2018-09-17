@@ -363,7 +363,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         /// Situation where the DST transition happens in the middle of the schedule, with the
         /// next occurrence AFTER the DST transition.
         /// </summary>
-        [Fact]
+        [Fact(Skip = "To be addressed by https://github.com/Azure/azure-webjobs-sdk-extensions/pull/492")]
         public void GetNextInterval_NextAfterDST_ReturnsExpectedValue()
         {
             // Running on the Friday before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
