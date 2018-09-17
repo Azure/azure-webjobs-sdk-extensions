@@ -24,16 +24,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
         internal const string AzureWebJobsSendGridApiKeyName = "AzureWebJobsSendGridApiKey";
 
         private readonly IOptions<SendGridOptions> _options;
-        private readonly INameResolver _nameResolver;
         private ConcurrentDictionary<string, ISendGridClient> _sendGridClientCache = new ConcurrentDictionary<string, ISendGridClient>();
 
         /// <summary>
         /// Creates a new instance.
         /// </summary>
-        public SendGridExtensionConfigProvider(IOptions<SendGridOptions> options, ISendGridClientFactory clientFactory, INameResolver nameResolver)
+        public SendGridExtensionConfigProvider(IOptions<SendGridOptions> options, ISendGridClientFactory clientFactory)
         {
             _options = options;
-            _nameResolver = nameResolver;
             ClientFactory = clientFactory;
         }
 
@@ -45,11 +43,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
             if (context == null)
             {
                 throw new ArgumentNullException("context");
-            }
-
-            if (string.IsNullOrEmpty(_options.Value.ApiKey))
-            {
-                _options.Value.ApiKey = _nameResolver.Resolve(AzureWebJobsSendGridApiKeyName);
             }
 
             context

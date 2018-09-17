@@ -28,8 +28,12 @@ namespace Microsoft.Extensions.Hosting
             }
 
             builder.AddExtension<SendGridExtensionConfigProvider>()
-                .ConfigureOptions<SendGridOptions>((section, options) =>
+                .ConfigureOptions<SendGridOptions>((rootConfig, extensionPath, options) =>
                 {
+                    // Set the default, which can be overridden.
+                    options.ApiKey = rootConfig[SendGridExtensionConfigProvider.AzureWebJobsSendGridApiKeyName];
+
+                    IConfigurationSection section = rootConfig.GetSection(extensionPath);
                     SendGridHelpers.ApplyConfiguration(section, options);
                 });
 

@@ -14,6 +14,7 @@ using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Indexers;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -38,10 +39,7 @@ namespace SendGridTests
         public async Task OutputBindings_WithKeysOnConfigAndAttribute()
         {
             string functionName = nameof(SendGridEndToEndFunctions.Outputs_AttributeAndConfig);
-
-            Mock<ISendGridClientFactory> factoryMock;
-            Mock<Client.ISendGridClient> clientMock;
-            InitializeMocks(out factoryMock, out clientMock);
+            InitializeMocks(out Mock<ISendGridClientFactory> factoryMock, out Mock<ISendGridClient> clientMock);
 
             await RunTestAsync(functionName, factoryMock.Object, configApiKey: ConfigApiKey, includeDefaultApiKey: false);
 
@@ -64,10 +62,7 @@ namespace SendGridTests
         public async Task OutputBindings_WithNameResolver()
         {
             string functionName = nameof(SendGridEndToEndFunctions.Outputs_NameResolver);
-
-            Mock<ISendGridClientFactory> factoryMock;
-            Mock<ISendGridClient> clientMock;
-            InitializeMocks(out factoryMock, out clientMock);
+            InitializeMocks(out Mock<ISendGridClientFactory> factoryMock, out Mock<ISendGridClient> clientMock);
 
             await RunTestAsync(functionName, factoryMock.Object, configApiKey: null, includeDefaultApiKey: true);
 
@@ -88,10 +83,7 @@ namespace SendGridTests
         public async Task OutputBindings_NoApiKey()
         {
             string functionName = nameof(SendGridEndToEndFunctions.Outputs_NameResolver);
-
-            Mock<ISendGridClientFactory> factoryMock;
-            Mock<ISendGridClient> clientMock;
-            InitializeMocks(out factoryMock, out clientMock);
+            InitializeMocks(out Mock<ISendGridClientFactory> factoryMock, out Mock<ISendGridClient> clientMock);
 
             var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
                 () => RunTestAsync(functionName, factoryMock.Object, configApiKey: null, includeDefaultApiKey: false));
@@ -124,20 +116,17 @@ namespace SendGridTests
             arguments.Add("triggerData", argument);
 
             var resolver = new TestNameResolver();
-            resolver.Values.Add("MyKey1", AttributeApiKey1);
-            resolver.Values.Add("MyKey2", AttributeApiKey2);
-
-            if (includeDefaultApiKey)
-            {
-                resolver.Values.Add(SendGridExtensionConfigProvider.AzureWebJobsSendGridApiKeyName, DefaultApiKey);
-            }
 
             IHost host = new HostBuilder()
                 .ConfigureWebJobs(builder =>
                 {
                     builder.AddSendGrid(o =>
                     {
-                        o.ApiKey = configApiKey;
+                        if (configApiKey != null)
+                        {
+                            o.ApiKey = configApiKey;
+                        }
+
                         o.ToAddress = new EmailAddress("ToConfig@test.com");
                         o.FromAddress = new EmailAddress("FromConfig@test.com");
                     });
@@ -152,6 +141,22 @@ namespace SendGridTests
                 {
                     logging.ClearProviders();
                     logging.AddProvider(_loggerProvider);
+                })
+                .ConfigureAppConfiguration(c =>
+                {
+                    c.Sources.Clear();
+                    var collection = new Dictionary<string, string>
+                    {
+                        { "MyKey1", AttributeApiKey1 },
+                        { "MyKey2", AttributeApiKey2 }
+                    };
+
+                    if (includeDefaultApiKey)
+                    {
+                        collection.Add(SendGridExtensionConfigProvider.AzureWebJobsSendGridApiKeyName, DefaultApiKey);
+                    }
+
+                    c.AddInMemoryCollection(collection);
                 })
                 .Build();
 
