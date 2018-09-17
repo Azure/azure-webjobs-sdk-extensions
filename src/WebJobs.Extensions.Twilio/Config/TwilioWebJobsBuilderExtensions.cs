@@ -4,6 +4,7 @@
 using System;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Twilio;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.Extensions.Hosting
@@ -24,7 +25,15 @@ namespace Microsoft.Extensions.Hosting
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            builder.AddExtension<TwilioExtensionConfigProvider>();
+            builder.AddExtension<TwilioExtensionConfigProvider>()
+                .ConfigureOptions<TwilioSmsOptions>((rootConfig, extensionPath, options) =>
+                {
+                    options.AccountSid = rootConfig[TwilioExtensionConfigProvider.AzureWebJobsTwilioAccountSidKeyName];
+                    options.AuthToken = rootConfig[TwilioExtensionConfigProvider.AzureWebJobsTwilioAccountAuthTokenName];
+
+                    IConfigurationSection section = rootConfig.GetSection(extensionPath);
+                    section.Bind(options);
+                });
 
             return builder;
         }

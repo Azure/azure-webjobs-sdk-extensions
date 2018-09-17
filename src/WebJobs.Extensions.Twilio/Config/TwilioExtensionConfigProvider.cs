@@ -22,16 +22,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
         internal const string AzureWebJobsTwilioAccountAuthTokenName = "AzureWebJobsTwilioAuthToken";
 
         private readonly IOptions<TwilioSmsOptions> _options;
-        private readonly INameResolver _nameResolver;
         private readonly ConcurrentDictionary<Tuple<string, string>, TwilioRestClient> _twilioClientCache = new ConcurrentDictionary<Tuple<string, string>, TwilioRestClient>();
 
-        private string _defaultAccountSid;
-        private string _defaultAuthToken;
-
-        public TwilioExtensionConfigProvider(IOptions<TwilioSmsOptions> options, INameResolver nameResolver)
+        public TwilioExtensionConfigProvider(IOptions<TwilioSmsOptions> options)
         {
             _options = options;
-            _nameResolver = nameResolver;
         }
 
         public void Initialize(ExtensionConfigContext context)
@@ -40,9 +35,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
             {
                 throw new ArgumentNullException("context");
             }
-
-            _defaultAccountSid = _nameResolver.Resolve(AzureWebJobsTwilioAccountSidKeyName);
-            _defaultAuthToken = _nameResolver.Resolve(AzureWebJobsTwilioAccountAuthTokenName);
 
             context.AddConverter<JObject, CreateMessageOptions>(CreateMessageOptions);
 
@@ -56,8 +48,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
 
         private void ValidateBinding(TwilioSmsAttribute attribute, Type type)
         {
-            string accountSid = Utility.FirstOrDefault(attribute.AccountSidSetting, _options.Value.AccountSid, _defaultAccountSid);
-            string authToken = Utility.FirstOrDefault(attribute.AuthTokenSetting, _options.Value.AuthToken, _defaultAuthToken);
+            string accountSid = Utility.FirstOrDefault(attribute.AccountSidSetting, _options.Value.AccountSid);
+            string authToken = Utility.FirstOrDefault(attribute.AuthTokenSetting, _options.Value.AuthToken);
             if (string.IsNullOrEmpty(accountSid))
             {
                 ThrowMissingSettingException("AccountSID", AzureWebJobsTwilioAccountSidKeyName, "AccountSID");
@@ -71,8 +63,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
 
         private TwilioSmsContext CreateContext(TwilioSmsAttribute attribute)
         {
-            string accountSid = Utility.FirstOrDefault(attribute.AccountSidSetting, _options.Value.AccountSid, _defaultAccountSid);
-            string authToken = Utility.FirstOrDefault(attribute.AuthTokenSetting, _options.Value.AuthToken, _defaultAuthToken);
+            string accountSid = Utility.FirstOrDefault(attribute.AccountSidSetting, _options.Value.AccountSid);
+            string authToken = Utility.FirstOrDefault(attribute.AuthTokenSetting, _options.Value.AuthToken);
 
             TwilioRestClient client = _twilioClientCache.GetOrAdd(new Tuple<string, string>(accountSid, authToken), t => new TwilioRestClient(t.Item1, t.Item2));
 
@@ -131,8 +123,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
 
         private static TValue GetValueOrDefault<TValue>(JObject messageObject, string propertyName)
         {
-            JToken result = null;
-            if (messageObject.TryGetValue(propertyName, StringComparison.OrdinalIgnoreCase, out result))
+            if (messageObject.TryGetValue(propertyName, StringComparison.OrdinalIgnoreCase, out JToken result))
             {
                 return result.Value<TValue>();
             }
