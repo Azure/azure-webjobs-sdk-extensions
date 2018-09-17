@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="3.0.0-rc1" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="3.0.0-rc1-11456" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="2.1.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.1.0" />
   </ItemGroup>
@@ -22,6 +22,12 @@
     <ProjectReference Include="..\WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.csproj" />
     <ProjectReference Include="..\WebJobs.Extensions.Twilio\WebJobs.Extensions.Twilio.csproj" />
     <ProjectReference Include="..\WebJobs.Extensions\WebJobs.Extensions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

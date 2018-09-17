@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Azure.WebJobs.Host.Indexers;
 using Microsoft.Azure.WebJobs.Host.Timers;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -105,7 +104,7 @@ namespace Microsoft.Azure.WebJobs.Host.TestCommon
             Assert.True(false, "Invoker should have failed");
         }
 
-        public static IHostBuilder ConfigureDefaultTestHost(this IHostBuilder builder, Action<IWebJobsBuilder> configure,  params Type[] types)
+        public static IHostBuilder ConfigureDefaultTestHost(this IHostBuilder builder, Action<IWebJobsBuilder> configure, params Type[] types)
         {
             if (configure == null)
             {
@@ -181,14 +180,14 @@ namespace Microsoft.Azure.WebJobs.Host.TestCommon
             return host.Services.GetServices<IExtensionConfigProvider>().OfType<TExtension>().SingleOrDefault();
         }
 
-        public static void Call<T>(this JobHost host, string methodName, object arguments)
+        public static Task CallAsync<T>(this JobHost host, string methodName, object arguments)
         {
-            host.Call(typeof(T).GetMethod(methodName), arguments);
+            return host.CallAsync(typeof(T).GetMethod(methodName), arguments);
         }
 
-        public static void Call<T>(this JobHost host, string methodName)
+        public static Task CallAsync<T>(this JobHost host, string methodName)
         {
-            host.Call(typeof(T).GetMethod(methodName));
+            return host.CallAsync(typeof(T).GetMethod(methodName));
         }
 
         public static TOptions GetOptions<TOptions>(this IHost host) where TOptions : class, new()

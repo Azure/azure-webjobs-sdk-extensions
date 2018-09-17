@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
@@ -12,6 +11,7 @@ using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -25,15 +25,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
     [Extension("CosmosDB")]
     internal class CosmosDBExtensionConfigProvider : IExtensionConfigProvider
     {
-        internal const string AzureWebJobsCosmosDBConnectionStringName = "AzureWebJobsCosmosDBConnectionString";
+        private readonly IConfiguration _configuration;
         private readonly ICosmosDBServiceFactory _cosmosDBServiceFactory;
         private readonly INameResolver _nameResolver;
         private readonly CosmosDBOptions _options;
         private readonly ILoggerFactory _loggerFactory;
-        private string _defaultConnectionString;
 
-        public CosmosDBExtensionConfigProvider(IOptions<CosmosDBOptions> options, ICosmosDBServiceFactory cosmosDBServiceFactory, INameResolver nameResolver, ILoggerFactory loggerFactory)
+        public CosmosDBExtensionConfigProvider(IOptions<CosmosDBOptions> options, ICosmosDBServiceFactory cosmosDBServiceFactory, IConfiguration configuration, INameResolver nameResolver, ILoggerFactory loggerFactory)
         {
+            _configuration = configuration;
             _cosmosDBServiceFactory = cosmosDBServiceFactory;
             _nameResolver = nameResolver;
             _options = options.Value;
@@ -49,9 +49,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 throw new ArgumentNullException("context");
             }
-
-            // Use this if there is no other connection string set.
-            _defaultConnectionString = _nameResolver.Resolve(AzureWebJobsCosmosDBConnectionStringName);
 
             // Apply ValidateConnection to all on this rule. 
             var rule = context.AddBindingRule<CosmosDBAttribute>();
@@ -74,7 +71,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             // Trigger
             var rule2 = context.AddBindingRule<CosmosDBTriggerAttribute>();
-            rule2.BindToTrigger<IReadOnlyList<Document>>(new CosmosDBTriggerAttributeBindingProvider(_nameResolver, _options, this, _loggerFactory));
+            rule2.BindToTrigger<IReadOnlyList<Document>>(new CosmosDBTriggerAttributeBindingProvider(_configuration, _nameResolver, _options, this, _loggerFactory));
             rule2.AddConverter<string, IReadOnlyList<Document>>(str => JsonConvert.DeserializeObject<IReadOnlyList<Document>>(str));
             rule2.AddConverter<IReadOnlyList<Document>, JArray>(docList => JArray.FromObject(docList));
             rule2.AddConverter<IReadOnlyList<Document>, string>(docList => JArray.FromObject(docList).ToString());
@@ -83,13 +80,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         internal void ValidateConnection(CosmosDBAttribute attribute, Type paramType)
         {
             if (string.IsNullOrEmpty(_options.ConnectionString) &&
-                string.IsNullOrEmpty(attribute.ConnectionStringSetting) &&
-                string.IsNullOrEmpty(_defaultConnectionString))
+                string.IsNullOrEmpty(attribute.ConnectionStringSetting))
             {
+                string attributeProperty = $"{nameof(CosmosDBAttribute)}.{nameof(CosmosDBAttribute.ConnectionStringSetting)}";
+                string optionsProperty = $"{nameof(CosmosDBOptions)}.{nameof(CosmosDBOptions.ConnectionString)}";
                 throw new InvalidOperationException(
-                    string.Format(CultureInfo.CurrentCulture,
-                    "The CosmosDB connection string must be set either via a '{0}' app setting, via the CosmosDBAttribute.ConnectionStringSetting property or via CosmosDBConfiguration.ConnectionString.",
-                    AzureWebJobsCosmosDBConnectionStringName));
+                    $"The CosmosDB connection string must be set either via the '{Constants.DefaultConnectionStringName}' IConfiguration connection string, via the {attributeProperty} property or via {optionsProperty}.");
             }
         }
 
@@ -124,14 +120,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 return attributeConnectionString;
             }
 
-            // Second, try the config's ConnectionString
-            if (!string.IsNullOrEmpty(_options.ConnectionString))
-            {
-                return _options.ConnectionString;
-            }
-
-            // Finally, fall back to the default.
-            return _defaultConnectionString;
+            // Then use the options.
+            return _options.ConnectionString;
         }
 
         internal ICosmosDBService GetService(string connectionString)

@@ -9,9 +9,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
-using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -23,6 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
     {
         private const string DatabaseName = "ItemDb";
         private const string CollectionName = "ItemCollection";
+        private static readonly IConfiguration _emptyConfig = new ConfigurationBuilder().Build();
         private readonly Uri _expectedUri = UriFactory.CreateDocumentCollectionUri(DatabaseName, CollectionName);
 
         [Fact]
@@ -135,7 +136,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             {
                 ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;"
             });
-            var configProvider = new CosmosDBExtensionConfigProvider(options, mockServiceFactory.Object, new TestNameResolver(), NullLoggerFactory.Instance);
+            var configProvider = new CosmosDBExtensionConfigProvider(options, mockServiceFactory.Object, _emptyConfig, new TestNameResolver(), NullLoggerFactory.Instance);
 
             return new CosmosDBEnumerableBuilder<T>(configProvider);
         }

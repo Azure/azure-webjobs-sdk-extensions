@@ -11,6 +11,7 @@ using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Indexers;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -300,12 +301,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             var resolver = new TestNameResolver();
             resolver.Values.Add("Database", "ResolvedDatabase");
             resolver.Values.Add("Collection", "ResolvedCollection");
-            resolver.Values.Add("MyConnectionString", AttributeConnStr);
             resolver.Values.Add("Query", "ResolvedQuery");
-            if (includeDefaultConnectionString)
-            {
-                resolver.Values.Add(CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName, DefaultConnStr);
-            }
 
             IHost host = new HostBuilder()
                 .ConfigureWebJobs(builder =>
@@ -313,13 +309,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                     builder.AddAzureStorage()
                     .AddCosmosDB();
                 })
+                .ConfigureAppConfiguration(c =>
+                {
+                    c.Sources.Clear();
+                    if (includeDefaultConnectionString)
+                    {
+                        c.AddInMemoryCollection(new Dictionary<string, string>
+                        {
+                            { $"ConnectionStrings:{Constants.DefaultConnectionStringName}", DefaultConnStr },
+                            { ConnectionStringNames.Storage, "UseDevelopmentStorage=true" },
+                            { "MyConnectionString", AttributeConnStr }
+                        });
+                    }
+                })
                 .ConfigureServices(services =>
                 {
                     services.AddSingleton<ICosmosDBServiceFactory>(factory);
                     services.AddSingleton<INameResolver>(resolver);
                     services.AddSingleton<ITypeLocator>(locator);
 
-                    services.Configure<CosmosDBOptions>(o => o.ConnectionString = configConnectionString);
+                    if (configConnectionString != null)
+                    {
+                        services.Configure<CosmosDBOptions>(o => o.ConnectionString = configConnectionString);
+                    }
                 })
                 .ConfigureLogging(logging =>
                 {

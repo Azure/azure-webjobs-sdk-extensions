@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.WebJobs.Extensions.Tests;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -69,7 +70,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         {
             var builder = new DbConnectionStringBuilder
             {
-                ConnectionString = configuration[CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName]
+                ConnectionString = configuration.GetConnectionString(Constants.DefaultConnectionStringName)
             };
 
             var serviceUri = new Uri(builder["AccountEndpoint"].ToString());
@@ -91,8 +92,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             IHost host = new HostBuilder()
                 .ConfigureWebJobs(builder => 
                 {
-                    builder.AddAzureStorage()
+                    builder
+                    .AddAzureStorage()
                     .AddCosmosDB();
+                })
+                .ConfigureAppConfiguration(c =>
+                {
+                    c.AddTestSettings();
                 })
                 .ConfigureServices(services =>
                 {

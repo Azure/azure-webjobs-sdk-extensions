@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Moq;
@@ -14,6 +15,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
 {
     public static class TestHelpers
     {
+        private static readonly IConfiguration _emptyConfig = new ConfigurationBuilder().Build();
+
         public static Task Await(Func<bool> condition, int timeout = 60 * 1000, int pollingInterval = 2 * 1000, bool throwWhenDebugging = false)
         {
             return Await(() => Task.FromResult(condition()), timeout, pollingInterval, throwWhenDebugging);
@@ -51,7 +54,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
 
             var converterManager = host.Services.GetRequiredService<IConverterManager>();
 
-            return new ExtensionConfigContext(resolver, converterManager, mockWebHookProvider.Object, mockExtensionRegistry.Object);
+            return new ExtensionConfigContext(_emptyConfig, resolver, converterManager, mockWebHookProvider.Object, mockExtensionRegistry.Object);
         }
     }
 }

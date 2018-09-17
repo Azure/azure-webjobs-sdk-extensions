@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
@@ -16,12 +17,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 {
     public class CosmosDBConfigurationTests
     {
+        private static readonly IConfiguration _emptyConfig = new ConfigurationBuilder().Build();
+
         [Fact]
         public async Task Configuration_Caches_Clients()
         {
             // Arrange
             var options = new CosmosDBOptions { ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;" };
-            var config = new CosmosDBExtensionConfigProvider(new OptionsWrapper<CosmosDBOptions>(options), new DefaultCosmosDBServiceFactory(), new TestNameResolver(), NullLoggerFactory.Instance);
+            var config = new CosmosDBExtensionConfigProvider(new OptionsWrapper<CosmosDBOptions>(options), new DefaultCosmosDBServiceFactory(), _emptyConfig, new TestNameResolver(), NullLoggerFactory.Instance);
             var attribute = new CosmosDBAttribute { Id = "abcdef" };
 
             // Act
@@ -84,12 +87,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
         private CosmosDBExtensionConfigProvider InitializeExtensionConfigProvider(string defaultConnStr, string optionsConnStr = null)
         {
-            var options = new OptionsWrapper<CosmosDBOptions>(new CosmosDBOptions { ConnectionString = optionsConnStr });
+            var options = CosmosDBTestUtility.InitializeOptions(defaultConnStr, optionsConnStr);
             var factory = new DefaultCosmosDBServiceFactory();
             var nameResolver = new TestNameResolver();
-            nameResolver.Values[CosmosDBExtensionConfigProvider.AzureWebJobsCosmosDBConnectionStringName] = defaultConnStr;
-
-            var configProvider = new CosmosDBExtensionConfigProvider(options, factory, nameResolver, NullLoggerFactory.Instance);
+            var configProvider = new CosmosDBExtensionConfigProvider(options, factory, _emptyConfig, nameResolver, NullLoggerFactory.Instance);
 
             var context = TestHelpers.CreateExtensionConfigContext(nameResolver);
 

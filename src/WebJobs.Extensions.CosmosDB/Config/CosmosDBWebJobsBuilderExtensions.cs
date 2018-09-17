@@ -24,9 +24,15 @@ namespace Microsoft.Extensions.Hosting
             {
                 throw new ArgumentNullException(nameof(builder));
             }
+            
+            builder.AddExtension<CosmosDBExtensionConfigProvider>()               
+                .ConfigureOptions<CosmosDBOptions>((config, path, options) =>
+                {
+                    options.ConnectionString = config.GetConnectionString(Constants.DefaultConnectionStringName);
 
-            builder.AddExtension<CosmosDBExtensionConfigProvider>()
-                .BindOptions<CosmosDBOptions>();
+                    IConfigurationSection section = config.GetSection(path);
+                    section.Bind(options);
+                });                
 
             builder.Services.AddSingleton<ICosmosDBServiceFactory, DefaultCosmosDBServiceFactory>();
 

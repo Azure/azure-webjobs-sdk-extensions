@@ -1,8 +1,8 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Indexers;
 using Microsoft.Extensions.Options;
@@ -15,27 +15,12 @@ namespace Microsoft.Azure.WebJobs.Host.TestCommon
         private readonly IJobActivator _jobActivator;
 
         public TestJobHost(
-            IOptions<JobHostOptions> options, 
+            IOptions<JobHostOptions> options,
             IJobHostContextFactory contextFactory,
             IJobActivator jobActivator)
             : base(options, contextFactory)
         {
             _jobActivator = jobActivator;
-        }
-
-        public void Call(string methodName)
-        {
-            Call(typeof(TProgram).GetMethod(methodName));
-        }
-
-        public void Call(string methodName, object arguments)
-        {
-            Call(typeof(TProgram).GetMethod(methodName), arguments);
-        }
-
-        public void Call(string methodName, IDictionary<string, object> arguments)
-        {
-            Call(typeof(TProgram).GetMethod(methodName), arguments);
         }
 
         public Task CallAsync(string methodName, object arguments)
@@ -60,7 +45,7 @@ namespace Microsoft.Azure.WebJobs.Host.TestCommon
             // Act
             using (this)
             {
-                this.Start();
+                await StartAsync();
 
                 // Assert
                 result = await JobHostTestHelpers.AwaitWithTimeout(taskSource);
@@ -69,12 +54,12 @@ namespace Microsoft.Azure.WebJobs.Host.TestCommon
         }
 
         // Helper for quickly testing indexing errors 
-        public void AssertIndexingError(string methodName, string expectedErrorMessage)
+        public async Task AssertIndexingErrorAsync(string methodName, string expectedErrorMessage)
         {
             try
             {
                 // Indexing is lazy, so must actually try a call first. 
-                this.Call(methodName);
+                await CallAsync(methodName);
             }
             catch (FunctionIndexingException e)
             {

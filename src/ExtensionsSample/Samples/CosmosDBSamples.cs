@@ -14,7 +14,7 @@ namespace ExtensionsSample
 {
     // To use the CosmosDB samples:
     // 1. Create a new CosmosDB account
-    // 2. Add the CosmosDB Connection String to the 'AzureWebJobsCosmosDBConnectionString' App Setting in app.config    
+    // 2. Add the CosmosDB Connection String to the "cosmosDB" property (under "connectionStrings") in appsettings.json    
     // 3. Add typeof(CosmosDBSamples) to the SamplesTypeLocator in Program.cs
     public static class CosmosDBSamples
     {

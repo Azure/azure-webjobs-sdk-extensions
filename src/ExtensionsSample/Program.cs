@@ -5,7 +5,6 @@ using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SendGrid.Helpers.Mail;
@@ -30,8 +29,7 @@ namespace ExtensionsSample
                .UseEnvironment("Development")
                .ConfigureWebJobs(webJobsBuilder =>
                {
-                   // TEMP - remove setting host id once https://github.com/Azure/azure-webjobs-sdk/issues/1802 is fixed
-                   webJobsBuilder.UseHostId("cead61-62cf-47f4-93b4-6efcded6")
+                   webJobsBuilder
                    .AddAzureStorageCoreServices()
                    .AddAzureStorage()
                    .AddFiles(o =>
@@ -55,7 +53,7 @@ namespace ExtensionsSample
                })
                .ConfigureServices(s =>
                {
-                   s.TryAddSingleton<ITypeLocator>(typeLocator);
+                   s.AddSingleton<ITypeLocator>(typeLocator);
                })
                .UseConsoleLifetime();
 

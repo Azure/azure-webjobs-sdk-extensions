@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         }
 
         [Fact]
-        public void BasicInvoke()
+        public async Task BasicInvoke()
         {
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions.com/api/123/two/test?q1=123&q2=two");
             request.Headers.Add("h1", "value1");
@@ -56,15 +56,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             request.HttpContext.Items[HttpExtensionConstants.AzureWebJobsHttpRouteDataKey] = routeDataValues;
 
             var method = typeof(TestFunctions).GetMethod("TestFunction1");
-            _host.Call(method, new { req = request });
+            await _host.CallAsync(method, new { req = request });
         }
 
         [Fact]
-        public void BasicResponse()
+        public async Task BasicResponse()
         {
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions.com/api/abc");
             var method = typeof(TestFunctions).GetMethod(nameof(TestFunctions.TestResponse));
-            _host.Call(method, new { req = request });
+            await _host.CallAsync(method, new { req = request });
 
             Assert.Equal("test-response", request.HttpContext.Items["$ret"]); // Verify resposne was set
         }

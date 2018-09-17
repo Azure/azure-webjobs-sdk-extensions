@@ -12,6 +12,10 @@ using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
 using Microsoft.Azure.WebJobs.Host.Bindings;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json.Linq;
 
@@ -21,6 +25,40 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
     {
         public const string DatabaseName = "ItemDB";
         public const string CollectionName = "ItemCollection";
+
+        // Runs the standard options pipeline for initialization
+        public static IOptions<CosmosDBOptions> InitializeOptions(string defaultConnectionString, string optionsConnectionString)
+        {
+            // Create the Options like we do during host build
+            var builder = new HostBuilder()               
+                .ConfigureWebJobs(b =>
+                {
+                    // This wires up our options pipeline.
+                    b.AddCosmosDB();
+
+                    // If someone is updating the ConnectionString, they'd do it like this.
+                    if (optionsConnectionString != null)
+                    {
+                        b.Services.Configure<CosmosDBOptions>(o =>
+                        {
+                            o.ConnectionString = optionsConnectionString;
+                        });
+                    }
+                })
+                .ConfigureAppConfiguration(b =>
+                {
+                    b.Sources.Clear();
+                    if (defaultConnectionString != null)
+                    {
+                        b.AddInMemoryCollection(new Dictionary<string, string>
+                        {
+                            { $"ConnectionStrings:{Constants.DefaultConnectionStringName}", defaultConnectionString }
+                        });
+                    }
+                });
+
+            return builder.Build().Services.GetService<IOptions<CosmosDBOptions>>();
+        }
 
         public static void SetupCollectionMock(Mock<ICosmosDBService> mockService, string partitionKeyPath = null, int throughput = 0)
         {

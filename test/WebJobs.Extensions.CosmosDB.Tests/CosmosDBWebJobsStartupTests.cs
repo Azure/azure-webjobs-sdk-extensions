@@ -21,7 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             IHost host = new HostBuilder()
                 .ConfigureWebJobs(builder =>
                 {
-                    builder.UseExternalStartup(new TestStartupTypeDiscoverer());
+                    builder.UseExternalStartup(new TestStartupTypeLocator());
                 })
                 .Build();
 
@@ -30,7 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             Assert.IsType<CosmosDBExtensionConfigProvider>(extensionConfig);
         }
 
-        private class TestStartupTypeDiscoverer : IWebJobsStartupTypeDiscoverer
+        private class TestStartupTypeLocator : IWebJobsStartupTypeLocator
         {
             public Type[] GetStartupTypes()
             {

@@ -12,11 +12,11 @@ namespace ExtensionsSample
 {
     // To use the CosmosDB samples:
     // 1. Create a new CosmosDB account
-    // 2. Add the CosmosDB Connection String to the 'AzureWebJobsCosmosDBConnectionString' App Setting in app.config
+    // 2. Add the CosmosDB Connection String to the "cosmosDB" property (under "connectionStrings") in appsettings.json    
     // 3. Create a Database called ItemDb.
     // 4. Create a Collection named ItemCollection. This will be the monitored collection.
     // 5. Create a Collection named Leases. This will be used to store auxiliary leases to support multi-observer scenarios and partitioning.
-    // 6. Optionally create a Collection named ItemCollectionCopy for the ListenAndCopy scenario. And add an 'AzureWebJobsCosmosDBConnectionString' App Setting in app.config with its Connection String
+    // 6. Optionally create a Collection named ItemCollectionCopy for the ListenAndCopy scenario.
     // 7. Add typeof(CosmosDBTriggerSamples) to the SamplesTypeLocator in Program.cs
     public static class CosmosDBTriggerSamples
     {
