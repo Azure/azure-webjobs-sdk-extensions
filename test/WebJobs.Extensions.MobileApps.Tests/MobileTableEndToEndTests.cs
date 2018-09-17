@@ -11,6 +11,7 @@ using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Indexers;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -259,11 +260,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
         {
             // Just start the host -- this should fail if function indexing fails.
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
-            var resolver = new TestNameResolver();
-            if (includeDefaultUri)
-            {
-                resolver.Values.Add(MobileAppsExtensionConfigProvider.AzureWebJobsMobileAppUriName, "https://default");
-            }
 
             IHost host = new HostBuilder()
                 .ConfigureWebJobs(builder =>
@@ -272,13 +268,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
                 })
                 .ConfigureServices(services =>
                 {
-                    services.AddSingleton<INameResolver>(resolver);
+                    services.AddSingleton<INameResolver>(new TestNameResolver());
                     services.AddSingleton<ITypeLocator>(locator);
                 })
                 .ConfigureLogging(logging =>
                 {
                     logging.ClearProviders();
                     logging.AddProvider(_loggerProvider);
+                })
+                .ConfigureAppConfiguration(c =>
+                {
+                    c.Sources.Clear();
+
+                    if (includeDefaultUri)
+                    {
+                        c.AddInMemoryCollection(new Dictionary<string, string>
+                        {
+                            { MobileAppsExtensionConfigProvider.AzureWebJobsMobileAppUriName, "https://default" }
+                        });
+                    }
                 })
                 .Build();
 
@@ -292,20 +300,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             testType = testType ?? typeof(MobileTableEndToEndFunctions);
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
 
-            var arguments = new Dictionary<string, object>();
-            arguments.Add("triggerData", argument);
+            var arguments = new Dictionary<string, object>
+            {
+                { "triggerData", argument }
+            };
 
             var resolver = new TestNameResolver();
-            resolver.Values.Add("MyUri", AttributeUri);
-            resolver.Values.Add("MyKey", AttributeKey);
-            if (includeDefaultUri)
-            {
-                resolver.Values.Add(MobileAppsExtensionConfigProvider.AzureWebJobsMobileAppUriName, DefaultUri);
-            }
-            if (includeDefaultKey)
-            {
-                resolver.Values.Add(MobileAppsExtensionConfigProvider.AzureWebJobsMobileAppApiKeyName, DefaultKey);
-            }
 
             IHost host = new HostBuilder()
                 .ConfigureWebJobs(builder =>
@@ -313,8 +313,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
                     builder.AddAzureStorage()
                     .AddMobileApps(o =>
                     {
-                        o.MobileAppUri = configUri;
-                        o.ApiKey = configKey;
+                        if (configUri != null)
+                        {
+                            o.MobileAppUri = configUri;
+                        }
+
+                        if (configKey != null)
+                        {
+                            o.ApiKey = configKey;
+                        }
                     });
                 })
                 .ConfigureServices(services =>
@@ -327,6 +334,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
                 {
                     logging.ClearProviders();
                     logging.AddProvider(_loggerProvider);
+                })
+                .ConfigureAppConfiguration(c =>
+                {
+                    c.Sources.Clear();
+                    var collection = new Dictionary<string, string>
+                     {
+                        { ConnectionStringNames.Storage, "UseDevelopmentStorage=true" },
+                        { "MyUri", AttributeUri },
+                        { "MyKey", AttributeKey }
+                     };
+
+                    if (includeDefaultUri)
+                    {
+                        collection.Add(MobileAppsExtensionConfigProvider.AzureWebJobsMobileAppUriName, DefaultUri);
+                    }
+                    if (includeDefaultKey)
+                    {
+                        collection.Add(MobileAppsExtensionConfigProvider.AzureWebJobsMobileAppApiKeyName, DefaultKey);
+                    }
+
+                    c.AddInMemoryCollection(collection);
                 })
                 .Build();
 

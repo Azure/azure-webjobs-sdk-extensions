@@ -11,7 +11,9 @@ using Microsoft.Azure.WebJobs.Extensions.MobileApps.Bindings;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.MobileApps;
 using Microsoft.Azure.WebJobs.Host.Config;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.WindowsAzure.MobileServices;
 using Moq;
 using Xunit;
@@ -20,7 +22,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
 {
     public class MobileAppsConfigurationTests
     {
-        private Uri _configUri = new Uri("https://config/");
+        private readonly Uri _configUri = new Uri("https://config/");
 
         [Fact]
         public void ResolveApiKey_ReturnsNull_IfAttributeEmpty()
@@ -153,8 +155,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             await table.ReadAsync(string.Empty);
 
             // Assert
-            IEnumerable<string> values = null;
-            bool foundHeader = handler.IssuedRequest.Headers.TryGetValues(MobileServiceApiKeyHandler.ZumoApiKeyHeaderName, out values);
+            bool foundHeader = handler.IssuedRequest.Headers.TryGetValues(MobileServiceApiKeyHandler.ZumoApiKeyHeaderName, out IEnumerable<string> values);
 
             Assert.Equal(expectHeader, foundHeader);
             if (expectHeader)
@@ -277,20 +278,42 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
 
         private MobileAppsExtensionConfigProvider CreateConfigProvider(string configApiKey, Uri configMobileAppUri, IMobileServiceClientFactory clientFactory = null)
         {
-            var options = new MobileAppsOptions
-            {
-                ApiKey = configApiKey,
-                MobileAppUri = configMobileAppUri
-            };
+            // Create this via the host so that options go through the correct flow.
+            var host = new HostBuilder()
+                .ConfigureWebJobs(c =>
+                {
+                    c.AddMobileApps(options =>
+                    {
+                        // Selectively override these.
+                        if (configApiKey != null)
+                        {
+                            options.ApiKey = configApiKey;
+                        }
 
-            var nameResolver = new TestNameResolver();
-            nameResolver.Values[MobileAppsExtensionConfigProvider.AzureWebJobsMobileAppApiKeyName] = "Default";
-            nameResolver.Values[MobileAppsExtensionConfigProvider.AzureWebJobsMobileAppUriName] = "https://default";
-            nameResolver.Values["Attribute"] = "ResolvedAttribute";
+                        if (configMobileAppUri != null)
+                        {
+                            options.MobileAppUri = configMobileAppUri;
+                        }
+                    });
 
-            clientFactory = clientFactory ?? new DefaultMobileServiceClientFactory();
-            var configProvider = new MobileAppsExtensionConfigProvider(new OptionsWrapper<MobileAppsOptions>(options), clientFactory, nameResolver);
-            var context = TestHelpers.CreateExtensionConfigContext(nameResolver);
+                    if (clientFactory != null)
+                    {
+                        c.Services.AddSingleton<IMobileServiceClientFactory>(clientFactory);
+                    }
+                })
+                .ConfigureAppConfiguration(c =>
+                {
+                    c.AddInMemoryCollection(new Dictionary<string, string>
+                    {
+                        { MobileAppsExtensionConfigProvider.AzureWebJobsMobileAppApiKeyName, "Default" },
+                        { MobileAppsExtensionConfigProvider.AzureWebJobsMobileAppUriName, "https://default" },
+                        { "Attribute", "ResolvedAttribute" }
+                    });
+                })
+                .Build();
+
+            var configProvider = host.Services.GetService<IExtensionConfigProvider>() as MobileAppsExtensionConfigProvider;
+            var context = TestHelpers.CreateExtensionConfigContext(new TestNameResolver());
             configProvider.Initialize(context);
 
             return configProvider;

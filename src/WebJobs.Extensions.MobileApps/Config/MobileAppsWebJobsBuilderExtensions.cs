@@ -26,7 +26,14 @@ namespace Microsoft.Extensions.Hosting
             }
 
             builder.AddExtension<MobileAppsExtensionConfigProvider>()
-                .BindOptions<MobileAppsOptions>();
+                .ConfigureOptions<MobileAppsOptions>((rootConfig, extensionPath, options) =>
+                {
+                    options.ApiKey = rootConfig[MobileAppsExtensionConfigProvider.AzureWebJobsMobileAppApiKeyName];
+                    options.MobileAppUri = rootConfig.GetSection(MobileAppsExtensionConfigProvider.AzureWebJobsMobileAppUriName).Get<Uri>();
+
+                    IConfigurationSection section = rootConfig.GetSection(extensionPath);
+                    section.Bind(options);
+                });
 
             builder.Services.AddSingleton<IMobileServiceClientFactory, DefaultMobileServiceClientFactory>();
 
