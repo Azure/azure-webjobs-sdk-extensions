@@ -41,7 +41,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
         public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsWithAppSettingsParameters
         {
-            get { return ValidCosmosDBTriggerBindigsWithAppSettings.GetParameters(); }
+            get { return ValidCosmosDBTriggerBindingsWithAppSettings.GetParameters(); }
         }
 
         public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsWithDatabaseAndCollectionSettingsParameters
@@ -75,14 +75,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         public async Task ValidParametersWithEnvironment_Succeed(ParameterInfo parameter)
         {
             var nameResolver = new TestNameResolver();
-            nameResolver.Values["CosmosDBConnectionString"] = "AccountEndpoint=https://fromSettings;AccountKey=someKey;";
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=someKey;" }
+                })
+                .Build();
 
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(_emptyConfig, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
             CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
             Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
-            Assert.Equal(binding.DocumentCollectionLocation.Uri, new Uri("https://fromEnvironment"));
+            Assert.Equal(new Uri("https://fromEnvironment"), binding.DocumentCollectionLocation.Uri);
+            Assert.Equal(new Uri("https://fromEnvironment"), binding.LeaseCollectionLocation.Uri);
         }
 
         [Theory]
@@ -95,7 +101,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
             var config = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string>
-                {                    
+                {
                     { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=someKey;" }
                 })
                 .Build();
@@ -105,7 +111,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
             Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
-            Assert.Equal(binding.DocumentCollectionLocation.Uri, new Uri("https://fromSettings"));
+            Assert.Equal(new Uri("https://fromSettings"), binding.DocumentCollectionLocation.Uri);
+            Assert.Equal(new Uri("https://fromSettings"), binding.LeaseCollectionLocation.Uri);
             Assert.Equal("myDatabase", binding.DocumentCollectionLocation.DatabaseName);
             Assert.Equal("myCollection", binding.DocumentCollectionLocation.CollectionName);
             Assert.Equal("myDatabase", binding.LeaseCollectionLocation.DatabaseName);
@@ -126,7 +133,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
             Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
-            Assert.Equal(binding.DocumentCollectionLocation.Uri, new Uri("https://fromEnvironment"));
+            Assert.Equal(new Uri("https://fromEnvironment"), binding.DocumentCollectionLocation.Uri);
+            Assert.Equal(new Uri("https://fromEnvironment"), binding.LeaseCollectionLocation.Uri);
             Assert.Equal("myDatabase-test", binding.DocumentCollectionLocation.DatabaseName);
             Assert.Equal("myCollection-test", binding.DocumentCollectionLocation.CollectionName);
             Assert.Equal("myDatabase-test", binding.LeaseCollectionLocation.DatabaseName);
@@ -153,8 +161,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
             Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
-            Assert.Equal(binding.DocumentCollectionLocation.Uri, new Uri("https://fromSettings"));
-            Assert.Equal(binding.LeaseCollectionLocation.Uri, new Uri("https://fromSettingsLease"));
+            Assert.Equal(new Uri("https://fromSettings"), binding.DocumentCollectionLocation.Uri);
+            Assert.Equal(new Uri("https://fromSettingsLease"), binding.LeaseCollectionLocation.Uri);
         }
 
         [Theory]
@@ -162,17 +170,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         public async Task ValidParametersWithEnvironment_ConnectionMode_Succeed(ParameterInfo parameter)
         {
             var nameResolver = new TestNameResolver();
-            nameResolver.Values["CosmosDBConnectionString"] = "AccountEndpoint=https://fromSettings;AccountKey=someKey;";
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=someKey;" }
+                })
+                .Build();
 
             _options.ConnectionMode = ConnectionMode.Direct;
             _options.Protocol = Protocol.Tcp;
 
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(_emptyConfig, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
             CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
             Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
             Assert.Equal(new Uri("https://fromEnvironment"), binding.DocumentCollectionLocation.Uri);
+            Assert.Equal(new Uri("https://fromEnvironment"), binding.LeaseCollectionLocation.Uri);
             Assert.Equal(ConnectionMode.Direct, binding.DocumentCollectionLocation.ConnectionPolicy.ConnectionMode);
             Assert.Equal(Protocol.Tcp, binding.DocumentCollectionLocation.ConnectionPolicy.ConnectionProtocol);
         }
@@ -226,7 +240,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 {
                     // Verify we load from connection strings first
                     { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=someKey;" },
-                    { "CosmosDBConnectionString", "will not work" }
+                    { "CosmosDBConnectionString", "will not work" },
+                    { "ConnectionStrings:LeaseConnectionString", "AccountEndpoint=https://overridden;AccountKey=someKey;" },
+                    { "LeaseConnectionString", "will not work" }
                 })
                 .Build();
 
@@ -234,8 +250,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
             CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
+            // This test uses the default for ConnectionStringSetting, but overrides LeaseConnectionStringSetting
             Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
-            Assert.Equal(new Uri("https://fromSettings"), binding.DocumentCollectionLocation.Uri);
+            Assert.Equal(new Uri("https://fromEnvironment"), binding.DocumentCollectionLocation.Uri);
+            Assert.Equal(new Uri("https://overridden"), binding.LeaseCollectionLocation.Uri);
             Assert.Equal("someLeasePrefix", binding.ChangeFeedHostOptions.LeasePrefix);
             Assert.Null(binding.ChangeFeedOptions.MaxItemCount);
             Assert.False(binding.ChangeFeedOptions.StartFromBeginning);
@@ -259,6 +277,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
             Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
             Assert.Equal(new Uri("https://fromSettings"), binding.DocumentCollectionLocation.Uri);
+            Assert.Equal(new Uri("https://fromSettings"), binding.LeaseCollectionLocation.Uri);
             Assert.Equal(10, binding.ChangeFeedOptions.MaxItemCount);
             Assert.True(binding.ChangeFeedOptions.StartFromBeginning);
         }
@@ -276,13 +295,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             return new CosmosDBExtensionConfigProvider(new OptionsWrapper<CosmosDBOptions>(options), new DefaultCosmosDBServiceFactory(), _emptyConfig, new TestNameResolver(), NullLoggerFactory.Instance);
         }
 
+        // These will use the default for ConnectionStringSetting, but override LeaseConnectionStringSetting
         private static class ValidCosmosDBTriggerBindigsWithLeaseHostOptions
         {
-            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", LeaseCollectionPrefix = "someLeasePrefix")] IReadOnlyList<Document> docs)
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", LeaseConnectionStringSetting = "LeaseConnectionString", LeaseCollectionPrefix = "someLeasePrefix")] IReadOnlyList<Document> docs)
             {
             }
 
-            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", LeaseCollectionPrefix = "%dynamicLeasePrefix%")] IReadOnlyList<Document> docs)
+            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", LeaseConnectionStringSetting = "LeaseConnectionString", LeaseCollectionPrefix = "%dynamicLeasePrefix%")] IReadOnlyList<Document> docs)
             {
             }
 
@@ -298,6 +318,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             }
         }
 
+        // These will set ConnectionStringSetting, which LeaseConnectionStringSetting should also use by default
         private static class ValidCosmosDBTriggerBindigsWithChangeFeedOptions
         {
             public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", MaxItemsPerInvocation = 10, StartFromBeginning = true)] IReadOnlyList<Document> docs)
@@ -347,7 +368,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             }
         }
 
-        private static class ValidCosmosDBTriggerBindigsWithAppSettings
+        private static class ValidCosmosDBTriggerBindingsWithAppSettings
         {
             public static void Func1([CosmosDBTrigger("%aDatabase%", "%aCollection%", ConnectionStringSetting = "CosmosDBConnectionString")] IReadOnlyList<Document> docs)
             {
@@ -363,7 +384,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
             public static IEnumerable<ParameterInfo[]> GetParameters()
             {
-                var type = typeof(ValidCosmosDBTriggerBindigsWithAppSettings);
+                var type = typeof(ValidCosmosDBTriggerBindingsWithAppSettings);
 
                 return new[]
                 {

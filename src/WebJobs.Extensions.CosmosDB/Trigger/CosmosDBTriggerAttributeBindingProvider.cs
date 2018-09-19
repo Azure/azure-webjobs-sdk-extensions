@@ -178,7 +178,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         private string ResolveAttributeLeasesConnectionString(CosmosDBTriggerAttribute attribute)
         {
-            string connectionString = ResolveConnectionString(attribute.LeaseConnectionStringSetting, nameof(CosmosDBTriggerAttribute.LeaseConnectionStringSetting));
+            // If the lease connection string is not set, use the trigger's
+            string keyToResolve = attribute.LeaseConnectionStringSetting;
+            if (string.IsNullOrEmpty(keyToResolve))
+            {
+                keyToResolve = attribute.ConnectionStringSetting;
+            }
+
+            string connectionString = ResolveConnectionString(keyToResolve, nameof(CosmosDBTriggerAttribute.LeaseConnectionStringSetting));
 
             if (string.IsNullOrEmpty(connectionString))
             {
