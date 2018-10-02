@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using Microsoft.Azure.Documents.Client;
-using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 {
@@ -15,7 +14,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             _service = service;
         }
 
-        public ICosmosDBService CreateService(string connectionString, ConnectionMode? connectionMode, Protocol? protocol)
+        public ICosmosDBService CreateService(string connectionString, ConnectionPolicy connectionPolicy)
         {
             return _service;
         }

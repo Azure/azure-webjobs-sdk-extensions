@@ -59,6 +59,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             get { return ValidCosmosDBTriggerBindigsWithEnvironment.GetParameters(); }
         }
 
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsPreferredLocationsParameters
+        {
+            get { return ValidCosmosDBTriggerBindigsPreferredLocations.GetParameters(); }
+        }
+
         [Theory]
         [MemberData(nameof(InvalidCosmosDBTriggerParameters))]
         public async Task InvalidParameters_Fail(ParameterInfo parameter)
@@ -89,6 +94,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
             Assert.Equal(new Uri("https://fromEnvironment"), binding.DocumentCollectionLocation.Uri);
             Assert.Equal(new Uri("https://fromEnvironment"), binding.LeaseCollectionLocation.Uri);
+            Assert.Empty(binding.DocumentCollectionLocation.ConnectionPolicy.PreferredLocations);
+            Assert.Empty(binding.LeaseCollectionLocation.ConnectionPolicy.PreferredLocations);
         }
 
         [Theory]
@@ -189,6 +196,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             Assert.Equal(new Uri("https://fromEnvironment"), binding.LeaseCollectionLocation.Uri);
             Assert.Equal(ConnectionMode.Direct, binding.DocumentCollectionLocation.ConnectionPolicy.ConnectionMode);
             Assert.Equal(Protocol.Tcp, binding.DocumentCollectionLocation.ConnectionPolicy.ConnectionProtocol);
+        }
+
+        [Theory]
+        [MemberData(nameof(ValidCosmosDBTriggerBindigsPreferredLocationsParameters))]
+        public async Task ValidCosmosDBTriggerBindigsPreferredLocationsParameters_Succeed(ParameterInfo parameter)
+        {
+            var nameResolver = new TestNameResolver();
+            nameResolver.Values["regions"] = "East US, North Europe,";
+
+            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(_emptyConfig, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+
+            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+
+            Assert.Equal(2, binding.DocumentCollectionLocation.ConnectionPolicy.PreferredLocations.Count);
+            Assert.Equal(2, binding.LeaseCollectionLocation.ConnectionPolicy.PreferredLocations.Count);
+            Assert.Equal("East US", binding.DocumentCollectionLocation.ConnectionPolicy.PreferredLocations[0]);
+            Assert.Equal("North Europe", binding.DocumentCollectionLocation.ConnectionPolicy.PreferredLocations[1]);
+            Assert.Equal("East US", binding.LeaseCollectionLocation.ConnectionPolicy.PreferredLocations[0]);
+            Assert.Equal("North Europe", binding.LeaseCollectionLocation.ConnectionPolicy.PreferredLocations[1]);
         }
 
         [Fact]
@@ -467,6 +493,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                     new[] { GetFirstParameter(type, "Func1") },
                     new[] { GetFirstParameter(type, "Func2") },
                     new[] { GetFirstParameter(type, "Func3") }
+                };
+            }
+        }
+
+        private static class ValidCosmosDBTriggerBindigsPreferredLocations
+        {
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", PreferredLocations = "East US, North Europe,")] IReadOnlyList<Document> docs)
+            {
+            }
+
+            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", PreferredLocations = "%regions%")] IReadOnlyList<Document> docs)
+            {
+            }
+
+            public static IEnumerable<ParameterInfo[]> GetParameters()
+            {
+                var type = typeof(ValidCosmosDBTriggerBindigsPreferredLocations);
+
+                return new[]
+                {
+                    new[] { GetFirstParameter(type, "Func1") }
                 };
             }
         }

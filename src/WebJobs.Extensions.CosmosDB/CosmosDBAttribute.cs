@@ -102,6 +102,23 @@ namespace Microsoft.Azure.WebJobs
         [AutoResolve(ResolutionPolicyType = typeof(CosmosDBSqlResolutionPolicy))]
         public string SqlQuery { get; set; }
 
+        /// <summary>
+        /// Optional.
+        /// Enable to use with Multi Master accounts.
+        /// </summary>
+        public bool UseMultipleWriteLocations { get; set; }
+
+        /// <summary>
+        /// Optional.
+        /// Defines preferred locations (regions) for geo-replicated database accounts in the Azure Cosmos DB service.
+        /// Values should be comma-separated.
+        /// </summary>
+        /// <example>
+        /// PreferredLocations = "East US,South Central US,North Europe"
+        /// </example>
+        [AutoResolve]
+        public string PreferredLocations { get; set; }
+
         internal SqlParameterCollection SqlQueryParameters { get; set; }
     }
 }

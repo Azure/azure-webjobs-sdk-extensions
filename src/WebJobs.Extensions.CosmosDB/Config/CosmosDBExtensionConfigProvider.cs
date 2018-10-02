@@ -92,7 +92,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         internal DocumentClient BindForClient(CosmosDBAttribute attribute)
         {
             string resolvedConnectionString = ResolveConnectionString(attribute.ConnectionStringSetting);
-            ICosmosDBService service = GetService(resolvedConnectionString);
+            ICosmosDBService service = GetService(resolvedConnectionString, attribute.PreferredLocations, attribute.UseMultipleWriteLocations);
 
             return service.GetClient();
         }
@@ -124,16 +124,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return _options.ConnectionString;
         }
 
-        internal ICosmosDBService GetService(string connectionString)
+        internal ICosmosDBService GetService(string connectionString, string preferredLocations = "", bool useMultipleWriteLocations = false)
         {
-            return ClientCache.GetOrAdd(connectionString, (c) => _cosmosDBServiceFactory.CreateService(c, _options.ConnectionMode, _options.Protocol));
+            string cacheKey = BuildCacheKey(connectionString, preferredLocations, useMultipleWriteLocations);
+            ConnectionPolicy connectionPolicy = CosmosDBUtility.BuildConnectionPolicy(_options.ConnectionMode, _options.Protocol, preferredLocations, useMultipleWriteLocations);
+            return ClientCache.GetOrAdd(cacheKey, (c) => _cosmosDBServiceFactory.CreateService(connectionString, connectionPolicy));
         }
 
         internal CosmosDBContext CreateContext(CosmosDBAttribute attribute)
         {
             string resolvedConnectionString = ResolveConnectionString(attribute.ConnectionStringSetting);
 
-            ICosmosDBService service = GetService(resolvedConnectionString);
+            ICosmosDBService service = GetService(resolvedConnectionString, attribute.PreferredLocations, attribute.UseMultipleWriteLocations);
 
             return new CosmosDBContext
             {
@@ -152,6 +154,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             return false;
         }
+
+        internal static string BuildCacheKey(string connectionString, string preferredLocations, bool useMultipleWriteLocations) => $"{connectionString}|{preferredLocations}|{useMultipleWriteLocations}";
 
         private class DocumentOpenType : OpenType.Poco
         {

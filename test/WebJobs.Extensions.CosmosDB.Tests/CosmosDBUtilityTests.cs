@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
@@ -79,6 +80,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             // Assert            
             mockService.VerifyAll();
+        }
+
+        [Fact]
+        public void ParsePreferredLocations_WhenEmpty()
+        {
+            // Arrange
+            string preferredLocationsEmpty = string.Empty;
+            string preferredLocationsNull = null;
+
+            // Act
+            var parsedLocationsEmpty = CosmosDBUtility.ParsePreferredLocations(preferredLocationsEmpty);
+            var parsedLocationsNull = CosmosDBUtility.ParsePreferredLocations(preferredLocationsNull);
+
+            // Assert
+            Assert.Empty(parsedLocationsEmpty);
+            Assert.Empty(parsedLocationsNull);
+        }
+
+        [Fact]
+        public void ParsePreferredLocations_WithEntries()
+        {
+            // Arrange
+            string preferredLocationsWithEntries = "East US, North Europe,";
+
+            // Act
+            var parsedLocations = CosmosDBUtility.ParsePreferredLocations(preferredLocationsWithEntries);
+
+            // Assert
+            Assert.Equal(2, parsedLocations.Count());
         }
     }
 }

@@ -119,6 +119,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     leaseCollectionLocation.ConnectionPolicy.ConnectionProtocol = desiredConnectionProtocol.Value;
                 }
 
+                string resolvedPreferredLocations = ResolveAttributeValue(attribute.PreferredLocations);
+                foreach (var location in CosmosDBUtility.ParsePreferredLocations(resolvedPreferredLocations))
+                {
+                    documentCollectionLocation.ConnectionPolicy.PreferredLocations.Add(location);
+                    leaseCollectionLocation.ConnectionPolicy.PreferredLocations.Add(location);
+                }
+
                 if (string.IsNullOrEmpty(documentCollectionLocation.DatabaseName)
                     || string.IsNullOrEmpty(documentCollectionLocation.CollectionName)
                     || string.IsNullOrEmpty(leaseCollectionLocation.DatabaseName)
@@ -137,7 +144,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 if (attribute.CreateLeaseCollectionIfNotExists)
                 {
                     // Not disposing this because it might be reused on other Trigger since Triggers could share lease collection
-                    ICosmosDBService service = _configProvider.GetService(leasesConnectionString);
+                    ICosmosDBService service = _configProvider.GetService(leasesConnectionString, resolvedPreferredLocations);
                     await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(service, leaseCollectionLocation.DatabaseName, leaseCollectionLocation.CollectionName, null, attribute.LeasesCollectionThroughput);
                 }
             }

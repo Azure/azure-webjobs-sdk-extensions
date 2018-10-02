@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
@@ -41,6 +43,47 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             await service.CreateDatabaseIfNotExistsAsync(new Database { Id = databaseName });
 
             await CreateDocumentCollectionIfNotExistsAsync(service, databaseName, collectionName, partitionKey, throughput);
+        }
+
+        internal static IEnumerable<string> ParsePreferredLocations(string preferredRegions)
+        {
+            if (string.IsNullOrEmpty(preferredRegions))
+            {
+                return Enumerable.Empty<string>();
+            }
+
+            return preferredRegions
+                .Split(',')
+                .Select((region) => region.Trim())
+                .Where((region) => !string.IsNullOrEmpty(region));
+        }
+
+        internal static ConnectionPolicy BuildConnectionPolicy(ConnectionMode? connectionMode, Protocol? protocol, string preferredLocations, bool useMultipleWriteLocations)
+        {
+            ConnectionPolicy connectionPolicy = new ConnectionPolicy();
+            if (connectionMode.HasValue)
+            {
+                // Default is Gateway
+                // Source: https://docs.microsoft.com/dotnet/api/microsoft.azure.documents.client.connectionpolicy.connectionmode
+                connectionPolicy.ConnectionMode = connectionMode.Value;
+            }
+
+            if (protocol.HasValue)
+            {
+                connectionPolicy.ConnectionProtocol = protocol.Value;
+            }
+
+            if (useMultipleWriteLocations)
+            {
+                connectionPolicy.UseMultipleWriteLocations = useMultipleWriteLocations;
+            }
+
+            foreach (var location in ParsePreferredLocations(preferredLocations))
+            {
+                connectionPolicy.PreferredLocations.Add(location);
+            }
+
+            return connectionPolicy;
         }
 
         private static async Task<DocumentCollection> CreateDocumentCollectionIfNotExistsAsync(ICosmosDBService service, string databaseName, string collectionName,

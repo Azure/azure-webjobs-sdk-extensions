@@ -137,5 +137,15 @@ namespace Microsoft.Azure.WebJobs
         /// Gets or sets whether change feed in the Azure Cosmos DB service should start from beginning (true) or from current (false). By default it's start from current (false).
         /// </summary>
         public bool StartFromBeginning { get; set; } = false;
+
+        /// <summary>
+        /// Optional.
+        /// Defines preferred locations (regions) for geo-replicated database accounts in the Azure Cosmos DB service.
+        /// Values should be comma-separated.
+        /// </summary>
+        /// <example>
+        /// PreferredLocations = "East US,South Central US,North Europe"
+        /// </example>
+        public string PreferredLocations { get; set; }
     }
 }

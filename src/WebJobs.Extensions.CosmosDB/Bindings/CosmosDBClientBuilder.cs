@@ -23,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings
             }
 
             string resolvedConnectionString = _configProvider.ResolveConnectionString(attribute.ConnectionStringSetting);
-            ICosmosDBService service = _configProvider.GetService(resolvedConnectionString);
+            ICosmosDBService service = _configProvider.GetService(resolvedConnectionString, attribute.PreferredLocations, attribute.UseMultipleWriteLocations);
 
             return service.GetClient();
         }

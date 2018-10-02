@@ -57,14 +57,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             var factoryMock = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(ConfigConnStr, null, null))
+                .Setup(f => f.CreateService(ConfigConnStr, It.IsAny<ConnectionPolicy>()))
                 .Returns(serviceMock.Object);
 
             //Act
             await RunTestAsync("Outputs", factoryMock.Object);
 
             // Assert
-            factoryMock.Verify(f => f.CreateService(ConfigConnStr, null, null), Times.Once());
+            factoryMock.Verify(f => f.CreateService(ConfigConnStr, It.IsAny<ConnectionPolicy>()), Times.Once());
             serviceMock.Verify(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()), Times.Exactly(8));
             Assert.Equal("Outputs", _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
         }
@@ -75,15 +75,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             // Arrange
             var factoryMock = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(DefaultConnStr, null, null))
-                .Returns<string, ConnectionMode?, Protocol?>((connectionString, connectionMode, protocol) => new CosmosDBService(connectionString, connectionMode, protocol));
+                .Setup(f => f.CreateService(DefaultConnStr, It.IsAny<ConnectionPolicy>()))
+                .Returns<string, ConnectionPolicy>((connectionString, connectionPolicy) => new CosmosDBService(connectionString, connectionPolicy));
 
             // Act
             // Also verify that this falls back to the default by setting the config connection string to null
             await RunTestAsync("Client", factoryMock.Object, configConnectionString: null);
 
             //Assert
-            factoryMock.Verify(f => f.CreateService(DefaultConnStr, null, null), Times.Once());
+            factoryMock.Verify(f => f.CreateService(DefaultConnStr, It.IsAny<ConnectionPolicy>()), Times.Once());
             Assert.Equal("Client", _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
         }
 
@@ -164,14 +164,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             var factoryMock = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(It.IsAny<string>(), null, null))
+                .Setup(f => f.CreateService(It.IsAny<string>(), It.IsAny<ConnectionPolicy>()))
                 .Returns(serviceMock.Object);
 
             // Act
             await RunTestAsync(nameof(CosmosDBEndToEndFunctions.Inputs), factoryMock.Object, item1Id);
 
             // Assert
-            factoryMock.Verify(f => f.CreateService(It.IsAny<string>(), null, null), Times.Once());
+            factoryMock.Verify(f => f.CreateService(It.IsAny<string>(), It.IsAny<ConnectionPolicy>()), Times.Once());
             Assert.Equal("Inputs", _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
             serviceMock.VerifyAll();
         }
@@ -193,7 +193,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             var factoryMock = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(AttributeConnStr, null, null))
+                .Setup(f => f.CreateService(AttributeConnStr, It.IsAny<ConnectionPolicy>()))
                 .Returns(serviceMock.Object);
 
             var jobject = JObject.FromObject(new QueueData { DocumentId = "docid1", PartitionKey = "partkey1" });
@@ -202,7 +202,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             await RunTestAsync(nameof(CosmosDBEndToEndFunctions.TriggerObject), factoryMock.Object, jobject.ToString());
 
             // Assert
-            factoryMock.Verify(f => f.CreateService(AttributeConnStr, null, null), Times.Once());
+            factoryMock.Verify(f => f.CreateService(AttributeConnStr, It.IsAny<ConnectionPolicy>()), Times.Once());
             Assert.Equal("TriggerObject", _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
         }
 

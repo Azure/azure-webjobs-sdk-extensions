@@ -7,9 +7,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
     internal class DefaultCosmosDBServiceFactory : ICosmosDBServiceFactory
     {
-        public ICosmosDBService CreateService(string connectionString, ConnectionMode? connectionMode, Protocol? protocol)
+        public ICosmosDBService CreateService(string connectionString, ConnectionPolicy connectionPolicy)
         {
-            return new CosmosDBService(connectionString, connectionMode, protocol);
+            return new CosmosDBService(connectionString, connectionPolicy);
         }
     }
 }
