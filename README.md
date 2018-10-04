@@ -10,21 +10,42 @@ This repo contains binding extensions for the **Azure WebJobs SDK**. See the [Az
 
 The [wiki](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki) contains information on how to **author your own binding extensions**. See the [Binding Extensions Overview](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Binding-Extensions-Overview) for more details. A [sample project](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Program.cs) is also provided that demonstrates the bindings in action.
 
-Extensions all follow the same "using" pattern for registration - after referencing the package the extension lives in, you call the corresponding "using" method to register the extension. These "using" methods are extension methods on `JobHostConfiguration` and often take optional configuration objects to customize the behavior of the extension. For example, the `config.UseSendGrid(...)` call below registers the SendGrid extension using the specified configuration options.
+Extensions all follow the same "adding" pattern for registration - after referencing the package the extension lives in, you call the corresponding "add" method to register the extension. These "add" methods are extension methods on `IWebJobsBuilder` which can be configured from `ConfigureWebJobs` and often take optional configuration objects to customize the behavior of the extension. For example, the `builder.AddSendGrid(...)` call below registers the SendGrid extension using the specified configuration options.
 
 ```csharp
-JobHostConfiguration config = new JobHostConfiguration();
-config.Tracing.ConsoleLevel = TraceLevel.Verbose;
-
-config.UseFiles();
-config.UseTimers();
-config.UseSendGrid(new SendGridConfiguration()
+public static async Task Main(string[] args)
 {
-    FromAddress = new MailAddress("orders@webjobssamples.com", "Order Processor")
-});
+    var builder = new HostBuilder()
+        .ConfigureWebJobs(x =>
+        {
+            x.AddAzureStorageCoreServices();
+            x.AddTimers();
+            x.AddSendGrid(o =>
+            {
+                o.FromAddress = new EmailAddress("orders@webjobssamples.com");
+            });
+        })
+        .ConfigureAppConfiguration(b =>
+        {
+            b.AddCommandLine(args);
+        })
+        .ConfigureLogging((context, b) =>
+        {
+            b.SetMinimumLevel(LogLevel.Debug);
+            b.AddConsole();
+        })
+        .ConfigureServices(services =>
+        {
+            services.AddSingleton<ISampleServiceA, SampleServiceA>();
+            services.AddSingleton<ISampleServiceB, SampleServiceB>();
+        })
+        .UseConsoleLifetime();
 
-JobHost host = new JobHost(config);
-host.RunAndBlock();
+    using (var host = builder.Build())
+    {
+        await host.RunAsync();
+    }
+}
 ```
 
 ## Other Extension Repositories
@@ -72,7 +93,7 @@ The TimerTrigger also handles multi-instance scale out automatically - only a si
 
 The first example above uses a [cron expression](http://en.wikipedia.org/wiki/Cron#CRON_expression) to declare the schedule. Using these **6 fields** `{second} {minute} {hour} {day} {month} {day of the week}` you can express arbitrarily complex schedules very concisely. **Note**: the 6 field format including seconds is less common, so in the various cron expression docs you find online you'll have to adjust for the extra field.
 
-To register the Timer extensions, call `config.UseTimers()` in your startup code. For more information, see the [TimerTrigger wiki page](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/TimerTrigger), and also the [Timer samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/TimerSamples.cs).
+To register the Timer extensions, call `config.AddTimers()` in your startup code. For more information, see the [TimerTrigger wiki page](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/TimerTrigger), and also the [Timer samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/TimerSamples.cs).
 
 ### FileTrigger / File
 
@@ -91,7 +112,7 @@ public static void ImportFile(
 }
 ```
 
-To register the File extensions, call `config.UseFiles()` in your startup code. For more information, see the [File samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/FileSamples.cs).
+To register the File extensions, call `config.AddFiles()` in your startup code. For more information, see the [File samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/FileSamples.cs).
 
 ### SendGrid
 
@@ -124,7 +145,7 @@ public static void Purge(
 
 The above messages are fully declarative, but you can also set the message properties in your job function code (e.g. add message attachments, etc.). 
 
-To register the SendGrid extensions, call `config.UseSendGrid()` in your startup code. For more information on the SendGrid binding, see the [SendGrid samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/SendGridSamples.cs).
+To register the SendGrid extensions, call `config.AddSendGrid()` in your startup code. For more information on the SendGrid binding, see the [SendGrid samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/SendGridSamples.cs).
 
 ### ErrorTrigger
 
@@ -148,7 +169,7 @@ public static void ErrorMonitor(
 }
 ```
 
-You can choose to send a alert text message to yourself, or a detailed email message, etc. The ErrorTrigger extension is part of the **Core extensions** can be registered on your JobHostConfiguration by calling `config.UseCore()`. In addition to setting up one or more **global error handlers** like the above, you can also specify **function specific error handlers** that will only handle erros for one function. This is done by naming convention based on an "ErrorHandler" suffix. For example, if your error function is named "**Import**ErrorHandler" and there is a function named "Import" in the same class, that error function will be scoped to errors for that function only:
+You can choose to send a alert text message to yourself, or a detailed email message, etc. The ErrorTrigger extension is part of the **Core extensions** can be registered on your IWebJobsBuilder by calling `config.UseCore()`. In addition to setting up one or more **global error handlers** like the above, you can also specify **function specific error handlers** that will only handle erros for one function. This is done by naming convention based on an "ErrorHandler" suffix. For example, if your error function is named "**Import**ErrorHandler" and there is a function named "Import" in the same class, that error function will be scoped to errors for that function only:
 
 ```csharp
 public static void Import(
