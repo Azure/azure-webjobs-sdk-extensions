@@ -11,7 +11,7 @@ using Microsoft.Extensions.Hosting;
 namespace Microsoft.Azure.WebJobs.Extensions.Http
 {
     /// <summary>
-    /// Enable dynamic HTTP registration against WebJobs 
+    /// Enable dynamic HTTP registration against WebJobs. 
     /// </summary>
     public class HttpWebJobsStartup : IWebJobsStartup
     {

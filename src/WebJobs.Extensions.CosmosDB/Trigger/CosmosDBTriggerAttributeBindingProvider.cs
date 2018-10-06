@@ -197,7 +197,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         private void ThrowMissingConnectionStringException(bool isLeaseConnectionString = false)
         {
-
             string attributeProperty = isLeaseConnectionString ?
                 $"{nameof(CosmosDBTriggerAttribute)}.{nameof(CosmosDBTriggerAttribute.LeaseConnectionStringSetting)}" :
                 $"{nameof(CosmosDBTriggerAttribute)}.{nameof(CosmosDBTriggerAttribute.ConnectionStringSetting)}";

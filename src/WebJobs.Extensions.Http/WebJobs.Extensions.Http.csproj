@@ -7,6 +7,14 @@
     <PackageId>Microsoft.Azure.WebJobs.Extensions.Http</PackageId>
     <Description>This package adds binding extensions for Http.</Description>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\WebJobs.Extensions\Framework\Bindings\StreamValueBinder.cs" Link="Binding\StreamValueBinder.cs" />
     <Compile Include="..\WebJobs.Extensions\Framework\Bindings\ValueBinder.cs" Link="Binding\ValueBinder.cs" />
@@ -23,6 +31,10 @@
 
   <ItemGroup>
     <Folder Include="Binding\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="StyleCop.Analyzers" Version="1.1.0-beta009" />
   </ItemGroup>
 
 </Project>
