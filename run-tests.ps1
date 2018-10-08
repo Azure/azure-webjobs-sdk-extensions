@@ -40,9 +40,20 @@ $tests = @(
 $success = $true
 $testRunSucceeded = $true
 
+# timer tests require Daylight Savings Time, so switch settings, then reset.
+$originalTZ = Get-TimeZone
+Write-Host "Current TimeZone: '$originalTZ'"
+Set-TimeZone -Name "Pacific Standard Time"
+$currentTZ = Get-TimeZone
+Write-Host "Changing TimeZone for Timer tests. Now '$currentTZ'"
+
 foreach ($test in $tests){
     $testRunSucceeded = RunTest $test.project $test.description $testRunSucceeded $test.filter
     $success = $testRunSucceeded -and $success
 }
+
+Set-TimeZone -Id $originalTZ.Id
+$currentTZ = Get-TimeZone
+Write-Host "Changing TimeZone back to original. Now '$currentTZ'"
 
 if (-not $success) { exit 1 }

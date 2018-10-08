@@ -2,13 +2,13 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Listeners;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -19,7 +19,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 {
     public class TimerListenerTests
     {
-        private string _testTimerName = "Program.TestTimerJob";
+        private readonly string _testTimerName = "Program.TestTimerJob";
         private TimerListener _listener;
         private Mock<ScheduleMonitor> _mockScheduleMonitor;
         private TimersOptions _options;
@@ -230,8 +230,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _listener.Dispose();
         }
 
-        [Fact(Skip = "There is an issue surfaced by this test. It now fails because the interval spans across daylight savings adjustments. We need to fix the handling re-enable the test" +
-            "Tracked by https://github.com/Azure/azure-webjobs-sdk-extensions/issues/489")]
+        [Fact]
         public async Task StartAsync_ExtendedScheduleInterval_TimerContinuesUntilTotalIntervalComplete()
         {
             // create a timer with an extended interval that exceeds the max
@@ -359,49 +358,69 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await RunInitialStatusTestAsync(null, "Function 'Program.TestTimerJob' initial status: Last='', Next='', LastUpdated=''");
         }
 
+        public static IEnumerable<object[]> TimerSchedulesAfterDST => new object[][]
+        {
+            new object[] { new CronSchedule(CrontabSchedule.Parse("0 0 18 * * 5", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(167) },
+            new object[] { new ConstantSchedule(TimeSpan.FromDays(7)), TimeSpan.FromDays(7) },
+        };
+
+        public static IEnumerable<object[]> TimerSchedulesWithinDST => new object[][]
+        {
+            new object[] { new CronSchedule(CrontabSchedule.Parse("0 59 * * * *", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(1) },
+            new object[] { new ConstantSchedule(TimeSpan.FromMinutes(5)), TimeSpan.FromMinutes(5) },
+        };
+
         /// <summary>
         /// Situation where the DST transition happens in the middle of the schedule, with the
         /// next occurrence AFTER the DST transition.
         /// </summary>
-        [Fact(Skip = "To be addressed by https://github.com/Azure/azure-webjobs-sdk-extensions/pull/492")]
-        public void GetNextInterval_NextAfterDST_ReturnsExpectedValue()
+        [Theory]
+        [MemberData(nameof(TimerSchedulesAfterDST))]
+        public void GetNextInterval_NextAfterDST_ReturnsExpectedValue(TimerSchedule schedule, TimeSpan expectedInterval)
         {
+            // This only works with a DST-supported time zone, so throw a nice exception
+            if (!TimeZoneInfo.Local.SupportsDaylightSavingTime)
+            {
+                throw new InvalidOperationException("This test will only pass if the time zone supports DST.");
+            }
+
             // Running on the Friday before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
             // Note: this test uses Local time, so if you're running in a timezone where
             // DST doesn't transition the test might not be valid.
+            // The input schedules will run after DST changes. For some (Cron), they will subtract
+            // an hour to account for the shift. For others (Constant), they will not.
             var now = new DateTime(2018, 3, 9, 18, 0, 0, DateTimeKind.Local);
 
-            // Configure schedule to run again on the next Friday (3/16) at 6 PM (Pacific Daylight Time)
-            var schedule = CrontabSchedule.Parse("0 0 18 * * 5", new CrontabSchedule.ParseOptions() { IncludingSeconds = true });
-
             var next = schedule.GetNextOccurrence(now);
-            var interval = TimerListener.GetNextTimerInterval(next, now);
+            var interval = TimerListener.GetNextTimerInterval(next, now, schedule.AdjustForDST);
 
             // One week is normally 168 hours, but it's 167 hours across DST
-            Assert.Equal(167, interval.TotalHours);
+            Assert.Equal(interval, expectedInterval);
         }
 
         /// <summary>
         /// Situation where the next occurrence falls within the hour that will be skipped
         /// as part of the DST transition (i.e. an invalid time).
         /// </summary>
-        [Fact]
-        public void GetNextInterval_NextWithinDST_ReturnsExpectedValue()
+        [Theory]
+        [MemberData(nameof(TimerSchedulesWithinDST))]
+        public void GetNextInterval_NextWithinDST_ReturnsExpectedValue(TimerSchedule schedule, TimeSpan expectedInterval)
         {
+            // This only works with a DST-supported time zone, so throw a nice exception
+            if (!TimeZoneInfo.Local.SupportsDaylightSavingTime)
+            {
+                throw new InvalidOperationException("This test will only pass if the time zone supports DST.");
+            }
+
             // Running at 1:59 AM, i.e. one minute before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
             // Note: this test uses Local time, so if you're running in a timezone where
             // DST doesn't transition the test might not be valid.
             var now = new DateTime(2018, 3, 11, 1, 59, 0, DateTimeKind.Local);
 
-            // Configure schedule to run on the 59th minute of every hour
-            var schedule = CrontabSchedule.Parse("0 59 * * * *", new CrontabSchedule.ParseOptions() { IncludingSeconds = true });
-
-            // Note: NCronTab actually gives us an invalid next occurrence of 2:59 AM, which doesn't actually
-            // exist because the DST switch skips from 2 to 3
             var next = schedule.GetNextOccurrence(now);
 
-            var interval = TimerListener.GetNextTimerInterval(next, now);
-            Assert.Equal(1, interval.TotalHours);
+            var interval = TimerListener.GetNextTimerInterval(next, now, schedule.AdjustForDST);
+            Assert.Equal(expectedInterval, interval);
         }
 
         [Fact]
@@ -410,7 +429,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             var now = DateTime.Now;
             var next = now.Subtract(TimeSpan.FromSeconds(1));
 
-            var interval = TimerListener.GetNextTimerInterval(next, now);
+            var interval = TimerListener.GetNextTimerInterval(next, now, true);
             Assert.Equal(1, interval.Ticks);
         }
 

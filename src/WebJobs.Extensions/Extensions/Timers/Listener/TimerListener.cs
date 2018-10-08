@@ -19,14 +19,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private readonly ITriggeredFunctionExecutor _executor;
         private readonly ILogger _logger;
         private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly string _timerName;
 
         // Since Timer uses an integer internally for it's interval,
         // it has a maximum interval of 24.8 days.
-        private static TimeSpan _maxTimerInterval = TimeSpan.FromDays(24);
+        private static readonly TimeSpan _maxTimerInterval = TimeSpan.FromDays(24);
 
         private System.Timers.Timer _timer;
         private TimerSchedule _schedule;
-        private string _timerName;
+
         private bool _disposed;
         private TimeSpan _remainingInterval;
 
@@ -114,7 +115,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             }
 
             // log the next several occurrences to console for visibility
-            string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5, timerName: _timerName);           
+            string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5, timerName: _timerName);
             _logger.LogInformation(nextOccurrences);
 
             StartTimer(DateTime.Now);
@@ -246,7 +247,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
         private void StartTimer(DateTime now)
         {
-            var nextInterval = GetNextTimerInterval(ScheduleStatus.Next, now);
+            var nextInterval = GetNextTimerInterval(ScheduleStatus.Next, now, _schedule.AdjustForDST);
             StartTimer(nextInterval);
         }
 
@@ -263,13 +264,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         /// <param name="next">The next schedule occurrence in Local time</param>
         /// <param name="now">The current Local time</param>
         /// <returns>The next timer interval</returns>
-        internal static TimeSpan GetNextTimerInterval(DateTime next, DateTime now)
+        internal static TimeSpan GetNextTimerInterval(DateTime next, DateTime now, bool adjustForDST)
         {
-            // For calculations, we use DateTimeOffsets and TimeZoneInfo to ensure we honor time zone
-            // changes (e.g. Daylight Savings Time)
-            var nowOffset = new DateTimeOffset(now, TimeZoneInfo.Local.GetUtcOffset(now));
-            var nextOffset = new DateTimeOffset(next, TimeZoneInfo.Local.GetUtcOffset(next));
-            var nextInterval = nextOffset - nowOffset;
+            TimeSpan nextInterval;
+
+            if (adjustForDST)
+            {
+                // For calculations, we use DateTimeOffsets and TimeZoneInfo to ensure we honor time zone
+                // changes (e.g. Daylight Savings Time)
+                var nowOffset = new DateTimeOffset(now, TimeZoneInfo.Local.GetUtcOffset(now));
+                var nextOffset = new DateTimeOffset(next, TimeZoneInfo.Local.GetUtcOffset(next));
+                nextInterval = nextOffset - nowOffset;
+            }
+            else
+            {
+                nextInterval = next - now;
+            }
 
             // If the interval happens to be negative (due to slow storage, for example), adjust the
             // interval back up 1 Tick (Zero is invalid for a timer) for an immediate invocation.
