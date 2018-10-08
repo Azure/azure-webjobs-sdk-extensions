@@ -15,6 +15,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     public abstract class TimerSchedule
     {
         /// <summary>
+        /// Gets a value indicating whether intervals between invocations should account for DST.        
+        /// </summary>
+        public abstract bool AdjustForDST { get; }
+
+        /// <summary>
         /// Gets the next occurrence of the schedule based on the specified
         /// base time.
         /// </summary>
@@ -58,10 +63,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             if (!string.IsNullOrEmpty(attribute.ScheduleExpression))
             {
                 string resolvedExpression = nameResolver.ResolveWholeString(attribute.ScheduleExpression);
-
-                CronSchedule cronSchedule = null;
-                TimeSpan periodTimespan;
-                if (CronSchedule.TryCreate(resolvedExpression, out cronSchedule))
+                if (CronSchedule.TryCreate(resolvedExpression, out CronSchedule cronSchedule))
                 {
                     schedule = cronSchedule;
 
@@ -74,7 +76,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                         attribute.UseMonitor = false;
                     }
                 }
-                else if (TimeSpan.TryParse(resolvedExpression, out periodTimespan))
+                else if (TimeSpan.TryParse(resolvedExpression, out TimeSpan periodTimespan))
                 {
                     schedule = new ConstantSchedule(periodTimespan);
 
