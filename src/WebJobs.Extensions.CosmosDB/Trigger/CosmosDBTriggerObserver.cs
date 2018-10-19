@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.ChangeFeedProcessor;
+using Microsoft.Azure.Documents.ChangeFeedProcessor.FeedProcessing;
 using Microsoft.Azure.WebJobs.Host.Executors;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
@@ -20,7 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             this.executor = executor;
         }
 
-        public Task CloseAsync(ChangeFeedObserverContext context, ChangeFeedObserverCloseReason reason)
+        public Task CloseAsync(IChangeFeedObserverContext context, ChangeFeedObserverCloseReason reason)
         {
             if (context == null)
             {
@@ -29,7 +29,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return Task.CompletedTask;
         }
 
-        public Task OpenAsync(ChangeFeedObserverContext context)
+        public Task OpenAsync(IChangeFeedObserverContext context)
         {
             if (context == null)
             {
@@ -38,9 +38,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return Task.CompletedTask;
         }
 
-        public Task ProcessChangesAsync(ChangeFeedObserverContext context, IReadOnlyList<Document> docs)
+        public Task ProcessChangesAsync(IChangeFeedObserverContext context, IReadOnlyList<Document> docs, CancellationToken cancellationToken)
         {
-            return this.executor.TryExecuteAsync(new TriggeredFunctionData() { TriggerValue = docs }, CancellationToken.None);
+            return this.executor.TryExecuteAsync(new TriggeredFunctionData() { TriggerValue = docs }, cancellationToken);
         }
     }
 }

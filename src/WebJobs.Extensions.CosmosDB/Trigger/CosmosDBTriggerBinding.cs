@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.ChangeFeedProcessor;
-using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
@@ -22,24 +21,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly ParameterInfo _parameter;
         private readonly DocumentCollectionInfo _documentCollectionLocation;
         private readonly DocumentCollectionInfo _leaseCollectionLocation;
-        private readonly ChangeFeedHostOptions _leaseHostOptions;
-        private readonly ChangeFeedOptions _changeFeedOptions;
+        private readonly ChangeFeedProcessorOptions _processorOptions;
         private readonly ILogger _logger;
         private readonly IReadOnlyDictionary<string, Type> _emptyBindingContract = new Dictionary<string, Type>();
         private readonly IReadOnlyDictionary<string, object> _emptyBindingData = new Dictionary<string, object>();
+        private readonly ICosmosDBService _monitoredCosmosDBService;
+        private readonly ICosmosDBService _leasesCosmosDBService;
 
-        public CosmosDBTriggerBinding(ParameterInfo parameter, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, ChangeFeedOptions changeFeedOptions, ILogger logger)
+        public CosmosDBTriggerBinding(ParameterInfo parameter, 
+            DocumentCollectionInfo documentCollectionLocation, 
+            DocumentCollectionInfo leaseCollectionLocation, 
+            ChangeFeedProcessorOptions processorOptions, 
+            ICosmosDBService monitoredCosmosDBService,
+            ICosmosDBService leasesCosmosDBService,
+            ILogger logger)
         {
             _documentCollectionLocation = documentCollectionLocation;
             _leaseCollectionLocation = leaseCollectionLocation;
-            _leaseHostOptions = leaseHostOptions;
+            _processorOptions = processorOptions;
             _parameter = parameter;
             _logger = logger;
-            _changeFeedOptions = changeFeedOptions;
+            _monitoredCosmosDBService = monitoredCosmosDBService;
+            _leasesCosmosDBService = leasesCosmosDBService;
         }
 
         /// <summary>
-        /// Gets the type of the value the Trigger receives from the Executor
+        /// Gets the type of the value the Trigger receives from the Executor.
         /// </summary>
         public Type TriggerValueType => typeof(IReadOnlyList<Document>);
 
@@ -47,9 +54,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         internal DocumentCollectionInfo LeaseCollectionLocation => _leaseCollectionLocation;
 
-        internal ChangeFeedHostOptions ChangeFeedHostOptions => _leaseHostOptions;
-
-        internal ChangeFeedOptions ChangeFeedOptions => _changeFeedOptions;
+        internal ChangeFeedProcessorOptions ChangeFeedProcessorOptions => _processorOptions;
 
         public IReadOnlyDictionary<string, Type> BindingDataContract
         {
@@ -70,11 +75,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 throw new ArgumentNullException("context", "Missing listener context");
             }
 
-            return Task.FromResult<IListener>(new CosmosDBTriggerListener(context.Executor, this._documentCollectionLocation, this._leaseCollectionLocation, this._leaseHostOptions, this._changeFeedOptions, this._logger));
+            return Task.FromResult<IListener>(new CosmosDBTriggerListener(
+                context.Executor, 
+                this._documentCollectionLocation, 
+                this._leaseCollectionLocation, 
+                this._processorOptions,
+                this._monitoredCosmosDBService,
+                this._leasesCosmosDBService,
+                this._logger));
         }
 
         /// <summary>
-        /// Shows display information on the dashboard
+        /// Shows display information on the dashboard.
         /// </summary>
         /// <returns></returns>
         public ParameterDescriptor ToParameterDescriptor()

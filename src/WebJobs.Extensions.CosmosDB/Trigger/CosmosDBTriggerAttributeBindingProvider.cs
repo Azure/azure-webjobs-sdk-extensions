@@ -4,6 +4,7 @@
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.ChangeFeedProcessor;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Config;
@@ -18,6 +19,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
     internal class CosmosDBTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
         private const string CosmosDBTriggerUserAgentSuffix = "CosmosDBTriggerFunctions";
+        private const string SharedThroughputRequirementException = "Shared throughput collection should have a partition key";
+        private const string LeaseCollectionRequiredPartitionKey = "/id";
         private readonly IConfiguration _configuration;
         private readonly INameResolver _nameResolver;
         private readonly CosmosDBOptions _options;
@@ -54,14 +57,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             DocumentCollectionInfo documentCollectionLocation;
             DocumentCollectionInfo leaseCollectionLocation;
-            ChangeFeedHostOptions leaseHostOptions = ResolveLeaseOptions(attribute);
-
-            ChangeFeedOptions changeFeedOptions = new ChangeFeedOptions();
-            changeFeedOptions.StartFromBeginning = attribute.StartFromBeginning;
+            ChangeFeedProcessorOptions processorOptions = BuildProcessorOptions(attribute);
+            processorOptions.StartFromBeginning = attribute.StartFromBeginning;
             if (attribute.MaxItemsPerInvocation > 0)
             {
-                changeFeedOptions.MaxItemCount = attribute.MaxItemsPerInvocation;
+                processorOptions.MaxItemCount = attribute.MaxItemsPerInvocation;
             }
+
+            ICosmosDBService monitoredCosmosDBService;
+            ICosmosDBService leaseCosmosDBService;
 
             try
             {
@@ -141,11 +145,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     throw new InvalidOperationException("The monitored collection cannot be the same as the collection storing the leases.");
                 }
 
+                monitoredCosmosDBService = _configProvider.GetService(triggerConnectionString, resolvedPreferredLocations);
+                leaseCosmosDBService = _configProvider.GetService(leasesConnectionString, resolvedPreferredLocations);
+
                 if (attribute.CreateLeaseCollectionIfNotExists)
                 {
-                    // Not disposing this because it might be reused on other Trigger since Triggers could share lease collection
-                    ICosmosDBService service = _configProvider.GetService(leasesConnectionString, resolvedPreferredLocations);
-                    await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(service, leaseCollectionLocation.DatabaseName, leaseCollectionLocation.CollectionName, null, attribute.LeasesCollectionThroughput);
+                    await CreateLeaseCollectionIfNotExistsAsync(leaseCosmosDBService, leaseCollectionLocation.DatabaseName, leaseCollectionLocation.CollectionName, attribute.LeasesCollectionThroughput);
                 }
             }
             catch (Exception ex)
@@ -153,7 +158,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 throw new InvalidOperationException(string.Format("Cannot create Collection Information for {0} in database {1} with lease {2} in database {3} : {4}", attribute.CollectionName, attribute.DatabaseName, attribute.LeaseCollectionName, attribute.LeaseDatabaseName, ex.Message), ex);
             }
 
-            return new CosmosDBTriggerBinding(parameter, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions, changeFeedOptions, _logger);
+            return new CosmosDBTriggerBinding(
+                parameter, 
+                documentCollectionLocation, 
+                leaseCollectionLocation, 
+                processorOptions, 
+                monitoredCosmosDBService,
+                leaseCosmosDBService,
+                _logger);
         }
 
         internal static TimeSpan ResolveTimeSpanFromMilliseconds(string nameOfProperty, TimeSpan baseTimeSpan, int? attributeValue)
@@ -169,6 +181,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
 
             return TimeSpan.FromMilliseconds(attributeValue.Value);
+        }
+
+        private static async Task CreateLeaseCollectionIfNotExistsAsync(ICosmosDBService leaseCosmosDBService, string databaseName, string collectionName, int throughput)
+        {
+            try
+            {
+                await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(leaseCosmosDBService, databaseName, collectionName, null, throughput);
+            }
+            catch (DocumentClientException ex) when (ex.Message.Contains(SharedThroughputRequirementException))
+            {
+                await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(leaseCosmosDBService, databaseName, collectionName, LeaseCollectionRequiredPartitionKey, throughput);
+            }
         }
 
         private string ResolveAttributeConnectionString(CosmosDBTriggerAttribute attribute)
@@ -235,11 +259,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return _options.ConnectionString;
         }
 
-        private ChangeFeedHostOptions ResolveLeaseOptions(CosmosDBTriggerAttribute attribute)
+        private ChangeFeedProcessorOptions BuildProcessorOptions(CosmosDBTriggerAttribute attribute)
         {
             ChangeFeedHostOptions leasesOptions = _options.LeaseOptions;
 
-            ChangeFeedHostOptions triggerChangeFeedHostOptions = new ChangeFeedHostOptions
+            ChangeFeedProcessorOptions processorOptions = new ChangeFeedProcessorOptions
             {
                 LeasePrefix = ResolveAttributeValue(attribute.LeaseCollectionPrefix) ?? leasesOptions.LeasePrefix,
                 FeedPollDelay = ResolveTimeSpanFromMilliseconds(nameof(CosmosDBTriggerAttribute.FeedPollDelay), leasesOptions.FeedPollDelay, attribute.FeedPollDelay),
@@ -251,15 +275,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             if (attribute.CheckpointInterval > 0)
             {
-                triggerChangeFeedHostOptions.CheckpointFrequency.TimeInterval = TimeSpan.FromMilliseconds(attribute.CheckpointInterval);
+                processorOptions.CheckpointFrequency.TimeInterval = TimeSpan.FromMilliseconds(attribute.CheckpointInterval);
             }
 
             if (attribute.CheckpointDocumentCount > 0)
             {
-                triggerChangeFeedHostOptions.CheckpointFrequency.ProcessedDocumentCount = attribute.CheckpointDocumentCount;
+                processorOptions.CheckpointFrequency.ProcessedDocumentCount = attribute.CheckpointDocumentCount;
             }
 
-            return triggerChangeFeedHostOptions;
+            return processorOptions;
         }
 
         private string ResolveAttributeValue(string attributeValue)

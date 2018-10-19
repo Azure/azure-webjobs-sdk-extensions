@@ -20,12 +20,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
         public async Task StartAsync_Retries()
         {
             var mockExecutor = new Mock<ITriggeredFunctionExecutor>();
+
+            var monitoredCosmosDBService = new Mock<ICosmosDBService>(MockBehavior.Strict);
+
+            monitoredCosmosDBService
+                .Setup(m => m.GetClient())
+                .Returns(new DocumentClient(new Uri("http://fakeaccount"), "c29tZV9rZXk="));
+
+            var leasesCosmosDBService = new Mock<ICosmosDBService>(MockBehavior.Strict);
+
+            leasesCosmosDBService
+                .Setup(m => m.GetClient())
+                .Returns(new DocumentClient(new Uri("http://fakeaccount"), "c29tZV9rZXk="));
+
             var collInfo = new DocumentCollectionInfo { Uri = new Uri("http://fakeaccount"), MasterKey = "c29tZV9rZXk=", DatabaseName = "FakeDb", CollectionName = "FakeColl" };
             var leaseInfo = new DocumentCollectionInfo { Uri = new Uri("http://fakeaccount"), MasterKey = "c29tZV9rZXk=", DatabaseName = "FakeDb", CollectionName = "leases" };
-            var hostOptions = new ChangeFeedHostOptions();
-            var feedOptions = new ChangeFeedOptions();
+            var processorOptions = new ChangeFeedProcessorOptions();
 
-            var listener = new MockListener(mockExecutor.Object, collInfo, leaseInfo, hostOptions, feedOptions, NullLogger.Instance);
+            var listener = new MockListener(mockExecutor.Object, collInfo, leaseInfo, processorOptions, monitoredCosmosDBService.Object, leasesCosmosDBService.Object, NullLogger.Instance);
 
             // Ensure that we can call StartAsync() multiple times to retry if there is an error.
             for (int i = 0; i < 3; i++)
@@ -42,12 +54,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
         {
             private int _retries = 0;
 
-            public MockListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, ChangeFeedOptions changeFeedOptions, ILogger logger)
-                : base(executor, documentCollectionLocation, leaseCollectionLocation, leaseHostOptions, changeFeedOptions, logger)
+            public MockListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedProcessorOptions processorOptions, ICosmosDBService monitoredCosmosDBService, ICosmosDBService leasesCosmosDBService, ILogger logger)
+                : base(executor, documentCollectionLocation, leaseCollectionLocation, processorOptions, monitoredCosmosDBService, leasesCosmosDBService, logger)
             {
             }
 
-            internal override Task RegisterObserverFactoryAsync()
+            internal override Task StartProcessorAsync()
             {
                 if (++_retries <= 3)
                 {

@@ -26,7 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
     {
         private readonly ILoggerFactory _loggerFactory = new LoggerFactory();
         private static readonly IConfiguration _emptyConfig = new ConfigurationBuilder().Build();
-        private readonly CosmosDBOptions _options = CosmosDBTestUtility.InitializeOptions("AccountEndpoint=https://fromEnvironment;AccountKey=someKey;", null).Value;
+        private readonly CosmosDBOptions _options = CosmosDBTestUtility.InitializeOptions("AccountEndpoint=https://fromEnvironment;AccountKey=c29tZV9rZXk=;", null).Value;
 
         public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsWithLeaseHostOptionsParameters
             => ValidCosmosDBTriggerBindigsWithLeaseHostOptions.GetParameters();
@@ -83,7 +83,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             var config = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string>
                 {
-                    { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=someKey;" }
+                    { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;" }
                 })
                 .Build();
 
@@ -109,7 +109,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             var config = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string>
                 {
-                    { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=someKey;" }
+                    { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;" }
                 })
                 .Build();
 
@@ -131,7 +131,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         public async Task ValidCosmosDBTriggerBindigsWithDatabaseAndCollectionSettings_Succeed(ParameterInfo parameter)
         {
             var nameResolver = new TestNameResolver();
-            nameResolver.Values["CosmosDBConnectionString"] = "AccountEndpoint=https://fromSettings;AccountKey=someKey;";
+            nameResolver.Values["CosmosDBConnectionString"] = "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;";
             nameResolver.Values["aDatabase"] = "myDatabase";
             nameResolver.Values["aCollection"] = "myCollection";
 
@@ -158,8 +158,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 .AddInMemoryCollection(new Dictionary<string, string>
                 {
                     // Verify we load from connection strings
-                    { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=someKey;" },
-                    { "ConnectionStrings:LeaseCosmosDBConnectionString", "AccountEndpoint=https://fromSettingsLease;AccountKey=someKey;" }
+                    { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;" },
+                    { "ConnectionStrings:LeaseCosmosDBConnectionString", "AccountEndpoint=https://fromSettingsLease;AccountKey=c29tZV9rZXk=;" }
                 })
                 .Build();
 
@@ -180,7 +180,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             var config = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string>
                 {
-                    { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=someKey;" }
+                    { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;" }
                 })
                 .Build();
 
@@ -265,9 +265,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 .AddInMemoryCollection(new Dictionary<string, string>
                 {
                     // Verify we load from connection strings first
-                    { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=someKey;" },
+                    { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;" },
                     { "CosmosDBConnectionString", "will not work" },
-                    { "ConnectionStrings:LeaseConnectionString", "AccountEndpoint=https://overridden;AccountKey=someKey;" },
+                    { "ConnectionStrings:LeaseConnectionString", "AccountEndpoint=https://overridden;AccountKey=c29tZV9rZXk=;" },
                     { "LeaseConnectionString", "will not work" }
                 })
                 .Build();
@@ -280,9 +280,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
             Assert.Equal(new Uri("https://fromEnvironment"), binding.DocumentCollectionLocation.Uri);
             Assert.Equal(new Uri("https://overridden"), binding.LeaseCollectionLocation.Uri);
-            Assert.Equal("someLeasePrefix", binding.ChangeFeedHostOptions.LeasePrefix);
-            Assert.Null(binding.ChangeFeedOptions.MaxItemCount);
-            Assert.False(binding.ChangeFeedOptions.StartFromBeginning);
+            Assert.Equal("someLeasePrefix", binding.ChangeFeedProcessorOptions.LeasePrefix);
+            Assert.Null(binding.ChangeFeedProcessorOptions.MaxItemCount);
+            Assert.False(binding.ChangeFeedProcessorOptions.StartFromBeginning);
         }
 
         [Theory]
@@ -293,7 +293,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 .AddInMemoryCollection(new Dictionary<string, string>
                 {
                     // Verify we load from root config
-                    { "CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=someKey;" }
+                    { "CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;" }
                 })
                 .Build();
 
@@ -304,8 +304,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
             Assert.Equal(new Uri("https://fromSettings"), binding.DocumentCollectionLocation.Uri);
             Assert.Equal(new Uri("https://fromSettings"), binding.LeaseCollectionLocation.Uri);
-            Assert.Equal(10, binding.ChangeFeedOptions.MaxItemCount);
-            Assert.True(binding.ChangeFeedOptions.StartFromBeginning);
+            Assert.Equal(10, binding.ChangeFeedProcessorOptions.MaxItemCount);
+            Assert.True(binding.ChangeFeedProcessorOptions.StartFromBeginning);
         }
 
         private static ParameterInfo GetFirstParameter(Type type, string methodName)

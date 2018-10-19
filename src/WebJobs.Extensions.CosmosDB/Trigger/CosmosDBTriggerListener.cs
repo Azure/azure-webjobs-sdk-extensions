@@ -7,14 +7,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.ChangeFeedProcessor;
-using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Documents.ChangeFeedProcessor.Monitoring;
+using Microsoft.Azure.Documents.ChangeFeedProcessor.PartitionManagement;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
-    internal class CosmosDBTriggerListener : IListener, IChangeFeedObserverFactory
+    internal class CosmosDBTriggerListener : IListener, Microsoft.Azure.Documents.ChangeFeedProcessor.FeedProcessing.IChangeFeedObserverFactory
     {
         private const int ListenerNotRegistered = 0;
         private const int ListenerRegistering = 1;
@@ -25,12 +26,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly DocumentCollectionInfo _monitorCollection;
         private readonly DocumentCollectionInfo _leaseCollection;
         private readonly string _hostName;
-        private readonly ChangeFeedOptions _changeFeedOptions;
-        private readonly ChangeFeedHostOptions _leaseHostOptions;
-        private ChangeFeedEventHost _host;
+        private readonly ChangeFeedProcessorOptions _processorOptions;
+        private readonly ICosmosDBService _monitoredCosmosDBService;
+        private readonly ICosmosDBService _leasesCosmosDBService;
+        private readonly IHealthMonitor _healthMonitor;
+        private IChangeFeedProcessor _host;
+        private ChangeFeedProcessorBuilder _hostBuilder;
         private int _listenerStatus;
 
-        public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedHostOptions leaseHostOptions, ChangeFeedOptions changeFeedOptions, ILogger logger)
+        public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor,
+            DocumentCollectionInfo documentCollectionLocation,
+            DocumentCollectionInfo leaseCollectionLocation,
+            ChangeFeedProcessorOptions processorOptions,
+            ICosmosDBService monitoredCosmosDBService,
+            ICosmosDBService leasesCosmosDBService,
+            ILogger logger)
         {
             this._logger = logger;
             this._executor = executor;
@@ -38,8 +48,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             this._monitorCollection = documentCollectionLocation;
             this._leaseCollection = leaseCollectionLocation;
-            this._leaseHostOptions = leaseHostOptions;
-            this._changeFeedOptions = changeFeedOptions;
+            this._processorOptions = processorOptions;
+            this._monitoredCosmosDBService = monitoredCosmosDBService;
+            this._leasesCosmosDBService = leasesCosmosDBService;
+            this._healthMonitor = new CosmosDBTriggerHealthMonitor(this._logger);
         }
 
         public void Cancel()
@@ -47,7 +59,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             this.StopAsync(CancellationToken.None).Wait();
         }
 
-        public IChangeFeedObserver CreateObserver()
+        public Microsoft.Azure.Documents.ChangeFeedProcessor.FeedProcessing.IChangeFeedObserver CreateObserver()
         {
             return new CosmosDBTriggerObserver(this._executor);
         }
@@ -70,11 +82,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 throw new InvalidOperationException("The listener has already started.");
             }
 
-            this.InitializeHost();
+            this.InitializeBuilder();
 
             try
             {
-                await RegisterObserverFactoryAsync();
+                await this.StartProcessorAsync();
                 Interlocked.CompareExchange(ref this._listenerStatus, ListenerRegistered, ListenerRegistering);
             }
             catch (Exception ex)
@@ -95,19 +107,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
         }
 
-        // For test mocking
-        internal virtual Task RegisterObserverFactoryAsync()
-        {
-            return this._host.RegisterObserverFactoryAsync(this);
-        }
-
         public async Task StopAsync(CancellationToken cancellationToken)
         {
             try
             {
                 if (this._host != null)
                 {
-                    await this._host.UnregisterObserversAsync();
+                    await this._host.StopAsync().ConfigureAwait(false);
                     this._listenerStatus = ListenerNotRegistered;
                 }
             }
@@ -117,15 +123,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
         }
 
-        private void InitializeHost()
+        internal virtual async Task StartProcessorAsync()
         {
             if (this._host == null)
             {
-                this._host = new ChangeFeedEventHost(this._hostName,
-                    this._monitorCollection,
-                    this._leaseCollection,
-                    this._changeFeedOptions,
-                    this._leaseHostOptions);
+                this._host = await this._hostBuilder.BuildAsync().ConfigureAwait(false);
+            }
+
+            await this._host.StartAsync().ConfigureAwait(false);
+        }
+
+        private void InitializeBuilder()
+        {
+            if (this._hostBuilder == null)
+            {
+                this._hostBuilder = new ChangeFeedProcessorBuilder()
+                    .WithHostName(this._hostName)
+                    .WithFeedDocumentClient(this._monitoredCosmosDBService.GetClient())
+                    .WithLeaseDocumentClient(this._leasesCosmosDBService.GetClient())
+                    .WithFeedCollection(this._monitorCollection)
+                    .WithLeaseCollection(this._leaseCollection)
+                    .WithProcessorOptions(this._processorOptions)
+                    .WithHealthMonitor(this._healthMonitor)
+                    .WithObserverFactory(this);
             }
         }
     }
