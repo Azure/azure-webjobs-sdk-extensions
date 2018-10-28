@@ -38,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         {
             if (count < 0)
             {
-                throw new ArgumentOutOfRangeException("count");
+                throw new ArgumentOutOfRangeException(nameof(count));
             }
 
             if (now == null)

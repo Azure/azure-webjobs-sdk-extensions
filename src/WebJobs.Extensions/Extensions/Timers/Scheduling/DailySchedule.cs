@@ -29,7 +29,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// <param name="times">The daily schedule times.</param>
         public DailySchedule(params string[] times)
         {
-            schedule = times.Select(p => TimeSpan.Parse(p)).OrderBy(p => p).ToList();
+            schedule = times.Select(TimeSpan.Parse).OrderBy(p => p).ToList();
         }
 
         /// <summary>

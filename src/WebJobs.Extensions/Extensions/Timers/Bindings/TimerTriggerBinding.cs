@@ -22,8 +22,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
         private readonly TimersOptions _options;
         private readonly ILogger _logger;
         private readonly ScheduleMonitor _scheduleMonitor;
-        private IReadOnlyDictionary<string, Type> _bindingContract;
-        private string _timerName;
+        private readonly IReadOnlyDictionary<string, Type> _bindingContract;
+        private readonly string _timerName;
 
         public TimerTriggerBinding(ParameterInfo parameter, TimerTriggerAttribute attribute, TimerSchedule schedule, TimersOptions options, ILogger logger, ScheduleMonitor scheduleMonitor)
         {
@@ -60,7 +60,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
                 ScheduleStatus status = null;
                 if (_attribute.UseMonitor && _scheduleMonitor != null)
                 {
-                    status = await _scheduleMonitor.GetStatusAsync(_timerName);
+                    status = await _scheduleMonitor.GetStatusAsync(_timerName)
+                        .ConfigureAwait(false);
                 }
                 timerInfo = new TimerInfo(_schedule, status);
             }
@@ -75,7 +76,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
         {
             if (context == null)
             {
-                throw new ArgumentNullException("context");
+                throw new ArgumentNullException(nameof(context));
             }
             return Task.FromResult<IListener>(new TimerListener(_attribute, _schedule, _timerName, _options, context.Executor, _logger, _scheduleMonitor));
         }
@@ -87,7 +88,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
                 Name = _parameter.Name,
                 DisplayHints = new ParameterDisplayHints
                 {
-                    Description = string.Format("Timer executed on schedule ({0})", _schedule.ToString())
+                    Description = string.Format("Timer executed on schedule ({0})", _schedule)
                 }
             };
             return descriptor;
