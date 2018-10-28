@@ -274,7 +274,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             {
                 if (next.Kind != DateTimeKind.Local)
                 {
-                    throw new ArgumentException("now and next should be in local kind");
+                    throw new ArgumentException("now should be in local kind");
                 }
 
                 try
