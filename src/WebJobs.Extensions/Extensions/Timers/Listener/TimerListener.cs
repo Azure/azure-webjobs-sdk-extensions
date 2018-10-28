@@ -261,9 +261,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         /// the interval for the next timer using 12:01 rather than at 12:00. Otherwise, 
         /// you'd start a 1-hour timer at 12:01 when we really want it to be a 59-minute timer.
         /// </remarks>
-        /// <param name="next">The next schedule occurrence in Local time</param>
-        /// <param name="now">The current Local time</param>
-        /// <returns>The next timer interval</returns>
+        /// <param name="next">The next schedule occurrence in Local time.</param>
+        /// <param name="now">The current Local time.</param>
+        /// <param name="adjustForDST">Indicates if the time need DST adjust.</param>
+        /// <returns>The next timer interval.</returns>
         internal static TimeSpan GetNextTimerInterval(DateTime next, DateTime now, bool adjustForDST)
         {
             TimeSpan nextInterval;

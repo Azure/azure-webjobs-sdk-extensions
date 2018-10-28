@@ -10,12 +10,12 @@ namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
     /// Provides access to timer schedule information for jobs triggered 
-    /// by <see cref="TimerTriggerAttribute"/>
+    /// by <see cref="TimerTriggerAttribute"/>.
     /// </summary>
     public class TimerInfo
     {
         /// <summary>
-        /// Constructs a new instance
+        /// Constructs a new instance.
         /// </summary>
         /// <param name="schedule">The timer trigger schedule.</param>
         /// <param name="status">The current schedule status.</param>
@@ -61,7 +61,7 @@ namespace Microsoft.Azure.WebJobs
         {
             if (schedule == null)
             {
-                throw new ArgumentNullException("schedule");
+                throw new ArgumentNullException(nameof(schedule));
             }
 
             // If we've got a timer name, format it

@@ -20,20 +20,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         private string _statusFilePath;
 
         /// <summary>
-        /// Constructs a new instance
+        /// Constructs a new instance.
         /// </summary>
         public FileSystemScheduleMonitor() : this(Directory.GetCurrentDirectory())
         {
         }
 
         /// <summary>
-        /// Constructs a new instance
+        /// Constructs a new instance.
         /// </summary>
         public FileSystemScheduleMonitor(string currentDirectory)
         {
             if (string.IsNullOrEmpty(currentDirectory))
             {
-                throw new ArgumentNullException("currentDirectory");
+                throw new ArgumentNullException(nameof(currentDirectory));
             }
 
             // default to the D:\HOME\DATA directory when running in Azure WebApps
@@ -86,11 +86,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             {
                 if (string.IsNullOrEmpty(value))
                 {
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 }
                 if (!Directory.Exists(value))
                 {
-                    throw new ArgumentException("The specified path does not exist.", "value");
+                    throw new ArgumentException("The specified path does not exist.", nameof(value));
                 }
                 _statusFilePath = value;
             }
@@ -112,7 +112,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 status = (ScheduleStatus)_serializer.Deserialize(stringReader, typeof(ScheduleStatus));
             }
 
-            return Task.FromResult<ScheduleStatus>(status);
+            return Task.FromResult(status);
         }
 
         /// <inheritdoc/>
@@ -139,9 +139,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         }
 
         /// <summary>
-        /// Returns the schedule status file name for the specified timer
+        /// Returns the schedule status file name for the specified timer.
         /// </summary>
-        /// <param name="timerName">The timer name</param>
+        /// <param name="timerName">The timer name.</param>
         /// <returns></returns>
         protected internal string GetStatusFileName(string timerName)
         {
