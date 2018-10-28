@@ -392,7 +392,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             var now = new DateTime(2018, 3, 9, 18, 0, 0, DateTimeKind.Local);
 
             var next = schedule.GetNextOccurrence(now);
-            var interval = TimerListener.GetNextTimerInterval(next, now, schedule.AdjustForDST);
+            var interval = TimerListener.GetNextTimerInterval(next, now, schedule.AdjustForDST, schedule.TimeZone);
 
             // One week is normally 168 hours, but it's 167 hours across DST
             Assert.Equal(interval, expectedInterval);
@@ -419,7 +419,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
             var next = schedule.GetNextOccurrence(now);
 
-            var interval = TimerListener.GetNextTimerInterval(next, now, schedule.AdjustForDST);
+            var interval = TimerListener.GetNextTimerInterval(next, now, schedule.AdjustForDST, schedule.TimeZone);
             Assert.Equal(expectedInterval, interval);
         }
 
@@ -429,7 +429,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             var now = DateTime.Now;
             var next = now.Subtract(TimeSpan.FromSeconds(1));
 
-            var interval = TimerListener.GetNextTimerInterval(next, now, true);
+            var interval = TimerListener.GetNextTimerInterval(next, now, true, null);
             Assert.Equal(1, interval.Ticks);
         }
 

@@ -20,6 +20,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         public abstract bool AdjustForDST { get; }
 
         /// <summary>
+        /// Gets or sets indicate the Time Zone to be used to get the next ocurrence
+        /// If null will not be used.
+        /// </summary>
+        public string TimeZone { get; set; }
+
+        /// <summary>
         /// Gets the next occurrence of the schedule based on the specified
         /// base time.
         /// </summary>
@@ -38,7 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         {
             if (count < 0)
             {
-                throw new ArgumentOutOfRangeException("count");
+                throw new ArgumentOutOfRangeException(nameof(count));
             }
 
             if (now == null)

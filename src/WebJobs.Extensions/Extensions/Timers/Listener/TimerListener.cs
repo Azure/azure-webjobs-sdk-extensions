@@ -247,7 +247,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
         private void StartTimer(DateTime now)
         {
-            var nextInterval = GetNextTimerInterval(ScheduleStatus.Next, now, _schedule.AdjustForDST);
+            var nextInterval = GetNextTimerInterval(ScheduleStatus.Next, now, _schedule.AdjustForDST, _schedule.TimeZone);
             StartTimer(nextInterval);
         }
 
@@ -264,10 +264,41 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         /// <param name="next">The next schedule occurrence in Local time.</param>
         /// <param name="now">The current Local time.</param>
         /// <param name="adjustForDST">Indicates if the time need DST adjust.</param>
+        /// <param name="timeZone"></param>
         /// <returns>The next timer interval.</returns>
-        internal static TimeSpan GetNextTimerInterval(DateTime next, DateTime now, bool adjustForDST)
+        internal static TimeSpan GetNextTimerInterval(DateTime next, DateTime now, bool adjustForDST, string timeZone)
         {
             TimeSpan nextInterval;
+
+            if (!string.IsNullOrWhiteSpace(timeZone))
+            {
+                if (next.Kind != DateTimeKind.Local)
+                {
+                    throw new ArgumentException("now and next should be in local kind");
+                }
+
+                try
+                {
+                    // try to convert next from local to the timezone
+                    TimeZoneInfo selectedZone = TimeZoneInfo.FindSystemTimeZoneById(timeZone);
+                    next = TimeZoneInfo.ConvertTime(next, TimeZoneInfo.Local, selectedZone);
+
+                    // if next is less than now it means that next is in the future but in the past for the selected timezone and 
+                    // next ocurrence will be next day.
+                    if (next < now)
+                    {
+                        next = next.AddDays(1);
+                    }
+                }
+                catch (TimeZoneNotFoundException)
+                {
+                    throw new ArgumentException(timeZone + " cannot be found on the local system.");
+                }
+                catch (InvalidTimeZoneException)
+                {
+                    throw new ArgumentException(timeZone + " contains invalid or missing data.");
+                }
+            }
 
             if (adjustForDST)
             {
