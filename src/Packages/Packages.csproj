@@ -22,6 +22,9 @@
     <NuGetProject Include="..\WebJobs.Extensions.SendGrid.NuGet\WebJobs.Extensions.SendGrid.nuproj">
       <Link>WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.nuproj</Link>
     </NuGetProject>
+    <NuGetProject Include="..\WebJobs.Extensions.Twilio.NuGet\WebJobs.Extensions.Twilio.nuproj">
+      <Link>WebJobs.Extensions.Twilio\WebJobs.Extensions.Twilio.nuproj</Link>
+    </NuGetProject>
   </ItemGroup>
   <ItemGroup>
     <NuGetSpec Include="..\WebJobs.Extensions.NuGet\WebJobs.Extensions.nuspec">
@@ -29,6 +32,9 @@
     </NuGetSpec>
     <NuGetSpec Include="..\WebJobs.Extensions.SendGrid.NuGet\WebJobs.Extensions.SendGrid.nuspec">
       <Link>WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.nuspec</Link>
+    </NuGetSpec>
+    <NuGetSpec Include="..\WebJobs.Extensions.Twilio.NuGet\WebJobs.Extensions.Twilio.nuspec">
+      <Link>WebJobs.Extensions.Twilio\WebJobs.Extensions.Twilio.nuspec</Link>
     </NuGetSpec>
   </ItemGroup>
   <ItemGroup>

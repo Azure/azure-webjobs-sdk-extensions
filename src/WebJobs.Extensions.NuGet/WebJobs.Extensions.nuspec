@@ -5,11 +5,11 @@
     <title>Microsoft.Azure.WebJobs.Extensions</title>
     <version>$NuGetPackageVersion$</version>
     <authors>Microsoft</authors>
-    <copyright>&#169; Microsoft Corporation. All rights reserved.</copyright>
+    <copyright>© Microsoft Corporation. All rights reserved.</copyright>
     <summary>Microsoft.Azure.WebJobs.Extensions adds additional triggers, binders and extensions to the WebJobs SDK.</summary>
     <description>This package contains the runtime assemblies for Microsoft.Azure.WebJobs.Extensions. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources</description>
     <language>en-US</language>
-    <projectUrl>https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources</projectUrl>
+    <projectUrl>http://go.microsoft.com/fwlink/?LinkID=320972</projectUrl>
     <licenseUrl>$PackageEULA$</licenseUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <tags>Microsoft Azure WebJobs Jobs Extensions Files Scheduler Cron Storage Table Blob Queue windowsazureofficial Web</tags>
