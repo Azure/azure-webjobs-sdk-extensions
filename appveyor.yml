@@ -14,6 +14,20 @@ environment:
 build_script:
 - cmd: IF "%APPVEYOR_REPO_TAG_NAME%"=="" SET PackageSuffixCmd=/p:PackageSuffix=-%APPVEYOR_BUILD_NUMBER%
 - cmd: msbuild "WebJobs.Extensions.proj" /target:EnableSkipStrongNames;TestBuild /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /property:BuildNumber=%APPVEYOR_BUILD_NUMBER%;Configuration=Release %PackageSuffixCmd%
+before_test:
+- ps: |
+    # timer tests require Daylight Savings Time, so switch settings, then reset.
+    $originalTZ = Get-TimeZone
+    $env:ORIG_ID = $originalTZ.Id
+    Write-Host "Current TimeZone: '$originalTZ'"
+    Set-TimeZone -Name "Pacific Standard Time"
+    $currentTZ = Get-TimeZone
+    Write-Host "Changing TimeZone for Timer tests. Now '$currentTZ'"
+after_test:
+- ps: |
+    Set-TimeZone -Id $env:ORIG_ID
+    $currentTZ = Get-TimeZone
+    Write-Host "Changing TimeZone back to original. Now '$currentTZ'"
 artifacts:
 - path: bin\Packages\*.*
   name: Packages

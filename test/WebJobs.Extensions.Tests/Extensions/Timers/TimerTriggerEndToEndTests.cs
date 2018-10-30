@@ -155,6 +155,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
                 public static int InvocationCount { get; set; }
 
+                public override bool AdjustForDST => true;
+
                 public override DateTime GetNextOccurrence(DateTime now)
                 {
                     InvocationCount++;
