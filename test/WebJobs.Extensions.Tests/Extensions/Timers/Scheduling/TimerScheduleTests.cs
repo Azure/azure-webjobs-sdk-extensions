@@ -67,13 +67,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             VerifyConstantSchedule("00:00:45", TimeSpan.FromSeconds(45));
             VerifyConstantSchedule("00:06:00", TimeSpan.FromMinutes(6));
             VerifyConstantSchedule("12:00:00", TimeSpan.FromHours(12));
-            VerifyConstantSchedule("1.00:00", TimeSpan.FromHours(24)); 
+            VerifyConstantSchedule("1.00:00", TimeSpan.FromHours(24));
         }
 
         private static void VerifyConstantSchedule(string expression, TimeSpan expectedInterval)
         {
-            TimeSpan timeSpan;
-            Assert.True(TimeSpan.TryParse(expression, out timeSpan));
+            Assert.True(TimeSpan.TryParse(expression, out TimeSpan timeSpan));
             Assert.Equal(timeSpan, expectedInterval);
 
             TimerTriggerAttribute attribute = new TimerTriggerAttribute(expression);
@@ -134,6 +133,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
 
         public class CustomSchedule : TimerSchedule
         {
+            public override bool AdjustForDST => true;
+
             public override DateTime GetNextOccurrence(DateTime now)
             {
                 return new DateTime(2015, 5, 22, 9, 45, 00);

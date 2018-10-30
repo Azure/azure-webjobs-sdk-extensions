@@ -43,6 +43,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         }
 
         /// <inheritdoc/>
+        public override bool AdjustForDST => true;
+
+        /// <inheritdoc/>
         public override DateTime GetNextOccurrence(DateTime now)
         {
             if (schedule.Count == 0)
