@@ -38,7 +38,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
     {
         internal const string HttpQueryKey = "Query";
         internal const string HttpHeadersKey = "Headers";
-        internal const string IdentitiesKey = "Identities";
 
         // Name of binding data slot where we place the full HttpRequestMessage
         internal const string RequestBindingName = "$request";
@@ -284,11 +283,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     aggregateDataContract.Add(HttpQueryKey, typeof(IDictionary<string, string>));
                 }
 
-                if (!aggregateDataContract.ContainsKey(IdentitiesKey))
-                {
-                    aggregateDataContract.Add(IdentitiesKey, typeof(JObject[]));
-                }
-
                 return aggregateDataContract;
             }
 
@@ -346,14 +340,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 if (!bindingData.ContainsKey(HttpHeadersKey))
                 {
                     bindingData[HttpHeadersKey] = request.Headers.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString(), StringComparer.OrdinalIgnoreCase);
-                }
-
-                if (!bindingData.ContainsKey(IdentitiesKey))
-                {
-                    bindingData[IdentitiesKey] = request.HttpContext.User
-                        .Identities
-                        .Select(identity => ClaimsIdentitySlim.FromClaimsIdentity(identity).ToJObject())
-                        .ToArray();
                 }
 
                 return bindingData;

@@ -84,24 +84,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         }
 
         [Fact]
-        public async Task HttpTrigger_WithClaimsPrincipal_HasIdentitiesBindingData()
-        {
-            var request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions.com/api/TestIdentityBindings");
-            request.HttpContext.User = GetSamplePrincipal();
-            var method = typeof(TestFunctions).GetMethod(nameof(TestFunctions.HttpRequestWithIdentitiesBindingData));
-            await GetJobHost().CallAsync(method, new { req = request });
-
-            JObject[] identities = GetBindingDataResult(request);
-            
-            Assert.Equal(UserAuthType, identities[0]["authenticationType"]);
-            var claims = identities[0]["claims"] as JArray;
-            var nameClaim = claims.FirstOrDefault(claim => string.Equals(claim["type"].Value<string>(), UserNameClaimType));
-            Assert.Equal(UserNameClaimValue, nameClaim["value"]);
-            var roleCLaim = claims.FirstOrDefault(claim => string.Equals(claim["type"].Value<string>(), UserRoleClaimType));
-            Assert.Equal(UserRoleClaimValue, roleCLaim["value"]);
-        }
-
-        [Fact]
         public async Task NonHttpTrigger_WithClaimsPrincipal_ExceptionIsThrown()
         {
             var method = typeof(TestFunctions).GetMethod(nameof(TestFunctions.TimerTrigger));
@@ -143,13 +125,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 ClaimsPrincipal principal)
             {
                 return principal;
-            }
-
-            public static JObject[] HttpRequestWithIdentitiesBindingData(
-                [HttpTrigger("get")] HttpRequestMessage req,
-                JObject[] identities)
-            {
-                return identities;
             }
 
             public static void TimerTrigger(
