@@ -18,7 +18,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.2" />
-    <PackageReference Include="SendGrid" Version="9.9.0" />
+    <PackageReference Include="SendGrid" Version="9.10.0" />
   </ItemGroup>
 
   <ItemGroup>
