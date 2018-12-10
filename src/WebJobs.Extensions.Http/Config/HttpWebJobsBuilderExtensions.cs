@@ -4,12 +4,14 @@
 using System;
 using System.Net.Http.Formatting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters.Json.Internal;
 using Microsoft.AspNetCore.Mvc.WebApiCompatShim;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Extensions.Hosting
 {
@@ -41,6 +43,9 @@ namespace Microsoft.Extensions.Hosting
             {
                 o.OutputFormatters.Insert(0, new HttpResponseMessageOutputFormatter());
             });
+
+            // JsonInputFormatter configuration and services
+            builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<IConfigureOptions<MvcOptions>, MvcJsonMvcOptionsSetup>());
 
             builder.Services.Configure<WebApiCompatShimOptions>(o =>
             {
