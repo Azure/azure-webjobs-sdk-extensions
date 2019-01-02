@@ -51,6 +51,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
         public Task RouteAsync(RouteContext context)
         {
+            // /admin/* routes should not be allowed to be overriden by proxies.
+            if (context.HttpContext.Request.Path.StartsWithSegments(new PathString("/admin"), System.StringComparison.OrdinalIgnoreCase))
+            {
+                return Task.CompletedTask;
+            }
+
             // If this key is set in HttpContext, we first match against Function routes then Proxies.
             if (context.HttpContext.Items.ContainsKey(HttpExtensionConstants.AzureWebJobsUseReverseRoutesKey))
             {
