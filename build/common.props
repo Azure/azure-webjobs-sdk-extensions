@@ -1,7 +1,15 @@
 <Project>
   <PropertyGroup>
-    <DebugType>embedded</DebugType>
+    <!-- Extensions can have independent versions and only increment when released -->
     <Version>3.0.0$(VersionSuffix)</Version>
+    <ExtensionsVersion>3.0.2$(VersionSuffix)</ExtensionsVersion> <!-- WebJobs.Extensions -->
+    <CosmosDBVersion>3.0.3$(VersionSuffix)</CosmosDBVersion>
+    <HttpVersion>3.0.3$(VersionSuffix)</HttpVersion>
+    <MobileAppsVersion>3.0.0$(VersionSuffix)</MobileAppsVersion>
+    <SendGridVersion>3.0.1$(VersionSuffix)</SendGridVersion>
+    <TwilioVersion>3.0.1$(VersionSuffix)</TwilioVersion>
+
+    <DebugType>embedded</DebugType>    
     <LatestCommit Condition="$(LatestCommit) == ''">$(CommitHash)</LatestCommit>
     <CommitHash Condition="$(CommitHash) == ''">N/A</CommitHash>
     <InformationalVersion>$(Version) Commit hash: $(CommitHash)</InformationalVersion>
