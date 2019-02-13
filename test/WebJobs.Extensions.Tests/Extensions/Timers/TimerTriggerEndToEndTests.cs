@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
@@ -31,6 +32,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 });
 
             CronScheduleTestJobs.InvocationCount = 0;
+
+            // Make sure we've logged the warning and details about RunOnStartup
+            var messages = _loggerProvider.GetAllLogMessages().Where(m => m.FormattedMessage != null);
+
+            // This trigger may be IsPastDue (which is evaluated first) or RunOnStartup. Make sure that we're
+            // logging it either way.
+            var triggerDetails = messages.Where(m =>
+            {
+                var msg = m.FormattedMessage;
+                return m.Level == LogLevel.Information &&
+                       (msg.Contains("Trigger Details: UnscheduledInvocationReason: RunOnStartup") ||
+                        msg.Contains("Trigger Details: UnscheduledInvocationReason: IsPastDue"));
+            });
+            Assert.True(triggerDetails.Count() == 1, string.Join(Environment.NewLine, messages));
         }
 
         [Fact]

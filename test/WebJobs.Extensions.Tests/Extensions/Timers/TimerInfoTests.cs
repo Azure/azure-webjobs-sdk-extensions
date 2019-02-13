@@ -26,18 +26,31 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
         [Fact]
         public void FormatNextOccurrences_ReturnsExpectedString()
-        {            
-            DateTime now = new DateTime(2015, 9, 16, 10, 30, 00);
-            TimerInfo timerInfo = new TimerInfo(new CronSchedule(CrontabSchedule.Parse("0 * * * *")), null);
-            string result = timerInfo.FormatNextOccurrences(10, now);
+        {
+            // There's no way to mock the OS TimeZoneInfo, so let's make sure this 
+            // works on both UTC and non-UTC
+            string DateFormatter(DateTime d)
+            {
+                if (TimeZoneInfo.Local == TimeZoneInfo.Utc)
+                {
+                    return d.ToString(TimerInfo.DateTimeFormat);
+                }
+
+                return $"{d.ToString(TimerInfo.DateTimeFormat)} ({d.ToUniversalTime().ToString(TimerInfo.DateTimeFormat)})";
+            }
+
+            DateTime now = new DateTime(2015, 9, 16, 10, 30, 00, DateTimeKind.Local);
+
+            CronSchedule cronSchedule = new CronSchedule(CrontabSchedule.Parse("0 * * * *"));
+            string result = TimerInfo.FormatNextOccurrences(cronSchedule, 10, now: now);
 
             var expectedDates = Enumerable.Range(11, 10)
-                .Select(hour => new DateTime(2015, 09, 16, hour, 00, 00))
-                .Select(dateTime => string.Format("{0}\r\n", dateTime))
+                .Select(hour => new DateTime(2015, 09, 16, hour, 00, 00, DateTimeKind.Local))
+                .Select(dateTime => $"{DateFormatter(dateTime)}\r\n")
                 .ToArray();
 
             string expected =
-                "The next 10 occurrences of the schedule will be:\r\n" +
+                $"The next 10 occurrences of the schedule ({cronSchedule}) will be:\r\n" +
                 string.Join(string.Empty, expectedDates);
 
             Assert.Equal(expected, result);
@@ -48,13 +61,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             result = TimerInfo.FormatNextOccurrences(schedule, 5, now, timerName);
 
             expectedDates = Enumerable.Range(17, 5)
-                .Select(day => new DateTime(2015, 09, day, 02, 00, 00))
-                .Select(dateTime => string.Format("{0}\r\n", dateTime))
+                .Select(day => new DateTime(2015, 09, day, 02, 00, 00, DateTimeKind.Local))
+                .Select(dateTime => $"{DateFormatter(dateTime)}\r\n")
                 .ToArray();
 
             expected =
-                "The next 5 occurrences of the 'TestTimer' schedule will be:\r\n" +
-                string.Join(string.Empty, expectedDates);
+                    $"The next 5 occurrences of the 'TestTimer' schedule ({schedule}) will be:\r\n" +
+                    string.Join(string.Empty, expectedDates);
             Assert.Equal(expected, result);
 
             WeeklySchedule weeklySchedule = new WeeklySchedule();
@@ -68,12 +81,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             result = TimerInfo.FormatNextOccurrences(schedule, 5, now, timerName);
 
             expected =
-                "The next 5 occurrences of the 'TestTimer' schedule will be:\r\n" +
-                new DateTime(2015, 09, 16, 21, 30, 00).ToString() + "\r\n" +
-                new DateTime(2015, 09, 18, 10, 00, 00).ToString() + "\r\n" +
-                new DateTime(2015, 09, 21, 08, 00, 00).ToString() + "\r\n" +
-                new DateTime(2015, 09, 23, 09, 30, 00).ToString() + "\r\n" +
-                new DateTime(2015, 09, 23, 21, 30, 00).ToString() + "\r\n";
+                $"The next 5 occurrences of the 'TestTimer' schedule ({weeklySchedule}) will be:\r\n" +
+                DateFormatter(new DateTime(2015, 09, 16, 21, 30, 00, DateTimeKind.Local)) + "\r\n" +
+                DateFormatter(new DateTime(2015, 09, 18, 10, 00, 00, DateTimeKind.Local)) + "\r\n" +
+                DateFormatter(new DateTime(2015, 09, 21, 08, 00, 00, DateTimeKind.Local)) + "\r\n" +
+                DateFormatter(new DateTime(2015, 09, 23, 09, 30, 00, DateTimeKind.Local)) + "\r\n" +
+                DateFormatter(new DateTime(2015, 09, 23, 21, 30, 00, DateTimeKind.Local)) + "\r\n";
 
             Assert.Equal(expected, result);
         }
