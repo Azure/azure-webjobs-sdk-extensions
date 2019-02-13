@@ -22,8 +22,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
         private readonly TimersOptions _options;
         private readonly ILogger _logger;
         private readonly ScheduleMonitor _scheduleMonitor;
+        private readonly string _timerName;
+
         private IReadOnlyDictionary<string, Type> _bindingContract;
-        private string _timerName;
 
         public TimerTriggerBinding(ParameterInfo parameter, TimerTriggerAttribute attribute, TimerSchedule schedule, TimersOptions options, ILogger logger, ScheduleMonitor scheduleMonitor)
         {
@@ -77,7 +78,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             {
                 throw new ArgumentNullException("context");
             }
-            return Task.FromResult<IListener>(new TimerListener(_attribute, _schedule, _timerName, _options, context.Executor, _logger, _scheduleMonitor));
+
+            return Task.FromResult<IListener>(new TimerListener(_attribute, _schedule, _timerName, _options, context.Executor, _logger, _scheduleMonitor, context.Descriptor?.ShortName));
         }
 
         public ParameterDescriptor ToParameterDescriptor()

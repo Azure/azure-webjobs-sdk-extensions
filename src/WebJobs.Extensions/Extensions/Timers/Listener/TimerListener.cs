@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
@@ -14,12 +15,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
     [Singleton(Mode = SingletonMode.Listener)]
     internal sealed class TimerListener : IListener
     {
+        public const string UnscheduledInvocationReasonKey = "UnscheduledInvocationReason";
+        public const string OriginalScheduleKey = "OriginalSchedule";
+
         private readonly TimerTriggerAttribute _attribute;
         private readonly TimersOptions _options;
         private readonly ITriggeredFunctionExecutor _executor;
         private readonly ILogger _logger;
         private readonly CancellationTokenSource _cancellationTokenSource;
-        private readonly string _timerName;
+
+        // _functionShortName is often the [FunctionName] value and used for logging, 
+        // while _timerLookupName is the fully-qualified method name and used for lookups
+        private readonly string _functionShortName;
+        private readonly string _timerLookupName;
 
         // Since Timer uses an integer internally for it's interval,
         // it has a maximum interval of 24.8 days.
@@ -31,16 +39,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private bool _disposed;
         private TimeSpan _remainingInterval;
 
-        public TimerListener(TimerTriggerAttribute attribute, TimerSchedule schedule, string timerName, TimersOptions options, ITriggeredFunctionExecutor executor, ILogger logger, ScheduleMonitor scheduleMonitor)
+        public TimerListener(TimerTriggerAttribute attribute, TimerSchedule schedule, string timerName, TimersOptions options, ITriggeredFunctionExecutor executor,
+            ILogger logger, ScheduleMonitor scheduleMonitor, string functionShortName)
         {
             _attribute = attribute;
-            _timerName = timerName;
+            _timerLookupName = timerName;
             _options = options;
             _executor = executor;
             _logger = logger;
             _cancellationTokenSource = new CancellationTokenSource();
             _schedule = schedule;
             ScheduleMonitor = _attribute.UseMonitor ? scheduleMonitor : null;
+            _functionShortName = functionShortName;
         }
 
         internal static TimeSpan MaxTimerInterval
@@ -80,15 +90,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             // we use DateTime.Now rather than DateTime.UtcNow to allow the local machine to set the time zone. In Azure this will be
             // UTC by default, but can be configured to use any time zone if it makes scheduling easier.
             DateTime now = DateTime.Now;
-            _logger.LogDebug($"The '{_timerName}' timer is using the local time zone: '{TimeZoneInfo.Local.DisplayName}'");
+            _logger.LogDebug($"The '{_functionShortName}' timer is using the schedule '{_schedule.ToString()}' and the local time zone: '{TimeZoneInfo.Local.DisplayName}'");
 
             if (ScheduleMonitor != null)
             {
                 // check to see if we've missed an occurrence since we last started.
                 // If we have, invoke it immediately.
-                ScheduleStatus = await ScheduleMonitor.GetStatusAsync(_timerName);
-                _logger.LogDebug($"Function '{_timerName}' initial status: Last='{ScheduleStatus?.Last.ToString("o")}', Next='{ScheduleStatus?.Next.ToString("o")}', LastUpdated='{ScheduleStatus?.LastUpdated.ToString("o")}'");
-                TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerName, now, _schedule, ScheduleStatus);
+                ScheduleStatus = await ScheduleMonitor.GetStatusAsync(_timerLookupName);
+                _logger.LogDebug($"Function '{_functionShortName}' initial status: Last='{ScheduleStatus?.Last.ToString("o")}', Next='{ScheduleStatus?.Next.ToString("o")}', LastUpdated='{ScheduleStatus?.LastUpdated.ToString("o")}'");
+                TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerLookupName, now, _schedule, ScheduleStatus);
                 isPastDue = pastDueDuration != TimeSpan.Zero;
             }
 
@@ -104,18 +114,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             if (isPastDue)
             {
-                _logger.LogDebug($"Function '{_timerName}' is past due on startup. Executing now.");
-                await InvokeJobFunction(now, isPastDue: true);
+                _logger.LogDebug($"Function '{_functionShortName}' is past due on startup. Executing now.");
+                await InvokeJobFunction(now, isPastDue: true, originalSchedule: ScheduleStatus.Next);
             }
             else if (_attribute.RunOnStartup)
             {
                 // The job is configured to run immediately on startup
-                _logger.LogDebug($"Function '{_timerName}' is configured to run on startup. Executing now.");
+                _logger.LogDebug($"Function '{_functionShortName}' is configured to run on startup. Executing now.");
                 await InvokeJobFunction(now, runOnStartup: true);
             }
 
             // log the next several occurrences to console for visibility
-            string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5, timerName: _timerName);
+            string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5, functionShortName: _functionShortName);
             _logger.LogInformation(nextOccurrences);
 
             StartTimer(DateTime.Now);
@@ -191,7 +201,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         /// <param name="invocationTime">The time of the invocation, likely DateTime.Now.</param>
         /// <param name="isPastDue">True if the invocation is because the invocation is due to a past due timer.</param>
         /// <param name="runOnStartup">True if the invocation is because the timer is configured to run on startup.</param>
-        internal async Task InvokeJobFunction(DateTime invocationTime, bool isPastDue = false, bool runOnStartup = false)
+        internal async Task InvokeJobFunction(DateTime invocationTime, bool isPastDue = false, bool runOnStartup = false, DateTime? originalSchedule = null)
         {
             CancellationToken token = _cancellationTokenSource.Token;
             ScheduleStatus timerInfoStatus = null;
@@ -200,9 +210,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 timerInfoStatus = ScheduleStatus;
             }
             TimerInfo timerInfo = new TimerInfo(_schedule, timerInfoStatus, isPastDue);
+
+            // Build up trigger details that will be logged if the timer is running at a different time 
+            // than originally scheduled.
+            IDictionary<string, string> details = new Dictionary<string, string>();
+            if (isPastDue)
+            {
+                details[UnscheduledInvocationReasonKey] = "IsPastDue";
+            }
+            else if (runOnStartup)
+            {
+                details[UnscheduledInvocationReasonKey] = "RunOnStartup";
+            }
+
+            if (originalSchedule.HasValue)
+            {
+                details[OriginalScheduleKey] = originalSchedule.Value.ToString("o");
+            }
+
             TriggeredFunctionData input = new TriggeredFunctionData
             {
-                TriggerValue = timerInfo
+                TriggerValue = timerInfo,
+                TriggerDetails = details
             };
 
             try
@@ -240,8 +269,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             if (ScheduleMonitor != null)
             {
-                await ScheduleMonitor.UpdateStatusAsync(_timerName, ScheduleStatus);
-                _logger.LogDebug($"Function '{_timerName}' updated status: Last='{ScheduleStatus.Last.ToString("o")}', Next='{ScheduleStatus.Next.ToString("o")}', LastUpdated='{ScheduleStatus.LastUpdated.ToString("o")}'");
+                await ScheduleMonitor.UpdateStatusAsync(_timerLookupName, ScheduleStatus);
+                _logger.LogDebug($"Function '{_functionShortName}' updated status: Last='{ScheduleStatus.Last.ToString("o")}', Next='{ScheduleStatus.Next.ToString("o")}', LastUpdated='{ScheduleStatus.LastUpdated.ToString("o")}'");
             }
         }
 
@@ -261,9 +290,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         /// the interval for the next timer using 12:01 rather than at 12:00. Otherwise, 
         /// you'd start a 1-hour timer at 12:01 when we really want it to be a 59-minute timer.
         /// </remarks>
-        /// <param name="next">The next schedule occurrence in Local time</param>
-        /// <param name="now">The current Local time</param>
-        /// <returns>The next timer interval</returns>
+        /// <param name="next">The next schedule occurrence in Local time.</param>
+        /// <param name="now">The current Local time.</param>
+        /// <returns>The next timer interval.</returns>
         internal static TimeSpan GetNextTimerInterval(DateTime next, DateTime now, bool adjustForDST)
         {
             TimeSpan nextInterval;
@@ -321,6 +350,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             _timer.Interval = interval.TotalMilliseconds;
             _timer.Start();
+            _logger.LogDebug($"Timer for '{_functionShortName}' started with interval '{interval}'.");
         }
 
         private void ThrowIfDisposed()
