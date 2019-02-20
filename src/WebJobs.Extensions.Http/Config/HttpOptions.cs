@@ -51,18 +51,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         public bool DynamicThrottlesEnabled { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether 'X-Powered-By'
-        /// response header should be removed.
-        /// </summary>
-        public bool RemoveXPowerByHeader { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether 'Server'
-        /// response header should be removed.
-        /// </summary>
-        public bool RemoveServerHeader { get; set; }
-
-        /// <summary>
         /// Gets or sets the Action used to receive the response
         /// </summary>
         [JsonIgnore]
