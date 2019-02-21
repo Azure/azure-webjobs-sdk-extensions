@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -12,6 +13,7 @@ using Microsoft.Azure.WebJobs.Host.TestCommon;
 using Microsoft.Extensions.Hosting;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
+using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
@@ -19,11 +21,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
     [Trait("Category", "E2E")]
     public class HttpTriggerEndToEndTests
     {
-        private JobHost _host;
+        private IHost _host;
+        private JobHost _jobHost;
 
         public HttpTriggerEndToEndTests()
         {
-            var host = new HostBuilder()
+            _host = new HostBuilder()
                 .ConfigureDefaultTestHost(builder =>
                 {
                     builder.AddHttp(o =>
@@ -33,8 +36,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                     .AddAzureStorage();
                 }, typeof(TestFunctions))
                 .Build();
-
-            _host = host.GetJobHost();
+            _jobHost = _host.GetJobHost();
         }
 
         private void SetResultHook(HttpRequest request, object result)
@@ -56,7 +58,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             request.HttpContext.Items[HttpExtensionConstants.AzureWebJobsHttpRouteDataKey] = routeDataValues;
 
             var method = typeof(TestFunctions).GetMethod("TestFunction1");
-            await _host.CallAsync(method, new { req = request });
+            await _jobHost.CallAsync(method, new { req = request });
         }
 
         [Fact]
@@ -64,7 +66,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         {
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions.com/api/abc");
             var method = typeof(TestFunctions).GetMethod(nameof(TestFunctions.TestResponse));
-            await _host.CallAsync(method, new { req = request });
+            await _jobHost.CallAsync(method, new { req = request });
 
             Assert.Equal("test-response", request.HttpContext.Items["$ret"]); // Verify resposne was set
         }
@@ -88,7 +90,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             request.HttpContext.Items[HttpExtensionConstants.AzureWebJobsHttpRouteDataKey] = routeDataValues;
 
             var method = typeof(TestFunctions).GetMethod(nameof(TestFunctions.TestFunction2));
-            await _host.CallAsync(method, new { req = request });
+            await _jobHost.CallAsync(method, new { req = request });
 
             // verify blob was written
             string blobName = $"test-{testId}-{testSuffix}";
@@ -109,6 +111,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             }
 
             Assert.Equal(testValue, result);
+        }
+
+        [Fact]
+        public void OptionsLogging()
+        {
+            // The outer host needs to start in order for options to be logged         
+            using (_host)
+            {
+                _host.Start();
+
+                // Make sure the Options were logged. Just check a few values.
+                string optionsMessage = _host.GetTestLoggerProvider().GetAllLogMessages()
+                    .Single(m => m.Category == "Microsoft.Azure.WebJobs.Hosting.OptionsLoggingService" && m.FormattedMessage.StartsWith(nameof(HttpOptions)))
+                    .FormattedMessage;
+                JObject loggedOptions = JObject.Parse(optionsMessage.Substring(optionsMessage.IndexOf(Environment.NewLine)));
+                Assert.False(loggedOptions["DynamicThrottlesEnabled"].Value<bool>());
+                Assert.Equal("api", loggedOptions["RoutePrefix"].Value<string>());
+            }
         }
 
         public static class TestFunctions
