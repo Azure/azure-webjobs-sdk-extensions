@@ -63,6 +63,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 {
                     return _loggerProvider.GetAllLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")) == 4;
                 });
+
+                // Make sure the Options were logged. Just check a few values.
+                string optionsMessage = _loggerProvider.GetAllLogMessages()
+                    .Single(m => m.Category == "Microsoft.Azure.WebJobs.Hosting.OptionsLoggingService" && m.FormattedMessage.StartsWith(nameof(CosmosDBOptions)))
+                    .FormattedMessage;
+                JObject loggedOptions = JObject.Parse(optionsMessage.Substring(optionsMessage.IndexOf(Environment.NewLine)));
+                Assert.Null(loggedOptions["ConnectionMode"].Value<string>());
+                Assert.False(loggedOptions["LeaseOptions"]["CheckpointFrequency"]["ExplicitCheckpoint"].Value<bool>());
+                Assert.Equal(TimeSpan.FromSeconds(5).ToString(), loggedOptions["LeaseOptions"]["FeedPollDelay"].Value<string>());
             }
         }
 
@@ -90,7 +99,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
 
             IHost host = new HostBuilder()
-                .ConfigureWebJobs(builder => 
+                .ConfigureWebJobs(builder =>
                 {
                     builder
                     .AddAzureStorage()

@@ -2,8 +2,10 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.IO;
 using System.Threading.Tasks.Dataflow;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.WebJobs.Hosting;
 using Newtonsoft.Json;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Http
@@ -11,7 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
     /// <summary>
     /// Defines the configuration options for the Http binding.
     /// </summary>
-    public class HttpOptions
+    public class HttpOptions : IOptionsFormatter
     {
         /// <summary>
         /// Constructs a new instance.
@@ -51,9 +53,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         public bool DynamicThrottlesEnabled { get; set; }
 
         /// <summary>
-        /// Gets or sets the Action used to receive the response
+        /// Gets or sets the Action used to receive the response.
         /// </summary>
         [JsonIgnore]
         public Action<HttpRequest, object> SetResponse { get; set; }
+
+        public string Format()
+        {
+            StringWriter sw = new StringWriter();
+            using (JsonTextWriter writer = new JsonTextWriter(sw) { Formatting = Formatting.Indented })
+            {
+                writer.WriteStartObject();
+
+                writer.WritePropertyName(nameof(DynamicThrottlesEnabled));
+                writer.WriteValue(DynamicThrottlesEnabled);
+
+                writer.WritePropertyName(nameof(MaxConcurrentRequests));
+                writer.WriteValue(MaxConcurrentRequests);
+
+                writer.WritePropertyName(nameof(MaxOutstandingRequests));
+                writer.WriteValue(MaxOutstandingRequests);
+
+                writer.WritePropertyName(nameof(RoutePrefix));
+                writer.WriteValue(RoutePrefix);
+
+                writer.WriteEndObject();
+            }
+
+            return sw.ToString();
+        }
     }
 }
