@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Listeners;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Moq;
 using NCrontab;
@@ -20,6 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
     public class TimerListenerTests
     {
         private readonly string _testTimerName = "Program.TestTimerJob";
+        private readonly string _functionShortName = "TimerFunctionShortName";
         private TimerListener _listener;
         private Mock<ScheduleMonitor> _mockScheduleMonitor;
         private TimersConfiguration _config;
@@ -334,7 +336,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await _listener.StartAsync(CancellationToken.None);
             await _listener.StopAsync(CancellationToken.None);
 
-            Assert.True(_traceWriter.Events.Single(m => m.Level == TraceLevel.Info).Message.StartsWith("The next 5 occurrences of the schedule will be:"));
+            Assert.Single(_traceWriter.Events, m => m.Level == TraceLevel.Info && m.Message.StartsWith($"The next 5 occurrences of the '{_functionShortName}' schedule ({_schedule}) will be:"));
         }
 
         [Fact]
@@ -347,14 +349,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 LastUpdated = new DateTime(2016, 3, 3, 23, 59, 59)
             };
 
-            var expected = $"Function 'Program.TestTimerJob' initial status: Last='{status.Last.ToString("o")}', Next='{status.Next.ToString("o")}', LastUpdated='{status.LastUpdated.ToString("o")}'";
+            var expected = $"Function '{_functionShortName}' initial status: Last='{status.Last.ToString("o")}', Next='{status.Next.ToString("o")}', LastUpdated='{status.LastUpdated.ToString("o")}'";
             await RunInitialStatusTestAsync(status, expected);
         }
 
         [Fact]
         public async Task Listener_LogsInitialNullStatus_WhenUsingMonitor()
         {
-            await RunInitialStatusTestAsync(null, "Function 'Program.TestTimerJob' initial status: Last='', Next='', LastUpdated=''");
+            await RunInitialStatusTestAsync(null, $"Function '{_functionShortName}' initial status: Last='', Next='', LastUpdated=''");
         }
 
         public static IEnumerable<object[]> TimerSchedulesAfterDST => new object[][]
@@ -445,12 +447,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await _listener.StopAsync(CancellationToken.None);
             _listener.Dispose();
 
-            Assert.Equal(expected, _traceWriter.Events.Single(m => m.Level == TraceLevel.Verbose).Message);
+            TraceEvent[] verboseTraces = _traceWriter.Events
+                .Where(m => m.Level == TraceLevel.Verbose)
+                .OrderBy(t => t.Timestamp)
+                .ToArray();
+
+            Assert.Equal(3, verboseTraces.Length);
+            Assert.Contains("timer is using the schedule 'Cron: '0 * * * * *'' and the local time zone:", verboseTraces[0].Message);
+            Assert.Equal(expected, verboseTraces[1].Message);
+            Assert.Contains($"Timer for '{_functionShortName}' started with interval", verboseTraces[2].Message);
         }
 
-        private void CreateTestListener(string expression, bool useMonitor = true, Action functionAction = null)
+        private void CreateTestListener(string expression, bool useMonitor = true, bool runOnStartup = false, Action functionAction = null)
         {
-            _attribute = new TimerTriggerAttribute(expression);
+            _attribute = new TimerTriggerAttribute(expression)
+            {
+                RunOnStartup = runOnStartup
+            };
+
             _schedule = TimerSchedule.Create(_attribute, new TestNameResolver());
             _attribute.UseMonitor = useMonitor;
             _config = new TimersConfiguration();
@@ -465,10 +479,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                     functionAction?.Invoke();
                 })
                 .Returns(Task.FromResult(result));
-            JobHostConfiguration hostConfig = new JobHostConfiguration();
-            hostConfig.HostId = "testhostid";
+
             _traceWriter = new TestTraceWriter();
-            _listener = new TimerListener(_attribute, _schedule, _testTimerName, _config, _mockTriggerExecutor.Object, _traceWriter);
+            _listener = new TimerListener(_attribute, _schedule, _testTimerName, _config, _mockTriggerExecutor.Object, _traceWriter, _functionShortName);
         }
     }
 }

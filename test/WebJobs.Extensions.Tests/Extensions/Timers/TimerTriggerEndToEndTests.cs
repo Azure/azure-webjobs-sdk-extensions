@@ -13,6 +13,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
     [Trait("Category", "E2E")]
     public class TimerTriggerEndToEndTests
     {
+        TestTraceWriter _testTrace = new TestTraceWriter(TraceLevel.Error);
+
         [Fact]
         public async Task CronScheduleJobTest()
         {
@@ -62,14 +64,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
         private async Task RunTimerJobTest(Type jobClassType, Func<bool> condition)
         {
-            TestTraceWriter testTrace = new TestTraceWriter(TraceLevel.Error);
             ExplicitTypeLocator locator = new ExplicitTypeLocator(jobClassType);
             JobHostConfiguration config = new JobHostConfiguration
             {
                 TypeLocator = locator
             };
             config.UseTimers();
-            config.Tracing.Tracers.Add(testTrace);
+            config.Tracing.Tracers.Add(_testTrace);
             JobHost host = new JobHost(config);
 
             await host.StartAsync();
@@ -82,7 +83,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await host.StopAsync();
 
             // ensure there were no errors
-            Assert.Equal(0, testTrace.Events.Count);
+            Assert.Equal(0, _testTrace.Events.Count);
         }
 
         public static class CronScheduleTestJobs

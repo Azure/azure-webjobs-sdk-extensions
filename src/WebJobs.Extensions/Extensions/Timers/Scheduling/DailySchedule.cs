@@ -61,13 +61,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 // no more occurrences for today, so start back at the beginning of the
                 // the schedule tomorrow
                 TimeSpan nextTime = schedule[0];
-                DateTime nextOccurrence = new DateTime(now.Year, now.Month, now.Day, nextTime.Hours, nextTime.Minutes, nextTime.Seconds);
+                DateTime nextOccurrence = new DateTime(now.Year, now.Month, now.Day, nextTime.Hours, nextTime.Minutes, nextTime.Seconds, now.Kind);
                 return nextOccurrence.AddDays(1);
             }
             else
             {
                 TimeSpan nextTime = schedule[idx];
-                return new DateTime(now.Year, now.Month, now.Day, nextTime.Hours, nextTime.Minutes, nextTime.Seconds);
+                return new DateTime(now.Year, now.Month, now.Day, nextTime.Hours, nextTime.Minutes, nextTime.Seconds, now.Kind);
             }
         }
 

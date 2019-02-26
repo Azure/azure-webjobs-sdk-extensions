@@ -80,7 +80,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
 
             // construct the next occurrence date
             int deltaDays = day - (int)now.DayOfWeek;
-            DateTime nextOccurrence = new DateTime(now.Year, now.Month, now.Day, nextTime.Hours, nextTime.Minutes, nextTime.Seconds);
+            DateTime nextOccurrence = new DateTime(now.Year, now.Month, now.Day, nextTime.Hours, nextTime.Minutes, nextTime.Seconds, now.Kind);
             nextOccurrence = nextOccurrence.AddDays(deltaDays);
 
             return nextOccurrence;

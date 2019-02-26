@@ -2,8 +2,10 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Linq;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
+using NCrontab;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
@@ -25,34 +27,47 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public void FormatNextOccurrences_ReturnsExpectedString()
         {
-            DateTime now = new DateTime(2015, 9, 16, 10, 30, 00);
-            TimerInfo timerInfo = new TimerInfo(new CronSchedule("0 0 * * * *"), null);
-            string result = timerInfo.FormatNextOccurrences(10, now);
+            // There's no way to mock the OS TimeZoneInfo, so let's make sure this 
+            // works on both UTC and non-UTC
+            string DateFormatter(DateTime d)
+            {
+                if (TimeZoneInfo.Local == TimeZoneInfo.Utc)
+                {
+                    return d.ToString(TimerInfo.DateTimeFormat);
+                }
+
+                return $"{d.ToString(TimerInfo.DateTimeFormat)} ({d.ToUniversalTime().ToString(TimerInfo.DateTimeFormat)})";
+            }
+
+            DateTime now = new DateTime(2015, 9, 16, 10, 30, 00, DateTimeKind.Local);
+
+            CronSchedule cronSchedule = new CronSchedule(CrontabSchedule.Parse("0 * * * *"));
+            string result = TimerInfo.FormatNextOccurrences(cronSchedule, 10, now: now);
+
+            var expectedDates = Enumerable.Range(11, 10)
+                .Select(hour => new DateTime(2015, 09, 16, hour, 00, 00, DateTimeKind.Local))
+                .Select(dateTime => $"{DateFormatter(dateTime)}\r\n")
+                .ToArray();
 
             string expected =
-                "The next 10 occurrences of the schedule will be:\r\n" +
-                "9/16/2015 11:00:00 AM\r\n" +
-                "9/16/2015 12:00:00 PM\r\n" +
-                "9/16/2015 1:00:00 PM\r\n" +
-                "9/16/2015 2:00:00 PM\r\n" +
-                "9/16/2015 3:00:00 PM\r\n" +
-                "9/16/2015 4:00:00 PM\r\n" +
-                "9/16/2015 5:00:00 PM\r\n" +
-                "9/16/2015 6:00:00 PM\r\n" +
-                "9/16/2015 7:00:00 PM\r\n" +
-                "9/16/2015 8:00:00 PM\r\n";
+                $"The next 10 occurrences of the schedule ({cronSchedule}) will be:\r\n" +
+                string.Join(string.Empty, expectedDates);
+
             Assert.Equal(expected, result);
 
-            timerInfo = new TimerInfo(new DailySchedule("2:00:00"), null);
-            result = timerInfo.FormatNextOccurrences(5, now);
+            // Test the internal method with timer name specified
+            string timerName = "TestTimer";
+            TimerSchedule schedule = new DailySchedule("2:00:00");
+            result = TimerInfo.FormatNextOccurrences(schedule, 5, now, timerName);
+
+            expectedDates = Enumerable.Range(17, 5)
+                .Select(day => new DateTime(2015, 09, day, 02, 00, 00, DateTimeKind.Local))
+                .Select(dateTime => $"{DateFormatter(dateTime)}\r\n")
+                .ToArray();
 
             expected =
-                "The next 5 occurrences of the schedule will be:\r\n" +
-                "9/17/2015 2:00:00 AM\r\n" +
-                "9/18/2015 2:00:00 AM\r\n" +
-                "9/19/2015 2:00:00 AM\r\n" +
-                "9/20/2015 2:00:00 AM\r\n" +
-                "9/21/2015 2:00:00 AM\r\n";
+                    $"The next 5 occurrences of the 'TestTimer' schedule ({schedule}) will be:\r\n" +
+                    string.Join(string.Empty, expectedDates);
             Assert.Equal(expected, result);
 
             WeeklySchedule weeklySchedule = new WeeklySchedule();
@@ -61,17 +76,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             weeklySchedule.Add(DayOfWeek.Wednesday, new TimeSpan(21, 30, 0));
             weeklySchedule.Add(DayOfWeek.Friday, new TimeSpan(10, 0, 0));
 
-            timerInfo = new TimerInfo(weeklySchedule, null);
-            
-            result = timerInfo.FormatNextOccurrences(5, now);
+            schedule = weeklySchedule;
+
+            result = TimerInfo.FormatNextOccurrences(schedule, 5, now, timerName);
 
             expected =
-                "The next 5 occurrences of the schedule will be:\r\n" +
-                "9/16/2015 9:30:00 PM\r\n" +
-                "9/18/2015 10:00:00 AM\r\n" +
-                "9/21/2015 8:00:00 AM\r\n" +
-                "9/23/2015 9:30:00 AM\r\n" +
-                "9/23/2015 9:30:00 PM\r\n";
+                $"The next 5 occurrences of the 'TestTimer' schedule ({weeklySchedule}) will be:\r\n" +
+                DateFormatter(new DateTime(2015, 09, 16, 21, 30, 00, DateTimeKind.Local)) + "\r\n" +
+                DateFormatter(new DateTime(2015, 09, 18, 10, 00, 00, DateTimeKind.Local)) + "\r\n" +
+                DateFormatter(new DateTime(2015, 09, 21, 08, 00, 00, DateTimeKind.Local)) + "\r\n" +
+                DateFormatter(new DateTime(2015, 09, 23, 09, 30, 00, DateTimeKind.Local)) + "\r\n" +
+                DateFormatter(new DateTime(2015, 09, 23, 21, 30, 00, DateTimeKind.Local)) + "\r\n";
+
             Assert.Equal(expected, result);
         }
     }

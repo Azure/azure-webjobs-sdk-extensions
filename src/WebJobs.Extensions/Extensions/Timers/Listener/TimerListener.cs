@@ -19,7 +19,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private readonly ITriggeredFunctionExecutor _executor;
         private readonly TraceWriter _trace;
         private readonly CancellationTokenSource _cancellationTokenSource;
-        private readonly string _timerName;
+
+        // _functionShortName is often the [FunctionName] value and used for logging, 
+        // while _timerLookupName is the fully-qualified method name and used for lookups
+        private readonly string _functionShortName;
+        private readonly string _timerLookupName;
 
         // Since Timer uses an integer internally for it's interval,
         // it has a maximum interval of 24.8 days.
@@ -31,16 +35,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private bool _disposed;
         private TimeSpan _remainingInterval;
 
-        public TimerListener(TimerTriggerAttribute attribute, TimerSchedule schedule, string timerName, TimersConfiguration config, ITriggeredFunctionExecutor executor, TraceWriter trace)
+        public TimerListener(TimerTriggerAttribute attribute, TimerSchedule schedule, string timerName, TimersConfiguration config, ITriggeredFunctionExecutor executor,
+            TraceWriter trace, string functionShortName)
         {
             _attribute = attribute;
-            _timerName = timerName;
+            _timerLookupName = timerName;
             _config = config;
             _executor = executor;
             _trace = trace;
             _cancellationTokenSource = new CancellationTokenSource();
             _schedule = schedule;
             ScheduleMonitor = _attribute.UseMonitor ? _config.ScheduleMonitor : null;
+            _functionShortName = functionShortName;
         }
 
         internal static TimeSpan MaxTimerInterval
@@ -80,13 +86,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             // we use DateTime.Now rather than DateTime.UtcNow to allow the local machine to set the time zone. In Azure this will be
             // UTC by default, but can be configured to use any time zone if it makes scheduling easier.
             DateTime now = DateTime.Now;
+            _trace.Verbose($"The '{_functionShortName}' timer is using the schedule '{_schedule.ToString()}' and the local time zone: '{TimeZoneInfo.Local.DisplayName}'");
+
             if (ScheduleMonitor != null)
             {
                 // check to see if we've missed an occurrence since we last started.
                 // If we have, invoke it immediately.
-                ScheduleStatus = await ScheduleMonitor.GetStatusAsync(_timerName);
-                _trace.Verbose($"Function '{_timerName}' initial status: Last='{ScheduleStatus?.Last.ToString("o")}', Next='{ScheduleStatus?.Next.ToString("o")}', LastUpdated='{ScheduleStatus?.LastUpdated.ToString("o")}'");
-                TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerName, now, _schedule, ScheduleStatus);
+                ScheduleStatus = await ScheduleMonitor.GetStatusAsync(_timerLookupName);
+                _trace.Verbose($"Function '{_functionShortName}' initial status: Last='{ScheduleStatus?.Last.ToString("o")}', Next='{ScheduleStatus?.Next.ToString("o")}', LastUpdated='{ScheduleStatus?.LastUpdated.ToString("o")}'");
+                TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerLookupName, now, _schedule, ScheduleStatus);
                 isPastDue = pastDueDuration != TimeSpan.Zero;
             }
 
@@ -102,18 +110,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             if (isPastDue)
             {
-                _trace.Verbose(string.Format("Function '{0}' is past due on startup. Executing now.", _timerName));
+                _trace.Verbose($"Function '{_functionShortName}' is past due on startup. Executing now.");
                 await InvokeJobFunction(now, isPastDue: true);
             }
             else if (_attribute.RunOnStartup)
             {
                 // The job is configured to run immediately on startup
-                _trace.Verbose(string.Format("Function '{0}' is configured to run on startup. Executing now.", _timerName));
+                _trace.Info($"Function '{_functionShortName}' is configured to run on startup. Executing now.");
                 await InvokeJobFunction(now, runOnStartup: true);
             }
 
             // log the next several occurrences to console for visibility
-            string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5);
+            string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5, functionShortName: _functionShortName);
             _trace.Info(nextOccurrences);
 
             StartTimer(DateTime.Now);
@@ -238,8 +246,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             if (ScheduleMonitor != null)
             {
-                await ScheduleMonitor.UpdateStatusAsync(_timerName, ScheduleStatus);
-                _trace.Verbose($"Function '{_timerName}' updated status: Last='{ScheduleStatus.Last.ToString("o")}', Next='{ScheduleStatus.Next.ToString("o")}', LastUpdated='{ScheduleStatus.LastUpdated}'");
+                await ScheduleMonitor.UpdateStatusAsync(_timerLookupName, ScheduleStatus);
+                _trace.Verbose($"Function '{_functionShortName}' updated status: Last='{ScheduleStatus.Last.ToString("o")}', Next='{ScheduleStatus.Next.ToString("o")}', LastUpdated='{ScheduleStatus.LastUpdated.ToString("o")}'");
             }
         }
 
@@ -320,6 +328,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             _timer.Interval = interval.TotalMilliseconds;
             _timer.Start();
+            _trace.Verbose($"Timer for '{_functionShortName}' started with interval '{interval}'.");
         }
 
         private void ThrowIfDisposed()

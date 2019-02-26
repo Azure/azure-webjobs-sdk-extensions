@@ -75,7 +75,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             {
                 throw new ArgumentNullException("context");
             }
-            return Task.FromResult<IListener>(new TimerListener(_attribute, _schedule, _timerName, _config, context.Executor, _trace));
+            return Task.FromResult<IListener>(new TimerListener(_attribute, _schedule, _timerName, _config, context.Executor, _trace, context.Descriptor?.ShortName));
         }
 
         public ParameterDescriptor ToParameterDescriptor()
