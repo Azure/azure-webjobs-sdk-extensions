@@ -297,6 +297,135 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         }
 
         [Fact]
+        public async Task BindAsync_PocoWithEnum_FromRequestBody()
+        {
+            ParameterInfo parameterInfo = GetType().GetMethod("TestPocoFunctionWithEnum").GetParameters()[0];
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, true);
+
+            JObject requestBody = new JObject
+            {
+                { "Name", "Mathew Charles" },
+                { "Location", "Seattle" },
+                { "EnumFromName", "Alpha" },
+                { "EnumFromValue", "2" }
+            };
+
+            var headers = new HeaderDictionary();
+            headers.Add("Content-Type", "application/json");
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/myfunc?code=abc123", headers, requestBody.ToString());
+
+            IServiceCollection services = new ServiceCollection();
+            services.AddMvc();
+            services.AddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();
+            services.AddSingleton<ILoggerFactory, NullLoggerFactory>();
+
+            request.HttpContext.RequestServices = services.BuildServiceProvider();
+
+            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
+            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            ITriggerData triggerData = await binding.BindAsync(request, context);
+
+            Assert.Equal(7, triggerData.BindingData.Count);
+            Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
+            Assert.Equal("Seattle", triggerData.BindingData["Location"]);
+            Assert.Equal(TestEnum.Alpha, triggerData.BindingData["EnumFromName"]);
+            Assert.Equal(TestEnum.Beta, triggerData.BindingData["EnumFromValue"]);
+
+            TestPocoWithEnum testPoco = (TestPocoWithEnum)(await triggerData.ValueProvider.GetValueAsync());
+            Assert.Equal("Mathew Charles", testPoco.Name);
+            Assert.Equal("Seattle", testPoco.Location);
+            Assert.Equal(TestEnum.Alpha, testPoco.EnumFromName);
+            Assert.Equal(TestEnum.Beta, testPoco.EnumFromValue);
+        }
+
+        [Fact]
+        public async Task BindAsync_PocoWithArray_FromRequestBody()
+        {
+            ParameterInfo parameterInfo = GetType().GetMethod("TestPocoFunctionWithArray").GetParameters()[0];
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, true);
+
+            JObject requestBody = new JObject
+            {
+                { "Name", "Mathew Charles" },
+                { "Location", "Seattle" },
+                {
+                    "Array", new JArray
+                    {
+                        "Value1", "Value2"
+                    }
+                }
+            };
+
+            var headers = new HeaderDictionary();
+            headers.Add("Content-Type", "application/json");
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/myfunc?code=abc123", headers, requestBody.ToString());
+
+            IServiceCollection services = new ServiceCollection();
+            services.AddMvc();
+            services.AddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();
+            services.AddSingleton<ILoggerFactory, NullLoggerFactory>();
+
+            request.HttpContext.RequestServices = services.BuildServiceProvider();
+
+            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
+            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            ITriggerData triggerData = await binding.BindAsync(request, context);
+
+            Assert.Equal(6, triggerData.BindingData.Count);
+            Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
+            Assert.Equal("Seattle", triggerData.BindingData["Location"]);
+            Assert.IsType<string[]>(triggerData.BindingData["Array"]);
+
+            var array = (string[])triggerData.BindingData["Array"];
+            Assert.Equal(2, array.Length);
+            Assert.Equal("Value1", array[0]);
+            Assert.Equal("Value2", array[1]);
+
+            TestPocoWithArray testPoco = (TestPocoWithArray)(await triggerData.ValueProvider.GetValueAsync());
+            Assert.Equal("Mathew Charles", testPoco.Name);
+            Assert.Equal("Seattle", testPoco.Location);
+            Assert.Equal(2, testPoco.Array.Length);
+            Assert.Equal("Value1", testPoco.Array[0]);
+            Assert.Equal("Value2", testPoco.Array[1]);
+        }
+
+        [Fact]
+        public async Task BindAsync_PocoWithArrayRoot_FromRequestBody()
+        {
+            ParameterInfo parameterInfo = GetType().GetMethod("TestPocoFunctionWithArrayRoot").GetParameters()[0];
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, true);
+
+            JArray requestBody = new JArray
+            {
+                new JObject
+                {
+                    { "Name", "Mathew Charles" },
+                    { "Location", "Seattle" },
+                }
+            };
+
+            var headers = new HeaderDictionary();
+            headers.Add("Content-Type", "application/json");
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/myfunc?code=abc123", headers, requestBody.ToString());
+
+            IServiceCollection services = new ServiceCollection();
+            services.AddMvc();
+            services.AddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();
+            services.AddSingleton<ILoggerFactory, NullLoggerFactory>();
+
+            request.HttpContext.RequestServices = services.BuildServiceProvider();
+
+            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
+            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            ITriggerData triggerData = await binding.BindAsync(request, context);
+
+            TestPoco[] testPoco = (TestPoco[])(await triggerData.ValueProvider.GetValueAsync());
+            Assert.Equal(1, testPoco.Length);
+            Assert.Equal("Mathew Charles", testPoco[0].Name);
+            Assert.Equal("Seattle", testPoco[0].Location);
+        }
+
+        [Fact]
         public async Task BindAsync_HttpRequest_FromRequestBody()
         {
             ParameterInfo parameterInfo = GetType().GetMethod("TestHttpRequestFunction").GetParameters()[0];
@@ -487,6 +616,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         {
         }
 
+        public void TestPocoFunctionWithEnum(TestPocoWithEnum poco)
+        {
+        }
+
+        public void TestPocoFunctionWithArray(TestPocoWithArray poco)
+        {
+        }
+
+        public void TestPocoFunctionWithArrayRoot(TestPoco[] poco)
+        {
+        }
+
         public void TestHttpRequestFunction(HttpRequest req)
         {
         }
@@ -519,6 +660,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             public string Readonly { get; }
 
             public IDictionary<string, string> Properties { get; set; }
+        }
+
+        public class TestPocoWithEnum : TestPoco
+        {
+            public TestEnum EnumFromName { get; set; }
+
+            public TestEnum EnumFromValue { get; set; }
+        }
+
+        public class TestPocoWithArray : TestPoco
+        {
+            public string[] Array { get; set; }
+        }
+
+        public enum TestEnum
+        {
+            None = 0,
+            Alpha,
+            Beta
         }
     }
 }
