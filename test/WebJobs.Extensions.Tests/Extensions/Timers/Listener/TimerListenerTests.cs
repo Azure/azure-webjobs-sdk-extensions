@@ -369,8 +369,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
         public static IEnumerable<object[]> TimerSchedulesAfterDST => new object[][]
         {
-            new object[] { new CronSchedule(CrontabSchedule.Parse("0 0 18 * * 5", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(167) },
-            new object[] { new ConstantSchedule(TimeSpan.FromDays(7)), TimeSpan.FromDays(7) },
+            new object[] { new CronSchedule(CrontabSchedule.Parse("0 0 18 6 * *", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(671) },
+            new object[] { new ConstantSchedule(TimeSpan.FromDays(28)), TimeSpan.FromDays(28) },
         };
 
         public static IEnumerable<object[]> TimerSchedulesWithinDST => new object[][]
@@ -393,7 +393,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 throw new InvalidOperationException("This test will only pass if the time zone supports DST.");
             }
 
-            // Running on the Friday before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
+            // Running on the Friday before the US DST switch at 2 AM on 3/11 (Pacific Standard Time)
+            // The EU DST switch is at 2 AM on the last Sunday of March, so is also covered by a
+            // timeframe of three weeks or more.
             // Note: this test uses Local time, so if you're running in a timezone where
             // DST doesn't transition the test might not be valid.
             // The input schedules will run after DST changes. For some (Cron), they will subtract
@@ -403,7 +405,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             var next = schedule.GetNextOccurrence(now);
             var interval = TimerListener.GetNextTimerInterval(next, now, schedule.AdjustForDST);
 
-            // One week is normally 168 hours, but it's 167 hours across DST
+            // Four weeks is normally 672 hours, but it's 671 hours across DST
             Assert.Equal(interval, expectedInterval);
         }
 
