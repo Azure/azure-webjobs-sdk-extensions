@@ -11,6 +11,7 @@ namespace WebJobsSandbox
     {
         /// <summary>
         /// Example job triggered by a crontab schedule.
+        /// Publish as a continuous webjob, not a triggered webjob (that will cause Exception "aborted due to no output nor CPU activity")
         /// </summary>
         public static void CronJob([TimerTrigger("*/15 * * * * *")] TimerInfo timerInfo)
         {
