@@ -64,6 +64,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             get { return ValidCosmosDBTriggerBindigsPreferredLocations.GetParameters(); }
         }
 
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsMultiMasterParameters
+        {
+            get { return ValidCosmosDBTriggerBindigsMultiMaster.GetParameters(); }
+        }
+
         [Theory]
         [MemberData(nameof(InvalidCosmosDBTriggerParameters))]
         public async Task InvalidParameters_Fail(ParameterInfo parameter)
@@ -215,6 +220,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             Assert.Equal("North Europe", binding.DocumentCollectionLocation.ConnectionPolicy.PreferredLocations[1]);
             Assert.Equal("East US", binding.LeaseCollectionLocation.ConnectionPolicy.PreferredLocations[0]);
             Assert.Equal("North Europe", binding.LeaseCollectionLocation.ConnectionPolicy.PreferredLocations[1]);
+            Assert.False(binding.DocumentCollectionLocation.ConnectionPolicy.UseMultipleWriteLocations);
+            Assert.False(binding.LeaseCollectionLocation.ConnectionPolicy.UseMultipleWriteLocations);
+        }
+
+        [Theory]
+        [MemberData(nameof(ValidCosmosDBTriggerBindigsMultiMasterParameters))]
+        public async Task ValidCosmosDBTriggerBindigsMultiMasterParameters_Succeed(ParameterInfo parameter)
+        {
+            var nameResolver = new TestNameResolver();
+            nameResolver.Values["regions"] = "East US, North Europe,";
+
+            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(_emptyConfig, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+
+            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+
+            Assert.False(binding.DocumentCollectionLocation.ConnectionPolicy.UseMultipleWriteLocations);
+            Assert.True(binding.LeaseCollectionLocation.ConnectionPolicy.UseMultipleWriteLocations);
         }
 
         [Fact]
@@ -510,6 +532,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             public static IEnumerable<ParameterInfo[]> GetParameters()
             {
                 var type = typeof(ValidCosmosDBTriggerBindigsPreferredLocations);
+
+                return new[]
+                {
+                    new[] { GetFirstParameter(type, "Func1") }
+                };
+            }
+        }
+
+        private static class ValidCosmosDBTriggerBindigsMultiMaster
+        {
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", UseMultipleWriteLocations = true)] IReadOnlyList<Document> docs)
+            {
+            }
+
+            public static IEnumerable<ParameterInfo[]> GetParameters()
+            {
+                var type = typeof(ValidCosmosDBTriggerBindigsMultiMaster);
 
                 return new[]
                 {

@@ -144,8 +144,17 @@ namespace Microsoft.Azure.WebJobs
         /// Values should be comma-separated.
         /// </summary>
         /// <example>
-        /// PreferredLocations = "East US,South Central US,North Europe"
+        /// PreferredLocations = "East US,South Central US,North Europe".
         /// </example>
         public string PreferredLocations { get; set; }
+
+        /// <summary>
+        /// Optional.
+        /// Enable to use with Multi Master accounts.
+        /// </summary>
+        /// <remarks>
+        /// This setting only applies to the Leases collection, as there are no write operations done to the monitored collection.
+        /// </remarks>
+        public bool UseMultipleWriteLocations { get; set; }
     }
 }

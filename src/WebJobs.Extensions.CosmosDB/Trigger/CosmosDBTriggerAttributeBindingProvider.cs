@@ -130,6 +130,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     leaseCollectionLocation.ConnectionPolicy.PreferredLocations.Add(location);
                 }
 
+                leaseCollectionLocation.ConnectionPolicy.UseMultipleWriteLocations = attribute.UseMultipleWriteLocations;
+
                 if (string.IsNullOrEmpty(documentCollectionLocation.DatabaseName)
                     || string.IsNullOrEmpty(documentCollectionLocation.CollectionName)
                     || string.IsNullOrEmpty(leaseCollectionLocation.DatabaseName)
@@ -146,7 +148,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 }
 
                 monitoredCosmosDBService = _configProvider.GetService(triggerConnectionString, resolvedPreferredLocations);
-                leaseCosmosDBService = _configProvider.GetService(leasesConnectionString, resolvedPreferredLocations);
+                leaseCosmosDBService = _configProvider.GetService(leasesConnectionString, resolvedPreferredLocations, attribute.UseMultipleWriteLocations);
 
                 if (attribute.CreateLeaseCollectionIfNotExists)
                 {
