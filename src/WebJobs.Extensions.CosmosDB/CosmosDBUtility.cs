@@ -32,17 +32,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return documentClientEx != null;
         }
 
-        internal static async Task CreateDatabaseAndCollectionIfNotExistAsync(CosmosDBContext context)
+        internal static Task CreateDatabaseAndCollectionIfNotExistAsync(CosmosDBContext context)
         {
-            await CreateDatabaseAndCollectionIfNotExistAsync(context.Service, context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName,
+            return CreateDatabaseAndCollectionIfNotExistAsync(context.Service, context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName,
                 context.ResolvedAttribute.PartitionKey, context.ResolvedAttribute.CollectionThroughput);
         }
 
         internal static async Task CreateDatabaseAndCollectionIfNotExistAsync(ICosmosDBService service, string databaseName, string collectionName, string partitionKey, int throughput)
         {
-            await service.CreateDatabaseIfNotExistsAsync(new Database { Id = databaseName });
+            await service.CreateDatabaseIfNotExistsAsync(new Database { Id = databaseName }).ConfigureAwait(false);
 
-            await CreateDocumentCollectionIfNotExistsAsync(service, databaseName, collectionName, partitionKey, throughput);
+            await CreateDocumentCollectionIfNotExistsAsync(service, databaseName, collectionName, partitionKey, throughput).ConfigureAwait(false);
         }
 
         internal static IEnumerable<string> ParsePreferredLocations(string preferredRegions)
@@ -112,7 +112,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 };
             }
 
-            return await service.CreateDocumentCollectionIfNotExistsAsync(databaseUri, documentCollection, collectionOptions);
+            return await service.CreateDocumentCollectionIfNotExistsAsync(databaseUri, documentCollection, collectionOptions).ConfigureAwait(false);
         }
     }
 }

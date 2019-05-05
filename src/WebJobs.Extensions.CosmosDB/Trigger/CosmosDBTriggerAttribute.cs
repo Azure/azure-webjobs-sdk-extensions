@@ -39,23 +39,23 @@ namespace Microsoft.Azure.WebJobs
         }
 
         /// <summary>
-        /// Connection string for the service containing the collection to monitor
+        /// Connection string for the service containing the collection to monitor.
         /// </summary>
         [AppSetting]
         public string ConnectionStringSetting { get; set; }
 
         /// <summary>
-        /// Name of the collection to monitor for changes
+        /// Name of the collection to monitor for changes.
         /// </summary>
         public string CollectionName { get; private set; }
 
         /// <summary>
-        /// Name of the database containing the collection to monitor for changes
+        /// Name of the database containing the collection to monitor for changes.
         /// </summary>
         public string DatabaseName { get; private set; }
 
         /// <summary>
-        /// Connection string for the service containing the lease collection
+        /// Connection string for the service containing the lease collection.
         /// </summary>
         [AppSetting]
         public string LeaseConnectionStringSetting { get; set; }
@@ -86,7 +86,7 @@ namespace Microsoft.Azure.WebJobs
 
         /// <summary>
         /// Optional.
-        /// Defines a prefix to be used within a Leases collection for this Trigger. Useful when sharing the same Lease collection among multiple Triggers
+        /// Defines a prefix to be used within a Leases collection for this Trigger. Useful when sharing the same Lease collection among multiple Triggers.
         /// </summary>
         public string LeaseCollectionPrefix { get; set; }
         
@@ -128,7 +128,7 @@ namespace Microsoft.Azure.WebJobs
         
         /// <summary>
         /// Optional.
-        /// Customizes the maximum amount of items received in an invocation
+        /// Customizes the maximum amount of items received in an invocation.
         /// </summary>
         public int MaxItemsPerInvocation { get; set; }
 
@@ -144,7 +144,7 @@ namespace Microsoft.Azure.WebJobs
         /// Values should be comma-separated.
         /// </summary>
         /// <example>
-        /// PreferredLocations = "East US,South Central US,North Europe"
+        /// PreferredLocations = "East US,South Central US,North Europe".
         /// </example>
         public string PreferredLocations { get; set; }
     }

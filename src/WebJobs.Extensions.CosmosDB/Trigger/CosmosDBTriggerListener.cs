@@ -74,7 +74,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             try
             {
-                await RegisterObserverFactoryAsync();
+                await RegisterObserverFactoryAsync().ConfigureAwait(false);
                 Interlocked.CompareExchange(ref this._listenerStatus, ListenerRegistered, ListenerRegistering);
             }
             catch (Exception ex)
@@ -107,7 +107,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 if (this._host != null)
                 {
-                    await this._host.UnregisterObserversAsync();
+                    await this._host.UnregisterObserversAsync().ConfigureAwait(false);
                     this._listenerStatus = ListenerNotRegistered;
                 }
             }

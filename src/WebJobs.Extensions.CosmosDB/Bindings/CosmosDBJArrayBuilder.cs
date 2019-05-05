@@ -19,7 +19,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings
 
         public async Task<JArray> ConvertAsync(CosmosDBAttribute attribute, CancellationToken cancellationToken)
         {
-            IEnumerable<JObject> results = await _builder.ConvertAsync(attribute, cancellationToken);
+            IEnumerable<JObject> results = await _builder.ConvertAsync(attribute, cancellationToken).ConfigureAwait(false);
             return JArray.FromObject(results);
         }
     }

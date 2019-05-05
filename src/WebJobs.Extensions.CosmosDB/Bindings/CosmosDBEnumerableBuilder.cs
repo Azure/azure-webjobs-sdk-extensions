@@ -38,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             do
             {
-                DocumentQueryResponse<T> response = await context.Service.ExecuteNextAsync<T>(collectionUri, sqlSpec, continuation);
+                DocumentQueryResponse<T> response = await context.Service.ExecuteNextAsync<T>(collectionUri, sqlSpec, continuation).ConfigureAwait(false);
 
                 finalResults.AddRange(response.Results);
                 continuation = response.ResponseContinuation;

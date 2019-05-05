@@ -114,7 +114,7 @@ namespace Microsoft.Azure.WebJobs
         /// Values should be comma-separated.
         /// </summary>
         /// <example>
-        /// PreferredLocations = "East US,South Central US,North Europe"
+        /// PreferredLocations = "East US,South Central US,North Europe".
         /// </example>
         [AutoResolve]
         public string PreferredLocations { get; set; }

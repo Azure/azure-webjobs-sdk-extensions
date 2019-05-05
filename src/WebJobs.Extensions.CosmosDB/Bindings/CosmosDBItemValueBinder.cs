@@ -56,7 +56,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             try
             {
-                document = await _context.Service.ReadDocumentAsync(documentUri, options);
+                document = await _context.Service.ReadDocumentAsync(documentUri, options).ConfigureAwait(false);
             }
             catch (DocumentClientException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
@@ -122,7 +122,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 }
 
                 Uri documentUri = UriFactory.CreateDocumentUri(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName, originalId);
-                await context.Service.ReplaceDocumentAsync(documentUri, newItem);
+                await context.Service.ReplaceDocumentAsync(documentUri, newItem).ConfigureAwait(false);
             }
         }
 

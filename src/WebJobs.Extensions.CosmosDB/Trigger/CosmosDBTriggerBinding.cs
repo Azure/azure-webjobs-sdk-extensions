@@ -74,7 +74,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         }
 
         /// <summary>
-        /// Shows display information on the dashboard
+        /// Shows display information on the dashboard.
         /// </summary>
         /// <returns></returns>
         public ParameterDescriptor ToParameterDescriptor()

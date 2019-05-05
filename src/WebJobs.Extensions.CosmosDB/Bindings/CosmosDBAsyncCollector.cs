@@ -25,7 +25,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             bool create = false;
             try
             {
-                await UpsertDocument(_docDBContext, item);
+                await UpsertDocument(_docDBContext, item).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -51,9 +51,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             if (create)
             {
-                await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(_docDBContext);
+                await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(_docDBContext).ConfigureAwait(false);
 
-                await UpsertDocument(_docDBContext, item);
+                await UpsertDocument(_docDBContext, item).ConfigureAwait(false);
             }
         }
 
@@ -74,7 +74,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 convertedItem = JObject.Parse(item.ToString());
             }
 
-            await context.Service.UpsertDocumentAsync(collectionUri, convertedItem);
+            await context.Service.UpsertDocumentAsync(collectionUri, convertedItem).ConfigureAwait(false);
         }
     }
 }
