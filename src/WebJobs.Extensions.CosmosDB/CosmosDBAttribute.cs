@@ -121,7 +121,7 @@ namespace Microsoft.Azure.WebJobs
 
         /// <summary>
         /// Gets or sets optional.
-        /// If set the preferred locations (regions) will automatically be set based on the current location. 
+        /// If set the preferred locations (regions) will automatically be populated based on the current location. 
         /// </summary>
         /// <remarks>
         /// If this property is set, it will ignore PreferredLocations if set.
