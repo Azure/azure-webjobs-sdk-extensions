@@ -119,6 +119,19 @@ namespace Microsoft.Azure.WebJobs
         [AutoResolve]
         public string PreferredLocations { get; set; }
 
+        /// <summary>
+        /// Gets or sets optional.
+        /// If set the preferred locations (regions) will automatically be set based on the current location. 
+        /// </summary>
+        /// <remarks>
+        /// If this property is set, it will ignore PreferredLocations if set.
+        /// </remarks>
+        /// <example>
+        /// CurrentLocation = "East US".
+        /// </example>
+        [AutoResolve]
+        public string CurrentLocation { get; set; }
+
         internal SqlParameterCollection SqlQueryParameters { get; set; }
     }
 }
