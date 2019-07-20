@@ -30,7 +30,7 @@ host.RunAndBlock();
 ## Other Extension Repositories
 Not all extensions for webjobs live here. Over time we expect them to move towards having their own ship cycle and repository. You can find other Azure owned extensions using [this github query](https://github.com/Azure?utf8=✓&q=functions%20extension). Right now there are:
 - https://github.com/Azure/azure-functions-durable-extension
-- https://github.com/Azure/azure-functions-eventing-extension
+- https://github.com/Azure/azure-functions-eventgrid-extension
 - https://github.com/Azure/azure-functions-iothub-extension
 
 ## Extensions
