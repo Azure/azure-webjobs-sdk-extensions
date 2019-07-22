@@ -21,10 +21,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             switch (record.Severity)
             {
                 case HealthSeverity.Critical:
-                    this._logger.LogCritical($"Unhealthiness detected in the operation {record.Operation} for {record.Lease}. ", record.Exception);
+                    this._logger.LogCritical(record.Exception, $"Unhealthiness detected in the operation {record.Operation} for {record.Lease}.");
                     break;
                 case HealthSeverity.Error:
-                    this._logger.LogError($"Unhealthiness detected in the operation {record.Operation} for {record.Lease}. ", record.Exception);
+                    this._logger.LogError(record.Exception, $"Unhealthiness detected in the operation {record.Operation} for {record.Lease}.");
                     break;
                 default:
                     this._logger.LogTrace($"{record.Operation} on lease {record.Lease?.Id}, partition {record.Lease?.PartitionId} for owner {record.Lease?.Owner}");
