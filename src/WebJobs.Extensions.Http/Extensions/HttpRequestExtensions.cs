@@ -11,7 +11,6 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Internal;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Http
 {
@@ -25,7 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
         public static async Task<string> ReadAsStringAsync(this HttpRequest request)
         {
-            request.EnableRewind();
+            request.EnableBuffering();
 
             string result = null;
             using (var reader = new StreamReader(
@@ -58,7 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             string headerValue = request.Headers[EasyAuthIdentityHeader].First();
             return FromBase64EncodedJson(headerValue);
         }
-      
+
         private static ClaimsIdentity FromBase64EncodedJson(string payload)
         {
             using (var buffer = new MemoryStream(Convert.FromBase64String(payload)))
