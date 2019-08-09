@@ -7,6 +7,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
     internal interface ICosmosDBServiceFactory
     {
-        ICosmosDBService CreateService(string connectionString, ConnectionPolicy connectionPolicy);
+        ICosmosDBService CreateService(string connectionString, ConnectionPolicy connectionPolicy, bool useDefaultJsonSerialization);
     }
 }

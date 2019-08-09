@@ -7,6 +7,7 @@ using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.Documents.Linq;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Config;
+using Newtonsoft.Json;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
@@ -15,7 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private bool _isDisposed;
         private DocumentClient _client;
 
-        public CosmosDBService(string connectionString, ConnectionPolicy connectionPolicy)
+        public CosmosDBService(string connectionString, ConnectionPolicy connectionPolicy, bool useDefaultJsonSerialization)
         {
             CosmosDBConnectionString connection = new CosmosDBConnectionString(connectionString);
             if (connectionPolicy == null)
@@ -23,7 +24,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 connectionPolicy = new ConnectionPolicy();
             }
 
-            _client = new DocumentClient(connection.ServiceEndpoint, connection.AuthKey, connectionPolicy);
+            if (useDefaultJsonSerialization)
+            {
+                if (JsonConvert.DefaultSettings == null)
+                {
+                    throw new ArgumentNullException("If UseDefaultJsonSerialization is enabled, JsonConvert.DefaultSettings should be configured.");
+                }
+
+                _client = new DocumentClient(connection.ServiceEndpoint, connection.AuthKey, connectionPolicy, null, JsonConvert.DefaultSettings.Invoke());
+            }
+            else
+            {
+                _client = new DocumentClient(connection.ServiceEndpoint, connection.AuthKey, connectionPolicy);
+            }
         }
 
         public DocumentClient GetClient()

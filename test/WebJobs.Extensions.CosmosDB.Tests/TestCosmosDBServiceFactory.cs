@@ -14,7 +14,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             _service = service;
         }
 
-        public ICosmosDBService CreateService(string connectionString, ConnectionPolicy connectionPolicy)
+        public ICosmosDBService CreateService(string connectionString, ConnectionPolicy connectionPolicy, bool useDefaultJsonSerialization)
         {
             return _service;
         }

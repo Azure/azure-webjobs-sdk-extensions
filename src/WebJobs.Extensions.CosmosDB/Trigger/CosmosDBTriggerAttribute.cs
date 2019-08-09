@@ -156,5 +156,15 @@ namespace Microsoft.Azure.WebJobs
         /// This setting only applies to the Leases collection, as there are no write operations done to the monitored collection.
         /// </remarks>
         public bool UseMultipleWriteLocations { get; set; }
+
+        /// <summary>
+        /// Optional.
+        /// Enables the use of JsonConvert.DefaultSettings in the monitored Azure Cosmos DB collection.
+        /// <remarks>
+        /// This setting only applies to the monitored collection and the consumer to setup the serialization used in the monitored collection.
+        /// The JsonConvert.DefaultSettings must be set in a class derived from CosmosDBWebJobsStartup.
+        /// </remarks>
+        /// </summary>
+        public bool UseDefaultJsonSerialization { get; set; }
     }
 }
