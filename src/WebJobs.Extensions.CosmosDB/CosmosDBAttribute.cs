@@ -110,6 +110,18 @@ namespace Microsoft.Azure.WebJobs
 
         /// <summary>
         /// Optional.
+        /// Enables the use of JsonConvert.DefaultSettings in the monitored Azure Cosmos DB collection.
+        /// <remarks>
+        /// This setting only applies to the monitored collection and the consumer to setup the serialization used in the monitored collection.
+        /// The JsonConvert.DefaultSettings must be set during the initialization process.
+        /// This is achieved by deriving a class from <see cref="CosmosDBWebJobsStartup"/> and adding a <see cref="WebJobsStartupAttribute"/>
+        /// to the assembly that specifies the derived class
+        /// </remarks>
+        /// </summary>
+        public bool UseDefaultJsonSerialization { get; set; }
+
+        /// <summary>
+        /// Optional.
         /// Defines preferred locations (regions) for geo-replicated database accounts in the Azure Cosmos DB service.
         /// Values should be comma-separated.
         /// </summary>

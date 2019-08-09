@@ -92,7 +92,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         internal DocumentClient BindForClient(CosmosDBAttribute attribute)
         {
             string resolvedConnectionString = ResolveConnectionString(attribute.ConnectionStringSetting);
-            ICosmosDBService service = GetService(resolvedConnectionString, attribute.PreferredLocations, attribute.UseMultipleWriteLocations);
+            ICosmosDBService service = GetService(resolvedConnectionString, attribute.PreferredLocations, attribute.UseMultipleWriteLocations, attribute.UseDefaultJsonSerialization);
 
             return service.GetClient();
         }
@@ -124,18 +124,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return _options.ConnectionString;
         }
 
-        internal ICosmosDBService GetService(string connectionString, string preferredLocations = "", bool useMultipleWriteLocations = false)
+        internal ICosmosDBService GetService(string connectionString, string preferredLocations = "", bool useMultipleWriteLocations = false, bool useDefaultJsonSerialization = false)
         {
-            string cacheKey = BuildCacheKey(connectionString, preferredLocations, useMultipleWriteLocations);
+            string cacheKey = BuildCacheKey(connectionString, preferredLocations, useMultipleWriteLocations, useDefaultJsonSerialization);
             ConnectionPolicy connectionPolicy = CosmosDBUtility.BuildConnectionPolicy(_options.ConnectionMode, _options.Protocol, preferredLocations, useMultipleWriteLocations);
-            return ClientCache.GetOrAdd(cacheKey, (c) => _cosmosDBServiceFactory.CreateService(connectionString, connectionPolicy));
+            return ClientCache.GetOrAdd(cacheKey, (c) => _cosmosDBServiceFactory.CreateService(connectionString, connectionPolicy, useDefaultJsonSerialization));
         }
 
         internal CosmosDBContext CreateContext(CosmosDBAttribute attribute)
         {
             string resolvedConnectionString = ResolveConnectionString(attribute.ConnectionStringSetting);
 
-            ICosmosDBService service = GetService(resolvedConnectionString, attribute.PreferredLocations, attribute.UseMultipleWriteLocations);
+            ICosmosDBService service = GetService(resolvedConnectionString, attribute.PreferredLocations, attribute.UseMultipleWriteLocations, attribute.UseDefaultJsonSerialization);
 
             return new CosmosDBContext
             {
@@ -155,7 +155,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return false;
         }
 
-        internal static string BuildCacheKey(string connectionString, string preferredLocations, bool useMultipleWriteLocations) => $"{connectionString}|{preferredLocations}|{useMultipleWriteLocations}";
+        internal static string BuildCacheKey(string connectionString, string preferredLocations, bool useMultipleWriteLocations, bool useDefaultJsonSerialization) => $"{connectionString}|{preferredLocations}|{useMultipleWriteLocations}|{useDefaultJsonSerialization}";
 
         private class DocumentOpenType : OpenType.Poco
         {

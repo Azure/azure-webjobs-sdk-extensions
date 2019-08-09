@@ -129,7 +129,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             Mock<ICosmosDBServiceFactory> mockServiceFactory = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
 
             mockServiceFactory
-                .Setup(m => m.CreateService(It.IsAny<string>(), It.IsAny<ConnectionPolicy>()))
+                .Setup(m => m.CreateService(It.IsAny<string>(), It.IsAny<ConnectionPolicy>(), It.IsAny<bool>()))
                 .Returns(mockService.Object);
 
             var options = new OptionsWrapper<CosmosDBOptions>(new CosmosDBOptions
