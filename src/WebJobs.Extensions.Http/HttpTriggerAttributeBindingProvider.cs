@@ -403,17 +403,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             {
                 if (value != null && !targetType.IsAssignableFrom(value.GetType()))
                 {
+                    var underlyingTargetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+
                     var jObject = value as JObject;
                     if (jObject != null)
                     {
                         value = jObject.ToObject(targetType);
                     }
+                    else if (underlyingTargetType == typeof(Guid) && value.GetType() == typeof(string))
+                    {
+                        // Guids need to be converted by their own logic
+                        // Intentionally throw here on error to standardize behavior
+                        value = Guid.Parse((string)value);
+                    }
                     else
                     {
                         // if the type is nullable, we only need to convert to the
                         // correct underlying type
-                        targetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
-                        value = Convert.ChangeType(value, targetType);
+                        value = Convert.ChangeType(value, underlyingTargetType);
                     }
                 }
 

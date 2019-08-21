@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
@@ -84,6 +85,36 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             Assert.Equal(4, bindingData.Count);
             Assert.Equal("Mathew Charles", bindingData["Name"]);
             Assert.Equal("Seattle", bindingData["Location"]);
+        }
+
+        [Theory]
+        [ClassData(typeof(BindsAllTypesTestData))]
+        public async Task GetRequestBindingDataAsync_ReadsFromRoute_BindsAllTypes(Type type, object value, string stringValue)
+        {
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/test");
+
+            Dictionary<string, object> routeData = new Dictionary<string, object>
+            {
+                { "test", stringValue }
+            };
+            request.HttpContext.Items.Add(HttpExtensionConstants.AzureWebJobsHttpRouteDataKey, routeData);
+
+            Dictionary<string, Type> bindingDataContract = new Dictionary<string, Type>
+            {
+                { "test", type }
+            };
+
+            var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request, bindingDataContract);
+
+            Assert.Equal(3, bindingData.Count);
+            Assert.Equal(value, bindingData["test"]);
+
+            // Can only compare types if something was passed in
+            if (value != null)
+            {
+                // Data is bound by underlying type if nullable
+                Assert.Equal(Nullable.GetUnderlyingType(type) ?? type, bindingData["test"].GetType());
+            }
         }
 
         // When we have the same name in multiple places, ensure that
@@ -501,6 +532,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
         public void TestDynamicFunction(dynamic body)
         {
+        }
+
+        public class BindsAllTypesTestData : IEnumerable<object[]>
+        {
+            private readonly List<object[]> _data = new List<object[]>
+            {
+                new object[] { typeof(string), "12345", "12345" },
+                new object[] { typeof(int), (int)12345, "12345" },
+                new object[] { typeof(int?), (int)12345, "12345" },
+                new object[] { typeof(int?), null, null },
+                new object[] { typeof(decimal), new decimal(1.2345), "1.2345" },
+                new object[] { typeof(double), (double)1.2345, "1.2345" },
+                new object[] { typeof(float), 1.2345f, "1.2345" },
+                new object[] { typeof(long), (long)12345, "12345" },
+                new object[] { typeof(Guid), new Guid("CD2C1638-1638-72D5-1638-DEADBEEF1638"), "CD2C1638-1638-72D5-1638-DEADBEEF1638" },
+                new object[] { typeof(Guid?), new Guid("CD2C1638-1638-72D5-1638-DEADBEEF1638"), "CD2C1638-1638-72D5-1638-DEADBEEF1638" },
+                new object[] { typeof(Guid?), null, null },
+                new object[] { typeof(bool), true, "true" },
+                new object[] { typeof(DateTime), new DateTime(2019, 8, 20), "2019-08-20" },
+                new object[] { typeof(DateTime?), new DateTime(2019, 8, 20), "2019-08-20" },
+                new object[] { typeof(DateTime?), null, null }
+            };
+
+            public IEnumerator<object[]> GetEnumerator() => _data.GetEnumerator();
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
         public class TestPoco
