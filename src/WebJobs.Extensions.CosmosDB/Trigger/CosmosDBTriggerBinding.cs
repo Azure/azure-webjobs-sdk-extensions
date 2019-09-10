@@ -76,9 +76,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
 
             return Task.FromResult<IListener>(new CosmosDBTriggerListener(
-                context.Executor, 
-                this._documentCollectionLocation, 
-                this._leaseCollectionLocation, 
+                context.Executor,
+                context.Descriptor.Id,
+                this._documentCollectionLocation,
+                this._leaseCollectionLocation,
                 this._processorOptions,
                 this._monitoredCosmosDBService,
                 this._leasesCosmosDBService,
