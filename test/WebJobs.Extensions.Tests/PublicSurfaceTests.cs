@@ -37,7 +37,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
                 "TimersOptions",
                 "TimerTriggerAttribute",
                 "WeeklySchedule",
-                "ExtensionsWebJobsStartup"
+                "ExtensionsWebJobsStartup",
+                "WarmupContext",
+                "WarmupTriggerAttribute",
+                "WarmupWebJobsBuilderExtensions"
             };
 
             AssertPublicTypes(expected, assembly);

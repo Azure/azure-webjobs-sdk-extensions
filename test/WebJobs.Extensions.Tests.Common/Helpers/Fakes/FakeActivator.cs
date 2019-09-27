@@ -3,8 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using Microsoft.Azure.WebJobs.Host;
 
-namespace Microsoft.Azure.WebJobs.Host.TestCommon
+namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
 {
     public class FakeActivator : IJobActivator
     {
