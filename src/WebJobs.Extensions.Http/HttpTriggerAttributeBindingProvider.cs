@@ -9,12 +9,10 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
-using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -235,7 +233,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             }
 
             /// <summary>
-            /// Gets the static strongly typed binding data contract
+            /// Gets the static strongly typed binding data contract.
             /// </summary>
             internal Dictionary<string, Type> GetBindingDataContract(HttpTriggerAttribute attribute, ParameterInfo parameter)
             {
@@ -428,7 +426,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             }
 
             /// <summary>
-            /// ValueBinder for all our built in supported Types
+            /// ValueBinder for all our built in supported Types.
             /// </summary>
             private class HttpRequestValueBinder : StreamValueBinder
             {
@@ -476,7 +474,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
                 protected override Stream GetStream()
                 {
-                    _request.EnableRewind();
+                    _request.EnableBuffering();
 
                     Stream stream = _request.Body;
 
