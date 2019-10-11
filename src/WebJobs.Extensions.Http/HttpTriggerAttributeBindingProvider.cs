@@ -463,8 +463,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                         {
                             using (var reader = new StreamReader(_request.Body))
                             {
-                                var serializer = JsonSerializer.CreateDefault();
-                                return serializer.Deserialize(reader, typeof(object));
+                                string jsonString = await reader.ReadToEndAsync();
+                                return JsonConvert.DeserializeObject(jsonString);
                             }
                         }
                     }
