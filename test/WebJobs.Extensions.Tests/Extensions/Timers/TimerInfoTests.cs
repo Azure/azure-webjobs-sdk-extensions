@@ -49,25 +49,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 .Select(dateTime => $"{DateFormatter(dateTime)}\r\n")
                 .ToArray();
 
-            string expected =
-                $"The next 10 occurrences of the schedule ({cronSchedule}) will be:\r\n" +
-                string.Join(string.Empty, expectedDates);
+            string expected = string.Join(string.Empty, expectedDates);
 
             Assert.Equal(expected, result);
 
             // Test the internal method with timer name specified
-            string timerName = "TestTimer";
             TimerSchedule schedule = new DailySchedule("2:00:00");
-            result = TimerInfo.FormatNextOccurrences(schedule, 5, now, timerName);
+            result = TimerInfo.FormatNextOccurrences(schedule, 5, now);
 
             expectedDates = Enumerable.Range(17, 5)
                 .Select(day => new DateTime(2015, 09, day, 02, 00, 00, DateTimeKind.Local))
                 .Select(dateTime => $"{DateFormatter(dateTime)}\r\n")
                 .ToArray();
 
-            expected =
-                    $"The next 5 occurrences of the 'TestTimer' schedule ({schedule}) will be:\r\n" +
-                    string.Join(string.Empty, expectedDates);
+            expected = string.Join(string.Empty, expectedDates);
             Assert.Equal(expected, result);
 
             WeeklySchedule weeklySchedule = new WeeklySchedule();
@@ -78,10 +73,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
             schedule = weeklySchedule;
 
-            result = TimerInfo.FormatNextOccurrences(schedule, 5, now, timerName);
+            result = TimerInfo.FormatNextOccurrences(schedule, 5, now);
 
             expected =
-                $"The next 5 occurrences of the 'TestTimer' schedule ({weeklySchedule}) will be:\r\n" +
                 DateFormatter(new DateTime(2015, 09, 16, 21, 30, 00, DateTimeKind.Local)) + "\r\n" +
                 DateFormatter(new DateTime(2015, 09, 18, 10, 00, 00, DateTimeKind.Local)) + "\r\n" +
                 DateFormatter(new DateTime(2015, 09, 21, 08, 00, 00, DateTimeKind.Local)) + "\r\n" +

@@ -59,23 +59,16 @@ namespace Microsoft.Azure.WebJobs
             return FormatNextOccurrences(Schedule, count, now);
         }
 
-        internal static string FormatNextOccurrences(TimerSchedule schedule, int count, DateTime? now = null, string functionShortName = null)
+        internal static string FormatNextOccurrences(TimerSchedule schedule, int count, DateTime? now = null)
         {
             if (schedule == null)
             {
                 throw new ArgumentNullException("schedule");
             }
 
-            // If we've got a timer name, format it
-            if (functionShortName != null)
-            {
-                functionShortName = $"'{functionShortName}' ";
-            }
-
             bool isUtc = TimeZoneInfo.Local.HasSameRules(TimeZoneInfo.Utc);
             IEnumerable<DateTime> nextOccurrences = schedule.GetNextOccurrences(count, now);
             StringBuilder builder = new StringBuilder();
-            builder.AppendLine($"The next {count} occurrences of the {functionShortName}schedule ({schedule}) will be:");
             foreach (DateTime occurrence in nextOccurrences)
             {
                 if (isUtc)

@@ -343,8 +343,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await _listener.StartAsync(CancellationToken.None);
             await _listener.StopAsync(CancellationToken.None);
 
-            string actualMessage = _logger.GetLogMessages().Single(m => m.Level == LogLevel.Information).FormattedMessage;
-            Assert.StartsWith($"The next 5 occurrences of the '{_functionShortName}' schedule ({_schedule}) will be:", actualMessage);
+            LogMessage actualMessage = _logger.GetLogMessages().Single(m => m.Level == LogLevel.Information);
+            Assert.StartsWith($"The next 5 occurrences of the '{_functionShortName}' schedule ({_schedule}) will be:", actualMessage.FormattedMessage);
+
+            // make sure we're logging function name.
+            Assert.Equal(_functionShortName, actualMessage.State.Single(p => p.Key == "functionName").Value);
         }
 
         [Fact]
@@ -364,7 +367,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public async Task Listener_LogsInitialNullStatus_WhenUsingMonitor()
         {
-            await RunInitialStatusTestAsync(null, $"Function '{_functionShortName}' initial status: Last='', Next='', LastUpdated=''");
+            await RunInitialStatusTestAsync(null, $"Function '{_functionShortName}' initial status: Last='(null)', Next='(null)', LastUpdated='(null)'");
         }
 
         public static IEnumerable<object[]> TimerSchedulesAfterDST => new object[][]
