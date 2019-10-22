@@ -2,8 +2,8 @@
   <PropertyGroup>
     <!-- Extensions can have independent versions and only increment when released -->
     <Version>3.0.0$(VersionSuffix)</Version>
-    <ExtensionsVersion>3.0.4$(VersionSuffix)</ExtensionsVersion> <!-- WebJobs.Extensions -->
-    <CosmosDBVersion>3.0.4$(VersionSuffix)</CosmosDBVersion>
+    <ExtensionsVersion>3.0.5$(VersionSuffix)</ExtensionsVersion> <!-- WebJobs.Extensions -->
+    <CosmosDBVersion>3.0.5$(VersionSuffix)</CosmosDBVersion>
     <HttpVersion>3.0.6$(VersionSuffix)</HttpVersion>
     <MobileAppsVersion>3.0.0$(VersionSuffix)</MobileAppsVersion>
     <SendGridVersion>3.0.2$(VersionSuffix)</SendGridVersion>
