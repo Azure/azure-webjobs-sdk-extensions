@@ -2,11 +2,11 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Cosmos;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings
 {
-    internal class CosmosDBClientBuilder : IConverter<CosmosDBAttribute, DocumentClient>
+    internal class CosmosDBClientBuilder : IConverter<CosmosDBAttribute, CosmosClient>
     {
         private readonly CosmosDBExtensionConfigProvider _configProvider;
 
@@ -15,7 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings
             _configProvider = configProvider;
         }
 
-        public DocumentClient Convert(CosmosDBAttribute attribute)
+        public CosmosClient Convert(CosmosDBAttribute attribute)
         {
             if (attribute == null)
             {
@@ -23,9 +23,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings
             }
 
             string resolvedConnectionString = _configProvider.ResolveConnectionString(attribute.ConnectionStringSetting);
-            ICosmosDBService service = _configProvider.GetService(resolvedConnectionString, attribute.PreferredLocations, attribute.UseMultipleWriteLocations, attribute.UseDefaultJsonSerialization);
-
-            return service.GetClient();
+            return _configProvider.GetService(
+                connectionString: resolvedConnectionString, 
+                preferredLocations: attribute.PreferredLocations);
         }
     }
 }

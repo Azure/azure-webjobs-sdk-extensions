@@ -6,10 +6,10 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Extensions.Tests;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
+using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -44,8 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 await host.GetJobHost().CallAsync(nameof(EndToEndTestClass.Outputs), parameter);
 
                 // Also insert a new Document so we can query on it.
-                var collectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseName, CollectionName);
-                var response = await client.UpsertDocumentAsync(collectionUri, new Document());
+                var response = await client.GetContainer(DatabaseName, CollectionName).UpsertItemAsync<Item>(new Item() { Id = Guid.NewGuid().ToString() });
 
                 // Now craft a queue message to send to the Inputs, which will pull these documents.
                 var queueInput = new QueueItem
@@ -61,7 +60,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
                 await TestHelpers.Await(() =>
                 {
-                    return _loggerProvider.GetAllLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")) == 4;
+                    return _loggerProvider.GetAllLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")) == 4
+                        && _loggerProvider.GetAllLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with string called!")) == 4;
                 });
 
                 // Make sure the Options were logged. Just check a few values.
@@ -70,26 +70,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                     .FormattedMessage;
                 JObject loggedOptions = JObject.Parse(optionsMessage.Substring(optionsMessage.IndexOf(Environment.NewLine)));
                 Assert.Null(loggedOptions["ConnectionMode"].Value<string>());
-                Assert.False(loggedOptions["LeaseOptions"]["CheckpointFrequency"]["ExplicitCheckpoint"].Value<bool>());
-                Assert.Equal(TimeSpan.FromSeconds(5).ToString(), loggedOptions["LeaseOptions"]["FeedPollDelay"].Value<string>());
             }
         }
 
-        private async Task<DocumentClient> InitializeDocumentClientAsync(IConfiguration configuration)
+        private async Task<CosmosClient> InitializeDocumentClientAsync(IConfiguration configuration)
         {
-            var builder = new DbConnectionStringBuilder
+            var client = new CosmosClient(configuration.GetConnectionStringOrSetting(Constants.DefaultConnectionStringName));
+
+            Database database = await client.CreateDatabaseIfNotExistsAsync(DatabaseName);
+
+            try
             {
-                ConnectionString = configuration.GetConnectionString(Constants.DefaultConnectionStringName)
-            };
-
-            var serviceUri = new Uri(builder["AccountEndpoint"].ToString());
-            var client = new DocumentClient(serviceUri, builder["AccountKey"].ToString());
-
-            var database = new Database() { Id = DatabaseName };
-            await client.CreateDatabaseIfNotExistsAsync(database);
-
-            var collection = new DocumentCollection() { Id = CollectionName };
-            await client.CreateDocumentCollectionIfNotExistsAsync(UriFactory.CreateDatabaseUri(DatabaseName), collection);
+                await database.GetContainer(CollectionName).ReadContainerAsync();
+            }
+            catch (CosmosException cosmosException) when (cosmosException.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                await database.CreateContainerAsync(CollectionName, "/id");
+            }
 
             return client;
         }
@@ -141,7 +138,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             {
                 for (int i = 0; i < 3; i++)
                 {
-                    await collector.AddAsync(new { input });
+                    await collector.AddAsync(new { input = input, id = Guid.NewGuid().ToString() });
                 }
             }
 
@@ -149,7 +146,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             public static void Inputs(
                 [QueueTrigger("NotUsed")] QueueItem item,
                 [CosmosDB(DatabaseName, CollectionName, Id = "{DocumentId}")] JObject document,
-                [CosmosDB(DatabaseName, CollectionName, SqlQuery = "SELECT * FROM c where c.input = {Input}")] IEnumerable<Document> documents,
+                [CosmosDB(DatabaseName, CollectionName, SqlQuery = "SELECT * FROM c where c.input = {Input}")] IEnumerable<Item> documents,
                 ILogger log)
             {
                 Assert.NotNull(document);
@@ -157,12 +154,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
 
             public static void Trigger(
-                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseCollectionIfNotExists = true)]IReadOnlyList<Document> documents,
+                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseCollectionIfNotExists = true)]IReadOnlyList<Item> documents,
                 ILogger log)
             {
                 foreach (var document in documents)
                 {
                     log.LogInformation("Trigger called!");
+                }
+            }
+
+            public static void TriggerWithString(
+                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseCollectionIfNotExists = true, LeaseCollectionPrefix = "withstring")] string documents,
+                ILogger log)
+            {
+                foreach (var document in JArray.Parse(documents))
+                {
+                    log.LogInformation("Trigger with string called!");
                 }
             }
         }

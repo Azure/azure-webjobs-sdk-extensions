@@ -5,66 +5,67 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.ChangeFeedProcessor;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
-    internal class CosmosDBTriggerBinding : ITriggerBinding
+    internal class CosmosDBTriggerBinding<T> : ITriggerBinding
     {
+        private static readonly IReadOnlyDictionary<string, Type> _emptyBindingContract = new Dictionary<string, Type>();
+        private static readonly IReadOnlyDictionary<string, object> _emptyBindingData = new Dictionary<string, object>();
         private readonly ParameterInfo _parameter;
-        private readonly DocumentCollectionInfo _documentCollectionLocation;
-        private readonly DocumentCollectionInfo _leaseCollectionLocation;
-        private readonly ChangeFeedProcessorOptions _processorOptions;
+        private readonly string _processorName;
         private readonly ILogger _logger;
-        private readonly IReadOnlyDictionary<string, Type> _emptyBindingContract = new Dictionary<string, Type>();
-        private readonly IReadOnlyDictionary<string, object> _emptyBindingData = new Dictionary<string, object>();
-        private readonly ICosmosDBService _monitoredCosmosDBService;
-        private readonly ICosmosDBService _leasesCosmosDBService;
+        private readonly Container _monitoredContainer;
+        private readonly Container _leaseContainer;
+        private readonly CosmosDBTriggerAttribute _cosmosDBAttribute;
 
-        public CosmosDBTriggerBinding(ParameterInfo parameter, 
-            DocumentCollectionInfo documentCollectionLocation, 
-            DocumentCollectionInfo leaseCollectionLocation, 
-            ChangeFeedProcessorOptions processorOptions, 
-            ICosmosDBService monitoredCosmosDBService,
-            ICosmosDBService leasesCosmosDBService,
+        public CosmosDBTriggerBinding(
+            ParameterInfo parameter, 
+            string processorName,
+            Container monitoredContainer,
+            Container leaseContainer,
+            CosmosDBTriggerAttribute cosmosDBAttribute,
             ILogger logger)
         {
-            _documentCollectionLocation = documentCollectionLocation;
-            _leaseCollectionLocation = leaseCollectionLocation;
-            _processorOptions = processorOptions;
+            _monitoredContainer = monitoredContainer;
+            _leaseContainer = leaseContainer;
+            _cosmosDBAttribute = cosmosDBAttribute;
             _parameter = parameter;
+            _processorName = processorName;
             _logger = logger;
-            _monitoredCosmosDBService = monitoredCosmosDBService;
-            _leasesCosmosDBService = leasesCosmosDBService;
         }
 
         /// <summary>
         /// Gets the type of the value the Trigger receives from the Executor.
         /// </summary>
-        public Type TriggerValueType => typeof(IReadOnlyList<Document>);
-
-        internal DocumentCollectionInfo DocumentCollectionLocation => _documentCollectionLocation;
-
-        internal DocumentCollectionInfo LeaseCollectionLocation => _leaseCollectionLocation;
-
-        internal ChangeFeedProcessorOptions ChangeFeedProcessorOptions => _processorOptions;
-
-        public IReadOnlyDictionary<string, Type> BindingDataContract
+        public Type TriggerValueType
         {
-            get { return _emptyBindingContract; }
+            get
+            {
+                return typeof(IReadOnlyCollection<T>);
+            }
         }
+
+        internal Container MonitoredContainer => _monitoredContainer;
+
+        internal Container LeaseContainer => _leaseContainer;
+
+        internal string ProcessorName => _processorName;
+
+        internal CosmosDBTriggerAttribute CosmosDBAttribute => _cosmosDBAttribute;
+
+        public IReadOnlyDictionary<string, Type> BindingDataContract => CosmosDBTriggerBinding<T>._emptyBindingContract;
 
         public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
         {
-            // ValueProvider is via binding rules. 
-            return Task.FromResult<ITriggerData>(new TriggerData(null, _emptyBindingData));
+            IValueProvider valueBinder = new CosmosDBTriggerValueBinder(_parameter, value);
+            return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, _emptyBindingData));
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
@@ -75,14 +76,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 throw new ArgumentNullException("context", "Missing listener context");
             }
 
-            return Task.FromResult<IListener>(new CosmosDBTriggerListener(
+            return Task.FromResult<IListener>(new CosmosDBTriggerListener<T>(
                 context.Executor,
                 context.Descriptor.Id,
-                this._documentCollectionLocation,
-                this._leaseCollectionLocation,
-                this._processorOptions,
-                this._monitoredCosmosDBService,
-                this._leasesCosmosDBService,
+                this._processorName,
+                this._monitoredContainer, 
+                this._leaseContainer, 
+                this._cosmosDBAttribute,
                 this._logger));
         }
 
@@ -96,31 +96,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 Name = _parameter.Name,
                 Type = CosmosDBTriggerConstants.TriggerName,
-                CollectionName = this._documentCollectionLocation.CollectionName
+                CollectionName = this._monitoredContainer.Id
             };
-        }
-
-        internal static bool TryAndConvertToDocumentList(object value, out IReadOnlyList<Document> documents)
-        {
-            documents = null;
-
-            try
-            {
-                if (value is IReadOnlyList<Document> docs)
-                {
-                    documents = docs;
-                }
-                else if (value is string stringVal)
-                {
-                    documents = JsonConvert.DeserializeObject<IReadOnlyList<Document>>(stringVal);
-                }
-
-                return documents != null;
-            }
-            catch
-            {
-                return false;
-            }
         }
     }
 }

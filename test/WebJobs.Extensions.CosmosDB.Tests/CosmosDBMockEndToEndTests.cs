@@ -4,9 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
 using Microsoft.Azure.WebJobs.Host;
@@ -42,30 +42,50 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         public async Task OutputBindings()
         {
             // Arrange
-            var serviceMock = new Mock<ICosmosDBService>(MockBehavior.Strict);
-            serviceMock
-                .Setup(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()))
-                .Returns<Uri, object>((uri, item) =>
-                {
-                    // Simulate what DocumentClient does. This will throw an error if a string
-                    // is directly passed as the item. We can't use DocumentClient directly for this
-                    // because it requires a real connection, but we're mocking here.
-                    JObject jObject = JObject.FromObject(item);
+            var serviceMock = new Mock<CosmosClient>(MockBehavior.Strict);
 
-                    return Task.FromResult(new Document());
+            var mockContainer = new Mock<Container>(MockBehavior.Strict);
+
+            serviceMock
+                .Setup(m => m.GetContainer(It.Is<string>(d => d == DatabaseName), It.Is<string>(c => c == CollectionName)))
+                .Returns(mockContainer.Object);
+
+            mockContainer
+                .Setup(m => m.UpsertItemAsync<object>(It.IsAny<object>(), It.IsAny<PartitionKey?>(), It.IsAny<ItemRequestOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((object item, PartitionKey? partitionKey, ItemRequestOptions itemRequestOptions, CancellationToken cancellationToken) =>
+                {
+                    Mock<ItemResponse<object>> mockResponse = new Mock<ItemResponse<object>>();
+                    mockResponse
+                        .Setup(m => m.Resource)
+                        .Returns(item);
+
+                    return mockResponse.Object;
+                });
+
+            mockContainer
+                .Setup(m => m.UpsertItemAsync<JObject>(It.IsAny<JObject>(), It.IsAny<PartitionKey?>(), It.IsAny<ItemRequestOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((JObject item, PartitionKey? partitionKey, ItemRequestOptions itemRequestOptions, CancellationToken cancellationToken) =>
+                {
+                    Mock<ItemResponse<JObject>> mockResponse = new Mock<ItemResponse<JObject>>();
+                    mockResponse
+                        .Setup(m => m.Resource)
+                        .Returns(item);
+
+                    return mockResponse.Object;
                 });
 
             var factoryMock = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(ConfigConnStr, It.IsAny<ConnectionPolicy>(), It.IsAny<bool>()))
+                .Setup(f => f.CreateService(ConfigConnStr, It.IsAny<CosmosClientOptions>()))
                 .Returns(serviceMock.Object);
 
             //Act
             await RunTestAsync("Outputs", factoryMock.Object);
 
             // Assert
-            factoryMock.Verify(f => f.CreateService(ConfigConnStr, It.IsAny<ConnectionPolicy>(), It.IsAny<bool>()), Times.Once());
-            serviceMock.Verify(m => m.UpsertDocumentAsync(It.IsAny<Uri>(), It.IsAny<object>()), Times.Exactly(8));
+            factoryMock.Verify(f => f.CreateService(ConfigConnStr, It.IsAny<CosmosClientOptions>()), Times.Once());
+            mockContainer.Verify(m => m.UpsertItemAsync<object>(It.IsAny<object>(), It.IsAny<PartitionKey?>(), It.IsAny<ItemRequestOptions>(), It.IsAny<CancellationToken>()), Times.Exactly(7));
+            mockContainer.Verify(m => m.UpsertItemAsync<JObject>(It.IsAny<JObject>(), It.IsAny<PartitionKey?>(), It.IsAny<ItemRequestOptions>(), It.IsAny<CancellationToken>()), Times.Exactly(1));
             Assert.Equal("Outputs", _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
         }
 
@@ -75,15 +95,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             // Arrange
             var factoryMock = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(DefaultConnStr, It.IsAny<ConnectionPolicy>(), It.IsAny<bool>()))
-                .Returns<string, ConnectionPolicy, bool>((connectionString, connectionPolicy, useDefaultDeserialization) => new CosmosDBService(connectionString, connectionPolicy, useDefaultDeserialization));
+                .Setup(f => f.CreateService(DefaultConnStr, It.IsAny<CosmosClientOptions>()))
+                .Returns<string, CosmosClientOptions>((connectionString, connectionPolicy) => new CosmosClient(connectionString, connectionPolicy));
 
             // Act
             // Also verify that this falls back to the default by setting the config connection string to null
             await RunTestAsync("Client", factoryMock.Object, configConnectionString: null);
 
             //Assert
-            factoryMock.Verify(f => f.CreateService(DefaultConnStr, It.IsAny<ConnectionPolicy>(), It.IsAny<bool>()), Times.Once());
+            factoryMock.Verify(f => f.CreateService(DefaultConnStr, It.IsAny<CosmosClientOptions>()), Times.Once());
             Assert.Equal("Client", _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
         }
 
@@ -96,84 +116,162 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             string item3Id = "docid3";
             string item4Id = "docid4";
             string item5Id = "docid5";
-            Uri item1Uri = UriFactory.CreateDocumentUri(DatabaseName, CollectionName, item1Id);
-            Uri item2Uri = UriFactory.CreateDocumentUri(DatabaseName, CollectionName, item2Id);
-            Uri item3Uri = UriFactory.CreateDocumentUri(DatabaseName, CollectionName, item3Id);
-            Uri item4Uri = UriFactory.CreateDocumentUri("ResolvedDatabase", "ResolvedCollection", item4Id);
-            Uri item5Uri = UriFactory.CreateDocumentUri(DatabaseName, CollectionName, item5Id);
-            Uri collectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseName, CollectionName);
 
             string options2 = string.Format("[\"{0}\"]", item1Id); // this comes from the trigger
             string options3 = "[\"partkey3\"]";
 
-            var serviceMock = new Mock<ICosmosDBService>(MockBehavior.Strict);
+            var serviceMock = new Mock<CosmosClient>(MockBehavior.Strict);
+
+            var mockContainer = new Mock<Container>(MockBehavior.Strict);
 
             serviceMock
-                .Setup(m => m.ReadDocumentAsync(item1Uri, null))
-                .ReturnsAsync(new Document { Id = item1Id });
+                .Setup(m => m.GetContainer(It.Is<string>(d => d == "ResolvedDatabase"), It.Is<string>(c => c == "ResolvedCollection")))
+                .Returns(mockContainer.Object);
 
             serviceMock
-               .Setup(m => m.ReadDocumentAsync(item2Uri, It.Is<RequestOptions>(r => r.PartitionKey.ToString() == options2)))
-               .ReturnsAsync(new Document { Id = item2Id });
+                .Setup(m => m.GetContainer(It.Is<string>(d => d == DatabaseName), It.Is<string>(c => c == CollectionName)))
+                .Returns(mockContainer.Object);
 
-            serviceMock
-                .Setup(m => m.ReadDocumentAsync(item3Uri, It.Is<RequestOptions>(r => r.PartitionKey.ToString() == options3)))
-                .ReturnsAsync(new Document { Id = item3Id });
+            mockContainer
+                .Setup(m => m.ReadItemAsync<Item>(It.Is<string>(id => id == item1Id), It.IsAny<PartitionKey>(), It.IsAny<ItemRequestOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((string id, PartitionKey partitionKey, ItemRequestOptions itemRequestOptions, CancellationToken cancellationToken) =>
+                {
+                    Mock<ItemResponse<Item>> mockResponse = new Mock<ItemResponse<Item>>();
+                    mockResponse
+                        .Setup(m => m.Resource)
+                        .Returns(new Item { Id = item1Id });
 
-            serviceMock
-                .Setup(m => m.ReadDocumentAsync(item4Uri, null))
-                .ReturnsAsync(new Document { Id = item4Id });
+                    return mockResponse.Object;
+                });
 
-            serviceMock
-                .Setup(m => m.ReadDocumentAsync(item5Uri, null))
-                .ReturnsAsync(new Document { Id = item5Id });
+            mockContainer
+                .Setup(m => m.ReadItemAsync<Item>(It.Is<string>(id => id == item2Id), It.Is<PartitionKey>(pk => pk.ToString() == options2), It.IsAny<ItemRequestOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((string id, PartitionKey partitionKey, ItemRequestOptions itemRequestOptions, CancellationToken cancellationToken) =>
+                {
+                    Mock<ItemResponse<Item>> mockResponse = new Mock<ItemResponse<Item>>();
+                    mockResponse
+                        .Setup(m => m.Resource)
+                        .Returns(new Item { Id = item2Id });
 
-            serviceMock
-                .Setup(m => m.ExecuteNextAsync<JObject>(
-                    collectionUri,
-                    It.Is<SqlQuerySpec>((s) =>
-                        s.QueryText == "some query" &&
-                        s.Parameters.Count() == 0),
-                    null))
-                .ReturnsAsync(new DocumentQueryResponse<JObject>());
+                    return mockResponse.Object;
+                });
 
-            serviceMock
-                .Setup(m => m.ExecuteNextAsync<JObject>(
-                    collectionUri,
-                    It.Is<SqlQuerySpec>((s) =>
-                        s.QueryText == "some ResolvedQuery with '@QueueTrigger' replacements" &&
-                        s.Parameters.Count() == 1 &&
-                        s.Parameters[0].Name == "@QueueTrigger" &&
-                        s.Parameters[0].Value.ToString() == "docid1"),
-                    null))
-                .ReturnsAsync(new DocumentQueryResponse<JObject>());
+            mockContainer
+                .Setup(m => m.ReadItemAsync<Item>(It.Is<string>(id => id == item3Id), It.Is<PartitionKey>(pk => pk.ToString() == options3), It.IsAny<ItemRequestOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((string id, PartitionKey partitionKey, ItemRequestOptions itemRequestOptions, CancellationToken cancellationToken) =>
+                {
+                    Mock<ItemResponse<Item>> mockResponse = new Mock<ItemResponse<Item>>();
+                    mockResponse
+                        .Setup(m => m.Resource)
+                        .Returns(new Item { Id = item3Id });
 
-            serviceMock
-                .Setup(m => m.ExecuteNextAsync<JToken>(
-                    collectionUri,
-                    It.Is<SqlQuerySpec>((s) =>
-                        s.QueryText == null &&
-                        s.Parameters.Count() == 0),
-                    null))
-                .ReturnsAsync(new DocumentQueryResponse<JToken>());
+                    return mockResponse.Object;
+                });
+
+            mockContainer
+                .Setup(m => m.ReadItemAsync<JObject>(It.Is<string>(id => id == item4Id), It.IsAny<PartitionKey>(), It.IsAny<ItemRequestOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((string id, PartitionKey partitionKey, ItemRequestOptions itemRequestOptions, CancellationToken cancellationToken) =>
+                {
+                    Mock<ItemResponse<JObject>> mockResponse = new Mock<ItemResponse<JObject>>();
+                    JObject item = new JObject();
+                    item["Id"] = item4Id;
+                    mockResponse
+                        .Setup(m => m.Resource)
+                        .Returns(item);
+
+                    return mockResponse.Object;
+                });
+
+            mockContainer
+                .Setup(m => m.ReadItemAsync<JObject>(It.Is<string>(id => id == item5Id), It.IsAny<PartitionKey>(), It.IsAny<ItemRequestOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((string id, PartitionKey partitionKey, ItemRequestOptions itemRequestOptions, CancellationToken cancellationToken) =>
+                {
+                    Mock<ItemResponse<JObject>> mockResponse = new Mock<ItemResponse<JObject>>();
+                    JObject item = new JObject();
+                    item["Id"] = item5Id;
+                    mockResponse
+                        .Setup(m => m.Resource)
+                        .Returns(item);
+
+                    return mockResponse.Object;
+                });
+
+            mockContainer
+                .Setup(m => m.GetItemQueryIterator<JObject>(
+                    It.IsAny<QueryDefinition>(),
+                    It.IsAny<string>(),
+                    It.IsAny<QueryRequestOptions>()))
+                .Returns((QueryDefinition a, string b, QueryRequestOptions c) =>
+                {
+                    Mock<FeedIterator<JObject>> mockIterator = new Mock<FeedIterator<JObject>>();
+                    mockIterator.SetupSequence(m => m.HasMoreResults).Returns(true).Returns(false);
+                    mockIterator
+                        .Setup(m => m.ReadNextAsync(It.IsAny<CancellationToken>()))
+                        .ReturnsAsync(Mock.Of<FeedResponse<JObject>>());
+
+                    return mockIterator.Object;
+                });
+
+            mockContainer
+                .Setup(m => m.GetItemQueryIterator<JToken>(
+                    It.IsAny<QueryDefinition>(),
+                    It.IsAny<string>(),
+                    It.IsAny<QueryRequestOptions>()))
+                .Returns((QueryDefinition a, string b, QueryRequestOptions c) =>
+                {
+                    Mock<FeedIterator<JToken>> mockIterator = new Mock<FeedIterator<JToken>>();
+                    mockIterator.SetupSequence(m => m.HasMoreResults).Returns(true).Returns(false);
+                    mockIterator
+                        .Setup(m => m.ReadNextAsync(It.IsAny<CancellationToken>()))
+                        .ReturnsAsync(Mock.Of<FeedResponse<JToken>>());
+
+                    return mockIterator.Object;
+                });
 
             // We only expect item2 to be updated
-            serviceMock
-                .Setup(m => m.ReplaceDocumentAsync(item2Uri, It.Is<object>(d => ((Document)d).Id == item2Id)))
-                .ReturnsAsync(new Document());
+            mockContainer
+                .Setup(m => m.ReplaceItemAsync<Item>(It.Is<Item>(i => i.Id == item2Id), It.Is<string>(id => id == item2Id), It.IsAny<PartitionKey?>(), It.IsAny<ItemRequestOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Item item, string id, PartitionKey? partitionKey, ItemRequestOptions itemRequestOptions, CancellationToken cancellationToken) =>
+                {
+                    Mock<ItemResponse<Item>> mockResponse = new Mock<ItemResponse<Item>>();
+                    mockResponse
+                        .Setup(m => m.Resource)
+                        .Returns(item);
+
+                    return mockResponse.Object;
+                });
+
 
             var factoryMock = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(It.IsAny<string>(), It.IsAny<ConnectionPolicy>(), It.IsAny<bool>()))
+                .Setup(f => f.CreateService(It.IsAny<string>(), It.IsAny<CosmosClientOptions>()))
                 .Returns(serviceMock.Object);
 
             // Act
             await RunTestAsync(nameof(CosmosDBEndToEndFunctions.Inputs), factoryMock.Object, item1Id);
 
             // Assert
-            factoryMock.Verify(f => f.CreateService(It.IsAny<string>(), It.IsAny<ConnectionPolicy>(), It.IsAny<bool>()), Times.Once());
+            factoryMock.Verify(f => f.CreateService(It.IsAny<string>(), It.IsAny<CosmosClientOptions>()), Times.Once());
             Assert.Equal("Inputs", _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
             serviceMock.VerifyAll();
+
+            mockContainer
+               .Verify(m => m.GetItemQueryIterator<JObject>(
+                   It.Is<QueryDefinition>(qd => qd != null && (qd.QueryText == "some query" || qd.QueryText == "some ResolvedQuery with '@QueueTrigger' replacements")),
+                   It.IsAny<string>(),
+                   It.Is<QueryRequestOptions>(ro => !ro.PartitionKey.HasValue)), Times.Exactly(2));
+
+            mockContainer
+               .Verify(m => m.GetItemQueryIterator<JObject>(
+                   It.Is<QueryDefinition>(qd => qd == null),
+                   It.IsAny<string>(),
+                   It.Is<QueryRequestOptions>(ro => ro.PartitionKey == new PartitionKey(item1Id))), Times.Once);
+
+            mockContainer
+               .Verify(m => m.GetItemQueryIterator<JToken>(
+                   It.Is<QueryDefinition>(qd => qd == null),
+                   It.IsAny<string>(),
+                   It.Is<QueryRequestOptions>(ro => !ro.PartitionKey.HasValue)), Times.Once);
         }
 
         [Fact]
@@ -181,19 +279,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         {
             // Arrange
             string itemId = "docid1";
-            Uri itemUri = UriFactory.CreateDocumentUri(DatabaseName, CollectionName, itemId);
 
             string key = "[\"partkey1\"]";
 
-            var serviceMock = new Mock<ICosmosDBService>(MockBehavior.Strict);
+            var serviceMock = new Mock<CosmosClient>(MockBehavior.Strict);
+
+            var mockContainer = new Mock<Container>(MockBehavior.Strict);
 
             serviceMock
-               .Setup(m => m.ReadDocumentAsync(itemUri, It.Is<RequestOptions>(r => r.PartitionKey.ToString() == key)))
-               .ReturnsAsync(new Document { Id = itemId });
+                .Setup(m => m.GetContainer(It.Is<string>(d => d == DatabaseName), It.Is<string>(c => c == CollectionName)))
+                .Returns(mockContainer.Object);
+
+            mockContainer
+                .Setup(m => m.ReadItemAsync<dynamic>(It.Is<string>(id => id == itemId), It.Is<PartitionKey>(pk => pk.ToString() == key), It.IsAny<ItemRequestOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((string id, PartitionKey partitionKey, ItemRequestOptions itemRequestOptions, CancellationToken cancellationToken) =>
+                {
+                    Mock<ItemResponse<dynamic>> mockResponse = new Mock<ItemResponse<dynamic>>();
+                    mockResponse
+                        .Setup(m => m.Resource)
+                        .Returns(new { id = itemId });
+
+                    return mockResponse.Object;
+                });
 
             var factoryMock = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(AttributeConnStr, It.IsAny<ConnectionPolicy>(), It.IsAny<bool>()))
+                .Setup(f => f.CreateService(AttributeConnStr, It.IsAny<CosmosClientOptions>()))
                 .Returns(serviceMock.Object);
 
             var jobject = JObject.FromObject(new QueueData { DocumentId = "docid1", PartitionKey = "partkey1" });
@@ -202,7 +313,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             await RunTestAsync(nameof(CosmosDBEndToEndFunctions.TriggerObject), factoryMock.Object, jobject.ToString());
 
             // Assert
-            factoryMock.Verify(f => f.CreateService(AttributeConnStr, It.IsAny<ConnectionPolicy>(), It.IsAny<bool>()), Times.Once());
+            factoryMock.Verify(f => f.CreateService(AttributeConnStr, It.IsAny<CosmosClientOptions>()), Times.Once());
             Assert.Equal("TriggerObject", _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
         }
 
@@ -360,10 +471,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
                 newItemString = "{}";
 
-                arrayItem = new Document[]
+                arrayItem = new Item[]
                 {
-                    new Document(),
-                    new Document()
+                    new Item(),
+                    new Item()
                 };
 
                 Task.WaitAll(new[]
@@ -380,7 +491,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             [NoAutomaticTrigger]
             public static void Client(
-                [CosmosDB] DocumentClient client,
+                [CosmosDB] CosmosClient client,
                 TraceWriter trace)
             {
                 Assert.NotNull(client);
@@ -391,14 +502,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             [NoAutomaticTrigger]
             public static void Inputs(
                 [QueueTrigger("fakequeue1")] string triggerData,
-                [CosmosDB(DatabaseName, CollectionName, Id = "{QueueTrigger}")] dynamic item1,
-                [CosmosDB(DatabaseName, CollectionName, Id = "docid2", PartitionKey = "{QueueTrigger}")] dynamic item2,
+                [CosmosDB(DatabaseName, CollectionName, Id = "{QueueTrigger}")] Item item1,
+                [CosmosDB(DatabaseName, CollectionName, Id = "docid2", PartitionKey = "{QueueTrigger}")] Item item2,
                 [CosmosDB(DatabaseName, CollectionName, Id = "docid3", PartitionKey = "partkey3")] Item item3,
                 [CosmosDB("%Database%", "%Collection%", Id = "docid4")] JObject item4,
                 [CosmosDB(DatabaseName, CollectionName, Id = "docid5")] string item5,
                 [CosmosDB(DatabaseName, CollectionName, SqlQuery = "some query")] IEnumerable<JObject> query1,
                 [CosmosDB(DatabaseName, CollectionName, SqlQuery = "some %Query% with '{QueueTrigger}' replacements")] IEnumerable<JObject> query2,
                 [CosmosDB(DatabaseName, CollectionName)] JArray query3,
+                [CosmosDB(DatabaseName, CollectionName, PartitionKey = "{QueueTrigger}")] IEnumerable<JObject> query4,
                 TraceWriter trace)
             {
                 Assert.NotNull(item1);
@@ -409,9 +521,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 Assert.NotNull(query1);
                 Assert.NotNull(query2);
                 Assert.NotNull(query3);
+                Assert.NotNull(query4);
 
                 // add some value to item2
-                item2.text = "changed";
+                item2.Text = "changed";
 
                 trace.Warning("Inputs");
             }
@@ -432,7 +545,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         {
             [NoAutomaticTrigger]
             public static void Broken(
-                [CosmosDB] DocumentClient client)
+                [CosmosDB] CosmosClient client)
             {
             }
         }

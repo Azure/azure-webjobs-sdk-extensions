@@ -3,9 +3,9 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace ExtensionsSample
@@ -54,5 +54,11 @@ namespace ExtensionsSample
                 await copyItems.AddAsync(modifiedDocument);
             }
         }
+    }
+
+    public class Document
+    {
+        [JsonProperty("id")]
+        public string Id { get; set; }
     }
 }

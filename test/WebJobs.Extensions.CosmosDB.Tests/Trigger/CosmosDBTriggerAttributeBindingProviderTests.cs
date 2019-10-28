@@ -7,8 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
@@ -17,7 +16,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
@@ -65,21 +63,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             get { return ValidCosmosDBTriggerBindigsPreferredLocations.GetParameters(); }
         }
 
-        public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsMultiMasterParameters
-        {
-            get { return ValidCosmosDBTriggerBindigsMultiMaster.GetParameters(); }
-        }
-
-        public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsUseDefaultJsonSerializationParameters
-        {
-            get { return ValidCosmosDBTriggerBindingsUseDefaultJsonSerialization.GetParameters(); }
-        }
-
         [Theory]
         [MemberData(nameof(InvalidCosmosDBTriggerParameters))]
         public async Task InvalidParameters_Fail(ParameterInfo parameter)
         {
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(_emptyConfig, new TestNameResolver(), _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(_emptyConfig, new TestNameResolver(), _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
             InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None)));
 
@@ -98,15 +86,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 })
                 .Build();
 
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
-            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+            CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
-            Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
-            Assert.Equal(new Uri("https://fromEnvironment"), binding.DocumentCollectionLocation.Uri);
-            Assert.Equal(new Uri("https://fromEnvironment"), binding.LeaseCollectionLocation.Uri);
-            Assert.Empty(binding.DocumentCollectionLocation.ConnectionPolicy.PreferredLocations);
-            Assert.Empty(binding.LeaseCollectionLocation.ConnectionPolicy.PreferredLocations);
+            Assert.Equal(typeof(IReadOnlyCollection<dynamic>), binding.TriggerValueType);
+            Assert.Equal(new Uri("https://fromEnvironment"), binding.MonitoredContainer.Database.Client.Endpoint);
+            Assert.Equal(new Uri("https://fromEnvironment"), binding.LeaseContainer.Database.Client.Endpoint);
+            Assert.Null(binding.MonitoredContainer.Database.Client.ClientOptions.ApplicationPreferredRegions);
+            Assert.Null(binding.LeaseContainer.Database.Client.ClientOptions.ApplicationPreferredRegions);
         }
 
         [Theory]
@@ -124,17 +112,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 })
                 .Build();
 
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
-            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+            CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
-            Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
-            Assert.Equal(new Uri("https://fromSettings"), binding.DocumentCollectionLocation.Uri);
-            Assert.Equal(new Uri("https://fromSettings"), binding.LeaseCollectionLocation.Uri);
-            Assert.Equal("myDatabase", binding.DocumentCollectionLocation.DatabaseName);
-            Assert.Equal("myCollection", binding.DocumentCollectionLocation.CollectionName);
-            Assert.Equal("myDatabase", binding.LeaseCollectionLocation.DatabaseName);
-            Assert.Equal("leases", binding.LeaseCollectionLocation.CollectionName);
+            Assert.Equal(typeof(IReadOnlyCollection<dynamic>), binding.TriggerValueType);
+            Assert.Equal(new Uri("https://fromSettings"), binding.MonitoredContainer.Database.Client.Endpoint);
+            Assert.Equal(new Uri("https://fromSettings"), binding.LeaseContainer.Database.Client.Endpoint);
+            Assert.Equal("myDatabase", binding.MonitoredContainer.Database.Id);
+            Assert.Equal("myCollection", binding.MonitoredContainer.Id);
+            Assert.Equal("myDatabase", binding.LeaseContainer.Database.Id);
+            Assert.Equal("leases", binding.LeaseContainer.Id);
         }
 
         [Theory]
@@ -146,17 +134,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             nameResolver.Values["aDatabase"] = "myDatabase";
             nameResolver.Values["aCollection"] = "myCollection";
 
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(_emptyConfig, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(_emptyConfig, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
-            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+            CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
-            Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
-            Assert.Equal(new Uri("https://fromEnvironment"), binding.DocumentCollectionLocation.Uri);
-            Assert.Equal(new Uri("https://fromEnvironment"), binding.LeaseCollectionLocation.Uri);
-            Assert.Equal("myDatabase-test", binding.DocumentCollectionLocation.DatabaseName);
-            Assert.Equal("myCollection-test", binding.DocumentCollectionLocation.CollectionName);
-            Assert.Equal("myDatabase-test", binding.LeaseCollectionLocation.DatabaseName);
-            Assert.Equal("leases", binding.LeaseCollectionLocation.CollectionName);
+            Assert.Equal(typeof(IReadOnlyCollection<dynamic>), binding.TriggerValueType);
+            Assert.Equal(new Uri("https://fromEnvironment"), binding.MonitoredContainer.Database.Client.Endpoint);
+            Assert.Equal(new Uri("https://fromEnvironment"), binding.LeaseContainer.Database.Client.Endpoint);
+            Assert.Equal("myDatabase-test", binding.MonitoredContainer.Database.Id);
+            Assert.Equal("myCollection-test", binding.MonitoredContainer.Id);
+            Assert.Equal("myDatabase-test", binding.LeaseContainer.Database.Id);
+            Assert.Equal("leases", binding.LeaseContainer.Id);
+            Assert.Equal(string.Empty, binding.ProcessorName);
         }
 
         [Theory]
@@ -174,13 +163,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 })
                 .Build();
 
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
-            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+            CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
-            Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
-            Assert.Equal(new Uri("https://fromSettings"), binding.DocumentCollectionLocation.Uri);
-            Assert.Equal(new Uri("https://fromSettingsLease"), binding.LeaseCollectionLocation.Uri);
+            Assert.Equal(typeof(IReadOnlyCollection<dynamic>), binding.TriggerValueType);
+            Assert.Equal(new Uri("https://fromSettings"), binding.MonitoredContainer.Database.Client.Endpoint);
+            Assert.Equal(new Uri("https://fromSettingsLease"), binding.LeaseContainer.Database.Client.Endpoint);
         }
 
         [Theory]
@@ -196,17 +185,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 .Build();
 
             _options.ConnectionMode = ConnectionMode.Direct;
-            _options.Protocol = Protocol.Tcp;
 
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
-            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+            CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
-            Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
-            Assert.Equal(new Uri("https://fromEnvironment"), binding.DocumentCollectionLocation.Uri);
-            Assert.Equal(new Uri("https://fromEnvironment"), binding.LeaseCollectionLocation.Uri);
-            Assert.Equal(ConnectionMode.Direct, binding.DocumentCollectionLocation.ConnectionPolicy.ConnectionMode);
-            Assert.Equal(Protocol.Tcp, binding.DocumentCollectionLocation.ConnectionPolicy.ConnectionProtocol);
+            Assert.Equal(typeof(IReadOnlyCollection<dynamic>), binding.TriggerValueType);
+            Assert.Equal(new Uri("https://fromEnvironment"), binding.MonitoredContainer.Database.Client.Endpoint);
+            Assert.Equal(new Uri("https://fromEnvironment"), binding.LeaseContainer.Database.Client.Endpoint);
+            Assert.Equal(ConnectionMode.Direct, binding.LeaseContainer.Database.Client.ClientOptions.ConnectionMode);
         }
 
         [Theory]
@@ -216,76 +203,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             var nameResolver = new TestNameResolver();
             nameResolver.Values["regions"] = "East US, North Europe,";
 
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(_emptyConfig, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(_emptyConfig, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
-            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+            CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
-            Assert.Equal(2, binding.DocumentCollectionLocation.ConnectionPolicy.PreferredLocations.Count);
-            Assert.Equal(2, binding.LeaseCollectionLocation.ConnectionPolicy.PreferredLocations.Count);
-            Assert.Equal("East US", binding.DocumentCollectionLocation.ConnectionPolicy.PreferredLocations[0]);
-            Assert.Equal("North Europe", binding.DocumentCollectionLocation.ConnectionPolicy.PreferredLocations[1]);
-            Assert.Equal("East US", binding.LeaseCollectionLocation.ConnectionPolicy.PreferredLocations[0]);
-            Assert.Equal("North Europe", binding.LeaseCollectionLocation.ConnectionPolicy.PreferredLocations[1]);
-            Assert.False(binding.DocumentCollectionLocation.ConnectionPolicy.UseMultipleWriteLocations);
-            Assert.False(binding.LeaseCollectionLocation.ConnectionPolicy.UseMultipleWriteLocations);
-        }
-
-        [Theory]
-        [MemberData(nameof(ValidCosmosDBTriggerBindigsMultiMasterParameters))]
-        public async Task ValidCosmosDBTriggerBindigsMultiMasterParameters_Succeed(ParameterInfo parameter)
-        {
-            var nameResolver = new TestNameResolver();
-            nameResolver.Values["regions"] = "East US, North Europe,";
-
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(_emptyConfig, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
-
-            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
-
-            Assert.False(binding.DocumentCollectionLocation.ConnectionPolicy.UseMultipleWriteLocations);
-            Assert.True(binding.LeaseCollectionLocation.ConnectionPolicy.UseMultipleWriteLocations);
-
-        }   
-
-        [Theory]
-        [MemberData(nameof(ValidCosmosDBTriggerBindingsUseDefaultJsonSerializationParameters))]
-        public async Task ValidCosmosDBTriggerBindingsUseDefaultJsonSerialization_Succeed(ParameterInfo parameter)
-        {
-            var nameResolver = new TestNameResolver();
-
-            var restoreDefaultSettings = JsonConvert.DefaultSettings;
-
-            var defaultSettingsFetched = false;
-            JsonConvert.DefaultSettings = () =>
-            {
-                defaultSettingsFetched = true;
-                return new JsonSerializerSettings();
-            };
-
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(_emptyConfig, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
-
-            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
-
-            Assert.True(defaultSettingsFetched);
-
-            JsonConvert.DefaultSettings = restoreDefaultSettings;
-        }
-
-        [Fact]
-        public void TryAndConvertToDocumentList_Fail()
-        {
-            Assert.False(CosmosDBTriggerBinding.TryAndConvertToDocumentList(null, out IReadOnlyList<Document> convertedValue));
-            Assert.False(CosmosDBTriggerBinding.TryAndConvertToDocumentList("some weird string", out convertedValue));
-            Assert.False(CosmosDBTriggerBinding.TryAndConvertToDocumentList(Guid.NewGuid(), out convertedValue));
+            Assert.Equal(2, binding.MonitoredContainer.Database.Client.ClientOptions.ApplicationPreferredRegions.Count);
+            Assert.Equal(2, binding.LeaseContainer.Database.Client.ClientOptions.ApplicationPreferredRegions.Count);
+            Assert.Equal("East US", binding.MonitoredContainer.Database.Client.ClientOptions.ApplicationPreferredRegions[0]);
+            Assert.Equal("North Europe", binding.MonitoredContainer.Database.Client.ClientOptions.ApplicationPreferredRegions[1]);
+            Assert.Equal("East US", binding.LeaseContainer.Database.Client.ClientOptions.ApplicationPreferredRegions[0]);
+            Assert.Equal("North Europe", binding.LeaseContainer.Database.Client.ClientOptions.ApplicationPreferredRegions[1]);
         }
 
         [Fact]
         public void ResolveTimeSpanFromMilliseconds_Succeed()
         {
             TimeSpan baseTimeSpan = TimeSpan.FromMilliseconds(10);
-            Assert.Equal(CosmosDBTriggerAttributeBindingProvider.ResolveTimeSpanFromMilliseconds("SomeAttribute", baseTimeSpan, null), baseTimeSpan);
+            Assert.Equal(CosmosDBTriggerAttributeBindingProvider<dynamic>.ResolveTimeSpanFromMilliseconds("SomeAttribute", baseTimeSpan, null), baseTimeSpan);
             int otherMilliseconds = 20;
             TimeSpan otherTimeSpan = TimeSpan.FromMilliseconds(otherMilliseconds);
-            Assert.Equal(CosmosDBTriggerAttributeBindingProvider.ResolveTimeSpanFromMilliseconds("SomeAttribute", baseTimeSpan, otherMilliseconds), otherTimeSpan);
+            Assert.Equal(CosmosDBTriggerAttributeBindingProvider<dynamic>.ResolveTimeSpanFromMilliseconds("SomeAttribute", baseTimeSpan, otherMilliseconds), otherTimeSpan);
         }
 
         [Fact]
@@ -293,18 +230,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         {
             int otherMilliseconds = -1;
             TimeSpan baseTimeSpan = TimeSpan.FromMilliseconds(10);
-            Assert.Throws<InvalidOperationException>(() => CosmosDBTriggerAttributeBindingProvider.ResolveTimeSpanFromMilliseconds("SomeAttribute", baseTimeSpan, otherMilliseconds));
-        }
-
-        [Fact]
-        public void TryAndConvertToDocumentList_Succeed()
-        {
-            Assert.True(CosmosDBTriggerBinding.TryAndConvertToDocumentList("[{\"id\":\"123\"}]", out IReadOnlyList<Document> convertedValue));
-            Assert.Equal("123", convertedValue[0].Id);
-
-            IReadOnlyList<Document> triggerValue = new List<Document>() { new Document() { Id = "123" } };
-            Assert.True(CosmosDBTriggerBinding.TryAndConvertToDocumentList(triggerValue, out convertedValue));
-            Assert.Equal(triggerValue[0].Id, convertedValue[0].Id);
+            Assert.Throws<InvalidOperationException>(() => CosmosDBTriggerAttributeBindingProvider<dynamic>.ResolveTimeSpanFromMilliseconds("SomeAttribute", baseTimeSpan, otherMilliseconds));
         }
 
         [Theory]
@@ -325,17 +251,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 })
                 .Build();
 
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
-            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+            CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
             // This test uses the default for ConnectionStringSetting, but overrides LeaseConnectionStringSetting
-            Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
-            Assert.Equal(new Uri("https://fromEnvironment"), binding.DocumentCollectionLocation.Uri);
-            Assert.Equal(new Uri("https://overridden"), binding.LeaseCollectionLocation.Uri);
-            Assert.Equal("someLeasePrefix", binding.ChangeFeedProcessorOptions.LeasePrefix);
-            Assert.Null(binding.ChangeFeedProcessorOptions.MaxItemCount);
-            Assert.False(binding.ChangeFeedProcessorOptions.StartFromBeginning);
+            Assert.Equal(typeof(IReadOnlyCollection<dynamic>), binding.TriggerValueType);
+            Assert.Equal(new Uri("https://fromEnvironment"), binding.MonitoredContainer.Database.Client.Endpoint);
+            Assert.Equal(new Uri("https://overridden"), binding.LeaseContainer.Database.Client.Endpoint);
+            Assert.Equal("someLeasePrefix", binding.ProcessorName);
+            Assert.False(binding.CosmosDBAttribute.StartFromBeginning);
         }
 
         [Theory]
@@ -350,18 +275,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 })
                 .Build();
 
-            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(config, new TestNameResolver(), _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(config, new TestNameResolver(), _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
-            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+            CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
             CosmosDBTriggerAttribute cosmosDBTriggerAttribute = parameter.GetCustomAttribute<CosmosDBTriggerAttribute>(inherit: false);
 
-            Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
-            Assert.Equal(new Uri("https://fromSettings"), binding.DocumentCollectionLocation.Uri);
-            Assert.Equal(new Uri("https://fromSettings"), binding.LeaseCollectionLocation.Uri);
-            Assert.Equal(cosmosDBTriggerAttribute.MaxItemsPerInvocation, binding.ChangeFeedProcessorOptions.MaxItemCount);
-            Assert.Equal(cosmosDBTriggerAttribute.StartFromBeginning, binding.ChangeFeedProcessorOptions.StartFromBeginning);
-            Assert.Equal(cosmosDBTriggerAttribute.StartFromTime, binding.ChangeFeedProcessorOptions.StartTime?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss%K"));
+            Assert.Equal(typeof(IReadOnlyCollection<dynamic>), binding.TriggerValueType);
+            Assert.Equal(new Uri("https://fromSettings"), binding.MonitoredContainer.Database.Client.Endpoint);
+            Assert.Equal(new Uri("https://fromSettings"), binding.LeaseContainer.Database.Client.Endpoint);
         }
 
         private static ParameterInfo GetFirstParameter(Type type, string methodName)
@@ -374,17 +296,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
         private static CosmosDBExtensionConfigProvider CreateExtensionConfigProvider(CosmosDBOptions options)
         {
-            return new CosmosDBExtensionConfigProvider(new OptionsWrapper<CosmosDBOptions>(options), new DefaultCosmosDBServiceFactory(), _emptyConfig, new TestNameResolver(), NullLoggerFactory.Instance);
+            return new CosmosDBExtensionConfigProvider(new OptionsWrapper<CosmosDBOptions>(options), new DefaultCosmosDBServiceFactory(), new DefaultCosmosDBSerializerFactory(), _emptyConfig, new TestNameResolver(), NullLoggerFactory.Instance);
         }
 
         // These will use the default for ConnectionStringSetting, but override LeaseConnectionStringSetting
         private static class ValidCosmosDBTriggerBindigsWithLeaseHostOptions
         {
-            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", LeaseConnectionStringSetting = "LeaseConnectionString", LeaseCollectionPrefix = "someLeasePrefix")] IReadOnlyList<Document> docs)
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", LeaseConnectionStringSetting = "LeaseConnectionString", LeaseCollectionPrefix = "someLeasePrefix")] IReadOnlyList<dynamic> docs)
             {
             }
 
-            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", LeaseConnectionStringSetting = "LeaseConnectionString", LeaseCollectionPrefix = "%dynamicLeasePrefix%")] IReadOnlyList<Document> docs)
+            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", LeaseConnectionStringSetting = "LeaseConnectionString", LeaseCollectionPrefix = "%dynamicLeasePrefix%")] IReadOnlyList<dynamic> docs)
             {
             }
 
@@ -403,15 +325,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         // These will set ConnectionStringSetting, which LeaseConnectionStringSetting should also use by default
         private static class ValidCosmosDBTriggerBindigsWithChangeFeedOptions
         {
-            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", MaxItemsPerInvocation = 10, StartFromBeginning = true)] IReadOnlyList<Document> docs)
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", MaxItemsPerInvocation = 10, StartFromBeginning = true)] IReadOnlyList<dynamic> docs)
             {
             }
 
-            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", MaxItemsPerInvocation = 10, StartFromTime = "2020-11-25T22:36:29Z")] IReadOnlyList<Document> docs)
+            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", MaxItemsPerInvocation = 10, StartFromTime = "2020-11-25T22:36:29Z")] IReadOnlyList<dynamic> docs)
             {
             }
 
-            public static void Func3([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", MaxItemsPerInvocation = 10, StartFromBeginning = false, StartFromTime = "2020-11-25T22:36:29Z")] IReadOnlyList<Document> docs)
+            public static void Func3([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", MaxItemsPerInvocation = 10, StartFromBeginning = false, StartFromTime = "2020-11-25T22:36:29Z")] IReadOnlyList<dynamic> docs)
             {
             }
 
@@ -423,38 +345,38 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 {
                     new[] { GetFirstParameter(type, "Func1") },
                     new[] { GetFirstParameter(type, "Func2") },
-                    new[] { GetFirstParameter(type, "Func3") },
+                    new[] { GetFirstParameter(type, "Func3") }
                 };
             }
         }
 
         private static class InvalidCosmosDBTriggerBindings
         {
-            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "notAConnectionString")] IReadOnlyList<Document> docs)
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "notAConnectionString")] IReadOnlyList<dynamic> docs)
             {
             }
 
-            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "notAConnectionString", LeaseConnectionStringSetting = "notAConnectionString", LeaseDatabaseName = "aDatabase", LeaseCollectionName = "aCollection")] IReadOnlyList<Document> docs)
+            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "notAConnectionString", LeaseConnectionStringSetting = "notAConnectionString", LeaseDatabaseName = "aDatabase", LeaseCollectionName = "aCollection")] IReadOnlyList<dynamic> docs)
             {
             }
 
-            public static void Func3([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", LeaseConnectionStringSetting = "CosmosDBConnectionString", LeaseDatabaseName = "aDatabase", LeaseCollectionName = "aCollection")] IReadOnlyList<Document> docs)
+            public static void Func3([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", LeaseConnectionStringSetting = "CosmosDBConnectionString", LeaseDatabaseName = "aDatabase", LeaseCollectionName = "aCollection")] IReadOnlyList<dynamic> docs)
             {
             }
 
-            public static void Func4([CosmosDBTrigger("aDatabase", "leases", ConnectionStringSetting = "CosmosDBConnectionString")] IReadOnlyList<Document> docs)
+            public static void Func4([CosmosDBTrigger("aDatabase", "leases", ConnectionStringSetting = "CosmosDBConnectionString")] IReadOnlyList<dynamic> docs)
             {
             }
 
-            public static void Func5([CosmosDBTrigger("aDatabase", "leases", ConnectionStringSetting = "CosmosDBConnectionString", StartFromBeginning = true, StartFromTime = "2020-11-25T22:36:29Z")] IReadOnlyList<Document> docs)
+            public static void Func5([CosmosDBTrigger("aDatabase", "leases", ConnectionStringSetting = "CosmosDBConnectionString", StartFromBeginning = true, StartFromTime = "2020-11-25T22:36:29Z")] IReadOnlyList<dynamic> docs)
             {
             }
 
-            public static void Func6([CosmosDBTrigger("aDatabase", "leases", ConnectionStringSetting = "CosmosDBConnectionString", StartFromTime = "blah")] IReadOnlyList<Document> docs)
+            public static void Func6([CosmosDBTrigger("aDatabase", "leases", ConnectionStringSetting = "CosmosDBConnectionString", StartFromTime = "blah")] IReadOnlyList<dynamic> docs)
             {
             }
 
-            public static void Func7([CosmosDBTrigger("aDatabase", "leases", ConnectionStringSetting = "CosmosDBConnectionString", StartFromBeginning = true, StartFromTime = "blah")] IReadOnlyList<Document> docs)
+            public static void Func7([CosmosDBTrigger("aDatabase", "leases", ConnectionStringSetting = "CosmosDBConnectionString", StartFromBeginning = true, StartFromTime = "blah")] IReadOnlyList<dynamic> docs)
             {
             }
 
@@ -470,18 +392,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                     new[] { GetFirstParameter(type, "Func4") },
                     new[] { GetFirstParameter(type, "Func5") },
                     new[] { GetFirstParameter(type, "Func6") },
-                    new[] { GetFirstParameter(type, "Func7") },
+                    new[] { GetFirstParameter(type, "Func7") }
                 };
             }
         }
 
         private static class ValidCosmosDBTriggerBindingsWithAppSettings
         {
-            public static void Func1([CosmosDBTrigger("%aDatabase%", "%aCollection%", ConnectionStringSetting = "CosmosDBConnectionString")] IReadOnlyList<Document> docs)
+            public static void Func1([CosmosDBTrigger("%aDatabase%", "%aCollection%", ConnectionStringSetting = "CosmosDBConnectionString")] IReadOnlyList<dynamic> docs)
             {
             }
 
-            public static void Func2([CosmosDBTrigger("%aDatabase%", "%aCollection%", ConnectionStringSetting = "CosmosDBConnectionString", LeaseConnectionStringSetting = "CosmosDBConnectionString", LeaseDatabaseName = "%aDatabase%")] IReadOnlyList<Document> docs)
+            public static void Func2([CosmosDBTrigger("%aDatabase%", "%aCollection%", ConnectionStringSetting = "CosmosDBConnectionString", LeaseConnectionStringSetting = "CosmosDBConnectionString", LeaseDatabaseName = "%aDatabase%")] IReadOnlyList<dynamic> docs)
             {
             }
 
@@ -504,11 +426,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
         private static class ValidCosmosDBTriggerBindigsDifferentConnections
         {
-            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", LeaseConnectionStringSetting = "LeaseCosmosDBConnectionString")] IReadOnlyList<Document> docs)
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", LeaseConnectionStringSetting = "LeaseCosmosDBConnectionString")] IReadOnlyList<dynamic> docs)
             {
             }
 
-            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", LeaseConnectionStringSetting = "LeaseCosmosDBConnectionString", LeaseDatabaseName = "aDatabase", LeaseCollectionName = "aLeaseCollection")] IReadOnlyList<Document> docs)
+            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", LeaseConnectionStringSetting = "LeaseCosmosDBConnectionString", LeaseDatabaseName = "aDatabase", LeaseCollectionName = "aLeaseCollection")] IReadOnlyList<dynamic> docs)
             {
             }
 
@@ -526,7 +448,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
         private static class ValidCosmosDBTriggerBindigsWithEnvironment
         {
-            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection")] IReadOnlyList<Document> docs)
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection")] IReadOnlyList<dynamic> docs)
             {
             }
 
@@ -534,7 +456,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             {
             }
 
-            public static void Func3([CosmosDBTrigger("aDatabase", "aCollection", LeaseDatabaseName = "aDatabase", LeaseCollectionName = "aLeaseCollection")] IReadOnlyList<Document> docs)
+            public static void Func3([CosmosDBTrigger("aDatabase", "aCollection", LeaseDatabaseName = "aDatabase", LeaseCollectionName = "aLeaseCollection")] IReadOnlyList<dynamic> docs)
             {
             }
 
@@ -553,7 +475,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
         private static class ValidCosmosDBTriggerBindingsWithDatabaseAndCollectionSettings
         {
-            public static void Func1([CosmosDBTrigger("%aDatabase%-test", "%aCollection%-test")] IReadOnlyList<Document> docs)
+            public static void Func1([CosmosDBTrigger("%aDatabase%-test", "%aCollection%-test")] IReadOnlyList<dynamic> docs)
             {
             }
 
@@ -561,7 +483,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             {
             }
 
-            public static void Func3([CosmosDBTrigger("%aDatabase%-test", "%aCollection%-test", LeaseDatabaseName = "%aDatabase%-test")] IReadOnlyList<Document> docs)
+            public static void Func3([CosmosDBTrigger("%aDatabase%-test", "%aCollection%-test", LeaseDatabaseName = "%aDatabase%-test")] IReadOnlyList<dynamic> docs)
             {
             }
 
@@ -580,51 +502,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
         private static class ValidCosmosDBTriggerBindigsPreferredLocations
         {
-            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", PreferredLocations = "East US, North Europe,")] IReadOnlyList<Document> docs)
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", PreferredLocations = "East US, North Europe,")] IReadOnlyList<dynamic> docs)
             {
             }
 
-            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", PreferredLocations = "%regions%")] IReadOnlyList<Document> docs)
+            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", PreferredLocations = "%regions%")] IReadOnlyList<dynamic> docs)
             {
             }
 
             public static IEnumerable<ParameterInfo[]> GetParameters()
             {
                 var type = typeof(ValidCosmosDBTriggerBindigsPreferredLocations);
-
-                return new[]
-                {
-                    new[] { GetFirstParameter(type, "Func1") }
-                };
-            }
-        }
-
-        private static class ValidCosmosDBTriggerBindigsMultiMaster
-        {
-            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", UseMultipleWriteLocations = true)] IReadOnlyList<Document> docs)
-            {
-            }
-
-            public static IEnumerable<ParameterInfo[]> GetParameters()
-            {
-                var type = typeof(ValidCosmosDBTriggerBindigsMultiMaster);
-
-                return new[]
-                {
-                    new[] { GetFirstParameter(type, "Func1") }
-                };
-            }
-        }
-
-        private static class ValidCosmosDBTriggerBindingsUseDefaultJsonSerialization
-        {
-            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", UseDefaultJsonSerialization = true)] IReadOnlyList<Document> docs)
-            {
-            }
-
-            public static IEnumerable<ParameterInfo[]> GetParameters()
-            {
-                var type = typeof(ValidCosmosDBTriggerBindingsUseDefaultJsonSerialization);
 
                 return new[]
                 {

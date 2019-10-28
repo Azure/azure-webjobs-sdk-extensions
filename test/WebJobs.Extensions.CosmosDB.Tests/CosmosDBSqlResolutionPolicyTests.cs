@@ -14,10 +14,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         public void TemplateBind_MultipleParameters()
         {
             // Arrange
+            string query = "SELECT * FROM c WHERE c.id = {foo} AND c.value = {bar}";
             PropertyInfo propInfo = null;
-            CosmosDBAttribute resolvedAttribute = new CosmosDBAttribute();
+            CosmosDBAttribute resolvedAttribute = new CosmosDBAttribute() { SqlQuery = query };
             BindingTemplate bindingTemplate =
-                BindingTemplate.FromString("SELECT * FROM c WHERE c.id = {foo} AND c.value = {bar}");
+                BindingTemplate.FromString(query);
             Dictionary<string, object> bindingData = new Dictionary<string, object>();
             bindingData.Add("foo", "1234");
             bindingData.Add("bar", "5678");
@@ -27,8 +28,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             string result = policy.TemplateBind(propInfo, resolvedAttribute, bindingTemplate, bindingData);
 
             // Assert
-            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@foo" && p.Value.ToString() == "1234");
-            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@bar" && p.Value.ToString() == "5678");
+            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Item1 == "@foo" && p.Item2.ToString() == "1234");
+            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Item1 == "@bar" && p.Item2.ToString() == "5678");
+
             Assert.Equal("SELECT * FROM c WHERE c.id = @foo AND c.value = @bar", result);
         }
 
@@ -36,10 +38,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         public void TemplateBind_DuplicateParameters()
         {
             // Arrange
+            string query = "SELECT * FROM c WHERE c.id = {foo} AND c.value = {foo}";
             PropertyInfo propInfo = null;
-            CosmosDBAttribute resolvedAttribute = new CosmosDBAttribute();
+            CosmosDBAttribute resolvedAttribute = new CosmosDBAttribute() { SqlQuery = query };
             BindingTemplate bindingTemplate =
-                BindingTemplate.FromString("SELECT * FROM c WHERE c.id = {foo} AND c.value = {foo}");
+                BindingTemplate.FromString(query);
             Dictionary<string, object> bindingData = new Dictionary<string, object>();
             bindingData.Add("foo", "1234");
             CosmosDBSqlResolutionPolicy policy = new CosmosDBSqlResolutionPolicy();
@@ -48,7 +51,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             string result = policy.TemplateBind(propInfo, resolvedAttribute, bindingTemplate, bindingData);
 
             // Assert
-            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Name == "@foo" && p.Value.ToString() == "1234");
+            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Item1 == "@foo" && p.Item2.ToString() == "1234");
             Assert.Equal("SELECT * FROM c WHERE c.id = @foo AND c.value = @foo", result);
         }
     }

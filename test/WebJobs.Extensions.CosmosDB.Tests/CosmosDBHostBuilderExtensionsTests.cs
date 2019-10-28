@@ -3,7 +3,10 @@
 
 using System;
 using System.Collections.Generic;
-using Microsoft.Azure.Documents.Client;
+using System.IO;
+using System.Linq;
+using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Extensions.Configuration.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -26,10 +29,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                      {
                          InitialData = new Dictionary<string, string>
                         {
-                            { "AzureWebJobs:extensions:cosmosDB:Protocol", "Tcp" },
-                            { "AzureWebJobs:extensions:CosmosDB:LeaseOptions:leaseRenewInterval", "11:11:11" },
-                            { "AzureWebJobs:extensions:CosmosDB:LeaseOptions:LeasePrefix", "pre1" },
-                            { "AzureWebJobs:extensions:cosmosdb:leaseoptions:CheckpointFrequency:ProcessedDocumentCount", "1234" }
+                            { "AzureWebJobs:extensions:cosmosDB:ConnectionMode", "Direct" }
                         }
                      };
 
@@ -39,19 +39,79 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                  {
                      builder.AddCosmosDB();
                  })
+                .Build();
+
+            var options = host.Services.GetService<IOptions<CosmosDBOptions>>().Value;
+
+            Assert.Equal(ConnectionMode.Direct, options.ConnectionMode);
+        }
+
+        [Fact]
+        public void ConfigurationBindsToOptions_WithConfigureServices()
+        {
+            IHost host = new HostBuilder()
+                 .ConfigureWebJobs(builder =>
+                 {
+                     builder.AddCosmosDB();
+                 })
                 .ConfigureServices(s =>
                 {
                     // Verifies that you can modify the bound options
-                    s.Configure<CosmosDBOptions>(o => o.LeaseOptions.LeasePrefix = "pre2");
+                    s.Configure<CosmosDBOptions>(o => o.ConnectionMode = ConnectionMode.Direct);
                 })
                 .Build();
 
             var options = host.Services.GetService<IOptions<CosmosDBOptions>>().Value;
 
-            Assert.Equal(Protocol.Tcp, options.Protocol);
-            Assert.Equal(TimeSpan.Parse("11:11:11"), options.LeaseOptions.LeaseRenewInterval);
-            Assert.Equal("pre2", options.LeaseOptions.LeasePrefix);
-            Assert.Equal(1234, options.LeaseOptions.CheckpointFrequency.ProcessedDocumentCount);
+            Assert.Equal(ConnectionMode.Direct, options.ConnectionMode);
+        }
+
+        [Fact]
+        public void ConfigurationBindsToOptions_WithSerializer()
+        {
+            CustomFactory customFactory = new CustomFactory();
+            IHost host = new HostBuilder()
+                 .ConfigureWebJobs(builder =>
+                 {
+                     builder.AddCosmosDB();
+                 })
+                .ConfigureServices(s =>
+                {
+                    s.AddSingleton<ICosmosDBSerializerFactory>(customFactory);
+                })
+                .Build();
+
+            var extensionConfig = host.Services.GetServices<IExtensionConfigProvider>().Single();
+            Assert.NotNull(extensionConfig);
+            Assert.IsType<CosmosDBExtensionConfigProvider>(extensionConfig);
+
+            CosmosDBExtensionConfigProvider cosmosDBExtensionConfigProvider = (CosmosDBExtensionConfigProvider)extensionConfig;
+            CosmosClient dummyClient = cosmosDBExtensionConfigProvider.GetService("AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;");
+            Assert.True(customFactory.CreateWasCalled);
+        }
+
+        private class CustomFactory : ICosmosDBSerializerFactory
+        {
+            public bool CreateWasCalled { get; private set; } = false;
+
+            public CosmosSerializer CreateSerializer()
+            {
+                this.CreateWasCalled = true;
+                return new CustomSerializer();
+            }
+        }
+
+        private class CustomSerializer : CosmosSerializer
+        {
+            public override T FromStream<T>(Stream stream)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override Stream ToStream<T>(T input)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

@@ -2,15 +2,15 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.Azure.Documents;
+using System.Collections.Generic;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
-using Microsoft.Azure.WebJobs.Hosting;
 
 namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
-    /// Attribute used to bind to an Azure CosmosDB collection.
+    /// Attribute used to bind to an Azure Cosmos DB account.
     /// </summary>
     /// <remarks>
     /// The method parameter type can be one of the following:
@@ -35,8 +35,8 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
-        /// <param name="databaseName">The CosmosDB database name.</param>
-        /// <param name="collectionName">The CosmosDB collection name.</param>
+        /// <param name="databaseName">The Azure Cosmos database name.</param>
+        /// <param name="collectionName">The Azure Cosmos container name.</param>
         public CosmosDBAttribute(string databaseName, string collectionName)
         {
             DatabaseName = databaseName;
@@ -44,44 +44,42 @@ namespace Microsoft.Azure.WebJobs
         }
 
         /// <summary>
-        /// The name of the database to which the parameter applies.        
+        /// Gets the name of the database to which the parameter applies.        
         /// May include binding parameters.
         /// </summary>
         [AutoResolve]
         public string DatabaseName { get; private set; }
 
         /// <summary>
-        /// The name of the collection to which the parameter applies. 
+        /// Gets the name of the collection to which the parameter applies. 
         /// May include binding parameters.
         /// </summary>
         [AutoResolve]
         public string CollectionName { get; private set; }
 
         /// <summary>
-        /// Optional.
-        /// Only applies to output bindings.
-        /// If true, the database and collection will be automatically created if they do not exist.
+        /// Gets or sets a value indicating whether the database and collection will be automatically created if they do not exist.
         /// </summary>
+        /// <remarks>
+        /// Only applies to output bindings.
+        /// </remarks>
         public bool CreateIfNotExists { get; set; }
 
         /// <summary>
-        /// Optional. A string value indicating the app setting to use as the CosmosDB connection string, if different
-        /// than the one specified in the <see cref="CosmosDBOptions"/>.
+        /// Gets or sets the connection string for the service containing the collection to monitor.
         /// </summary>
         [ConnectionString]
         public string ConnectionStringSetting { get; set; }
 
         /// <summary>
-        /// Optional. The Id of the document to retrieve from the collection.
+        /// Gets or sets the Id of the document to retrieve from the collection.
         /// May include binding parameters.
         /// </summary>
         [AutoResolve]
         public string Id { get; set; }
 
         /// <summary>
-        /// Optional.
-        /// When specified on an output binding and <see cref="CreateIfNotExists"/> is true, defines the partition key 
-        /// path for the created collection.
+        /// Gets or sets the partition key path to be used if <see cref="CreateIfNotExists"/> is true on an output binding.
         /// When specified on an input binding, specifies the partition key value for the lookup.
         /// May include binding parameters.
         /// </summary>
@@ -89,49 +87,28 @@ namespace Microsoft.Azure.WebJobs
         public string PartitionKey { get; set; }
 
         /// <summary>
-        /// Optional.
-        /// When specified on an output binding and <see cref="CreateIfNotExists"/> is true, defines the throughput of the created
+        /// Gets or sets the throughput to be used when creating the collection if <see cref="CreateIfNotExists"/> is true.
         /// collection.
         /// </summary>
-        public int CollectionThroughput { get; set; }
+        public int? CollectionThroughput { get; set; }
 
         /// <summary>
-        /// Optional.
-        /// When specified on an input binding using an <see cref="System.Collections.Generic.IEnumerable{T}"/>, defines the query to run against the collection. 
+        /// Gets or sets a sql query expression for an input binding to execute on the collection and produce results.
         /// May include binding parameters.
         /// </summary>
         [AutoResolve(ResolutionPolicyType = typeof(CosmosDBSqlResolutionPolicy))]
         public string SqlQuery { get; set; }
 
         /// <summary>
-        /// Optional.
-        /// Enable to use with Multi Master accounts.
-        /// </summary>
-        public bool UseMultipleWriteLocations { get; set; }
-
-        /// <summary>
-        /// Optional.
-        /// Enables the use of JsonConvert.DefaultSettings in the monitored Azure Cosmos DB collection.
-        /// <remarks>
-        /// This setting only applies to the monitored collection and the consumer to setup the serialization used in the monitored collection.
-        /// The JsonConvert.DefaultSettings must be set during the initialization process.
-        /// This is achieved by deriving a class from <see cref="CosmosDBWebJobsStartup"/> and adding a <see cref="WebJobsStartupAttribute"/>
-        /// to the assembly that specifies the derived class
-        /// </remarks>
-        /// </summary>
-        public bool UseDefaultJsonSerialization { get; set; }
-
-        /// <summary>
-        /// Optional.
-        /// Defines preferred locations (regions) for geo-replicated database accounts in the Azure Cosmos DB service.
+        /// Gets or sets the preferred locations (regions) for geo-replicated database accounts in the Azure Cosmos DB service.
         /// Values should be comma-separated.
         /// </summary>
         /// <example>
-        /// PreferredLocations = "East US,South Central US,North Europe"
+        /// PreferredLocations = "East US,South Central US,North Europe".
         /// </example>
         [AutoResolve]
         public string PreferredLocations { get; set; }
 
-        internal SqlParameterCollection SqlQueryParameters { get; set; }
+        internal IEnumerable<(string, object)> SqlQueryParameters { get; set; }
     }
 }

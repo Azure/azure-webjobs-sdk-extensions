@@ -3,13 +3,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
 using System.Reflection;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.Client;
+using System.Threading;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Extensions.Configuration;
@@ -24,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
     internal static class CosmosDBTestUtility
     {
         public const string DatabaseName = "ItemDB";
-        public const string CollectionName = "ItemCollection";
+        public const string ContainerName = "ItemCollection";
 
         // Runs the standard options pipeline for initialization
         public static IOptions<CosmosDBOptions> InitializeOptions(string defaultConnectionString, string optionsConnectionString)
@@ -60,45 +59,74 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             return builder.Build().Services.GetService<IOptions<CosmosDBOptions>>();
         }
 
-        public static void SetupCollectionMock(Mock<ICosmosDBService> mockService, string partitionKeyPath = null, int throughput = 0)
+        public static Mock<Container> SetupCollectionMock(Mock<CosmosClient> mockService, Mock<Database> mockDatabase, string partitionKeyPath = null, int throughput = 0)
         {
-            Uri databaseUri = UriFactory.CreateDatabaseUri(DatabaseName);
+            var mockContainer = new Mock<Container>(MockBehavior.Strict);
 
-            var expectedPaths = new List<string>();
-            if (!string.IsNullOrEmpty(partitionKeyPath))
-            {
-                expectedPaths.Add(partitionKeyPath);
-            }
+            mockService
+               .Setup(m => m.GetDatabase(It.Is<string>(d => d == DatabaseName)))
+               .Returns(mockDatabase.Object);
+
+            var response = new Mock<ContainerResponse>();
+            response
+                .Setup(m => m.Container)
+                .Returns(mockContainer.Object);
+
+            mockDatabase
+                .Setup(db => db.GetContainer(It.Is<string>(i => i == ContainerName)))
+                .Returns(mockContainer.Object);
+
+            mockContainer
+                .Setup(c => c.ReadContainerAsync(It.IsAny<ContainerRequestOptions>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new CosmosException("test", HttpStatusCode.NotFound, 0, string.Empty, 0));
 
             if (throughput == 0)
             {
-                mockService
-                    .Setup(m => m.CreateDocumentCollectionIfNotExistsAsync(databaseUri,
-                        It.Is<DocumentCollection>(d => d.Id == CollectionName && Enumerable.SequenceEqual(d.PartitionKey.Paths, expectedPaths)),
-                        null))
-                    .ReturnsAsync(new DocumentCollection());
+                mockDatabase
+                    .Setup(m => m.CreateContainerAsync(It.Is<string>(i => i == ContainerName),
+                        It.Is<string>(p => p == partitionKeyPath),
+                        It.Is<int?>(t => t == null),
+                        It.IsAny<RequestOptions>(),
+                        It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(response.Object);
             }
             else
             {
-                mockService
-                    .Setup(m => m.CreateDocumentCollectionIfNotExistsAsync(databaseUri,
-                        It.Is<DocumentCollection>(d => d.Id == CollectionName && Enumerable.SequenceEqual(d.PartitionKey.Paths, expectedPaths)),
-                        It.Is<RequestOptions>(r => r.OfferThroughput == throughput)))
-                    .ReturnsAsync(new DocumentCollection());
+                mockDatabase
+                    .Setup(m => m.CreateContainerAsync(It.Is<string>(i => i == ContainerName),
+                        It.Is<string>(p => p == partitionKeyPath),
+                        It.Is<int?>(t => t == throughput),
+                        It.IsAny<RequestOptions>(),
+                        It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(response.Object);
             }
+
+            return mockContainer;
         }
 
-        public static void SetupDatabaseMock(Mock<ICosmosDBService> mockService)
+        public static Mock<Database> SetupDatabaseMock(Mock<CosmosClient> mockService)
         {
+            Mock<Database> database = new Mock<Database>();
+            database
+                .Setup(m => m.Id)
+                .Returns(DatabaseName);
+
+            Mock<DatabaseResponse> response = new Mock<DatabaseResponse>();
+            response
+                .Setup(m => m.Database)
+                .Returns(database.Object);
+
             mockService
-                .Setup(m => m.CreateDatabaseIfNotExistsAsync(It.Is<Database>(d => d.Id == DatabaseName)))
-                .ReturnsAsync(new Database());
+                .Setup(m => m.CreateDatabaseIfNotExistsAsync(It.Is<string>(d => d == DatabaseName), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(response.Object);
+
+            return database;
         }
 
-        public static CosmosDBContext CreateContext(ICosmosDBService service, bool createIfNotExists = false,
+        public static CosmosDBContext CreateContext(CosmosClient service, bool createIfNotExists = false,
             string partitionKeyPath = null, int throughput = 0)
         {
-            CosmosDBAttribute attribute = new CosmosDBAttribute(CosmosDBTestUtility.DatabaseName, CosmosDBTestUtility.CollectionName)
+            CosmosDBAttribute attribute = new CosmosDBAttribute(CosmosDBTestUtility.DatabaseName, CosmosDBTestUtility.ContainerName)
             {
                 CreateIfNotExists = createIfNotExists,
                 PartitionKey = partitionKeyPath,
@@ -117,16 +145,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             return enumerable.AsQueryable().OrderBy(keySelector);
         }
 
-        public static DocumentClientException CreateDocumentClientException(HttpStatusCode status)
+        public static CosmosException CreateDocumentClientException(HttpStatusCode status)
         {
-            Type t = typeof(DocumentClientException);
-
-            var constructor = t.GetConstructor(
-               BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic,
-               null, new[] { typeof(string), typeof(Exception), typeof(HttpStatusCode?), typeof(Uri), typeof(string) }, null);
-
-            object ex = constructor.Invoke(new object[] { string.Empty, new Exception(), status, null, string.Empty });
-            return ex as DocumentClientException;
+            return new CosmosException("error!", status, 0, string.Empty, 0);
         }
 
         public static ParameterInfo GetInputParameter<T>()
@@ -186,14 +207,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         }
 
         private static void ItemInputParameters(
-            [CosmosDB(Id = "abc123")] Document document,
             [CosmosDB(Id = "abc123")] Item poco,
             [CosmosDB(Id = "abc123")] object obj)
         {
         }
 
         private static void ClientInputParameters(
-            [CosmosDB] DocumentClient client)
+            [CosmosDB] CosmosClient client)
         {
         }
     }

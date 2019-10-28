@@ -5,8 +5,7 @@ using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -41,48 +40,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public async Task<object> GetValueAsync()
         {
-            Uri documentUri = UriFactory.CreateDocumentUri(_context.ResolvedAttribute.DatabaseName, _context.ResolvedAttribute.CollectionName, _context.ResolvedAttribute.Id);
-            RequestOptions options = null;
+            T document = default(T);
 
-            if (!string.IsNullOrEmpty(_context.ResolvedAttribute.PartitionKey))
-            {
-                options = new RequestOptions
-                {
-                    PartitionKey = new PartitionKey(_context.ResolvedAttribute.PartitionKey)
-                };
-            }
-
-            Document document = null;
-
-            try
-            {
-                document = await _context.Service.ReadDocumentAsync(documentUri, options);
-            }
-            catch (DocumentClientException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-            {
-                // ignore not found; we'll return null below
-            }
-
-            if (document == null)
-            {
-                return document;
-            }
-
-            T item = null;
+            PartitionKey partitionKey = _context.ResolvedAttribute.PartitionKey == null ? PartitionKey.None : new PartitionKey(_context.ResolvedAttribute.PartitionKey);
 
             // Strings need to be handled differently.
-            if (typeof(T) == typeof(string))
+            if (typeof(T) != typeof(string))
             {
-                _originalItem = JObject.FromObject(document);
-                item = _originalItem.ToString(Formatting.None) as T;
+                try
+                {
+                    document = await _context.Service.GetContainer(_context.ResolvedAttribute.DatabaseName, _context.ResolvedAttribute.CollectionName)
+                        .ReadItemAsync<T>(_context.ResolvedAttribute.Id, partitionKey);
+
+                    _originalItem = JObject.FromObject(document);
+                }
+                catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+                {
+                    // ignore not found; we'll return null below
+                }
             }
             else
             {
-                item = (T)(dynamic)document;
-                _originalItem = JObject.FromObject(item);
+                JObject jObject = await _context.Service.GetContainer(_context.ResolvedAttribute.DatabaseName, _context.ResolvedAttribute.CollectionName)
+                        .ReadItemAsync<JObject>(_context.ResolvedAttribute.Id, partitionKey);
+                _originalItem = jObject;
+
+                document = _originalItem.ToString(Formatting.None) as T;
             }
 
-            return item;
+            return document;
         }
 
         public string ToInvokeString()
@@ -111,7 +97,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     // make sure it's not the Id that has changed
                     if (!string.Equals(originalId, currentId, StringComparison.Ordinal))
                     {
-                        throw new InvalidOperationException("Cannot update the 'Id' property.");
+                        throw new InvalidOperationException("Cannot update the 'id' property.");
                     }
                 }
                 else
@@ -121,8 +107,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     throw new InvalidOperationException(string.Format("The document must have an 'id' property."));
                 }
 
-                Uri documentUri = UriFactory.CreateDocumentUri(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName, originalId);
-                await context.Service.ReplaceDocumentAsync(documentUri, newItem);
+                Container container = context.Service.GetContainer(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName);
+                await container.ReplaceItemAsync<T>(newItem, originalId);
             }
         }
 

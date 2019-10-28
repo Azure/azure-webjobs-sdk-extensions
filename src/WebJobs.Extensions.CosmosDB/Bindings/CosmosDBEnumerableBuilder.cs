@@ -1,12 +1,10 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Cosmos;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
@@ -24,28 +22,39 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         {
             CosmosDBContext context = _configProvider.CreateContext(attribute);
 
-            Uri collectionUri = UriFactory.CreateDocumentCollectionUri(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName);
-
             List<T> finalResults = new List<T>();
 
-            string continuation = null;
+            Container container = context.Service.GetContainer(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName);
 
-            SqlQuerySpec sqlSpec = new SqlQuerySpec
+            QueryDefinition queryDefinition = null;
+            if (!string.IsNullOrEmpty(attribute.SqlQuery))
             {
-                QueryText = context.ResolvedAttribute.SqlQuery,
-                Parameters = context.ResolvedAttribute.SqlQueryParameters ?? new SqlParameterCollection()
-            };
-
-            do
-            {
-                DocumentQueryResponse<T> response = await context.Service.ExecuteNextAsync<T>(collectionUri, sqlSpec, continuation);
-
-                finalResults.AddRange(response.Results);
-                continuation = response.ResponseContinuation;
+                queryDefinition = new QueryDefinition(attribute.SqlQuery);
+                if (attribute.SqlQueryParameters != null)
+                {
+                    foreach (var parameter in attribute.SqlQueryParameters)
+                    {
+                        queryDefinition.WithParameter(parameter.Item1, parameter.Item2);
+                    }
+                }
             }
-            while (!string.IsNullOrEmpty(continuation));
 
-            return finalResults;
+            QueryRequestOptions queryRequestOptions = new QueryRequestOptions();
+            if (!string.IsNullOrEmpty(attribute.PartitionKey))
+            {
+                queryRequestOptions.PartitionKey = new PartitionKey(attribute.PartitionKey);
+            }
+
+            using (FeedIterator<T> iterator = container.GetItemQueryIterator<T>(queryDefinition: queryDefinition, requestOptions: queryRequestOptions))
+            {
+                while (iterator.HasMoreResults)
+                {
+                    FeedResponse<T> response = await iterator.ReadNextAsync(cancellationToken);
+                    finalResults.AddRange(response.Resource);
+                }
+
+                return finalResults;
+            }
         }
     }
 }

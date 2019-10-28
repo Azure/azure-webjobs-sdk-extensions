@@ -8,12 +8,12 @@ using Microsoft.Azure.WebJobs.Host.Protocols;
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
     /// <summary>
-    /// Trigger parameter descriptor for [CosmosDBTrigger]
+    /// Trigger parameter descriptor for [CosmosDBTrigger].
     /// </summary>
     internal class CosmosDBTriggerParameterDescriptor : TriggerParameterDescriptor
     {
         /// <summary>
-        /// Name of the collection being monitored
+        /// Gets or sets the name of the collection being monitored.
         /// </summary>
         public string CollectionName { get; set; }
 

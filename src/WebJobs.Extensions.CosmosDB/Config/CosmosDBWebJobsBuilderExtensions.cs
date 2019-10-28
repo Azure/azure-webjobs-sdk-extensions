@@ -28,13 +28,14 @@ namespace Microsoft.Extensions.Hosting
             builder.AddExtension<CosmosDBExtensionConfigProvider>()               
                 .ConfigureOptions<CosmosDBOptions>((config, path, options) =>
                 {
-                    options.ConnectionString = config.GetConnectionString(Constants.DefaultConnectionStringName);
+                    options.ConnectionString = config.GetConnectionStringOrSetting(Constants.DefaultConnectionStringName);
 
                     IConfigurationSection section = config.GetSection(path);
                     section.Bind(options);
                 });                
 
             builder.Services.AddSingleton<ICosmosDBServiceFactory, DefaultCosmosDBServiceFactory>();
+            builder.Services.AddSingleton<ICosmosDBSerializerFactory, DefaultCosmosDBSerializerFactory>();
 
             return builder;
         }

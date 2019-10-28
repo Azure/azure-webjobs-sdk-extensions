@@ -5,8 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -14,7 +13,6 @@ using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
@@ -27,20 +25,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
     {
         private readonly IConfiguration _configuration;
         private readonly ICosmosDBServiceFactory _cosmosDBServiceFactory;
+        private readonly ICosmosDBSerializerFactory _cosmosSerializerFactory;
         private readonly INameResolver _nameResolver;
         private readonly CosmosDBOptions _options;
         private readonly ILoggerFactory _loggerFactory;
 
-        public CosmosDBExtensionConfigProvider(IOptions<CosmosDBOptions> options, ICosmosDBServiceFactory cosmosDBServiceFactory, IConfiguration configuration, INameResolver nameResolver, ILoggerFactory loggerFactory)
+        public CosmosDBExtensionConfigProvider(
+            IOptions<CosmosDBOptions> options, 
+            ICosmosDBServiceFactory cosmosDBServiceFactory, 
+            ICosmosDBSerializerFactory cosmosSerializerFactory,
+            IConfiguration configuration, 
+            INameResolver nameResolver, 
+            ILoggerFactory loggerFactory)
         {
             _configuration = configuration;
             _cosmosDBServiceFactory = cosmosDBServiceFactory;
+            _cosmosSerializerFactory = cosmosSerializerFactory;
             _nameResolver = nameResolver;
             _options = options.Value;
             _loggerFactory = loggerFactory;
         }
 
-        internal ConcurrentDictionary<string, ICosmosDBService> ClientCache { get; } = new ConcurrentDictionary<string, ICosmosDBService>();
+        internal ConcurrentDictionary<string, CosmosClient> ClientCache { get; } = new ConcurrentDictionary<string, CosmosClient>();
 
         /// <inheritdoc />
         public void Initialize(ExtensionConfigContext context)
@@ -55,7 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             rule.AddValidator(ValidateConnection);
             rule.BindToCollector<DocumentOpenType>(typeof(CosmosDBCollectorBuilder<>), this);
 
-            rule.BindToInput<DocumentClient>(new CosmosDBClientBuilder(this));
+            rule.BindToInput<CosmosClient>(new CosmosDBClientBuilder(this));
 
             // Enumerable inputs
             rule.WhenIsNull(nameof(CosmosDBAttribute.Id))
@@ -71,10 +77,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             // Trigger
             var rule2 = context.AddBindingRule<CosmosDBTriggerAttribute>();
-            rule2.BindToTrigger<IReadOnlyList<Document>>(new CosmosDBTriggerAttributeBindingProvider(_configuration, _nameResolver, _options, this, _loggerFactory));
-            rule2.AddConverter<string, IReadOnlyList<Document>>(str => JsonConvert.DeserializeObject<IReadOnlyList<Document>>(str));
-            rule2.AddConverter<IReadOnlyList<Document>, JArray>(docList => JArray.FromObject(docList));
-            rule2.AddConverter<IReadOnlyList<Document>, string>(docList => JArray.FromObject(docList).ToString());
+            rule2.BindToTrigger(new CosmosDBTriggerAttributeBindingProviderGenerator(_configuration, _nameResolver, _options, this, _loggerFactory));
         }
 
         internal void ValidateConnection(CosmosDBAttribute attribute, Type paramType)
@@ -89,12 +92,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
         }
 
-        internal DocumentClient BindForClient(CosmosDBAttribute attribute)
+        internal CosmosClient BindForClient(CosmosDBAttribute attribute)
         {
             string resolvedConnectionString = ResolveConnectionString(attribute.ConnectionStringSetting);
-            ICosmosDBService service = GetService(resolvedConnectionString, attribute.PreferredLocations, attribute.UseMultipleWriteLocations, attribute.UseDefaultJsonSerialization);
-
-            return service.GetClient();
+            return GetService(
+                connectionString: resolvedConnectionString, 
+                preferredLocations: attribute.PreferredLocations);
         }
 
         internal Task<IValueBinder> BindForItemAsync(CosmosDBAttribute attribute, Type type)
@@ -124,18 +127,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return _options.ConnectionString;
         }
 
-        internal ICosmosDBService GetService(string connectionString, string preferredLocations = "", bool useMultipleWriteLocations = false, bool useDefaultJsonSerialization = false, string userAgent = "")
+        internal CosmosClient GetService(string connectionString, string preferredLocations = "", string userAgent = "")
         {
-            string cacheKey = BuildCacheKey(connectionString, preferredLocations, useMultipleWriteLocations, useDefaultJsonSerialization);
-            ConnectionPolicy connectionPolicy = CosmosDBUtility.BuildConnectionPolicy(_options.ConnectionMode, _options.Protocol, preferredLocations, useMultipleWriteLocations, userAgent);
-            return ClientCache.GetOrAdd(cacheKey, (c) => _cosmosDBServiceFactory.CreateService(connectionString, connectionPolicy, useDefaultJsonSerialization));
+            string cacheKey = BuildCacheKey(connectionString, preferredLocations);
+            CosmosClientOptions cosmosClientOptions = CosmosDBUtility.BuildClientOptions(_options.ConnectionMode, _cosmosSerializerFactory.CreateSerializer(), preferredLocations, userAgent);
+            return ClientCache.GetOrAdd(cacheKey, (c) => _cosmosDBServiceFactory.CreateService(connectionString, cosmosClientOptions));
         }
 
         internal CosmosDBContext CreateContext(CosmosDBAttribute attribute)
         {
             string resolvedConnectionString = ResolveConnectionString(attribute.ConnectionStringSetting);
 
-            ICosmosDBService service = GetService(resolvedConnectionString, attribute.PreferredLocations, attribute.UseMultipleWriteLocations, attribute.UseDefaultJsonSerialization);
+            CosmosClient service = GetService(
+                connectionString: resolvedConnectionString, 
+                preferredLocations: attribute.PreferredLocations);
 
             return new CosmosDBContext
             {
@@ -155,7 +160,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return false;
         }
 
-        internal static string BuildCacheKey(string connectionString, string preferredLocations, bool useMultipleWriteLocations, bool useDefaultJsonSerialization) => $"{connectionString}|{preferredLocations}|{useMultipleWriteLocations}|{useDefaultJsonSerialization}";
+        internal static string BuildCacheKey(string connectionString, string region) => $"{connectionString}|{region}";
 
         private class DocumentOpenType : OpenType.Poco
         {

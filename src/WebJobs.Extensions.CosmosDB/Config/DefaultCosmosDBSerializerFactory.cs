@@ -5,10 +5,8 @@ using Microsoft.Azure.Cosmos;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
-    internal class CosmosDBContext
+    internal class DefaultCosmosDBSerializerFactory : ICosmosDBSerializerFactory
     {
-        public CosmosDBAttribute ResolvedAttribute { get; set; }
-
-        public CosmosClient Service { get; set; }
+        public CosmosSerializer CreateSerializer() => null;
     }
 }

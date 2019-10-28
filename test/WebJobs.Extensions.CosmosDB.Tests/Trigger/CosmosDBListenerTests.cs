@@ -8,10 +8,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents.ChangeFeedProcessor;
-using Microsoft.Azure.Documents.ChangeFeedProcessor.PartitionManagement;
-using Microsoft.Azure.Documents.Client;
-using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Scale;
@@ -24,17 +21,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
 {
     public class CosmosDBListenerTests
     {
+        private static readonly string DatabaseName = "testDb";
+        private static readonly string ContainerName = "testContainer";
+        private static readonly string ProcessorName = "theProcessor";
+
         private readonly TestLoggerProvider _loggerProvider = new TestLoggerProvider();
-        private ILoggerFactory _loggerFactory;
-        private Mock<ITriggeredFunctionExecutor> _mockExecutor;
-        private Mock<ICosmosDBService> _mockMonitoredService;
-        private Mock<ICosmosDBService> _mockLeasesService;
-        private DocumentCollectionInfo _monitoredInfo;
-        private DocumentCollectionInfo _leasesInfo;
-        private ChangeFeedProcessorOptions _processorOptions;
-        private CosmosDBTriggerListener _listener;
-        private Mock<IRemainingWorkEstimator> _mockWorkEstimator;
-        private string _functionId;
+        private readonly ILoggerFactory _loggerFactory;
+        private readonly Mock<ITriggeredFunctionExecutor> _mockExecutor;
+        private readonly Mock<Container> _monitoredContainer;
+        private readonly Mock<Container> _leasesContainer;
+        private readonly Mock<FeedIterator<ChangeFeedProcessorState>> _estimatorIterator;
+        private readonly CosmosDBTriggerListener<dynamic> _listener;
+        private readonly string _functionId;
 
         public CosmosDBListenerTests()
         {
@@ -44,34 +42,54 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             _mockExecutor = new Mock<ITriggeredFunctionExecutor>();
             _functionId = "testfunctionid";
 
-            _mockMonitoredService = new Mock<ICosmosDBService>(MockBehavior.Strict);
-            _mockMonitoredService.Setup(m => m.GetClient()).Returns(new DocumentClient(new Uri("http://someurl"), "c29tZV9rZXk="));
-            _monitoredInfo = new DocumentCollectionInfo { Uri = new Uri("http://someurl"), MasterKey = "c29tZV9rZXk=", DatabaseName = "MonitoredDB", CollectionName = "MonitoredCollection" };
+            var database = new Mock<Database>(MockBehavior.Strict);
+            database.Setup(d => d.Id).Returns(DatabaseName);
 
-            _mockLeasesService = new Mock<ICosmosDBService>(MockBehavior.Strict);
-            _mockLeasesService.Setup(m => m.GetClient()).Returns(new DocumentClient(new Uri("http://someurl"), "c29tZV9rZXk="));
-            _leasesInfo = new DocumentCollectionInfo { Uri = new Uri("http://someurl"), MasterKey = "c29tZV9rZXk=", DatabaseName = "LeasesDB", CollectionName = "LeasesCollection" };
+            _monitoredContainer = new Mock<Container>(MockBehavior.Strict);
+            _monitoredContainer.Setup(m => m.Id).Returns(ContainerName);
+            _monitoredContainer.Setup(m => m.Database).Returns(database.Object);
 
-            _processorOptions = new ChangeFeedProcessorOptions();
+            _estimatorIterator = new Mock<FeedIterator<ChangeFeedProcessorState>>();
 
-            // Mock the work estimator so this doesn't require a CosmosDB instance.
-            _mockWorkEstimator = new Mock<IRemainingWorkEstimator>(MockBehavior.Strict);
+            Mock<ChangeFeedEstimator> estimator = new Mock<ChangeFeedEstimator>();
+            estimator.Setup(m => m.GetCurrentStateIterator(It.IsAny<ChangeFeedEstimatorRequestOptions>()))
+                .Returns(_estimatorIterator.Object);
 
-            _listener = new CosmosDBTriggerListener(_mockExecutor.Object, _functionId, _monitoredInfo, _leasesInfo, _processorOptions, _mockMonitoredService.Object, _mockLeasesService.Object, _loggerFactory.CreateLogger<CosmosDBTriggerListener>(), _mockWorkEstimator.Object);
+            _leasesContainer = new Mock<Container>(MockBehavior.Strict);
+            _leasesContainer.Setup(m => m.Id).Returns(ContainerName);
+            _leasesContainer.Setup(m => m.Database).Returns(database.Object);
+
+            _monitoredContainer
+                .Setup(m => m.GetChangeFeedEstimator(It.Is<string>(s => s == ProcessorName), It.Is<Container>(c => c == _leasesContainer.Object)))
+                .Returns(estimator.Object);
+
+            var attribute = new CosmosDBTriggerAttribute(DatabaseName, ContainerName);
+
+            _listener = new CosmosDBTriggerListener<dynamic>(_mockExecutor.Object, _functionId, ProcessorName, _monitoredContainer.Object, _leasesContainer.Object, attribute, _loggerFactory.CreateLogger<CosmosDBTriggerListener<dynamic>>());
         }
 
         [Fact]
         public void ScaleMonitorDescriptor_ReturnsExpectedValue()
         {
-            Assert.Equal($"{_functionId}-cosmosdbtrigger-{_monitoredInfo.DatabaseName}-{_monitoredInfo.CollectionName}".ToLower(), _listener.Descriptor.Id);
+            Assert.Equal($"{_functionId}-cosmosdbtrigger-{DatabaseName}-{ContainerName}".ToLower(), _listener.Descriptor.Id);
         }
 
         [Fact]
         public async Task GetMetrics_ReturnsExpectedResult()
         {
-            _mockWorkEstimator
-                .Setup(m => m.GetEstimatedRemainingWorkPerPartitionAsync())
-                .Returns(Task.FromResult((IReadOnlyList<RemainingPartitionWork>)new List<RemainingPartitionWork>()));
+            _estimatorIterator
+                .SetupSequence(m => m.HasMoreResults)
+                .Returns(true)
+                .Returns(false);
+
+            Mock<FeedResponse<ChangeFeedProcessorState>> response = new Mock<FeedResponse<ChangeFeedProcessorState>>();
+            response
+                .Setup(m => m.GetEnumerator())
+                .Returns(new List<ChangeFeedProcessorState>().GetEnumerator());
+
+            _estimatorIterator
+                .Setup(m => m.ReadNextAsync(It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(response.Object));
 
             var metrics = await _listener.GetMetricsAsync();
 
@@ -79,21 +97,41 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             Assert.Equal(0, metrics.RemainingWork);
             Assert.NotEqual(default(DateTime), metrics.Timestamp);
 
-            _mockWorkEstimator
-                .Setup(m => m.GetEstimatedRemainingWorkPerPartitionAsync())
-                .Returns(Task.FromResult((IReadOnlyList<RemainingPartitionWork>)new List<RemainingPartitionWork>()
+            _estimatorIterator
+                .SetupSequence(m => m.HasMoreResults)
+                .Returns(true)
+                .Returns(false);
+
+            response
+                .Setup(m => m.GetEnumerator())
+                .Returns(new List<ChangeFeedProcessorState>()
                 {
-                    new RemainingPartitionWork("a", 5),
-                    new RemainingPartitionWork("b", 5),
-                    new RemainingPartitionWork("c", 5),
-                    new RemainingPartitionWork("d", 5)
-                }));
+                    new ChangeFeedProcessorState("a", 5, string.Empty),
+                    new ChangeFeedProcessorState("b", 5, string.Empty),
+                    new ChangeFeedProcessorState("c", 5, string.Empty),
+                    new ChangeFeedProcessorState("d", 5, string.Empty)
+                }.GetEnumerator());
 
             metrics = await _listener.GetMetricsAsync();
 
             Assert.Equal(4, metrics.PartitionCount);
             Assert.Equal(20, metrics.RemainingWork);
             Assert.NotEqual(default(DateTime), metrics.Timestamp);
+
+            _estimatorIterator
+                .SetupSequence(m => m.HasMoreResults)
+                .Returns(true)
+                .Returns(false);
+
+            response
+                .Setup(m => m.GetEnumerator())
+                .Returns(new List<ChangeFeedProcessorState>()
+                {
+                                new ChangeFeedProcessorState("a", 5, string.Empty),
+                                new ChangeFeedProcessorState("b", 5, string.Empty),
+                                new ChangeFeedProcessorState("c", 5, string.Empty),
+                                new ChangeFeedProcessorState("d", 5, string.Empty)
+                }.GetEnumerator());
 
             // verify non-generic interface works as expected
             metrics = (CosmosDBTriggerMetrics)(await ((IScaleMonitor)_listener).GetMetricsAsync());
@@ -106,11 +144,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
         public async Task GetMetrics_HandlesExceptions()
         {
             // Can't test DocumentClientExceptions because they can't be constructed.
+            _estimatorIterator
+                .Setup(m => m.HasMoreResults).Returns(true);
 
-            // InvalidOperationExceptions
-            _mockWorkEstimator
-                .Setup(m => m.GetEstimatedRemainingWorkPerPartitionAsync())
-                .Throws(new InvalidOperationException("Resource Not Found"));
+            _estimatorIterator
+                .SetupSequence(m => m.ReadNextAsync(It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new CosmosException("Resource not found", HttpStatusCode.NotFound, 0, string.Empty, 0))
+                .ThrowsAsync(new InvalidOperationException("Unknown"))
+                .ThrowsAsync(new HttpRequestException("Uh oh", new System.Net.WebException("Uh oh again", WebExceptionStatus.NameResolutionFailure)));
 
             var metrics = await _listener.GetMetricsAsync();
 
@@ -122,21 +163,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             Assert.Equal("Please check that the CosmosDB collection and leases collection exist and are listed correctly in Functions config files.", warning.FormattedMessage);
             _loggerProvider.ClearAllLogMessages();
 
-            // Unknown InvalidOperationExceptions
-            _mockWorkEstimator
-                .Setup(m => m.GetEstimatedRemainingWorkPerPartitionAsync())
-                .Throws(new InvalidOperationException("Unknown"));
-
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await _listener.GetMetricsAsync());
 
             warning = _loggerProvider.GetAllLogMessages().Single(p => p.Level == Microsoft.Extensions.Logging.LogLevel.Warning);
             Assert.Equal("Unable to handle System.InvalidOperationException: Unknown", warning.FormattedMessage);
             _loggerProvider.ClearAllLogMessages();
-
-            // HttpRequestExceptions
-            _mockWorkEstimator
-                .Setup(m => m.GetEstimatedRemainingWorkPerPartitionAsync())
-                .Throws(new HttpRequestException("Uh oh", new System.Net.WebException("Uh oh again", WebExceptionStatus.NameResolutionFailure)));
 
             metrics = await _listener.GetMetricsAsync();
 
@@ -191,7 +222,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             Assert.Equal("WorkerCount (2) > PartitionCount (1).", log.FormattedMessage);
             log = logs[1];
             Assert.Equal(Microsoft.Extensions.Logging.LogLevel.Information, log.Level);
-            Assert.Equal("Number of instances (2) is too high relative to number of partitions for collection (MonitoredCollection, 1).", log.FormattedMessage);
+            Assert.Equal($"Number of instances (2) is too high relative to number of partitions for collection ({ContainerName}, 1).", log.FormattedMessage);
         }
 
         [Fact]
@@ -221,7 +252,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             Assert.Equal("RemainingWork (2900) > WorkerCount (1) * 1,000.", log.FormattedMessage);
             log = logs[1];
             Assert.Equal(Microsoft.Extensions.Logging.LogLevel.Information, log.Level);
-            Assert.Equal("Remaining work for collection (MonitoredCollection, 2900) is too high relative to the number of instances (1).", log.FormattedMessage);
+            Assert.Equal($"Remaining work for collection ({ContainerName}, 2900) is too high relative to the number of instances (1).", log.FormattedMessage);
         }
 
         [Fact]
@@ -248,7 +279,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             var logs = _loggerProvider.GetAllLogMessages().ToArray();
             var log = logs[0];
             Assert.Equal(Microsoft.Extensions.Logging.LogLevel.Information, log.Level);
-            Assert.Equal("CosmosDB collection 'MonitoredCollection' has documents waiting to be processed.", log.FormattedMessage);
+            Assert.Equal($"CosmosDB collection '{ContainerName}' has documents waiting to be processed.", log.FormattedMessage);
             log = logs[1];
             Assert.Equal(Microsoft.Extensions.Logging.LogLevel.Information, log.Level);
             Assert.Equal("There are 1 instances relative to 2 partitions.", log.FormattedMessage);
@@ -278,7 +309,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             var logs = _loggerProvider.GetAllLogMessages().ToArray();
             var log = logs[0];
             Assert.Equal(Microsoft.Extensions.Logging.LogLevel.Information, log.Level);
-            Assert.Equal("Remaining work is increasing for 'MonitoredCollection'.", log.FormattedMessage);
+            Assert.Equal($"Remaining work is increasing for '{ContainerName}'.", log.FormattedMessage);
         }
 
         [Fact]
@@ -305,13 +336,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             var logs = _loggerProvider.GetAllLogMessages().ToArray();
             var log = logs[0];
             Assert.Equal(Microsoft.Extensions.Logging.LogLevel.Information, log.Level);
-            Assert.Equal("Remaining work is decreasing for 'MonitoredCollection'.", log.FormattedMessage);
+            Assert.Equal($"Remaining work is decreasing for '{ContainerName}'.", log.FormattedMessage);
         }
 
         [Fact]
         public async Task StartAsync_Retries()
         {
-            var listener = new MockListener(_mockExecutor.Object, _functionId, _monitoredInfo, _leasesInfo, _processorOptions, _mockMonitoredService.Object, _mockLeasesService.Object, NullLogger.Instance);
+            var attribute = new CosmosDBTriggerAttribute("test", "test") { LeaseCollectionPrefix = Guid.NewGuid().ToString() };
+           
+            var mockExecutor = new Mock<ITriggeredFunctionExecutor>();
+
+            var listener = new MockListener<dynamic>(mockExecutor.Object, _monitoredContainer.Object, _leasesContainer.Object, attribute, NullLogger.Instance);
 
             // Ensure that we can call StartAsync() multiple times to retry if there is an error.
             for (int i = 0; i < 3; i++)
@@ -324,12 +359,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             await listener.StartAsync(CancellationToken.None);
         }
 
-        private class MockListener : CosmosDBTriggerListener
+        private class MockListener<T> : CosmosDBTriggerListener<T>
         {
             private int _retries = 0;
 
-            public MockListener(ITriggeredFunctionExecutor executor, string functionId, DocumentCollectionInfo documentCollectionLocation, DocumentCollectionInfo leaseCollectionLocation, ChangeFeedProcessorOptions processorOptions, ICosmosDBService monitoredCosmosDBService, ICosmosDBService leasesCosmosDBService, ILogger logger)
-                : base(executor, functionId, documentCollectionLocation, leaseCollectionLocation, processorOptions, monitoredCosmosDBService, leasesCosmosDBService, logger)
+            public MockListener(ITriggeredFunctionExecutor executor,
+                Container monitoredContainer,
+                Container leaseContainer,
+                CosmosDBTriggerAttribute cosmosDBAttribute,
+                ILogger logger)
+                : base(executor, Guid.NewGuid().ToString(), string.Empty, monitoredContainer, leaseContainer, cosmosDBAttribute, logger)
             {
             }
 
@@ -341,6 +380,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 }
 
                 return Task.CompletedTask;
+            }
+
+            internal override void InitializeBuilder()
+            {
             }
         }
     }

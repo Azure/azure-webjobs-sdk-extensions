@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
 using Microsoft.Extensions.Configuration;
@@ -24,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         {
             // Arrange
             var options = new CosmosDBOptions { ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;" };
-            var config = new CosmosDBExtensionConfigProvider(new OptionsWrapper<CosmosDBOptions>(options), new DefaultCosmosDBServiceFactory(), _emptyConfig, new TestNameResolver(), NullLoggerFactory.Instance);
+            var config = new CosmosDBExtensionConfigProvider(new OptionsWrapper<CosmosDBOptions>(options), new DefaultCosmosDBServiceFactory(), new DefaultCosmosDBSerializerFactory(), _emptyConfig, new TestNameResolver(), NullLoggerFactory.Instance);
             var attribute = new CosmosDBAttribute { Id = "abcdef" };
 
             // Act
@@ -74,11 +73,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
         [Theory]
         [InlineData(typeof(IEnumerable<string>), true)]
-        [InlineData(typeof(IEnumerable<Document>), true)]
+        [InlineData(typeof(IEnumerable<Item>), true)]
         [InlineData(typeof(IEnumerable<JObject>), true)]
         [InlineData(typeof(JArray), false)]
         [InlineData(typeof(string), false)]
-        [InlineData(typeof(List<Document>), false)]
+        [InlineData(typeof(List<Item>), false)]
         public void TryGetEnumerableType(Type type, bool expectedResult)
         {
             bool actualResult = CosmosDBExtensionConfigProvider.IsSupportedEnumerable(type);
@@ -90,7 +89,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             var options = CosmosDBTestUtility.InitializeOptions(defaultConnStr, optionsConnStr);
             var factory = new DefaultCosmosDBServiceFactory();
             var nameResolver = new TestNameResolver();
-            var configProvider = new CosmosDBExtensionConfigProvider(options, factory, _emptyConfig, nameResolver, NullLoggerFactory.Instance);
+            var configProvider = new CosmosDBExtensionConfigProvider(options, factory, new DefaultCosmosDBSerializerFactory(), _emptyConfig, nameResolver, NullLoggerFactory.Instance);
 
             var context = TestHelpers.CreateExtensionConfigContext(nameResolver);
 

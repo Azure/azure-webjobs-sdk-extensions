@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
-using Microsoft.Azure.Documents;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 
@@ -32,22 +31,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 throw new NotSupportedException($"This policy is only supported for {nameof(CosmosDBAttribute)}.");
             }
 
-            // build a SqlParameterCollection for each parameter            
-            SqlParameterCollection paramCollection = new SqlParameterCollection();
-
             // also build up a dictionary replacing '{token}' with '@token' 
             IDictionary<string, string> replacements = new Dictionary<string, string>();
+            List<(string, object)> parameters = new List<(string, object)>();
             foreach (var token in bindingTemplate.ParameterNames.Distinct())
             {
                 string sqlToken = $"@{token}";
-                paramCollection.Add(new SqlParameter(sqlToken, bindingData[token]));
+                parameters.Add((sqlToken, bindingData[token]));
                 replacements.Add(token, sqlToken);
             }
 
-            docDbAttribute.SqlQueryParameters = paramCollection;
+            docDbAttribute.SqlQueryParameters = parameters;
 
-            string replacement = bindingTemplate.Bind(new ReadOnlyDictionary<string, string>(replacements));
-            return replacement;
+            return bindingTemplate.Bind(new ReadOnlyDictionary<string, string>(replacements));
         }
     }
 }

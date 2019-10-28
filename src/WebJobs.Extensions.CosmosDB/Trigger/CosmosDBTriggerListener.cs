@@ -8,12 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.ChangeFeedProcessor;
-using Microsoft.Azure.Documents.ChangeFeedProcessor.Monitoring;
-using Microsoft.Azure.Documents.ChangeFeedProcessor.PartitionManagement;
-using Microsoft.Azure.Documents.Client;
-using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Scale;
@@ -21,7 +16,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
-    internal class CosmosDBTriggerListener : IListener, IScaleMonitor<CosmosDBTriggerMetrics>, Microsoft.Azure.Documents.ChangeFeedProcessor.FeedProcessing.IChangeFeedObserverFactory
+    internal class CosmosDBTriggerListener<T> : IListener, IScaleMonitor<CosmosDBTriggerMetrics>
     {
         private const int ListenerNotRegistered = 0;
         private const int ListenerRegistering = 1;
@@ -29,20 +24,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         private readonly ITriggeredFunctionExecutor _executor;
         private readonly ILogger _logger;
-        private readonly DocumentCollectionInfo _monitorCollection;
-        private readonly DocumentCollectionInfo _leaseCollection;
+        private readonly Container _monitoredContainer;
+        private readonly Container _leaseContainer;
+        private readonly CosmosDBTriggerAttribute _cosmosDBAttribute;
         private readonly string _hostName;
-        private readonly ChangeFeedProcessorOptions _processorOptions;
-        private readonly ICosmosDBService _monitoredCosmosDBService;
-        private readonly ICosmosDBService _leasesCosmosDBService;
-        private readonly IHealthMonitor _healthMonitor;
-        private IChangeFeedProcessor _host;
+        private readonly string _processorName;
+        private readonly string _functionId;
+        private readonly ScaleMonitorDescriptor _scaleMonitorDescriptor;
+        private ChangeFeedProcessor _host;
         private ChangeFeedProcessorBuilder _hostBuilder;
-        private ChangeFeedProcessorBuilder _workEstimatorBuilder;
-        private IRemainingWorkEstimator _workEstimator;
         private int _listenerStatus;
-        private string _functionId;
-        private ScaleMonitorDescriptor _scaleMonitorDescriptor;
 
         private static readonly Dictionary<string, string> KnownDocumentClientErrors = new Dictionary<string, string>()
         {
@@ -59,49 +50,31 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             { "The specified document collection is invalid", string.Empty }
         };
 
-        public CosmosDBTriggerListener(ITriggeredFunctionExecutor executor,
+        public CosmosDBTriggerListener(
+            ITriggeredFunctionExecutor executor,
             string functionId,
-            DocumentCollectionInfo documentCollectionLocation,
-            DocumentCollectionInfo leaseCollectionLocation,
-            ChangeFeedProcessorOptions processorOptions,
-            ICosmosDBService monitoredCosmosDBService,
-            ICosmosDBService leasesCosmosDBService,
-            ILogger logger,
-            IRemainingWorkEstimator workEstimator = null)
+            string processorName,
+            Container monitoredContainer,
+            Container leaseContainer,
+            CosmosDBTriggerAttribute cosmosDBAttribute,
+            ILogger logger)
         {
             this._logger = logger;
             this._executor = executor;
-            this._functionId = functionId;
+            this._processorName = processorName;
             this._hostName = Guid.NewGuid().ToString();
-
-            this._monitorCollection = documentCollectionLocation;
-            this._leaseCollection = leaseCollectionLocation;
-            this._processorOptions = processorOptions;
-            this._monitoredCosmosDBService = monitoredCosmosDBService;
-            this._leasesCosmosDBService = leasesCosmosDBService;
-            this._healthMonitor = new CosmosDBTriggerHealthMonitor(this._logger);
-
-            this._workEstimator = workEstimator;
-
-            this._scaleMonitorDescriptor = new ScaleMonitorDescriptor($"{_functionId}-CosmosDBTrigger-{_monitorCollection.DatabaseName}-{_monitorCollection.CollectionName}".ToLower());
+            this._functionId = functionId;
+            this._monitoredContainer = monitoredContainer;
+            this._leaseContainer = leaseContainer;
+            this._cosmosDBAttribute = cosmosDBAttribute;
+            this._scaleMonitorDescriptor = new ScaleMonitorDescriptor($"{_functionId}-CosmosDBTrigger-{_monitoredContainer.Database.Id}-{_monitoredContainer.Id}".ToLower());
         }
 
-        public ScaleMonitorDescriptor Descriptor
-        {
-            get
-            {
-                return _scaleMonitorDescriptor;
-            }
-        }
+        public ScaleMonitorDescriptor Descriptor => this._scaleMonitorDescriptor;
 
         public void Cancel()
         {
             this.StopAsync(CancellationToken.None).Wait();
-        }
-
-        public Microsoft.Azure.Documents.ChangeFeedProcessor.FeedProcessing.IChangeFeedObserver CreateObserver()
-        {
-            return new CosmosDBTriggerObserver(this._executor);
         }
 
         public void Dispose()
@@ -135,10 +108,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 this._listenerStatus = ListenerNotRegistered;
 
                 // Throw a custom error if NotFound.
-                if (ex is DocumentClientException docEx && docEx.StatusCode == HttpStatusCode.NotFound)
+                if (ex is CosmosException docEx && docEx.StatusCode == HttpStatusCode.NotFound)
                 {
                     // Throw a custom error so that it's easier to decipher.
-                    string message = $"Either the source collection '{_monitorCollection.CollectionName}' (in database '{_monitorCollection.DatabaseName}')  or the lease collection '{_leaseCollection.CollectionName}' (in database '{_leaseCollection.DatabaseName}') does not exist. Both collections must exist before the listener starts. To automatically create the lease collection, set '{nameof(CosmosDBTriggerAttribute.CreateLeaseCollectionIfNotExists)}' to 'true'.";
+                    string message = $"Either the source collection '{this._cosmosDBAttribute.CollectionName}' (in database '{this._cosmosDBAttribute.DatabaseName}')  or the lease collection '{this._cosmosDBAttribute.LeaseCollectionName}' (in database '{this._cosmosDBAttribute.LeaseDatabaseName}') does not exist. Both collections must exist before the listener starts. To automatically create the lease collection, set '{nameof(CosmosDBTriggerAttribute.CreateLeaseCollectionIfNotExists)}' to 'true'.";
                     this._host = null;
                     throw new InvalidOperationException(message, ex);
                 }
@@ -163,77 +136,107 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
         }
 
-        internal virtual async Task StartProcessorAsync()
+        internal virtual Task StartProcessorAsync()
         {
             if (this._host == null)
             {
-                this._host = await this._hostBuilder.BuildAsync().ConfigureAwait(false);
+                this._host = this._hostBuilder.Build();
             }
 
-            await this._host.StartAsync().ConfigureAwait(false);
+            return this._host.StartAsync();
         }
 
-        private void InitializeBuilder()
+        internal virtual void InitializeBuilder()
         {
             if (this._hostBuilder == null)
             {
-                this._hostBuilder = new ChangeFeedProcessorBuilder()
-                    .WithHostName(this._hostName)
-                    .WithFeedDocumentClient(this._monitoredCosmosDBService.GetClient())
-                    .WithLeaseDocumentClient(this._leasesCosmosDBService.GetClient())
-                    .WithFeedCollection(this._monitorCollection)
-                    .WithLeaseCollection(this._leaseCollection)
-                    .WithProcessorOptions(this._processorOptions)
-                    .WithHealthMonitor(this._healthMonitor)
-                    .WithObserverFactory(this);
+                this._hostBuilder = this._monitoredContainer.GetChangeFeedProcessorBuilder<T>(this._processorName, this.ProcessChangesAsync)
+                    .WithInstanceName(this._hostName)
+                    .WithLeaseContainer(this._leaseContainer);
+
+                if (this._cosmosDBAttribute.MaxItemsPerInvocation > 0)
+                {
+                    this._hostBuilder.WithMaxItems(this._cosmosDBAttribute.MaxItemsPerInvocation);
+                }
+
+                if (!string.IsNullOrEmpty(this._cosmosDBAttribute.StartFromTime))
+                {
+                    if (this._cosmosDBAttribute.StartFromBeginning)
+                    {
+                        throw new InvalidOperationException("Only one of StartFromBeginning or StartFromTime can be used");
+                    }
+
+                    if (!DateTime.TryParse(this._cosmosDBAttribute.StartFromTime, out DateTime startFromTime))
+                    {
+                        throw new InvalidOperationException(@"The specified StartFromTime parameter is not in the correct format. Please use the ISO 8601 format with the UTC designator. For example: '2021-02-16T14:19:29Z'.");
+                    }
+
+                    this._hostBuilder.WithStartTime(startFromTime);
+                }
+                else
+                {
+                    if (this._cosmosDBAttribute.StartFromBeginning)
+                    {
+                        this._hostBuilder.WithStartTime(DateTime.MinValue.ToUniversalTime());
+                    }
+                }
+
+                if (this._cosmosDBAttribute.FeedPollDelay > 0)
+                {
+                    this._hostBuilder.WithPollInterval(TimeSpan.FromMilliseconds(this._cosmosDBAttribute.FeedPollDelay));
+                }
+
+                TimeSpan? leaseAcquireInterval = null;
+                if (this._cosmosDBAttribute.LeaseAcquireInterval > 0)
+                {
+                    leaseAcquireInterval = TimeSpan.FromMilliseconds(this._cosmosDBAttribute.LeaseAcquireInterval);
+                }
+
+                TimeSpan? leaseExpirationInterval = null;
+                if (this._cosmosDBAttribute.LeaseExpirationInterval > 0)
+                {
+                    leaseExpirationInterval = TimeSpan.FromMilliseconds(this._cosmosDBAttribute.LeaseExpirationInterval);
+                }
+
+                TimeSpan? leaseRenewInterval = null;
+                if (this._cosmosDBAttribute.LeaseRenewInterval > 0)
+                {
+                    leaseRenewInterval = TimeSpan.FromMilliseconds(this._cosmosDBAttribute.LeaseRenewInterval);
+                }
+
+                this._hostBuilder.WithLeaseConfiguration(leaseAcquireInterval, leaseExpirationInterval, leaseRenewInterval);
             }
         }
 
-        private async Task<IRemainingWorkEstimator> GetWorkEstimatorAsync()
+        private Task ProcessChangesAsync(IReadOnlyCollection<T> docs, CancellationToken cancellationToken)
         {
-            if (_workEstimatorBuilder == null)
-            {
-                _workEstimatorBuilder = new ChangeFeedProcessorBuilder()
-                    .WithHostName(this._hostName)
-                    .WithFeedDocumentClient(this._monitoredCosmosDBService.GetClient())
-                    .WithLeaseDocumentClient(this._leasesCosmosDBService.GetClient())
-                    .WithFeedCollection(this._monitorCollection)
-                    .WithLeaseCollection(this._leaseCollection)
-                    .WithProcessorOptions(this._processorOptions)
-                    .WithHealthMonitor(this._healthMonitor)
-                    .WithObserverFactory(this);
-            }
-
-            if (_workEstimator == null)
-            {
-                _workEstimator = await _workEstimatorBuilder.BuildEstimatorAsync();
-            }
-
-            return _workEstimator;
-        }
-
-        async Task<ScaleMetrics> IScaleMonitor.GetMetricsAsync()
-        {
-            return await GetMetricsAsync();
+            return this._executor.TryExecuteAsync(new TriggeredFunctionData() { TriggerValue = docs }, cancellationToken);
         }
 
         public async Task<CosmosDBTriggerMetrics> GetMetricsAsync()
         {
             int partitionCount = 0;
             long remainingWork = 0;
-            IReadOnlyList<RemainingPartitionWork> partitionWorkList = null;
 
             try
             {
-                IRemainingWorkEstimator workEstimator = await GetWorkEstimatorAsync();
-                partitionWorkList = await workEstimator.GetEstimatedRemainingWorkPerPartitionAsync();
+                List<ChangeFeedProcessorState> partitionWorkList = new List<ChangeFeedProcessorState>();
+                ChangeFeedEstimator estimator = this._monitoredContainer.GetChangeFeedEstimator(this._processorName, this._leaseContainer);
+                using (FeedIterator<ChangeFeedProcessorState> iterator = estimator.GetCurrentStateIterator())
+                {
+                    while (iterator.HasMoreResults)
+                    {
+                        FeedResponse<ChangeFeedProcessorState> response = await iterator.ReadNextAsync();
+                        partitionWorkList.AddRange(response);
+                    }
+                }
 
                 partitionCount = partitionWorkList.Count;
-                remainingWork = partitionWorkList.Sum(item => item.RemainingWork);
+                remainingWork = partitionWorkList.Sum(item => item.EstimatedLag);
             }
-            catch (Exception e) when (e is DocumentClientException || e is InvalidOperationException)
+            catch (Exception e) when (e is CosmosException || e is InvalidOperationException)
             {
-                if (!TryHandleDocumentClientException(e))
+                if (!TryHandleCosmosException(e))
                 {
                     _logger.LogWarning("Unable to handle {0}: {1}", e.GetType().ToString(), e.Message);
                     if (e is InvalidOperationException)
@@ -275,14 +278,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             };
         }
 
-        ScaleStatus IScaleMonitor.GetScaleStatus(ScaleStatusContext context)
+        public ScaleStatus GetScaleStatus(ScaleStatusContext<CosmosDBTriggerMetrics> context)
         {
             return GetScaleStatusCore(context.WorkerCount, context.Metrics?.Cast<CosmosDBTriggerMetrics>().ToArray());
         }
 
-        public ScaleStatus GetScaleStatus(ScaleStatusContext<CosmosDBTriggerMetrics> context)
+        async Task<ScaleMetrics> IScaleMonitor.GetMetricsAsync()
         {
-            return GetScaleStatusCore(context.WorkerCount, context.Metrics?.ToArray());
+            return await GetMetricsAsync();
+        }
+
+        public ScaleStatus GetScaleStatus(ScaleStatusContext context)
+        {
+            return GetScaleStatusCore(context.WorkerCount, context.Metrics?.Cast<CosmosDBTriggerMetrics>().ToArray());
         }
 
         private ScaleStatus GetScaleStatusCore(int workerCount, CosmosDBTriggerMetrics[] metrics)
@@ -308,7 +316,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 status.Vote = ScaleVote.ScaleIn;
                 _logger.LogInformation(string.Format($"WorkerCount ({workerCount}) > PartitionCount ({partitionCount})."));
                 _logger.LogInformation(string.Format($"Number of instances ({workerCount}) is too high relative to number " +
-                                                     $"of partitions for collection ({this._monitorCollection.CollectionName}, {partitionCount})."));
+                                                     $"of partitions for collection ({this._monitoredContainer.Id}, {partitionCount})."));
                 return status;
             }
 
@@ -324,7 +332,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 status.Vote = ScaleVote.ScaleOut;
                 _logger.LogInformation(string.Format($"RemainingWork ({latestRemainingWork}) > WorkerCount ({workerCount}) * 1,000."));
-                _logger.LogInformation(string.Format($"Remaining work for collection ({this._monitorCollection.CollectionName}, {latestRemainingWork}) " +
+                _logger.LogInformation(string.Format($"Remaining work for collection ({this._monitoredContainer.Id}, {latestRemainingWork}) " +
                                                      $"is too high relative to the number of instances ({workerCount})."));
                 return status;
             }
@@ -333,7 +341,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (documentsWaiting && partitionCount > 0 && partitionCount > workerCount)
             {
                 status.Vote = ScaleVote.ScaleOut;
-                _logger.LogInformation(string.Format($"CosmosDB collection '{this._monitorCollection.CollectionName}' has documents waiting to be processed."));
+                _logger.LogInformation(string.Format($"CosmosDB collection '{this._monitoredContainer.Id}' has documents waiting to be processed."));
                 _logger.LogInformation(string.Format($"There are {workerCount} instances relative to {partitionCount} partitions."));
                 return status;
             }
@@ -343,7 +351,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (isIdle)
             {
                 status.Vote = ScaleVote.ScaleIn;
-                _logger.LogInformation(string.Format($"'{this._monitorCollection.CollectionName}' is idle."));
+                _logger.LogInformation(string.Format($"'{this._monitoredContainer.Id}' is idle."));
                 return status;
             }
 
@@ -357,7 +365,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (remainingWorkIncreasing)
             {
                 status.Vote = ScaleVote.ScaleOut;
-                _logger.LogInformation($"Remaining work is increasing for '{this._monitorCollection.CollectionName}'.");
+                _logger.LogInformation($"Remaining work is increasing for '{this._monitoredContainer.Id}'.");
                 return status;
             }
 
@@ -369,18 +377,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (remainingWorkDecreasing)
             {
                 status.Vote = ScaleVote.ScaleIn;
-                _logger.LogInformation($"Remaining work is decreasing for '{this._monitorCollection.CollectionName}'.");
+                _logger.LogInformation($"Remaining work is decreasing for '{this._monitoredContainer.Id}'.");
                 return status;
             }
 
-            _logger.LogInformation($"CosmosDB collection '{this._monitorCollection.CollectionName}' is steady.");
+            _logger.LogInformation($"CosmosDB collection '{this._monitoredContainer.Id}' is steady.");
 
             return status;
         }
 
-        // Since all exceptions in the Document client are thrown as DocumentClientExceptions, we have to parse their error strings because we dont have access to the internal types
-        // In the form Microsoft.Azure.Documents.DocumentClientException or Microsoft.Azure.Documents.UnauthorizedException
-        private bool TryHandleDocumentClientException(Exception exception)
+        // Since all exceptions in the Cosmos client are thrown as CosmosExceptions, we have to parse their error strings because we dont have access to the internal types
+        private bool TryHandleCosmosException(Exception exception)
         {
             string errormsg = null;
             string exceptionMessage = exception.Message;

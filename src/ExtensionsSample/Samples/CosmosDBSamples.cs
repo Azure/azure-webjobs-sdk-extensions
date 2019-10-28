@@ -3,9 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using ExtensionsSample.Models;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Newtonsoft.Json.Linq;
@@ -73,19 +73,22 @@ namespace ExtensionsSample
         }
 
         // DocumentClient input binding
-        //   The binding supplies a DocumentClient directly.
+        //   The binding supplies a CosmosClient directly.
         [Disable]
-        public static void DocumentClient(
+        public static async Task CosmosClient(
             [TimerTrigger("00:01", RunOnStartup = true)] TimerInfo timer,
-            [CosmosDB] DocumentClient client,
+            [CosmosDB] CosmosClient client,
             TraceWriter log)
         {
-            var collectionUri = UriFactory.CreateDocumentCollectionUri("ItemDb", "ItemCollection");
-            var documents = client.CreateDocumentQuery(collectionUri);
+            var iterator = client.GetContainer("ItemDb", "ItemCollection").GetItemQueryIterator<dynamic>("SELECT * FROM c");
 
-            foreach (Document d in documents)
+            while (iterator.HasMoreResults)
             {
-                log.Info(d.Id);
+                var documents = await iterator.ReadNextAsync();
+                foreach (dynamic d in documents)
+                {
+                    log.Info(d.id);
+                }
             }
         }
     }

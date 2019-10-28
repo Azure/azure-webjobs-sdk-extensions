@@ -3,7 +3,7 @@
     <!-- Extensions can have independent versions and only increment when released -->
     <Version>3.0.0$(VersionSuffix)</Version>
     <ExtensionsVersion>4.0.3$(VersionSuffix)</ExtensionsVersion> <!-- WebJobs.Extensions -->
-    <CosmosDBVersion>3.0.10$(VersionSuffix)</CosmosDBVersion>
+    <CosmosDBVersion>4.0.0$(VersionSuffix)</CosmosDBVersion>
     <HttpVersion>3.1.1$(VersionSuffix)</HttpVersion>
     <MobileAppsVersion>3.0.0$(VersionSuffix)</MobileAppsVersion>
     <SendGridVersion>3.0.2$(VersionSuffix)</SendGridVersion>

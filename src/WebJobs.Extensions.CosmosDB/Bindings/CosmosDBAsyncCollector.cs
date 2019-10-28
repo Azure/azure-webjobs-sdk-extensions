@@ -5,8 +5,7 @@ using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.Client;
+using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
@@ -22,19 +21,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public async Task AddAsync(T item, CancellationToken cancellationToken = default(CancellationToken))
         {
-            bool create = false;
             try
             {
                 await UpsertDocument(_docDBContext, item);
             }
             catch (Exception ex)
             {
-                if (CosmosDBUtility.TryGetDocumentClientException(ex, out DocumentClientException de) &&
+                if (CosmosDBUtility.TryGetCosmosException(ex, out CosmosException de) &&
                     de.StatusCode == HttpStatusCode.NotFound)
                 {
                     if (_docDBContext.ResolvedAttribute.CreateIfNotExists)
                     {
-                        create = true;
+                        await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(_docDBContext);
+
+                        await UpsertDocument(_docDBContext, item);
                     }
                     else
                     {
@@ -48,13 +48,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     throw;
                 }
             }
-
-            if (create)
-            {
-                await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(_docDBContext);
-
-                await UpsertDocument(_docDBContext, item);
-            }
         }
 
         public Task FlushAsync(CancellationToken cancellationToken = default(CancellationToken))
@@ -63,18 +56,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return Task.FromResult(0);
         }
 
-        internal static async Task UpsertDocument(CosmosDBContext context, T item)
+        internal static Task UpsertDocument(CosmosDBContext context, T item)
         {
-            Uri collectionUri = UriFactory.CreateDocumentCollectionUri(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName);
-
-            // DocumentClient does not accept strings directly.
-            object convertedItem = item;
+            // Support user sending a string
             if (item is string)
             {
-                convertedItem = JObject.Parse(item.ToString());
+                JObject asJObject = JObject.Parse(item.ToString());
+                return context.Service.GetContainer(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName).UpsertItemAsync(asJObject);
             }
 
-            await context.Service.UpsertDocumentAsync(collectionUri, convertedItem);
+            return context.Service.GetContainer(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName).UpsertItemAsync(item);
         }
     }
 }
