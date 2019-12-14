@@ -227,7 +227,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
         }
 
         /// <summary>
-        /// Queues an incoming File for processing if ti was renamed and matches the filter.
+        /// Queues an incoming File for processing if it was renamed and matches the filter.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
