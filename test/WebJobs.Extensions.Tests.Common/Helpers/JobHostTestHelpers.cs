@@ -191,7 +191,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
             return host.CallAsync(typeof(T).GetMethod(methodName));
         }
 
-        public static TOptions GetOptions<TOptions>(this IHost host) where TOptions : class, new()
+        public static TOptions GetOptions<TOptions>(this IHost host) 
+            where TOptions : class, new()
         {
             return host.Services.GetService<IOptions<TOptions>>().Value;
         }

@@ -73,7 +73,7 @@ namespace Microsoft.Azure.WebJobs
         public bool AutoDelete { get; private set; }
 
         /// <summary>
-        /// Returns the trigger path, minus any trailing template pattern for file name
+        /// Returns the trigger path, minus any trailing template pattern for file name.
         /// </summary>
         /// <returns></returns>
         internal string GetRootPath()

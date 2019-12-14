@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Extensions.Bindings;
 using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
 using Microsoft.Azure.WebJobs.Files.Listeners;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -60,9 +61,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 fileEvent = GetFileArgsFromString(filePath);
             }
 
+            IValueBinder valueBinder = new FileValueBinder(_parameter, fileEvent);
             IReadOnlyDictionary<string, object> bindingData = GetBindingData(fileEvent);
 
-            return Task.FromResult<ITriggerData>(new TriggerData(null, bindingData));
+            return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, bindingData));
         }
 
         internal static FileSystemEventArgs GetFileArgsFromString(string filePath)
@@ -163,6 +165,42 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                     return string.Format("File change detected for file '{0}'", fullPath);
                 }
                 return null;
+            }
+        }
+
+        private class FileValueBinder : StreamValueBinder
+        {
+            private readonly ParameterInfo _parameter;
+            private readonly FileSystemEventArgs _fileEvent;
+
+            public FileValueBinder(ParameterInfo parameter, FileSystemEventArgs fileEvent)
+                : base(parameter)
+            {
+                _parameter = parameter;
+                _fileEvent = fileEvent;
+            }
+
+            public override async Task<object> GetValueAsync()
+            {
+                if (_parameter.ParameterType == typeof(FileSystemEventArgs))
+                {
+                    return _fileEvent;
+                }
+                else if (_parameter.ParameterType == typeof(FileInfo))
+                {
+                    return new FileInfo(_fileEvent.FullPath);
+                }
+                return await base.GetValueAsync();
+            }
+
+            protected override Stream GetStream()
+            {
+                return File.OpenRead(_fileEvent.FullPath);
+            }
+
+            public override string ToInvokeString()
+            {
+                return _fileEvent.FullPath;
             }
         }
     }
