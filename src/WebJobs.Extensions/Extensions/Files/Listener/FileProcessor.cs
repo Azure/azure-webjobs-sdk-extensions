@@ -276,7 +276,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files
         }
 
         /// <summary>
-        /// Clean up any files that have been fully processed
+        /// Clean up any files that have been fully processed.
         /// </summary>
         public virtual void CleanupProcessedFiles()
         {

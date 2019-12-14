@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Microsoft.Extensions.Hosting
 {
     /// <summary>
-    /// Extension methods for Files integration
+    /// Extension methods for Files integration.
     /// </summary>
     public static class FilesWebJobsBuilderExtensions
     {
