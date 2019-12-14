@@ -157,13 +157,6 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
         private void CreateFileWatcher()
         {
-            if (_attribute.ChangeTypes != WatcherChangeTypes.Created &&
-                _attribute.ChangeTypes != WatcherChangeTypes.Changed &&
-                _attribute.ChangeTypes != (WatcherChangeTypes.Created | WatcherChangeTypes.Changed))
-            {
-                throw new NotSupportedException("Only the 'Created' and 'Changed' change types are supported.");
-            }
-
             if ((_attribute.ChangeTypes & WatcherChangeTypes.Changed) != 0 && _attribute.AutoDelete)
             {
                 throw new NotSupportedException("Use of AutoDelete is not supported when using change type 'Changed'.");
@@ -181,16 +174,25 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
                 Filter = _attribute.Filter
             };
 
-            if ((_attribute.ChangeTypes & WatcherChangeTypes.Changed) != 0)
-            {
-                _watcher.Changed += new FileSystemEventHandler(FileChangeHandler);
-            }
-
             if ((_attribute.ChangeTypes & WatcherChangeTypes.Created) != 0)
             {
                 _watcher.Created += new FileSystemEventHandler(FileChangeHandler);
             }
 
+            if ((_attribute.ChangeTypes & WatcherChangeTypes.Changed) != 0)
+            {
+                _watcher.Changed += new FileSystemEventHandler(FileChangeHandler);
+            }
+
+            if ((_attribute.ChangeTypes & WatcherChangeTypes.Renamed) != 0)
+            {
+                _watcher.Renamed += new RenamedEventHandler(FileRenameHandler);
+            }
+
+            if ((_attribute.ChangeTypes & WatcherChangeTypes.Deleted) != 0)
+            {
+                _watcher.Deleted += new FileSystemEventHandler(FileChangeHandler);
+            }
             _watcher.EnableRaisingEvents = true;
         }
 
@@ -221,6 +223,22 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
             }
 
             // add the item to the work queue
+            _workQueue.Post(e);
+        }
+
+        /// <summary>
+        /// Queues an incoming File for processing if it was renamed and matches the filter.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void FileRenameHandler(object sender, RenamedEventArgs e)
+        {
+            if (_processor.IsStatusFile(e.Name))
+            {
+                // We never want to trigger on our own status files
+                return;
+            }
+
             _workQueue.Post(e);
         }
 
