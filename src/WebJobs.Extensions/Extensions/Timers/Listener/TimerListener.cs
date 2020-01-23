@@ -174,9 +174,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             }
         }
 
-        private void OnTimer(object sender, ElapsedEventArgs e)
+        private async void OnTimer(object sender, ElapsedEventArgs e)
         {
-            HandleTimerEvent().Wait();
+            await HandleTimerEvent();
         }
 
         internal async Task HandleTimerEvent()
