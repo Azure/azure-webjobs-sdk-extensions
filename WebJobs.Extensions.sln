@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26730.3
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1118E0AD-83C8-4B67-859B-FCDEF54338C1}"
 EndProject
@@ -44,6 +44,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.Twilio.Tests", "test\WebJobs.Extensions.Twilio.Tests\WebJobs.Extensions.Twilio.Tests.csproj", "{021C005F-1A58-44D0-B891-52F2AAFAD8ED}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.MobileApps.Tests", "test\WebJobs.Extensions.MobileApps.Tests\WebJobs.Extensions.MobileApps.Tests.csproj", "{587D158D-D719-42EF-AE81-70E2E8142B46}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.CosmosDBCassandra", "src\WebJobs.Extensions.CosmosDBCassandra\WebJobs.Extensions.CosmosDBCassandra.csproj", "{52823066-F7B7-42B6-AEF6-6206D2ADE5E7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -107,6 +109,10 @@ Global
 		{587D158D-D719-42EF-AE81-70E2E8142B46}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{587D158D-D719-42EF-AE81-70E2E8142B46}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{587D158D-D719-42EF-AE81-70E2E8142B46}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52823066-F7B7-42B6-AEF6-6206D2ADE5E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52823066-F7B7-42B6-AEF6-6206D2ADE5E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52823066-F7B7-42B6-AEF6-6206D2ADE5E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52823066-F7B7-42B6-AEF6-6206D2ADE5E7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -126,6 +132,7 @@ Global
 		{ED06F3EC-4663-46BF-ACF6-D218802F5610} = {6D6CF06F-EFCF-4E01-99F1-CB7991C279D8}
 		{021C005F-1A58-44D0-B891-52F2AAFAD8ED} = {6D6CF06F-EFCF-4E01-99F1-CB7991C279D8}
 		{587D158D-D719-42EF-AE81-70E2E8142B46} = {6D6CF06F-EFCF-4E01-99F1-CB7991C279D8}
+		{52823066-F7B7-42B6-AEF6-6206D2ADE5E7} = {1118E0AD-83C8-4B67-859B-FCDEF54338C1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {821EF04F-5408-46AD-94ED-0E939B89D4B8}

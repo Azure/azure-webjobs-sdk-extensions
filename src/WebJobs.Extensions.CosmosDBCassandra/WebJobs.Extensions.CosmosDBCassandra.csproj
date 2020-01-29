@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <!--<Import Project="..\..\build\common.props" />-->
+  <PropertyGroup>
+    <Version>$(CosmosDBVersion)</Version>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra</AssemblyName>
+    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra</RootNamespace>
+    <PackageId>Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra</PackageId>
+    <Description>This package contains binding extensions for Azure Cosmos DB Cassandra API.</Description>
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+    <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CassandraCSharpDriver" Version="3.12.0" />
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.14" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
+    <PackageReference Include="System.Reflection.Metadata" Version="1.8.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="StyleCop.Analyzers" Version="1.1.0-beta009" />
+  </ItemGroup>
+
+</Project>
