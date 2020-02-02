@@ -7,6 +7,8 @@ using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -47,9 +49,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra
             // Trigger
             var rule2 = context.AddBindingRule<CosmosDBCassandraTriggerAttribute>();
             rule2.BindToTrigger<IReadOnlyList<Row>>(new CosmosDBCassandraTriggerAttributeBindingProvider(_configuration, _nameResolver, _options, this, _loggerFactory));
-            //rule2.AddConverter<string, RowSet>(str => JsonConvert.DeserializeObject<IReadOnlyList<Row>>(str));
-            //rule2.AddConverter<RowSet, JArray>(docList => JArray.FromObject(docList));
-            //rule2.AddConverter<RowSet, string>(docList => JArray.FromObject(docList).ToString());
+            rule2.AddConverter<string, IReadOnlyList<Row>>(str => JsonConvert.DeserializeObject<IReadOnlyList<Row>>(str));
+            rule2.AddConverter<IReadOnlyList<Row>, JArray>(docList => JArray.FromObject(docList));
+            rule2.AddConverter<IReadOnlyList<Row>, string>(docList => JArray.FromObject(docList).ToString());
         }
 
         internal ICosmosDBCassandraService GetService(string contactPoint, string user, string password)
