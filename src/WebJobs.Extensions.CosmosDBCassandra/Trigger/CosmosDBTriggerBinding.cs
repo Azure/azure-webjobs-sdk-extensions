@@ -1,13 +1,13 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using Cassandra;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -48,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra
         /// <summary>
         /// Gets the type of the value the Trigger receives from the Executor.
         /// </summary>
-        public Type TriggerValueType => typeof(IReadOnlyList<Row>);
+        public Type TriggerValueType => typeof(IReadOnlyList<JArray>);
 
         public IReadOnlyDictionary<string, Type> BindingDataContract
         {
@@ -95,19 +95,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra
             };
         }
 
-        internal static bool TryAndConvertToDocumentList(object value, out IReadOnlyList<Row> documents)
+        internal static bool TryAndConvertToDocumentList(object value, out IReadOnlyList<JArray> documents)
         {
             documents = null;
 
             try
             {
-                if (value is IReadOnlyList<Row> docs)
+                if (value is IReadOnlyList<JArray> docs)
                 {
                     documents = docs;
                 }
                 else if (value is string stringVal)
                 {
-                    documents = JsonConvert.DeserializeObject<IReadOnlyList<Row>>(stringVal);
+                    documents = JsonConvert.DeserializeObject<IReadOnlyList<JArray>>(stringVal);
                 }
 
                 return documents != null;

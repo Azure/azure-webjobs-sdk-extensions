@@ -1,7 +1,6 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using Cassandra;
 using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Extensions.Configuration;
@@ -27,7 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra
         private readonly CosmosDBCassandraOptions _options;
         private readonly ILoggerFactory _loggerFactory;
 
-        public CosmosDBExtensionConfigProvider(IOptions<CosmosDBCassandraOptions> options, ICosmosDBCassandraServiceFactory cosmosDBServiceFactory,  IConfiguration configuration, INameResolver nameResolver, ILoggerFactory loggerFactory)
+        public CosmosDBExtensionConfigProvider(IOptions<CosmosDBCassandraOptions> options, ICosmosDBCassandraServiceFactory cosmosDBServiceFactory, IConfiguration configuration, INameResolver nameResolver, ILoggerFactory loggerFactory)
         {
             _configuration = configuration;
             _cosmosDBServiceFactory = cosmosDBServiceFactory;
@@ -48,10 +47,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra
 
             // Trigger
             var rule2 = context.AddBindingRule<CosmosDBCassandraTriggerAttribute>();
-            rule2.BindToTrigger<IReadOnlyList<Row>>(new CosmosDBCassandraTriggerAttributeBindingProvider(_configuration, _nameResolver, _options, this, _loggerFactory));
-            rule2.AddConverter<string, IReadOnlyList<Row>>(str => JsonConvert.DeserializeObject<IReadOnlyList<Row>>(str));
-            rule2.AddConverter<IReadOnlyList<Row>, JArray>(docList => JArray.FromObject(docList));
-            rule2.AddConverter<IReadOnlyList<Row>, string>(docList => JArray.FromObject(docList).ToString());
+            rule2.BindToTrigger<IReadOnlyList<JArray>>(new CosmosDBCassandraTriggerAttributeBindingProvider(_configuration, _nameResolver, _options, this, _loggerFactory));
+            rule2.AddConverter<string, IReadOnlyList<JArray>>(str => JsonConvert.DeserializeObject<IReadOnlyList<JArray>>(str));
+            rule2.AddConverter<IReadOnlyList<JArray>, JArray>(docList => JArray.FromObject(docList));
+            rule2.AddConverter<IReadOnlyList<JArray>, string>(docList => JArray.FromObject(docList).ToString());
         }
 
         internal ICosmosDBCassandraService GetService(string contactPoint, string user, string password)
