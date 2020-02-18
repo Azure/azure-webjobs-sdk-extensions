@@ -18,7 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra
     /// Defines the configuration options for the CosmosDB Cassandra binding.
     /// </summary>
     [Extension("CosmosDBCassandra")]
-    internal class CosmosDBExtensionConfigProvider : IExtensionConfigProvider
+    internal class CosmosDBCassandraExtensionConfigProvider : IExtensionConfigProvider
     {
         private readonly IConfiguration _configuration;
         private readonly ICosmosDBCassandraServiceFactory _cosmosDBServiceFactory;
@@ -26,7 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra
         private readonly CosmosDBCassandraOptions _options;
         private readonly ILoggerFactory _loggerFactory;
 
-        public CosmosDBExtensionConfigProvider(IOptions<CosmosDBCassandraOptions> options, ICosmosDBCassandraServiceFactory cosmosDBServiceFactory, IConfiguration configuration, INameResolver nameResolver, ILoggerFactory loggerFactory)
+        public CosmosDBCassandraExtensionConfigProvider(IOptions<CosmosDBCassandraOptions> options, ICosmosDBCassandraServiceFactory cosmosDBServiceFactory, IConfiguration configuration, INameResolver nameResolver, ILoggerFactory loggerFactory)
         {
             _configuration = configuration;
             _cosmosDBServiceFactory = cosmosDBServiceFactory;

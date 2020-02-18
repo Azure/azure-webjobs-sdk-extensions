@@ -21,11 +21,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra
         private readonly INameResolver _nameResolver;
         private readonly CosmosDBCassandraOptions _options;
         private readonly ILogger _logger;
-        private readonly CosmosDBExtensionConfigProvider _configProvider;
+        private readonly CosmosDBCassandraExtensionConfigProvider _configProvider;
 
 
         public CosmosDBCassandraTriggerAttributeBindingProvider(IConfiguration configuration, INameResolver nameResolver, CosmosDBCassandraOptions options,
-            CosmosDBExtensionConfigProvider configProvider, ILoggerFactory loggerFactory)
+            CosmosDBCassandraExtensionConfigProvider configProvider, ILoggerFactory loggerFactory)
         {
             _configuration = configuration;
             _nameResolver = nameResolver;

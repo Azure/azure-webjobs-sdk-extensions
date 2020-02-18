@@ -25,7 +25,7 @@ namespace Microsoft.Extensions.Hosting
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            builder.AddExtension<CosmosDBExtensionConfigProvider>()
+            builder.AddExtension<CosmosDBCassandraExtensionConfigProvider>()
                 .ConfigureOptions<CosmosDBCassandraOptions>((config, path, options) =>
                 {
                     // TODO: Add to Options the Cassandra connection details

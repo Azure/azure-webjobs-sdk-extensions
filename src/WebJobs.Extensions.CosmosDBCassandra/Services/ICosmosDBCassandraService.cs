@@ -8,7 +8,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra
     /// <summary>
     /// An abstraction layer for communicating with a CosmosDB Cassandra account.
     /// </summary>
-    internal interface ICosmosDBCassandraService
+    public interface ICosmosDBCassandraService
     {
         /// <summary>
         /// Returns the underlying <see cref="Cluster"/>.
