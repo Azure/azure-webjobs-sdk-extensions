@@ -52,15 +52,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
         {
             _loggerFactory = new LoggerFactory();
             _loggerFactory.AddProvider(_loggerProvider);
-
             _mockExecutor = new Mock<ITriggeredFunctionExecutor>();
             _functionId = "testfunctionid";
-
             _mockMonitoredService = new Mock<ICosmosDBCassandraService>(MockBehavior.Strict);
-
             options.SetHostNameResolver((ipAddress) => contactpoint);
-
-            _mockMonitoredService.Setup(m => m.GetCluster()).Returns(Cluster.Builder().WithCredentials(user, password).WithPort(10350).AddContactPoint("cassandra-3.cassandra.cosmos.azure.com").WithSSL(options).Build());
+            _mockMonitoredService.Setup(m => m.GetCluster()).Returns(Cluster.Builder().WithCredentials(user, password).WithPort(10350).AddContactPoint(contactpoint).WithSSL(options).Build());
         }
 
         public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsWithAppSettingsParameters
@@ -73,6 +69,36 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
             return new CosmosDBCassandraExtensionConfigProvider(new OptionsWrapper<CosmosDBCassandraOptions>(options), new DefaultCosmosDBCassandraServiceFactory(), _emptyConfig, new TestNameResolver(), NullLoggerFactory.Instance);
         }
 
+        [Fact]
+        public async Task StartEndToEndTests()
+        {
+            var listener = new MockListener(_mockExecutor.Object, _functionId, true, _defaultTimeSpan.Milliseconds, _mockMonitoredService.Object, _loggerFactory.CreateLogger<CosmosDBTriggerListener>());
+
+            //write the records
+            options.SetHostNameResolver((ipAddress) => contactpoint);
+            Cluster cluster = Cluster.Builder().WithCredentials(user, password).WithPort(10350).AddContactPoint(contactpoint).WithSSL(options).Build();
+            ISession session = cluster.Connect();
+            session = cluster.Connect("uprofile");
+            session.Execute("CREATE TABLE IF NOT EXISTS uprofile.user (user_id int PRIMARY KEY, user_name text, user_bcity text)");
+            Thread.Sleep(2000);
+            IMapper mapper = new Mapper(session);
+
+
+            //start the listener
+            _ = listener.StartAsync(CancellationToken.None);
+
+
+            await TestHelpers.Await(() =>
+            {
+                //insert row and return true when change picked up in log
+                mapper.Insert<User>(new User(1, "field1", "field2"));
+                System.Diagnostics.Debug.WriteLine("log: " + _loggerProvider.GetLogString());
+                return _loggerProvider.GetLogString().Contains("processing change...");
+            }).ConfigureAwait(true);
+
+        }
+
+
         [Theory]
         [MemberData(nameof(ValidCosmosDBTriggerBindingsWithAppSettingsParameters))]
         public async Task ValidParametersWithAppSettings_Succeed(ParameterInfo parameter)
@@ -83,9 +109,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
                 .AddInMemoryCollection(new Dictionary<string, string>
                 {
                     { "ConnectionStrings:CassandraDBconnection", "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;" },
-                    { "ContactPoint", "tvkcassandra.cassandra.cosmos.azure.com" },
-                    { "User", "tvkcassandra" },
-                    { "Password", "fOUhRd1tue9DV7oshoDsKiXLamfMHemZ2EjJd9Q8JEjkJEfdPDqyv8HLlPOuxpbIp8XjbAHfrYpJJLubDvCWIQ==" }
+                    { "ContactPoint", contactpoint },
+                    { "User", user },
+                    { "Password", password }
                 })
                 .Build();
 
@@ -96,53 +122,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
             Assert.Equal(typeof(IReadOnlyList<JArray>), binding.TriggerValueType);
         }
 
-        [Fact]
-        public async Task StartEndToEndTests()
+
+
+        private static ParameterInfo GetFirstParameter(Type type, string methodName)
         {
+            var methodInfo = type.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
+            var paramInfo = methodInfo.GetParameters().First();
 
-            var listener = new MockListener(_mockExecutor.Object, _functionId, true, _defaultTimeSpan.Milliseconds, _mockMonitoredService.Object, _loggerFactory.CreateLogger<CosmosDBTriggerListener>());
-
-            //start the listener
-            _ = listener.StartAsync(CancellationToken.None);
-
-
-            //write the records
-            options.SetHostNameResolver((ipAddress) => contactpoint);
-            Cluster cluster = Cluster.Builder().WithCredentials(user, password).WithPort(10350).AddContactPoint(contactpoint).WithSSL(options).Build();
-            ISession session = cluster.Connect();
-            session = cluster.Connect("uprofile");
-            session.Execute("CREATE TABLE IF NOT EXISTS uprofile.user (user_id int PRIMARY KEY, user_name text, user_bcity text)");
-            IMapper mapper = new Mapper(session);
-            mapper.Insert<User>(new User(1, "field1", "field2"));
-
-
-
-            // We will stopAsync as it is a loop, not a registered listener          
-            await listener.StopAsync(CancellationToken.None).ConfigureAwait(false);
-            listener.Dispose();
+            return paramInfo;
         }
 
         private static class ValidCosmosDBTriggerBindingsWithAppSettings
         {
-            public static void Func1([CosmosDBCassandraTrigger(
-                "uprofile",
-                "user",
+            public static void Func1(
+                [CosmosDBCassandraTrigger("uprofile", "user",
                 ContactPoint = "ContactPoint",
                 FeedPollDelay = 5000,
                 User = "User",
-                Password = "Password")] IReadOnlyList<JArray> input)
+                StartFromBeginning = true,
+                Password = "Password")]IReadOnlyList<JArray> input,
+                ILogger log)
             {
-                if (input != null)
-                {
-                    if (input.Count != 0)
-                    {
-                        for (int i = 0; i < input.Count; i++)
-                        {
-                            Console.WriteLine("Cassandra row: " + input[i].ToString());
-                            System.Diagnostics.Debug.WriteLine("Cassandra row: " + input[i].ToString());
-                        }
-                    }
-                }
             }
 
             // TODO more tests?
@@ -156,15 +156,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
                 };
             }
         }
-
-        private static ParameterInfo GetFirstParameter(Type type, string methodName)
-        {
-            var methodInfo = type.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
-            var paramInfo = methodInfo.GetParameters().First();
-
-            return paramInfo;
-        }
-
 
         private static bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
@@ -182,16 +173,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
         {
 
             public MockListener(ITriggeredFunctionExecutor executor, string functionId, bool startFromBeginning, int defaultTimeSpan, ICosmosDBCassandraService mockMonitoredService, ILogger logger)
-                : base(executor, functionId, "uprofile", "user", startFromBeginning, defaultTimeSpan, mockMonitoredService, logger)
+                : base(executor, functionId, "uprofile", "user", false, 5000, mockMonitoredService, logger)
             {
-
+                logger.LogInformation("MockListener");
             }
         }
 
         private class User
         {
             public int user_id { get; set; }
+
             public String user_name { get; set; }
+
             public String user_bcity { get; set; }
 
             public User(int user_id, String user_name, String user_bcity)

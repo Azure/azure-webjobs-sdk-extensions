@@ -211,18 +211,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
             }
         }
 
-        private static bool ValidateServerCertificate(
-object sender,
-X509Certificate certificate,
-X509Chain chain,
-SslPolicyErrors sslPolicyErrors)
+        private static bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             if (sslPolicyErrors == SslPolicyErrors.None)
+            {
                 return true;
-
+            }
             // Do not allow this client to communicate with unauthenticated servers.
             throw new InvalidOperationException($"Certificate error: {sslPolicyErrors}");
-
         }
 
     }

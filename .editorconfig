@@ -8,3 +8,9 @@ dotnet_diagnostic.CA5359.severity = suggestion
 
 # CA2000: Dispose objects before losing scope
 dotnet_diagnostic.CA2000.severity = warning
+
+# SA1201: Elements should appear in the correct order
+dotnet_diagnostic.SA1201.severity = none
+
+# CA1307: Specify StringComparison
+dotnet_diagnostic.CA1307.severity = suggestion

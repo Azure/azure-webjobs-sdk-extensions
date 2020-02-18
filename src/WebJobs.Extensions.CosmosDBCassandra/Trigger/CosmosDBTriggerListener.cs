@@ -105,18 +105,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra
                                 {
                                     //add column names and values extracted from rowList to JObject
                                     jcolumns.Add(new JProperty(col.Name, rowList[i].GetValue<dynamic>(col.Name)));
+                                    
                                 }
                                 //add the JObject to the JArray
                                 row.Add(jcolumns);
 
                                 //add the JArray to the JArray List
                                 rows.Add(row);
+                                //_logger.LogInformation("row: " + row.ToString());
                             }
+                            _logger.LogInformation("processing change...");
                             await _executor.TryExecuteAsync(new TriggeredFunctionData() { TriggerValue = rows }, cancellationToken);
+                            
                             wait = TimeSpan.Zero; // If there were changes, we want to capture the next batch right away with no delay
                         }
                     }
-
                     await Task.Delay(wait, cancellationTokenSource.Token);
                 }
                 catch (TaskCanceledException e)
