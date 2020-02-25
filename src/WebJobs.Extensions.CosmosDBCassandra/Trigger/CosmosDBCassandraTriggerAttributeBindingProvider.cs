@@ -46,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra
             CosmosDBCassandraTriggerAttribute attribute = parameter.GetCustomAttribute<CosmosDBCassandraTriggerAttribute>(inherit: false);
             if (attribute == null)
             {
-                return null;
+                return Task.FromResult<ITriggerBinding>(null);
             }
 
             string contactPoint = ResolveConfigurationValue(attribute.ContactPoint, nameof(attribute.ContactPoint));
