@@ -52,7 +52,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
         [MemberData(nameof(InvalidCosmosDBTriggerParameters))]
         public async Task InvalidParameters_Fail(ParameterInfo parameter)
         {
-            CosmosDBCassandraTriggerAttributeBindingProvider provider = new CosmosDBCassandraTriggerAttributeBindingProvider(_emptyConfig, new TestNameResolver(), _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    { "MyContactPoint", "tvkcassandra.cassandra.cosmos.azure.com" },
+                    { "MyUser", "tvkcassandra" },
+                    { "MyPassword", "fOUhRd1tue9DV7oshoDsKiXLamfMHemZ2EjJd9Q8JEjkJEfdPDqyv8HLlPOuxpbIp8XjbAHfrYpJJLubDvCWIQ==" }
+                })
+                .Build();
+
+            CosmosDBCassandraTriggerAttributeBindingProvider provider = new CosmosDBCassandraTriggerAttributeBindingProvider(config, new TestNameResolver(), _options, CreateExtensionConfigProvider(_options), _loggerFactory);
 
             InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None)));
 
@@ -109,20 +118,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
             public static void Func1([CosmosDBCassandraTrigger(
                 "data",
                 "table1",
-                ContactPoint = "ContactPoint",
+                ContactPoint = "MyContactPoint",
                 FeedPollDelay = 5000,
-                User = "User",
-                Password = "Password")] IReadOnlyList<JArray> input)
+                User = "MyUser",
+                Password = "Not Specified")] IReadOnlyList<JArray> input)
             {
             }
 
             public static void Func2([CosmosDBCassandraTrigger(
                 "data",
                 "table1",
-                ContactPoint = "ContactPoint",
+                ContactPoint = "MyContactPoint",
                 FeedPollDelay = 5000,
-                User = "User",
-                Password = "Password")] IReadOnlyList<JArray> input)
+                User = "Not Specified",
+                Password = "MyPassword")] IReadOnlyList<JArray> input)
+            {
+            }
+
+            public static void Func3([CosmosDBCassandraTrigger(
+                "data",
+                "table1",
+                ContactPoint = "Not Specified",
+                FeedPollDelay = 5000,
+                User = "MyUser",
+                Password = "MyPassword")] IReadOnlyList<JArray> input)
             {
             }
 
@@ -133,7 +152,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
                 return new[]
                 {
                     new[] { GetFirstParameter(type, "Func1") },
-                    new[] { GetFirstParameter(type, "Func2") }
+                    new[] { GetFirstParameter(type, "Func2") },
+                    new[] { GetFirstParameter(type, "Func3") }
                 };
             }
         }
@@ -191,10 +211,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
         {
 
             public static void Func1([CosmosDBCassandraTrigger(
-                "data", 
-                "table1", 
-                ContactPoint = "ContactPoint", 
-                FeedPollDelay = 5000, 
+                "data",
+                "table1",
+                ContactPoint = "ContactPoint",
+                FeedPollDelay = 5000,
                 User = "User",
                 Password = "Password")] IReadOnlyList<JArray> input)
             {

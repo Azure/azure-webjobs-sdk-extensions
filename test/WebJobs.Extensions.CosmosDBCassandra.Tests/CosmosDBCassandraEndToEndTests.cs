@@ -26,11 +26,10 @@ using Xunit;
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
 {
 
-    public class CosmosDBListenerEndToEndTests
+    public class CosmosDBCassandraEndToEndTests
 
     {
         private readonly TestLoggerProvider _loggerProvider = new TestLoggerProvider();
-        //private readonly bool _startFromBeginning;
         private ILoggerFactory _loggerFactory;
         private Mock<ITriggeredFunctionExecutor> _mockExecutor;
         private Mock<ICosmosDBCassandraService> _mockMonitoredService;
@@ -40,15 +39,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
         private string password = "2wVREKBUPzccE4PGrFiwmIqvKj0gUI08rGRQJkS1gPnTSDJ6s0gbWNDZZ0WkSWqAT0r6eQAdkxABO2tY8Shgig==";
         private string contactpoint = "cassandra-3.cassandra.cosmos.azure.com";
         private SSLOptions options = new SSLOptions(SslProtocols.Tls12, true, ValidateServerCertificate);
-
-
-        //private readonly ILoggerFactory _loggerFactory = new LoggerFactory();
         private static readonly IConfiguration _emptyConfig = new ConfigurationBuilder().Build();
         private static CosmosDBCassandraOptions _options = new CosmosDBCassandraOptions();
 
-        //private CosmosDBTriggerListener _listener;
-
-        public CosmosDBListenerEndToEndTests()
+        public CosmosDBCassandraEndToEndTests()
         {
             _loggerFactory = new LoggerFactory();
             _loggerFactory.AddProvider(_loggerProvider);
@@ -72,7 +66,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
         [Fact]
         public async Task StartEndToEndTests()
         {
-            var listener = new MockListener(_mockExecutor.Object, _functionId, true, _defaultTimeSpan.Milliseconds, _mockMonitoredService.Object, _loggerFactory.CreateLogger<CosmosDBTriggerListener>());
+            var listener = new CosmosDBTriggerListener(_mockExecutor.Object, _functionId, "uprofile", "user", true, _defaultTimeSpan.Milliseconds, _mockMonitoredService.Object, _loggerFactory.CreateLogger<CosmosDBTriggerListener>());
 
             //write the records
             options.SetHostNameResolver((ipAddress) => contactpoint);
@@ -86,7 +80,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
 
             //start the listener
             _ = listener.StartAsync(CancellationToken.None);
-
 
             await TestHelpers.Await(() =>
             {
@@ -116,9 +109,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
                 .Build();
 
             CosmosDBCassandraTriggerAttributeBindingProvider provider = new CosmosDBCassandraTriggerAttributeBindingProvider(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
-
             CosmosDBCassandraTriggerBinding binding = (CosmosDBCassandraTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None)).ConfigureAwait(true);
-
             Assert.Equal(typeof(IReadOnlyList<JArray>), binding.TriggerValueType);
         }
 
@@ -144,8 +135,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
                 ILogger log)
             {
             }
-
-            // TODO more tests?
             public static IEnumerable<ParameterInfo[]> GetParameters()
             {
                 var type = typeof(ValidCosmosDBTriggerBindingsWithAppSettings);
@@ -168,17 +157,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBCassandra.Tests.Trigger
             throw new InvalidOperationException($"Certificate error: {sslPolicyErrors}");
 
         }
-
-        private class MockListener : CosmosDBTriggerListener
-        {
-
-            public MockListener(ITriggeredFunctionExecutor executor, string functionId, bool startFromBeginning, int defaultTimeSpan, ICosmosDBCassandraService mockMonitoredService, ILogger logger)
-                : base(executor, functionId, "uprofile", "user", false, 5000, mockMonitoredService, logger)
-            {
-                logger.LogInformation("MockListener");
-            }
-        }
-
         private class User
         {
             public int user_id { get; set; }
