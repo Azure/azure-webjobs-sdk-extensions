@@ -4,7 +4,7 @@
 namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
     /// <summary>
-    /// Options object for <see cref="TimerTriggerAttribute"/> decorated job functions.
+    /// Options object for <see cref="TimerTriggerAttribute"/> decorated job functions. Currently this type is just a placeholder and presents no configurable options.
     /// </summary>
     public class TimersOptions
     {

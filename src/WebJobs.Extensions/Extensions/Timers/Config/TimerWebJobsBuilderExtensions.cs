@@ -37,6 +37,7 @@ namespace Microsoft.Extensions.Hosting
         /// </summary>
         /// <param name="builder">The <see cref="IWebJobsBuilder"/> to configure.</param>
         /// <param name="configure">An <see cref="Action{TimersOptions}"/> to configure the provided <see cref="TimersOptions"/>.</param>
+        /// <remarks>Currently there are no configurable options on <see cref="TimersOptions"/> so this overload does not provide any utility.</remarks>
         public static IWebJobsBuilder AddTimers(this IWebJobsBuilder builder, Action<TimersOptions> configure)
         {
             if (builder == null)
