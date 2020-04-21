@@ -26,7 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     // parse the object adding top level properties
                     JObject parsed = JObject.Parse(json);
                     var additionalBindingData = parsed.Children<JProperty>()
-                        .Where(p => p.Value != null && (p.Value.Type != JTokenType.Array))
+                        .Where(p => p.Value != null)
                         .ToDictionary(p => p.Name, p => ConvertPropertyValue(p));
 
                     if (additionalBindingData != null)
@@ -54,6 +54,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             if (property.Value != null && property.Value.Type == JTokenType.Object)
             {
                 return (JObject)property.Value;
+            }
+            else if (property.Value != null && property.Value.Type == JTokenType.Array)
+            {
+                return (JArray)property.Value;
             }
             else
             {

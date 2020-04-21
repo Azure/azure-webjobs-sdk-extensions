@@ -38,15 +38,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         [Fact]
         public async Task GetRequestBindingDataAsync_ReadsFromBody()
         {
-            string input = "{ test: 'testing', baz: 123, nestedArray: [ { nesting: 'yes' } ], nestedObject: { a: 123, b: 456 } }";
+            string input = "{ test: 'testing', baz: 123, nestedArray: [ { nesting: 'yes' } ], nestedEmptyArray: [ ], nestedObject: { a: 123, b: 456 } }";
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/test", null, input);
             var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
 
-            Assert.Equal(5, bindingData.Count);
+            Assert.Equal(7, bindingData.Count);
             Assert.Equal("testing", bindingData["test"]);
             Assert.Equal("123", bindingData["baz"]);
 
             JObject nestedObject = (JObject)bindingData["nestedObject"];
+            JArray nestedArray = (JArray)bindingData["nestedArray"];
+            Assert.Single(nestedArray);
+            JArray nestedEmptyArray = (JArray)bindingData["nestedEmptyArray"];
+            Assert.Empty(nestedEmptyArray);
             Assert.Equal(123, (int)nestedObject["a"]);
         }
 
@@ -169,7 +173,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             JObject requestBody = new JObject
             {
                 { "Name", "Mathew Charles" },
-                { "Location", "Seattle" }
+                { "Location", "Seattle" },
             };
 
             var headers = new HeaderDictionary();
@@ -194,6 +198,51 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             TestPoco testPoco = (TestPoco)(await triggerData.ValueProvider.GetValueAsync());
             Assert.Equal("Mathew Charles", testPoco.Name);
             Assert.Equal("Seattle", testPoco.Location);
+        }
+
+        [Fact]
+        public async Task BindAsync_PocoNestedCollection_FromRequestBody()
+        {
+            ParameterInfo parameterInfo = GetType().GetMethod("TestPocoWithNestedCollectionsFunction").GetParameters()[0];
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, true);
+
+            List<TestPocoItem> list = new List<TestPocoItem>() { new TestPocoItem("test1"), new TestPocoItem("test2") };
+            TestPocoWithNestedCollections requestObject = new TestPocoWithNestedCollections()
+            {
+                Item = new TestPocoItem("test"),
+                Collection1 = list.ToArray(),
+                Collection2 = list,
+                Collection3 = list,
+                Collection4 = list,
+                EmptyArray = new TestPocoItem[] { },
+                NullArray = null
+            };
+
+            var headers = new HeaderDictionary();
+            headers.Add("Content-Type", "application/json");
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/myfunc?code=abc123", headers, JsonConvert.SerializeObject(requestObject).ToString());
+
+            IServiceCollection services = new ServiceCollection();
+            services.AddMvc();
+            services.AddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();
+            services.AddSingleton<ILoggerFactory, NullLoggerFactory>();
+
+            request.HttpContext.RequestServices = services.BuildServiceProvider();
+
+            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
+            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            ITriggerData triggerData = await binding.BindAsync(request, context);
+
+            for (int i = 0; i < 2; i++)
+            {
+                Assert.Equal(list[0].Value, ((TestPocoItem[])triggerData.BindingData["Collection1"])[0].Value);
+                Assert.Equal(list[0].Value, new List<TestPocoItem>((IEnumerable<TestPocoItem>)triggerData.BindingData["Collection2"])[0].Value);
+                Assert.Equal(list[0].Value, ((IList<TestPocoItem>)triggerData.BindingData["Collection3"])[0].Value);
+                Assert.Equal(list[0].Value, new List<TestPocoItem>((ICollection<TestPocoItem>)triggerData.BindingData["Collection4"])[0].Value);
+            }
+
+            Assert.Empty((TestPocoItem[])triggerData.BindingData["EmptyArray"]);
+            Assert.Null(triggerData.BindingData["NullArray"]);
         }
 
         [Fact]
@@ -518,6 +567,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         {
         }
 
+        public void TestPocoWithNestedCollectionsFunction(TestPocoWithNestedCollections poco)
+        {
+        }
+
         public void TestHttpRequestFunction(HttpRequest req)
         {
         }
@@ -576,6 +629,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             public string Readonly { get; }
 
             public IDictionary<string, string> Properties { get; set; }
+        }
+
+        public class TestPocoWithNestedCollections
+        {
+            public TestPocoItem Item { get; set; }
+
+            public TestPocoItem[] Collection1 { get; set; }
+
+            public IEnumerable<TestPocoItem> Collection2 { get; set; }
+
+            public IList<TestPocoItem> Collection3 { get; set; }
+
+            public ICollection<TestPocoItem> Collection4 { get; set; }
+
+            public TestPocoItem[] EmptyArray { get; set; }
+
+            public TestPocoItem[] NullArray { get; set; }
+        }
+
+        public class TestPocoItem
+        {
+            public TestPocoItem(string value)
+            {
+                Value = value;
+            }
+
+            public string Value { get; set; }
         }
     }
 }
