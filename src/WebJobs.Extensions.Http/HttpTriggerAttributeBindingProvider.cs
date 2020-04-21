@@ -403,11 +403,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 {
                     var underlyingTargetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
 
-                    var jToken = value as JToken;
-                    if (jToken != null)
+                    if (value is JObject jObject)
+                    {
+                        value = jObject.ToObject(targetType);
+                    }
+                    else if (value is JArray jArray)
                     {
                         // value is JObject or JArray
-                        value = jToken.ToObject(targetType);
+                        value = jArray.ToObject(targetType);
                     }
                     else if (underlyingTargetType == typeof(Guid) && value.GetType() == typeof(string))
                     {

@@ -173,7 +173,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             JObject requestBody = new JObject
             {
                 { "Name", "Mathew Charles" },
-                { "Location", "Seattle" },
+                { "Location", "Seattle" }
             };
 
             var headers = new HeaderDictionary();
