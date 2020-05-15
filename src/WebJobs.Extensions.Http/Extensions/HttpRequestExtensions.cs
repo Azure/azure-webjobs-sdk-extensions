@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Security.Claims;
@@ -46,6 +47,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         {
             // last one wins for any duplicate query parameters
             return request.Query.ToDictionary(p => p.Key, p => p.Value.Last());
+        }
+
+        public static bool IsJsonContentType(this HttpRequest request)
+        {
+            return !string.IsNullOrEmpty(request.ContentType) && 
+                MediaTypeHeaderValue.TryParse(request.ContentType, out MediaTypeHeaderValue headerValue) &&
+                string.Equals(headerValue.MediaType, "application/json", StringComparison.OrdinalIgnoreCase);
         }
 
         public static ClaimsIdentity GetAppServiceIdentity(this HttpRequest request)

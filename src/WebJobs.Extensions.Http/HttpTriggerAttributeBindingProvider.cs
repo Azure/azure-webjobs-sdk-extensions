@@ -95,9 +95,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             private readonly bool _isUserTypeBinding;
             private readonly Dictionary<string, Type> _bindingDataContract;
             private readonly Action<HttpRequest, object> _responseHook;
-            private readonly bool _isEasyAuthEnabled;
 
-            public HttpTriggerBinding(HttpTriggerAttribute attribute, ParameterInfo parameter, bool isUserTypeBinding, Action<HttpRequest, object> responseHook = null, bool isEasyAuthEnabled = false)
+            public HttpTriggerBinding(HttpTriggerAttribute attribute, ParameterInfo parameter, bool isUserTypeBinding, Action<HttpRequest, object> responseHook = null)
             {
                 _responseHook = responseHook;
                 _parameter = parameter;
@@ -113,7 +112,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 }
 
                 _bindingDataContract = GetBindingDataContract(attribute, parameter);
-                _isEasyAuthEnabled = isEasyAuthEnabled;
             }
 
             public IReadOnlyDictionary<string, Type> BindingDataContract
@@ -138,24 +136,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 }
 
                 IValueProvider valueProvider = null;
-                object poco = null;
-                IReadOnlyDictionary<string, object> userTypeBindingData = null;
                 string invokeString = ToInvokeString(request);
                 if (_isUserTypeBinding)
                 {
                     valueProvider = await CreateUserTypeValueProvider(request, invokeString);
-                    if (_bindingDataProvider != null)
-                    {
-                        // some binding data is defined by the user type
-                        // the provider might be null if the Type is invalid, or if the Type
-                        // has no public properties to bind to
-                        poco = await valueProvider.GetValueAsync();
-                        userTypeBindingData = _bindingDataProvider.GetBindingData(poco);
-                    }
                 }
                 else
                 {
                     valueProvider = new HttpRequestValueBinder(_parameter, request, invokeString);
+                }
+
+                var bindingData = await GetBindingDataAsync(request, valueProvider);
+                return new TriggerData(valueProvider, bindingData) 
+                { 
+                    ReturnValueProvider = new ResponseHandler(request, _responseHook)
+                };
+            }
+
+            private async Task<IReadOnlyDictionary<string, object>> GetBindingDataAsync(HttpRequest request, IValueProvider valueProvider)
+            {
+                object poco = null;
+                IReadOnlyDictionary<string, object> userTypeBindingData = null;
+                if (_bindingDataProvider != null)
+                {
+                    // some binding data is defined by the user type
+                    // the provider might be null if the Type is invalid, or if the Type
+                    // has no public properties to bind to
+                    poco = await valueProvider.GetValueAsync();
+                    userTypeBindingData = _bindingDataProvider.GetBindingData(poco);
                 }
 
                 // create a modifiable collection of binding data and
@@ -166,7 +174,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 aggregateBindingData[RequestBindingName] = request;
 
                 // Apply additional binding data coming from request route, query params, etc.
-                var requestBindingData = await GetRequestBindingDataAsync(request, _bindingDataContract, _isEasyAuthEnabled);
+                var requestBindingData = await GetRequestBindingDataAsync(request, _bindingDataContract);
                 aggregateBindingData.AddRange(requestBindingData);
 
                 // apply binding data to the user type
@@ -175,8 +183,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     ApplyBindingData(poco, aggregateBindingData);
                 }
 
-                IValueBinder returnProvider = new ResponseHandler(request, _responseHook);
-                return new TriggerData(valueProvider, aggregateBindingData) { ReturnValueProvider = returnProvider };
+                return aggregateBindingData;
             }
 
             public static string ToInvokeString(HttpRequest request)
@@ -284,11 +291,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 return aggregateDataContract;
             }
 
-            internal static async Task<IReadOnlyDictionary<string, object>> GetRequestBindingDataAsync(HttpRequest request, Dictionary<string, Type> bindingDataContract = null, bool isEasyAuthEnabled = false)
+            internal static async Task<IReadOnlyDictionary<string, object>> GetRequestBindingDataAsync(HttpRequest request, Dictionary<string, Type> bindingDataContract = null)
             {
                 // apply binding data from request body if present
                 var bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                if (request.ContentLength != null && request.ContentLength > 0)
+                if (request.ContentLength != null && request.ContentLength > 0 &&
+                    (string.IsNullOrEmpty(request.ContentType) || request.IsJsonContentType()))
                 {
                     string body = await request.ReadAsStringAsync();
                     Utility.ApplyBindingData(body, bindingData);
@@ -458,8 +466,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                         // a JObject which is dynamic
 
                         // Only supported for JSON payloads
-                        if (MediaTypeHeaderValue.TryParse(_request.ContentType, out MediaTypeHeaderValue value) &&
-                            string.Equals(value.MediaType, "application/json", StringComparison.OrdinalIgnoreCase))
+                        if (_request.IsJsonContentType())
                         {
                             using (var reader = new StreamReader(_request.Body))
                             {
