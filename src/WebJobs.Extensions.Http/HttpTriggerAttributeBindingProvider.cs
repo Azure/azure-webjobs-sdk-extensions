@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -416,14 +417,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     {
                         value = jObject.ToObject(targetType);
                     }
-                    else if (underlyingTargetType == typeof(Guid) && value.GetType() == typeof(string))
-                    {
-                        // Guids need to be converted by their own logic
-                        // Intentionally throw here on error to standardize behavior
-                        value = Guid.Parse((string)value);
-                    }
                     else
                     {
+                        var valueType = value.GetType();
+                        
+                        var targetTypeConverter = TypeDescriptor.GetConverter(underlyingTargetType);
+                        if (targetTypeConverter.CanConvertFrom(valueType))
+                        {
+                            return targetTypeConverter.ConvertFrom(value);
+                        }
+
                         // if the type is nullable, we only need to convert to the
                         // correct underlying type
                         value = Convert.ChangeType(value, underlyingTargetType);
