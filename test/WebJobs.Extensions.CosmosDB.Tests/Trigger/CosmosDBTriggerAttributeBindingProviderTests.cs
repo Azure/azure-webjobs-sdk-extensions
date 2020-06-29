@@ -17,6 +17,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
@@ -67,6 +68,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsMultiMasterParameters
         {
             get { return ValidCosmosDBTriggerBindigsMultiMaster.GetParameters(); }
+        }
+
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsUseDefaultJsonSerializationParameters
+        {
+            get { return ValidCosmosDBTriggerBindingsUseDefaultJsonSerialization.GetParameters(); }
         }
 
         [Theory]
@@ -237,6 +243,31 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
             Assert.False(binding.DocumentCollectionLocation.ConnectionPolicy.UseMultipleWriteLocations);
             Assert.True(binding.LeaseCollectionLocation.ConnectionPolicy.UseMultipleWriteLocations);
+
+        }   
+
+        [Theory]
+        [MemberData(nameof(ValidCosmosDBTriggerBindingsUseDefaultJsonSerializationParameters))]
+        public async Task ValidCosmosDBTriggerBindingsUseDefaultJsonSerialization_Succeed(ParameterInfo parameter)
+        {
+            var nameResolver = new TestNameResolver();
+
+            var restoreDefaultSettings = JsonConvert.DefaultSettings;
+
+            var defaultSettingsFetched = false;
+            JsonConvert.DefaultSettings = () =>
+            {
+                defaultSettingsFetched = true;
+                return new JsonSerializerSettings();
+            };
+
+            CosmosDBTriggerAttributeBindingProvider provider = new CosmosDBTriggerAttributeBindingProvider(_emptyConfig, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+
+            CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+
+            Assert.True(defaultSettingsFetched);
+
+            JsonConvert.DefaultSettings = restoreDefaultSettings;
         }
 
         [Fact]
@@ -549,6 +580,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             public static IEnumerable<ParameterInfo[]> GetParameters()
             {
                 var type = typeof(ValidCosmosDBTriggerBindigsMultiMaster);
+
+                return new[]
+                {
+                    new[] { GetFirstParameter(type, "Func1") }
+                };
+            }
+        }
+
+        private static class ValidCosmosDBTriggerBindingsUseDefaultJsonSerialization
+        {
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", UseDefaultJsonSerialization = true)] IReadOnlyList<Document> docs)
+            {
+            }
+
+            public static IEnumerable<ParameterInfo[]> GetParameters()
+            {
+                var type = typeof(ValidCosmosDBTriggerBindingsUseDefaultJsonSerialization);
 
                 return new[]
                 {
