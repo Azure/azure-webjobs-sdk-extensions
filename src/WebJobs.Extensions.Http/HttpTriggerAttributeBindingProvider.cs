@@ -7,7 +7,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -147,8 +146,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 }
 
                 var bindingData = await GetBindingDataAsync(request, valueProvider);
-                return new TriggerData(valueProvider, bindingData) 
-                { 
+                return new TriggerData(valueProvider, bindingData)
+                {
                     ReturnValueProvider = new ResponseHandler(request, _responseHook)
                 };
             }
@@ -295,8 +294,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             {
                 // apply binding data from request body if present
                 var bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                if (request.ContentLength != null && request.ContentLength > 0 &&
-                    (string.IsNullOrEmpty(request.ContentType) || request.IsJsonContentType()))
+                if (request.ContentLength != null && request.ContentLength > 0)
                 {
                     string body = await request.ReadAsStringAsync();
                     Utility.ApplyBindingData(body, bindingData);
