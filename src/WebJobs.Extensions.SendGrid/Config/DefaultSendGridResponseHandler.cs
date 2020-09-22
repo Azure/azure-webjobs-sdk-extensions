@@ -22,7 +22,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid.Config
         /// <returns>A task.</returns>
         public async Task HandleAsync(Response response, CancellationToken cancellationToken)
         {
-            if ((int)response.StatusCode >= 300)
+            // https://sendgrid.com/docs/API_Reference/Web_API_v3/Mail/errors.html
+            if ((int)response.StatusCode >= 400)
             {
                 string body = await response.Body.ReadAsStringAsync();
 
