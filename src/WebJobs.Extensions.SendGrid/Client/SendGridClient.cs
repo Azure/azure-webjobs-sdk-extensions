@@ -1,7 +1,6 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using SendGrid;
@@ -18,17 +17,9 @@ namespace Client
             _client = new SendGrid.SendGridClient(apiKey);
         }
 
-        public async Task<Response> SendMessageAsync(SendGridMessage msg, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<Response> SendMessageAsync(SendGridMessage msg, CancellationToken cancellationToken = default)
         {
-            var response = await _client.SendEmailAsync(msg, cancellationToken);
-
-            if ((int)response.StatusCode >= 300)
-            {
-                string body = await response.Body.ReadAsStringAsync();
-                throw new InvalidOperationException(body);
-            }
-
-            return response;
+            return _client.SendEmailAsync(msg, cancellationToken);
         }
     }
 }
