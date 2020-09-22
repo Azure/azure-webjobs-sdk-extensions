@@ -3,7 +3,7 @@
 
 using SendGrid.Helpers.Mail;
 
-namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
+namespace Microsoft.Azure.WebJobs.Extensions.SendGrid.Config
 {
     /// <summary>
     /// Defines the configuration options for the SendGrid binding.

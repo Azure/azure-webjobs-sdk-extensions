@@ -5,12 +5,11 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
-using Client;
-using Microsoft.Azure.WebJobs.Extensions.SendGrid;
+using Microsoft.Azure.WebJobs.Extensions.SendGrid.Config;
+using SendGrid;
 using SendGrid.Helpers.Mail;
-using SendGridResponse = SendGrid.Response;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Bindings
+namespace Microsoft.Azure.WebJobs.Extensions.SendGrid.Bindings
 {
     internal class SendGridMessageAsyncCollector : IAsyncCollector<SendGridMessage>
     {
@@ -55,7 +54,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
         {
             while (_messages.TryDequeue(out SendGridMessage message))
             {
-                SendGridResponse response = await _sendGrid.SendMessageAsync(message, cancellationToken);
+                Response response = await _sendGrid.SendEmailAsync(message, cancellationToken);
 
                 await _responseHandler.HandleAsync(response, cancellationToken);
             }

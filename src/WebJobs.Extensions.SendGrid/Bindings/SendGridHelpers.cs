@@ -4,13 +4,13 @@
 using System;
 using System.Linq;
 using System.Net.Mail;
-using Microsoft.Azure.WebJobs.Extensions.SendGrid;
+using Microsoft.Azure.WebJobs.Extensions.SendGrid.Config;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SendGrid.Helpers.Mail;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Bindings
+namespace Microsoft.Azure.WebJobs.Extensions.SendGrid.Bindings
 {
     internal class SendGridHelpers
     {

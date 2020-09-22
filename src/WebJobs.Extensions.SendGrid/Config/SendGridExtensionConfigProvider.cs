@@ -4,16 +4,15 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using Client;
 using Microsoft.Azure.WebJobs.Description;
-using Microsoft.Azure.WebJobs.Extensions.Bindings;
-using Microsoft.Azure.WebJobs.Extensions.Config;
+using Microsoft.Azure.WebJobs.Extensions.SendGrid.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using SendGrid;
 using SendGrid.Helpers.Mail;
 
-namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
+namespace Microsoft.Azure.WebJobs.Extensions.SendGrid.Config
 {
     /// <summary>
     /// Defines the configuration options for the SendGrid binding.

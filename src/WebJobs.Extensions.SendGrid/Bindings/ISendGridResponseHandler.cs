@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using SendGrid;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Bindings
+namespace Microsoft.Azure.WebJobs.Extensions.SendGrid.Bindings
 {
     /// <summary>
     /// A handler of responses received from APIs call to SendGrid.

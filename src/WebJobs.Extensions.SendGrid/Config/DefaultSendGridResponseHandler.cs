@@ -4,7 +4,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs.Extensions.Bindings;
+using Microsoft.Azure.WebJobs.Extensions.SendGrid.Bindings;
 using SendGrid;
 
 namespace Microsoft.Azure.WebJobs.Extensions.SendGrid.Config
