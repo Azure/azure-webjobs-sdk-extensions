@@ -3,6 +3,7 @@
   <PropertyGroup>
     <Version>$(SendGridVersion)</Version>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions.SendGrid</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.SendGrid</RootNamespace>
     <PackageId>Microsoft.Azure.WebJobs.Extensions.SendGrid</PackageId>
