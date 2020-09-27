@@ -35,6 +35,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             CreateTestListener("0 */1 * * * *");
         }
 
+        public static IEnumerable<object[]> TimerSchedulesAfterDST => new object[][]
+        {
+            new object[] { new CronSchedule(CrontabSchedule.Parse("0 0 18 * * 5", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(167) },
+            new object[] { new ConstantSchedule(TimeSpan.FromDays(7)), TimeSpan.FromDays(7) },
+        };
+
+        public static IEnumerable<object[]> TimerSchedulesWithinDST => new object[][]
+        {
+            new object[] { new CronSchedule(CrontabSchedule.Parse("0 59 * * * *", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(1) },
+            new object[] { new ConstantSchedule(TimeSpan.FromMinutes(5)), TimeSpan.FromMinutes(5) },
+        };
+
         [Fact]
         public async Task InvokeJobFunction_UpdatesScheduleMonitor()
         {
@@ -369,18 +381,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         {
             await RunInitialStatusTestAsync(null, $"Function '{_functionShortName}' initial status: Last='(null)', Next='(null)', LastUpdated='(null)'");
         }
-
-        public static IEnumerable<object[]> TimerSchedulesAfterDST => new object[][]
-        {
-            new object[] { new CronSchedule(CrontabSchedule.Parse("0 0 18 * * 5", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(167) },
-            new object[] { new ConstantSchedule(TimeSpan.FromDays(7)), TimeSpan.FromDays(7) },
-        };
-
-        public static IEnumerable<object[]> TimerSchedulesWithinDST => new object[][]
-        {
-            new object[] { new CronSchedule(CrontabSchedule.Parse("0 59 * * * *", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(1) },
-            new object[] { new ConstantSchedule(TimeSpan.FromMinutes(5)), TimeSpan.FromMinutes(5) },
-        };
 
         /// <summary>
         /// Situation where the DST transition happens in the middle of the schedule, with the

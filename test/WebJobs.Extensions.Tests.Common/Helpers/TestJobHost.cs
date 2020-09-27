@@ -3,7 +3,6 @@
 
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host;
-using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Indexers;
 using Microsoft.Extensions.Options;
@@ -11,6 +10,12 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
 {
+    // $$$ Meant to simplify some tests - is this worth it? 
+    public interface IProgramWithResult<TResult>
+    {
+        TaskCompletionSource<TResult> TaskSource { get; set; }
+    }
+
     public class TestJobHost<TProgram> : JobHost
     {
         private readonly IJobActivator _jobActivator;
@@ -71,11 +76,5 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
             }
             Assert.True(false, "Invoker should have failed");
         }
-    }
-
-    // $$$ Meant to simplify some tests - is this worth it? 
-    public interface IProgramWithResult<TResult>
-    {
-        TaskCompletionSource<TResult> TaskSource { get; set; }
     }
 }
