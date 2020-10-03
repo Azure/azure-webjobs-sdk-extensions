@@ -7,10 +7,8 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Client;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Config;
-using Microsoft.Azure.WebJobs.Extensions.SendGrid;
+using Microsoft.Azure.WebJobs.Extensions.SendGrid.Config;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Indexers;
@@ -20,6 +18,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json.Linq;
+using SendGrid;
 using SendGrid.Helpers.Mail;
 using Xunit;
 
@@ -49,7 +48,7 @@ namespace SendGridTests
             factoryMock.Verify(f => f.Create(ConfigApiKey), Times.Once());
 
             // This function sends 4 messages.
-            clientMock.Verify(c => c.SendMessageAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()), Times.Exactly(4));
+            clientMock.Verify(c => c.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()), Times.Exactly(4));
 
             // Just make sure traces work.
             Assert.Equal(functionName, _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
@@ -70,7 +69,7 @@ namespace SendGridTests
             factoryMock.Verify(f => f.Create(DefaultApiKey), Times.Once());
 
             // This function sends 1 message.
-            clientMock.Verify(c => c.SendMessageAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()), Times.Once);
+            clientMock.Verify(c => c.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()), Times.Once);
 
             // Just make sure traces work.
             Assert.Equal(functionName, _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
@@ -94,9 +93,9 @@ namespace SendGridTests
         private void InitializeMocks(out Mock<ISendGridClientFactory> factoryMock, out Mock<ISendGridClient> clientMock)
         {
             var mockResponse = new SendGrid.Response(HttpStatusCode.OK, null, null);
-            clientMock = new Mock<Client.ISendGridClient>(MockBehavior.Strict);
+            clientMock = new Mock<ISendGridClient>(MockBehavior.Strict);
             clientMock
-                .Setup(c => c.SendMessageAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()))
+                .Setup(c => c.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(mockResponse);
 
             factoryMock = new Mock<ISendGridClientFactory>(MockBehavior.Strict);

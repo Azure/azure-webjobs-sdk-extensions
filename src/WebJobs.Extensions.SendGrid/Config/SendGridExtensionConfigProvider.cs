@@ -4,16 +4,15 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using Client;
 using Microsoft.Azure.WebJobs.Description;
-using Microsoft.Azure.WebJobs.Extensions.Bindings;
-using Microsoft.Azure.WebJobs.Extensions.Config;
+using Microsoft.Azure.WebJobs.Extensions.SendGrid.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using SendGrid;
 using SendGrid.Helpers.Mail;
 
-namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
+namespace Microsoft.Azure.WebJobs.Extensions.SendGrid.Config
 {
     /// <summary>
     /// Defines the configuration options for the SendGrid binding.
@@ -24,15 +23,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
         internal const string AzureWebJobsSendGridApiKeyName = "AzureWebJobsSendGridApiKey";
 
         private readonly IOptions<SendGridOptions> _options;
+        private readonly ISendGridResponseHandler _responseHandler;
+
         private ConcurrentDictionary<string, ISendGridClient> _sendGridClientCache = new ConcurrentDictionary<string, ISendGridClient>();
 
         /// <summary>
         /// Creates a new instance.
         /// </summary>
-        public SendGridExtensionConfigProvider(IOptions<SendGridOptions> options, ISendGridClientFactory clientFactory)
+        public SendGridExtensionConfigProvider(IOptions<SendGridOptions> options, ISendGridClientFactory clientFactory, ISendGridResponseHandler responseHandler)
         {
-            _options = options;
-            ClientFactory = clientFactory;
+            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _responseHandler = responseHandler ?? throw new ArgumentNullException(nameof(responseHandler));
+
+            ClientFactory = clientFactory ?? throw new ArgumentNullException(nameof(clientFactory));
         }
 
         internal ISendGridClientFactory ClientFactory { get; set; }
@@ -57,8 +60,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
         private IAsyncCollector<SendGridMessage> CreateCollector(SendGridAttribute attr)
         {
             string apiKey = FirstOrDefault(attr.ApiKey, _options.Value.ApiKey);
+
             ISendGridClient sendGrid = _sendGridClientCache.GetOrAdd(apiKey, a => ClientFactory.Create(a));
-            return new SendGridMessageAsyncCollector(_options.Value, attr, sendGrid);
+
+            return new SendGridMessageAsyncCollector(_options.Value, attr, sendGrid, _responseHandler);
         }
 
         private void ValidateBinding(SendGridAttribute attribute, Type type)

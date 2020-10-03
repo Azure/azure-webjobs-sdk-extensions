@@ -4,8 +4,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Bindings;
-using Microsoft.Azure.WebJobs.Extensions.SendGrid;
+using Microsoft.Azure.WebJobs.Extensions.SendGrid.Bindings;
+using Microsoft.Azure.WebJobs.Extensions.SendGrid.Config;
 using Microsoft.Extensions.Configuration;
 using SendGrid.Helpers.Mail;
 using Xunit;

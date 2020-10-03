@@ -3,14 +3,13 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
-using Client;
-using Microsoft.Azure.WebJobs.Extensions.SendGrid;
+using Microsoft.Azure.WebJobs.Extensions.SendGrid.Config;
+using SendGrid;
 using SendGrid.Helpers.Mail;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Bindings
+namespace Microsoft.Azure.WebJobs.Extensions.SendGrid.Bindings
 {
     internal class SendGridMessageAsyncCollector : IAsyncCollector<SendGridMessage>
     {
@@ -18,15 +17,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
         private readonly SendGridAttribute _attribute;
         private readonly ConcurrentQueue<SendGridMessage> _messages = new ConcurrentQueue<SendGridMessage>();
         private readonly ISendGridClient _sendGrid;
+        private readonly ISendGridResponseHandler _responseHandler;
 
-        public SendGridMessageAsyncCollector(SendGridOptions options, SendGridAttribute attribute, ISendGridClient sendGrid)
+        public SendGridMessageAsyncCollector(SendGridOptions options, SendGridAttribute attribute, ISendGridClient sendGrid, ISendGridResponseHandler responseHandler)
         {
-            _options = options;
-            _attribute = attribute;
-            _sendGrid = sendGrid;
+            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _attribute = attribute ?? throw new ArgumentNullException(nameof(attribute));
+            _sendGrid = sendGrid ?? throw new ArgumentNullException(nameof(sendGrid));
+            _responseHandler = responseHandler ?? throw new ArgumentNullException(nameof(responseHandler));
         }
 
-        public Task AddAsync(SendGridMessage item, CancellationToken cancellationToken = default(CancellationToken))
+        public Task AddAsync(SendGridMessage item, CancellationToken cancellationToken = default)
         {
             if (item == null)
             {
@@ -49,11 +50,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
             return Task.CompletedTask;
         }
 
-        public async Task FlushAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task FlushAsync(CancellationToken cancellationToken = default)
         {
             while (_messages.TryDequeue(out SendGridMessage message))
             {
-                await _sendGrid.SendMessageAsync(message);
+                Response response = await _sendGrid.SendEmailAsync(message, cancellationToken);
+
+                await _responseHandler.HandleAsync(response, cancellationToken);
             }
         }        
     }
