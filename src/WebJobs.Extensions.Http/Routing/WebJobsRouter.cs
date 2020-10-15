@@ -15,6 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         private readonly IInlineConstraintResolver _constraintResolver;
         private RouteCollection _functionRoutes;
         private RouteCollection _proxyRoutes;
+        private RouteCollection _warmupRoute;
         private RouteCollection _routeCollection;
         private RouteCollection _routeCollectionReverse;
 
@@ -29,6 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
         private void InitializeRouteCollections()
         {
+            _warmupRoute = null;
             _functionRoutes = new RouteCollection();
             _proxyRoutes = new RouteCollection();
 
@@ -52,7 +54,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         public Task RouteAsync(RouteContext context)
         {
             // /admin/* routes should not be allowed to be overriden by proxies.
-            if (context.HttpContext.Request.Path.StartsWithSegments(new PathString("/admin"), System.StringComparison.OrdinalIgnoreCase))
+            if (context.HttpContext.Request.Path.StartsWithSegments(new PathString("/admin"), System.StringComparison.OrdinalIgnoreCase) &&
+                (_warmupRoute != null && !context.HttpContext.Request.Path.Value.Equals("/admin/warmup", StringComparison.OrdinalIgnoreCase)))
             {
                 return Task.CompletedTask;
             }
@@ -66,8 +69,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             return _routeCollection.RouteAsync(context);
         }
 
-        public void AddFunctionRoutes(IRouter functionRoutes, IRouter proxyRoutes)
+        public void AddFunctionRoutes(IRouter functionRoutes, IRouter proxyRoutes, IRouter warmupRoute)
         {
+            if (warmupRoute != null)
+            {
+                // _warmupRoute will be created here instead of the constructor to avoid extra allocations if no warmupRoute is needed nor provided like for Consumption scenarios.
+                if (_warmupRoute == null)
+                {
+                    _warmupRoute = new RouteCollection();
+                    _routeCollection.Add(_warmupRoute);
+                    _routeCollectionReverse.Add(_warmupRoute);
+                }
+                _warmupRoute.Add(warmupRoute);
+            }
+
             if (proxyRoutes != null)
             {
                 _proxyRoutes.Add(proxyRoutes);
