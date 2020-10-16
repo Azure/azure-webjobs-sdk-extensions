@@ -17,6 +17,7 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -36,11 +37,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         }
 
         [Fact]
-        public async Task GetRequestBindingDataAsync_ReadsFromBody()
+        public void GetRequestBindingData_ReadsFromBody()
         {
             string input = "{ test: 'testing', baz: 123, nestedArray: [ { nesting: 'yes' } ], nestedObject: { a: 123, b: 456 } }";
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/test", null, input);
-            var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
+            var bindingData = HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingData(request, input);
 
             Assert.Equal(5, bindingData.Count);
             Assert.Equal("testing", bindingData["test"]);
@@ -51,11 +52,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         }
 
         [Fact]
-        public async Task GetRequestBindingDataAsync_ReadsFromQueryString()
+        public void GetRequestBindingData_ReadsFromQueryString()
         {
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/test?name=Mathew%20Charles&location=Seattle");
 
-            var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
+            var bindingData = HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingData(request);
 
             Assert.Equal(4, bindingData.Count);
             Assert.Equal("Mathew Charles", bindingData["name"]);
@@ -69,7 +70,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         }
 
         [Fact]
-        public async Task GetRequestBindingDataAsync_ReadsFromRoute()
+        public void GetRequestBindingData_ReadsFromRoute()
         {
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/test");
 
@@ -80,7 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             };
             request.HttpContext.Items.Add(HttpExtensionConstants.AzureWebJobsHttpRouteDataKey, routeData);
 
-            var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
+            var bindingData = HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingData(request);
 
             Assert.Equal(4, bindingData.Count);
             Assert.Equal("Mathew Charles", bindingData["Name"]);
@@ -89,7 +90,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
         [Theory]
         [ClassData(typeof(BindsAllTypesTestData))]
-        public async Task GetRequestBindingDataAsync_ReadsFromRoute_BindsAllTypes(Type type, object value, string stringValue)
+        public void GetRequestBindingData_ReadsFromRoute_BindsAllTypes(Type type, object value, string stringValue)
         {
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/test");
 
@@ -104,7 +105,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 { "test", type }
             };
 
-            var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request, bindingDataContract);
+            var bindingData = HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingData(request, bindingDataContract: bindingDataContract);
 
             Assert.Equal(3, bindingData.Count);
             Assert.Equal(value, bindingData["test"]);
@@ -120,7 +121,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         // When we have the same name in multiple places, ensure that
         // we can access it unambiguously via binding expression
         [Fact]
-        public async Task GetRequestBindingDataAsync_ReadsFrom_Duplicates()
+        public void GetRequestBindingData_ReadsFrom_Duplicates()
         {
             string input = "{ name: 'body1', nestedObject: { name: 'body2' } }";
             var headers = new HeaderDictionary();
@@ -134,7 +135,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             };
             request.HttpContext.Items.Add(HttpExtensionConstants.AzureWebJobsHttpRouteDataKey, routeData);
 
-            var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
+            var bindingData = HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingData(request, input);
 
             TestBindingData(bindingData,
                 "{headers.name}", "Mathew",
@@ -144,7 +145,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
         // Ensure specifically we can bind to the authorization headers  
         [Fact]
-        public async Task GetRequestBindingDataAsync_Auth_Header()
+        public void GetRequestBindingData_Auth_Header()
         {
             var headers = new HeaderDictionary();
 
@@ -153,7 +154,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/test", headers);
 
-            var bindingData = await HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingDataAsync(request);
+            var bindingData = HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingData(request);
 
             TestBindingData(bindingData,
                 "{headers.authorization}", "Bearer ey123",
@@ -496,6 +497,31 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             {
                 Assert.Equal(pair.Value, poco.Properties[pair.Key]);
             }
+        }
+
+        [Fact]
+        public static void LazyBindingData_DelaysInstantiation()
+        {
+            int invokeCount = 0;
+            Dictionary<string, object> bindingData = new Dictionary<string, object>
+            {
+                { "d1", 1 },
+                { "d2", 2 },
+                { "d3", 3 }
+            };
+            Func<IReadOnlyDictionary<string, object>> factory = () =>
+            {
+                invokeCount++;
+                return bindingData;
+            };
+
+            var lazyBindingData = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding.LazyBindingData(factory);
+
+            Assert.Equal(0, invokeCount);
+
+            Assert.Equal(3, lazyBindingData.Count);
+
+            Assert.Equal(1, invokeCount);
         }
 
         private static void TestBindingData(IReadOnlyDictionary<string, object> bindingData, params string[] values)

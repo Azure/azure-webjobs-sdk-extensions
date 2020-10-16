@@ -12,7 +12,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
     {
         /// <summary>
         /// Applies any additional binding data from the input value to the specified binding data.
-        /// This binding data then becomes available to the binding process (in the case of late bound bindings)
+        /// This binding data then becomes available to the binding process (in the case of late bound bindings).
         /// </summary>
         internal static void ApplyBindingData(object value, Dictionary<string, object> bindingData)
         {
