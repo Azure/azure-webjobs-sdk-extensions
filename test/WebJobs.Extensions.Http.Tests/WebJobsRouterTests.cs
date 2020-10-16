@@ -23,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
             var builder = router.CreateBuilder(handler.Object, "api");
             builder.MapFunctionRoute("testfunction", "test/{token}", "testfunction");
 
-            router.AddFunctionRoutes(builder.Build(), null, null);
+            router.AddFunctionRoutes(builder.Build(), null);
 
             // Act
             string routeTemplate = router.GetFunctionRouteTemplate("testfunction");
@@ -33,7 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
         }
 
         [Fact]
-        public void GetFunctionWithWarmupRoute()
+        public void GetFunctionWithCustomRoute()
         {
             var constraintResolver = new Mock<IInlineConstraintResolver>();
             var handler = new Mock<IWebJobsRouteHandler>();
@@ -42,29 +42,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
             var builder = router.CreateBuilder(handler.Object, "api");
             builder.MapFunctionRoute("warmuproute", "warmup", "warmuproute");
 
-            var warmupBuilder = router.CreateBuilder(handler.Object, "admin");
-            warmupBuilder.MapFunctionRoute("warmup", "warmup", "warmup");
+            var customBuilder = router.CreateBuilder(handler.Object, "admin");
+            customBuilder.MapFunctionRoute("warmup", "warmup", "warmup");
 
-            router.AddFunctionRoutes(builder.Build(), null, warmupBuilder.Build());
+            router.AddFunctionRoutes(builder.Build(), null);
+            router.AddCustomRoutes(customBuilder.Build());
 
             string routeTemplate = router.GetFunctionRouteTemplate("warmuproute");
 
             Assert.Equal("api/warmup", routeTemplate);
 
-            var req = HttpTestHelpers.CreateHttpRequest("GET", "http://functions.com/admin/host/ping");
-            RouteContext rc = new RouteContext(req.HttpContext);
-            var r = router.RouteAsync(rc);
-            Assert.True(r.IsCompletedSuccessfully == true);
-
-            req = HttpTestHelpers.CreateHttpRequest("GET", "http://functions.com/admin/warmup");
-            rc = new RouteContext(req.HttpContext);
-            r = router.RouteAsync(rc);
-            Assert.True(r.IsCompletedSuccessfully == false);
-
-            req = HttpTestHelpers.CreateHttpRequest("GET", "http://functions.com/api/warmup");
-            rc = new RouteContext(req.HttpContext);
-            r = router.RouteAsync(rc);
-            Assert.True(r.IsCompletedSuccessfully == false);
+            routeTemplate = router.GetFunctionRouteTemplate("warmup");
+            Assert.Equal("admin/warmup", routeTemplate);
         }
     }
 }
