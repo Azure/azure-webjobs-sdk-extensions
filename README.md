@@ -130,54 +130,9 @@ The above messages are fully declarative, but you can also set the message prope
 
 To register the SendGrid extensions, call `config.UseSendGrid()` in your startup code. For more information on the SendGrid binding, see the [SendGrid samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/SendGridSamples.cs).
 
-### ErrorTrigger
-
-An **error trigger** that allows you to annotate functions to be automatically called by the runtime when errors occur. This allows you to set up email/text/etc. notifications to alert you when things are going wrong with your jobs.  Here's an example function that will be called whenever 10 errors occur within a 30 minute sliding window (throttled at a maximum of 1 notification per hour):
-
-```csharp
-public static void ErrorMonitor(
-    [ErrorTrigger("0:30:00", 10, Throttle = "1:00:00")] TraceFilter filter, 
-    TextWriter log)
-{
-    // send Text notification using IFTTT
-    string body = string.Format("{{ \"value1\": \"{0}\" }}", filter.Message);
-    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, WebNotificationUri)
-    {
-        Content = new StringContent(body, Encoding.UTF8, "application/json")
-    };
-    HttpClient.SendAsync(request);
-
-    // log last 5 detailed errors to the Dashboard
-    log.WriteLine(filter.GetDetailedMessage(5));
-}
-```
-
-You can choose to send a alert text message to yourself, or a detailed email message, etc. The ErrorTrigger extension is part of the **Core extensions** can be registered on your JobHostConfiguration by calling `config.UseCore()`. In addition to setting up one or more **global error handlers** like the above, you can also specify **function specific error handlers** that will only handle erros for one function. This is done by naming convention based on an "ErrorHandler" suffix. For example, if your error function is named "**Import**ErrorHandler" and there is a function named "Import" in the same class, that error function will be scoped to errors for that function only:
-
-```csharp
-public static void Import(
-    [FileTrigger(@"import\{name}")] Stream file,
-    [Blob(@"processed/{name}")] CloudBlockBlob output)
-{
-    output.UploadFromStream(file);
-}
-
-public static void ImportErrorHandler(
-    [ErrorTrigger("1:00:00", 5)] TraceFilter filter,
-    TextWriter log)
-{
-    // Here you could send an error notification, etc.
-
-    // log last 5 detailed errors to the Dashboard
-    log.WriteLine(filter.GetDetailedMessage(3));
-}
-```
-
-To register the Error extensions, call `config.UseCore()` in your startup code. For more information see the [Error Monitoring](http://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Error-Monitoring) wiki page, as well as the the [Error Monitoring Sample](http://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/ErrorMonitoringSamples.cs).
-
 ### Core Extensions
 
-There are a set of triggers/bindings that can be registered by calling `config.UseCore()`. The Core extensions contain a set of general purpose bindings. For example, the **ErrorTrigger** binding discussed in its own section above is part of the Core extension. There is also a binding for `ExecutionContext` which allows you to access invocation specific system information in your function. Here's an example showing how to access the function **Invocation ID** for the function:
+There are a set of triggers/bindings that can be registered by calling `config.UseCore()`. The Core extensions contain a set of general purpose bindings. For example, there is a binding for `ExecutionContext` which allows you to access invocation specific system information in your function. Here's an example showing how to access the function **Invocation ID** for the function:
 
 ```csharp
 public static void ProcessOrder(
@@ -191,56 +146,6 @@ public static void ProcessOrder(
 
 The invocation ID is used in the Dashboard logs, so having access to this programatically allows you to correlate an invocation to those logs. This might be useful if you're also logging to your own external system. To register the Core extensions, call `config.Core()` in your startup code.
 
-### Azure Mobile Apps
-
-A binding that allows you to easily create, read, and update records from an [Azure Mobile App](https://azure.microsoft.com/en-us/services/app-service/mobile/). This extension lives in **Microsoft.Azure.WebJobs.Extensions.MobileApps** nuget package. To configure the binding, add the Mobile App's URI (like `https://{yourapp}.azurewebsites.net`) as an app setting or environment variable using the setting name `AzureWebJobsMobileAppUri`. 
-
-By default, the binding will only be able to interact with Mobile App tables that are configured to be Anonymous. However, you can configure an Api Key on the Mobile App by following the Api Key sample for the [Node SDK](https://github.com/Azure/azure-mobile-apps-node/tree/master/samples/api-key) and the guide for the [.NET SDK](https://github.com/Azure/azure-mobile-apps-net-server/wiki/Implementing-Application-Key). Once your Api Key is properly configured for your Mobile App, you can configure your binding to use it by setting an app setting or environment variable with the name `AzureWebJobsMobileAppApiKey`.
-
-In this scenario, a record is created in the `Item` table each time a message appears in the queue. This specific sample uses an anonymous type for the record, but it could also have used `JObject` or any other type with a `public string Id` property.
-
-```csharp
-public static void MobileTableOutputSample(
-    [QueueTrigger("sample")] QueueData trigger,
-    [MobileTable(TableName = "Item")] out object item)
-{    
-    item = new { Text = "some sample text" };
-}
-```
-
-The following sample performs a lookup based on the data in the queue trigger. The `RecordId` property value of the `QueueData` object is used to query the `Item` table of the Mobile App. If the record exists, it is provided in the `item` parameter. If not, the `item` parameter will be `null`. Inside the method, the `item` object is changed. This change is automatically sent back to the Mobile App when the method exits. This scenario uses the `Item` type, but it could also have used `JObject` or any type with a `public string Id` property.
-
-```csharp
-public static void MobileTableInputSample(
-    [QueueTrigger("sample")] QueueData trigger,
-    [MobileTable(TableName = "Item", Id = "{RecordId}")] Item item)
-{    
-    // item will be null if the record is not found
-    if (item != null)
-    {
-        // Perform some processing...    
-        item.IsProcessed = true;
-    }
-}
-```
-
-If you need more control over the interaction with your Mobile App, you can also use parameters of type `IMobileServiceTable`, `IMobileServiceTable<T>`, `IMobileServiceTableQuery<T>`, or even `IMobileServiceClient`. For example, the method below can be used to execute a more complex query against the `Item` table. Note that if you are using a type other than `object` or `JObject`, the `TableName` is not required as the underlying Mobile App Client SDK will determine the table name based on the type. However, if you need to use a table name that does not match your type, you can specify that name as the `TableName` and it will override the type name.
-
-```csharp
-public static void MobileTableSample(
-    [QueueTrigger("sample")] QueueData trigger,
-    [MobileTable] IMobileServiceTable<Item> itemTable)
-{    
-    IEnumerable<Item> processedItems = await itemTable.CreateQuery()
-        .Where(i => i.IsProcessed && i.ProcessedAt < DateTime.Now.AddMinutes(-5))
-        .ToListAsync();
-
-    foreach (Item i in processedItems)
-    {
-        await table.DeleteAsync(i);
-    }
-}
-```
 ### DocumentDB
 
 Use an [Azure DocumentDB](https://azure.microsoft.com/en-us/services/documentdb/) binding to easily create, read, and update JSON documents from a WebJob. This extension lives in **Microsoft.Azure.WebJobs.Extensions.DocumentDB** nuget package. To configure the binding, add the DocumentDB connection string as an app setting or environment variable using the setting name `AzureWebJobsDocumentDBConnectionString`.
