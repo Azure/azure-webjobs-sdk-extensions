@@ -110,6 +110,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         }
 
         [Fact]
+        public async Task HandleTimerEvent_HandlesExceptions()
+        {
+            // force an exception to occur outside of the function invocation path
+            var ex = new Exception("Kaboom!");
+            _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName, It.IsAny<ScheduleStatus>())).ThrowsAsync(ex);
+
+            var listener = new TimerListener(_attribute, _schedule, _testTimerName, _options, _mockTriggerExecutor.Object, _logger, _mockScheduleMonitor.Object, _functionShortName);
+
+            Assert.Null(listener.Timer);
+
+            await listener.HandleTimerEvent();
+
+            // verify the timer was started
+            Assert.NotNull(listener.Timer);
+            Assert.True(listener.Timer.Enabled);
+
+            var logs = _logger.GetLogMessages();
+            var log = logs[0];
+            Assert.Equal(LogLevel.Error, log.Level);
+            Assert.Equal("Error occurred during scheduled invocation for 'TimerFunctionShortName'.", log.FormattedMessage);
+            Assert.Same(ex, log.Exception);
+            log = logs[1];
+            Assert.Equal(LogLevel.Debug, log.Level);
+            Assert.True(log.FormattedMessage.StartsWith("Timer for 'TimerFunctionShortName' started with interval"));
+
+            listener.Dispose();
+        }
+
+        [Fact]
         public async Task ClockSkew_IsNotCalculatedPastDue()
         {
             // First, invoke a function with clock skew. This will store the next status back in the 
