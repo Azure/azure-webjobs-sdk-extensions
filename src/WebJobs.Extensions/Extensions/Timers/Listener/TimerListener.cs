@@ -80,6 +80,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             // we use DateTime.Now rather than DateTime.UtcNow to allow the local machine to set the time zone. In Azure this will be
             // UTC by default, but can be configured to use any time zone if it makes scheduling easier.
             DateTime now = DateTime.Now;
+            _trace.Verbose($"The '{_timerName}' timer is using the schedule '{_schedule}' and the local time zone: '{TimeZoneInfo.Local.DisplayName}'");
+
             if (ScheduleMonitor != null)
             {
                 // check to see if we've missed an occurrence since we last started.
@@ -162,25 +164,41 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             }
         }
 
-        private void OnTimer(object sender, ElapsedEventArgs e)
+        private async void OnTimer(object sender, ElapsedEventArgs e)
         {
-            HandleTimerEvent().Wait();
+            await HandleTimerEvent();
         }
 
         internal async Task HandleTimerEvent()
         {
-            if (_remainingInterval != TimeSpan.Zero)
+            bool timerStarted = false;
+
+            try
             {
-                // if we're in the middle of a long interval that exceeds
-                // Timer's max interval, continue the remaining interval w/o
-                // invoking the function
-                StartTimer(_remainingInterval);
-                return;
+                if (_remainingInterval != TimeSpan.Zero)
+                {
+                    // if we're in the middle of a long interval that exceeds
+                    // Timer's max interval, continue the remaining interval w/o
+                    // invoking the function
+                    StartTimer(_remainingInterval);
+                    timerStarted = true;
+                    return;
+                }
+
+                await InvokeJobFunction(DateTime.Now, false);
             }
-
-            await InvokeJobFunction(DateTime.Now, false);
-
-            StartTimer(DateTime.Now);
+            catch (Exception ex)
+            {
+                // ensure background exceptions don't stop the execution schedule
+                _trace.Error($"Error occurred during scheduled invocation for '{_timerName}'.", ex);
+            }
+            finally
+            {
+                if (!timerStarted)
+                {
+                    StartTimer(DateTime.Now);
+                }
+            }
         }
 
         /// <summary>
@@ -205,16 +223,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             try
             {
-                FunctionResult result = await _executor.TryExecuteAsync(input, token);
-                if (!result.Succeeded)
-                {
-                    token.ThrowIfCancellationRequested();
-                }
+                await _executor.TryExecuteAsync(input, token);
             }
             catch
             {
                 // We don't want any function errors to stop the execution
-                // schedule. Errors will be logged to Dashboard already.
+                // schedule. Invocation errors are already logged.
             }
 
             // If the trigger fired before it was officially scheduled (likely under 1 second due to clock skew),
@@ -320,6 +334,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             _timer.Interval = interval.TotalMilliseconds;
             _timer.Start();
+            _trace.Verbose($"Timer for '{_timerName}' started with interval '{interval}'.");
         }
 
         private void ThrowIfDisposed()
