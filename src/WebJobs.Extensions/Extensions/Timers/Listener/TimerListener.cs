@@ -174,25 +174,41 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             }
         }
 
-        private void OnTimer(object sender, ElapsedEventArgs e)
+        private async void OnTimer(object sender, ElapsedEventArgs e)
         {
-            HandleTimerEvent().Wait();
+            await HandleTimerEvent();
         }
 
         internal async Task HandleTimerEvent()
         {
-            if (_remainingInterval != TimeSpan.Zero)
+            bool timerStarted = false;
+
+            try
             {
-                // if we're in the middle of a long interval that exceeds
-                // Timer's max interval, continue the remaining interval w/o
-                // invoking the function
-                StartTimer(_remainingInterval);
-                return;
+                if (_remainingInterval != TimeSpan.Zero)
+                {
+                    // if we're in the middle of a long interval that exceeds
+                    // Timer's max interval, continue the remaining interval w/o
+                    // invoking the function
+                    StartTimer(_remainingInterval);
+                    timerStarted = true;
+                    return;
+                }
+
+                await InvokeJobFunction(DateTime.Now, false);
             }
-
-            await InvokeJobFunction(DateTime.Now, false);
-
-            StartTimer(DateTime.Now);
+            catch (Exception ex)
+            {
+                // ensure background exceptions don't stop the execution schedule
+                _logger.LogError(ex, "Error occurred during scheduled invocation for '{functionName}'.", _functionLogName);
+            }
+            finally
+            {
+                if (!timerStarted)
+                {
+                    StartTimer(DateTime.Now);
+                }
+            }
         }
 
         /// <summary>
@@ -236,16 +252,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             try
             {
-                FunctionResult result = await _executor.TryExecuteAsync(input, token);
-                if (!result.Succeeded)
-                {
-                    token.ThrowIfCancellationRequested();
-                }
+                await _executor.TryExecuteAsync(input, token);
             }
             catch
             {
                 // We don't want any function errors to stop the execution
-                // schedule. Errors will be logged to Dashboard already.
+                // schedule. Invocation errors are already logged.
             }
 
             // If the trigger fired before it was officially scheduled (likely under 1 second due to clock skew),
