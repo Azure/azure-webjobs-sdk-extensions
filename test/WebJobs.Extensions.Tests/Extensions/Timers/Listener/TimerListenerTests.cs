@@ -109,6 +109,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         }
 
         [Fact]
+        public async Task HandleTimerEvent_HandlesExceptions()
+        {
+            // force an exception to occur outside of the function invocation path
+            var ex = new Exception("Kaboom!");
+            _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName, It.IsAny<ScheduleStatus>())).Throws(ex);
+            _config.ScheduleMonitor = _mockScheduleMonitor.Object;
+            var listener = new TimerListener(_attribute, _schedule, _testTimerName, _config, _mockTriggerExecutor.Object, _traceWriter);
+
+            Assert.Null(listener.Timer);
+
+            await listener.HandleTimerEvent();
+
+            // verify the timer was started
+            Assert.NotNull(listener.Timer);
+            Assert.True(listener.Timer.Enabled);
+
+            var logs = _traceWriter.Events.ToArray();
+            var log = logs[0];
+            Assert.Equal(TraceLevel.Error, log.Level);
+            Assert.Equal("Error occurred during scheduled invocation for 'Program.TestTimerJob'.", log.Message);
+            Assert.Same(ex, log.Exception);
+            log = logs[1];
+            Assert.Equal(TraceLevel.Verbose, log.Level);
+            Assert.True(log.Message.StartsWith("Timer for 'Program.TestTimerJob' started with interval"));
+
+            listener.Dispose();
+        }
+
+        [Fact]
         public async Task ClockSkew_IsNotCalculatedPastDue()
         {
             // First, invoke a function with clock skew. This will store the next status back in the 
@@ -445,7 +474,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await _listener.StopAsync(CancellationToken.None);
             _listener.Dispose();
 
-            Assert.Equal(expected, _traceWriter.Events.Single(m => m.Level == TraceLevel.Verbose).Message);
+            var logs = _traceWriter.Events.ToArray();
+            Assert.Collection(logs,
+                p => Assert.StartsWith("The 'Program.TestTimerJob' timer is using the schedule", p.Message),
+                p => Assert.Equal(expected, p.Message),
+                p => Assert.StartsWith("The next 5 occurrences of the schedule will be", p.Message),
+                p => Assert.StartsWith("Timer for 'Program.TestTimerJob' started with interval", p.Message));
         }
 
         private void CreateTestListener(string expression, bool useMonitor = true, Action functionAction = null)
