@@ -23,6 +23,7 @@ using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -145,23 +146,36 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     valueProvider = new HttpRequestValueBinder(_parameter, request, invokeString);
                 }
 
-                var bindingData = await GetBindingDataAsync(request, valueProvider);
-                return new TriggerData(valueProvider, bindingData)
-                {
-                    ReturnValueProvider = new ResponseHandler(request, _responseHook)
-                };
-            }
-
-            private async Task<IReadOnlyDictionary<string, object>> GetBindingDataAsync(HttpRequest request, IValueProvider valueProvider)
-            {
                 object poco = null;
-                IReadOnlyDictionary<string, object> userTypeBindingData = null;
                 if (_bindingDataProvider != null)
                 {
                     // some binding data is defined by the user type
                     // the provider might be null if the Type is invalid, or if the Type
                     // has no public properties to bind to
                     poco = await valueProvider.GetValueAsync();
+                }
+
+                string body = null;
+                if (request.ContentLength != null && request.ContentLength > 0)
+                {
+                    body = await request.ReadAsStringAsync();
+                }
+
+                var bindingData = new LazyBindingData(() => GetBindingData(request, poco, body));
+                return new TriggerData(valueProvider, bindingData)
+                {
+                    ReturnValueProvider = new ResponseHandler(request, _responseHook)
+                };
+            }
+
+            private IReadOnlyDictionary<string, object> GetBindingData(HttpRequest request, object poco, string body)
+            {
+                IReadOnlyDictionary<string, object> userTypeBindingData = null;
+                if (_bindingDataProvider != null)
+                {
+                    // some binding data is defined by the user type
+                    // the provider might be null if the Type is invalid, or if the Type
+                    // has no public properties to bind to
                     userTypeBindingData = _bindingDataProvider.GetBindingData(poco);
                 }
 
@@ -173,7 +187,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 aggregateBindingData[RequestBindingName] = request;
 
                 // Apply additional binding data coming from request route, query params, etc.
-                var requestBindingData = await GetRequestBindingDataAsync(request, _bindingDataContract);
+                var requestBindingData = GetRequestBindingData(request, body, _bindingDataContract);
                 aggregateBindingData.AddRange(requestBindingData);
 
                 // apply binding data to the user type
@@ -290,13 +304,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 return aggregateDataContract;
             }
 
-            internal static async Task<IReadOnlyDictionary<string, object>> GetRequestBindingDataAsync(HttpRequest request, Dictionary<string, Type> bindingDataContract = null)
+            internal static IReadOnlyDictionary<string, object> GetRequestBindingData(HttpRequest request, string body = null, Dictionary<string, Type> bindingDataContract = null)
             {
                 // apply binding data from request body if present
                 var bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
                 if (request.ContentLength != null && request.ContentLength > 0)
                 {
-                    string body = await request.ReadAsStringAsync();
                     Utility.ApplyBindingData(body, bindingData);
                 }
 
@@ -583,6 +596,44 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 public Task StopAsync(CancellationToken cancellationToken)
                 {
                     return Task.CompletedTask;
+                }
+            }
+
+            internal class LazyBindingData : IReadOnlyDictionary<string, object>
+            {
+                private Lazy<IReadOnlyDictionary<string, object>> _inner;
+
+                public LazyBindingData(Func<IReadOnlyDictionary<string, object>> factory)
+                {
+                    _inner = new Lazy<IReadOnlyDictionary<string, object>>(factory);
+                }
+
+                public IEnumerable<string> Keys => _inner.Value.Keys;
+
+                public IEnumerable<object> Values => _inner.Value.Values;
+
+                public int Count => _inner.Value.Count;
+
+                public object this[string key] => _inner.Value[key];
+
+                public bool ContainsKey(string key)
+                {
+                    return _inner.Value.ContainsKey(key);
+                }
+
+                public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+                {
+                    return _inner.Value.GetEnumerator();
+                }
+
+                public bool TryGetValue(string key, out object value)
+                {
+                    return _inner.Value.TryGetValue(key, out value);
+                }
+
+                System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+                {
+                    return _inner.Value.GetEnumerator();
                 }
             }
         }
