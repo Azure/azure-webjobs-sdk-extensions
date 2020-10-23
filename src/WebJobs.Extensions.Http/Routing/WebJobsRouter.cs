@@ -51,12 +51,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
         public Task RouteAsync(RouteContext context)
         {
-            // /admin/* routes should not be allowed to be overriden by proxies.
-            if (context.HttpContext.Request.Path.StartsWithSegments(new PathString("/admin"), System.StringComparison.OrdinalIgnoreCase))
-            {
-                return Task.CompletedTask;
-            }
-
             // If this key is set in HttpContext, we first match against Function routes then Proxies.
             if (context.HttpContext.Items.ContainsKey(HttpExtensionConstants.AzureWebJobsUseReverseRoutesKey))
             {
@@ -79,6 +73,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             }
         }
 
+        public void AddCustomRoutes(IRouter customRoutes)
+        {
+            if (customRoutes != null)
+            {
+                _routeCollection.Add(customRoutes);
+            }
+        }
+
         public string GetFunctionRouteTemplate(string functionName)
         {
             if (functionName == null)
@@ -86,12 +88,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 throw new ArgumentNullException(nameof(functionName));
             }
 
-            if (_functionRoutes == null)
+            if (_routeCollection == null)
             {
                 return null;
             }
 
-            return GetFunctionRouteTemplate(_functionRoutes, functionName);
+            return GetFunctionRouteTemplate(_routeCollection, functionName);
         }
 
         private string GetFunctionRouteTemplate(RouteCollection routes, string functionName)

@@ -2,7 +2,9 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http;
 using Moq;
 using Xunit;
 
@@ -28,6 +30,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
 
             // Assert
             Assert.Equal("api/test/{token}", routeTemplate);
+        }
+
+        [Fact]
+        public void GetFunctionWithCustomRoute()
+        {
+            var constraintResolver = new Mock<IInlineConstraintResolver>();
+            var handler = new Mock<IWebJobsRouteHandler>();
+            IWebJobsRouter router = new WebJobsRouter(constraintResolver.Object);
+
+            var builder = router.CreateBuilder(handler.Object, "api");
+            builder.MapFunctionRoute("warmuproute", "warmup", "warmuproute");
+
+            var customBuilder = router.CreateBuilder(handler.Object, "admin");
+            customBuilder.MapFunctionRoute("warmup", "warmup", "warmup");
+
+            router.AddFunctionRoutes(builder.Build(), null);
+            router.AddCustomRoutes(customBuilder.Build());
+
+            string routeTemplate = router.GetFunctionRouteTemplate("warmuproute");
+
+            Assert.Equal("api/warmup", routeTemplate);
+
+            routeTemplate = router.GetFunctionRouteTemplate("warmup");
+            Assert.Equal("admin/warmup", routeTemplate);
         }
     }
 }

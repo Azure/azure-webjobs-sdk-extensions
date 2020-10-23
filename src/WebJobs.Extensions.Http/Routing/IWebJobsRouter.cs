@@ -11,6 +11,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
         void AddFunctionRoutes(IRouter functionRoutes, IRouter proxyRoutes);
 
+        void AddCustomRoutes(IRouter customRoutes);
+
         void ClearRoutes();
 
         WebJobsRouteBuilder CreateBuilder(IWebJobsRouteHandler routeHandler, string routePrefix);

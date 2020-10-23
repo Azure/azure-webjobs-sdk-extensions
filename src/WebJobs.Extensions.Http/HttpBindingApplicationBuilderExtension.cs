@@ -18,7 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         /// <param name="builder">The application builder.</param>
         /// <param name="applicationLifetime">The application lifetime instance.</param>
         /// <param name="routes">A route configuration handler.</param>
-        /// <returns>The updated <see cref="IApplicationBuilder"/></returns>
+        /// <returns>The updated <see cref="IApplicationBuilder"/>.</returns>
         public static IApplicationBuilder UseHttpBinding(this IApplicationBuilder builder, IApplicationLifetime applicationLifetime, Action<WebJobsRouteBuilder> routes)
             => UseHttpBindingRouting(builder, applicationLifetime, routes);
 
@@ -28,7 +28,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         /// <param name="builder">The application builder.</param>
         /// <param name="applicationLifetime">The application lifetime instance.</param>
         /// <param name="routes">A route configuration handler.</param>
-        /// <returns>The updated <see cref="IApplicationBuilder"/></returns>
+        /// <returns>The updated <see cref="IApplicationBuilder"/>.</returns>
         public static IApplicationBuilder UseHttpBindingRouting(this IApplicationBuilder builder, IApplicationLifetime applicationLifetime, Action<WebJobsRouteBuilder> routes)
         {
             var router = builder.ApplicationServices.GetRequiredService<IWebJobsRouter>();
