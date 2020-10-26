@@ -1,7 +1,7 @@
-$isPr = Test-Path env:APPVEYOR_PULL_REQUEST_NUMBER
+$shouldPackage = -not $env:APPVEYOR_PULL_REQUEST_NUMBER -or $env:APPVEYOR_PULL_REQUEST_TITLE.Contains("[pack]")
 $directoryPath = Split-Path $MyInvocation.MyCommand.Path -Parent
 
-if (-not $isPr -and $env:SkipAssemblySigning -ne "true") {
+if ($shouldPackage -and $env:SkipAssemblySigning -ne "true") {
   $timeout = new-timespan -Minutes 15
   $sw = [diagnostics.stopwatch]::StartNew();
   $polling = $true;
