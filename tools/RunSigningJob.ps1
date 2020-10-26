@@ -1,7 +1,7 @@
-$isPr = Test-Path env:APPVEYOR_PULL_REQUEST_NUMBER
+$shouldPackage = -not $env:APPVEYOR_PULL_REQUEST_NUMBER -or $env:APPVEYOR_PULL_REQUEST_TITLE.Contains("[pack]")
 $directoryPath = Split-Path $MyInvocation.MyCommand.Path -Parent
 
-if (-not $isPr) {
+if ($shouldPackage) {
   Compress-Archive $directoryPath\..\buildoutput\* $directoryPath\..\buildoutput\tosign.zip
 
   if ($env:SkipAssemblySigning -eq "true") {
