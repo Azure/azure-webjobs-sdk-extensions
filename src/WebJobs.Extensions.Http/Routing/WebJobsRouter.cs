@@ -73,14 +73,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             }
         }
 
-        public void AddCustomRoutes(IRouter customRoutes)
-        {
-            if (customRoutes != null)
-            {
-                _routeCollection.Add(customRoutes);
-            }
-        }
-
         public string GetFunctionRouteTemplate(string functionName)
         {
             if (functionName == null)
