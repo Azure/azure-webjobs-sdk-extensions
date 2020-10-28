@@ -4,7 +4,7 @@
     <Version>3.0.0$(VersionSuffix)</Version>
     <ExtensionsVersion>4.0.1$(VersionSuffix)</ExtensionsVersion> <!-- WebJobs.Extensions -->
     <CosmosDBVersion>3.0.8$(VersionSuffix)</CosmosDBVersion>
-    <HttpVersion>3.0.9$(VersionSuffix)</HttpVersion>
+    <HttpVersion>3.0.8$(VersionSuffix)</HttpVersion>
     <MobileAppsVersion>3.0.0$(VersionSuffix)</MobileAppsVersion>
     <SendGridVersion>3.0.2$(VersionSuffix)</SendGridVersion>
     <TwilioVersion>3.0.2$(VersionSuffix)</TwilioVersion>

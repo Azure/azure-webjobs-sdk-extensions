@@ -46,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
             customBuilder.MapFunctionRoute("warmup", "warmup", "warmup");
 
             router.AddFunctionRoutes(builder.Build(), null);
-            router.AddCustomRoutes(customBuilder.Build());
+            router.AddFunctionRoutes(customBuilder.Build(), null);
 
             string routeTemplate = router.GetFunctionRouteTemplate("warmuproute");
 
