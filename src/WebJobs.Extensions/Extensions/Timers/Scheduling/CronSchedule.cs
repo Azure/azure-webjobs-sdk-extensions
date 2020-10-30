@@ -16,9 +16,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         private readonly CrontabSchedule _cronSchedule;
 
         /// <summary>
-        /// Constructs a new instance based on the specified crontab schedule
+        /// Constructs a new instance based on the specified crontab schedule.
         /// </summary>
-        /// <param name="schedule">The crontab schedule to use</param>
+        /// <param name="schedule">The crontab schedule to use.</param>
         public CronSchedule(CrontabSchedule schedule)
         {
             _cronSchedule = schedule;

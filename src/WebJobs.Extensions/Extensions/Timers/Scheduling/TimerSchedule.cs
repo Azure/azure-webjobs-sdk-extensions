@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Extensions.Logging;
+using NCrontab;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
@@ -56,7 +58,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             return occurrences;
         }
 
-        internal static TimerSchedule Create(TimerTriggerAttribute attribute, INameResolver nameResolver)
+        internal static TimerSchedule Create(TimerTriggerAttribute attribute, INameResolver nameResolver, ILogger logger)
         {
             TimerSchedule schedule = null;
 
@@ -66,13 +68,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 if (CronSchedule.TryCreate(resolvedExpression, out CronSchedule cronSchedule))
                 {
                     schedule = cronSchedule;
-
-                    DateTime[] nextOccurrences = cronSchedule.InnerSchedule.GetNextOccurrences(DateTime.Now, DateTime.Now + TimeSpan.FromMinutes(1)).ToArray();
-                    if (nextOccurrences.Length > 1)
+                    if (attribute.UseMonitor && ShouldDisableScheduleMonitor(cronSchedule, DateTime.Now))
                     {
-                        // if there is more than one occurrence due in the next minute,
-                        // assume that this is a sub-minute constant schedule and disable
-                        // persistence
+                        logger.LogDebug("UseMonitor changed to false based on schedule frequency.");
                         attribute.UseMonitor = false;
                     }
                 }
@@ -80,9 +78,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 {
                     schedule = new ConstantSchedule(periodTimespan);
 
-                    if (periodTimespan.TotalMinutes < 1)
+                    if (attribute.UseMonitor && periodTimespan.TotalMinutes < 1)
                     {
                         // for very frequent constant schedules, we want to disable persistence
+                        logger.LogDebug("UseMonitor changed to false based on schedule frequency.");
                         attribute.UseMonitor = false;
                     }
                 }
@@ -97,6 +96,42 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             }
 
             return schedule;
+        }
+
+        /// <summary>
+        /// For schedules with an occurrence more frequent than 1 minute, we disable schedule monitoring.
+        /// </summary>
+        /// <param name="cronSchedule">The cron schedule to check.</param>
+        /// <returns>True if monitoring should be disabled, false otherwise.</returns>
+        internal static bool ShouldDisableScheduleMonitor(CronSchedule cronSchedule, DateTime now)
+        {
+            // take the original expression minus the seconds portion
+            string expression = cronSchedule.InnerSchedule.ToString();
+            var expressions = expression.Split(' ');
+
+            // If any of the minute or higher fields contain non-wildcard expressions
+            // the schedule can be longer than 1 minute. I.e. the only way for all occurrences
+            // to be less than or equal to a minute is if all these fields are wild ("* * * * *").
+            bool hasNonSecondRestrictions = !expressions.Skip(1).All(p => p == "*");
+
+            if (!hasNonSecondRestrictions)
+            {
+                // If to here, we know we're dealing with a schedule of the form X * * * * *
+                // so we just need to consider the seconds expression to determine if it occurs
+                // more frequently than 1 minute.
+                // E.g. an expression like */10 * * * * * occurs every 10 seconds, while an
+                // expression like 0 * * * * * occurs exactly once per minute.
+                DateTime[] nextOccurrences = cronSchedule.InnerSchedule.GetNextOccurrences(now, now + TimeSpan.FromMinutes(1)).ToArray();
+                if (nextOccurrences.Length > 1)
+                {
+                    // if there is more than one occurrence due in the next minute,
+                    // assume that this is a sub-minute constant schedule and disable
+                    // persistence
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

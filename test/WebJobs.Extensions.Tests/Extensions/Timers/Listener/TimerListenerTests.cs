@@ -505,7 +505,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 RunOnStartup = runOnStartup
             };
 
-            _schedule = TimerSchedule.Create(_attribute, new TestNameResolver());
+            _schedule = TimerSchedule.Create(_attribute, new TestNameResolver(), _logger);
             _attribute.UseMonitor = useMonitor;
             _options = new TimersOptions();
             _mockScheduleMonitor = new Mock<ScheduleMonitor>(MockBehavior.Strict);
