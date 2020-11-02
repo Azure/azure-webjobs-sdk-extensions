@@ -18,6 +18,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Bindings
 {
     public class TimerTriggerBindingTests
     {
+        private readonly ILogger _logger;
+        private readonly TestLoggerProvider _loggerProvider;
+
+        public TimerTriggerBindingTests()
+        {
+            _loggerProvider = new TestLoggerProvider();
+            ILoggerFactory loggerFactory = new LoggerFactory();
+            loggerFactory.AddProvider(_loggerProvider);
+            _logger = _loggerProvider.CreateLogger("Test");
+        }
+
         [Fact]
         public async Task BindAsync_ReturnsExpectedTriggerData()
         {
@@ -31,7 +42,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Bindings
 
             TimerTriggerAttribute attribute = parameter.GetCustomAttribute<TimerTriggerAttribute>();
             INameResolver nameResolver = new TestNameResolver();
-            TimerSchedule schedule = TimerSchedule.Create(attribute, nameResolver);
+            TimerSchedule schedule = TimerSchedule.Create(attribute, nameResolver, _logger);
             TimersOptions options = new TimersOptions();
 
             ILoggerFactory loggerFactory = new LoggerFactory();

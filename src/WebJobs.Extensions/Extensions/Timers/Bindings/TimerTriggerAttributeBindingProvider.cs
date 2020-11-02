@@ -44,7 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
                 throw new InvalidOperationException(string.Format("Can't bind TimerTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            TimerSchedule schedule = TimerSchedule.Create(timerTriggerAttribute, _nameResolver);
+            TimerSchedule schedule = TimerSchedule.Create(timerTriggerAttribute, _nameResolver, _logger);
 
             return Task.FromResult<ITriggerBinding>(new TimerTriggerBinding(parameter, timerTriggerAttribute, schedule, _options, _logger, _scheduleMonitor));
         }

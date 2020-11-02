@@ -6,17 +6,17 @@ using System;
 namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
     /// <summary>
-    /// Represents a timer schedule status
+    /// Represents a timer schedule status.
     /// </summary>
     public class ScheduleStatus
     {
         /// <summary>
-        /// Gets or sets the last recorded schedule occurrence
+        /// Gets or sets the last recorded schedule occurrence.
         /// </summary>
         public DateTime Last { get; set; }
 
         /// <summary>
-        /// Gets or sets the expected next schedule occurrence
+        /// Gets or sets the expected next schedule occurrence.
         /// </summary>
         public DateTime Next { get; set; }
 

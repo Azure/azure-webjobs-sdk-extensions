@@ -21,7 +21,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.22" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Host.Storage" Version="4.0.1" />
-    <PackageReference Include="ncrontab.signed" Version="3.3.0" />
+    <PackageReference Include="ncrontab.signed" Version="3.3.2" />
   </ItemGroup>
 
   <ItemGroup>
