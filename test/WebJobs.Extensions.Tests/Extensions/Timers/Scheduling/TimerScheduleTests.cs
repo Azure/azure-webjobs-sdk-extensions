@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
@@ -11,13 +12,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
 {
     public class TimerScheduleTests
     {
+        private readonly TestTraceWriter _traceWriter;
+
+        public TimerScheduleTests()
+        {
+            _traceWriter = new TestTraceWriter(TraceLevel.Verbose);
+        }
+
         [Fact]
         public void Create_CronSchedule_CreatesExpectedSchedule()
         {
             TimerTriggerAttribute attribute = new TimerTriggerAttribute("*/15 * * * * *");
             INameResolver nameResolver = new TestNameResolver();
-            CronSchedule schedule = (CronSchedule)TimerSchedule.Create(attribute, nameResolver);
+            CronSchedule schedule = (CronSchedule)TimerSchedule.Create(attribute, nameResolver, _traceWriter);
             Assert.False(attribute.UseMonitor);
+            var log = _traceWriter.Events.Single();
+            Assert.Equal("UseMonitor changed to false based on schedule frequency.", log.Message);
+            Assert.Equal(TraceLevel.Verbose, log.Level);
 
             DateTime now = new DateTime(2015, 5, 22, 9, 45, 00);
             DateTime nextOccurrence = schedule.GetNextOccurrence(now);
@@ -25,15 +36,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
 
             // For schedules occuring on an interval greater than a minute, we expect
             // UseMonitor to be defaulted to true
+            _traceWriter.Events.Clear();
             attribute = new TimerTriggerAttribute("0 0 * * * *");
-            schedule = (CronSchedule)TimerSchedule.Create(attribute, nameResolver);
+            schedule = (CronSchedule)TimerSchedule.Create(attribute, nameResolver, _traceWriter);
             Assert.True(attribute.UseMonitor);
+            Assert.Empty(_traceWriter.Events);
 
             // verify that if UseMonitor is set explicitly, it is not overridden
             attribute = new TimerTriggerAttribute("0 0 * * * *");
             attribute.UseMonitor = false;
-            schedule = (CronSchedule)TimerSchedule.Create(attribute, nameResolver);
+            schedule = (CronSchedule)TimerSchedule.Create(attribute, nameResolver, _traceWriter);
             Assert.False(attribute.UseMonitor);
+            Assert.Empty(_traceWriter.Events);
         }
 
         [Fact]
@@ -41,8 +55,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         {
             TimerTriggerAttribute attribute = new TimerTriggerAttribute("00:00:15");
             INameResolver nameResolver = new TestNameResolver();
-            ConstantSchedule schedule = (ConstantSchedule)TimerSchedule.Create(attribute, nameResolver);
+            ConstantSchedule schedule = (ConstantSchedule)TimerSchedule.Create(attribute, nameResolver, _traceWriter);
             Assert.False(attribute.UseMonitor);
+            var log = _traceWriter.Events.Single();
+            Assert.Equal("UseMonitor changed to false based on schedule frequency.", log.Message);
+            Assert.Equal(TraceLevel.Verbose, log.Level);
 
             DateTime now = new DateTime(2015, 5, 22, 9, 45, 00);
             DateTime nextOccurrence = schedule.GetNextOccurrence(now);
@@ -50,15 +67,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
 
             // For schedules occuring on an interval greater than a minute, we expect
             // UseMonitor to be defaulted to true
+            _traceWriter.Events.Clear();
             attribute = new TimerTriggerAttribute("01:00:00");
-            schedule = (ConstantSchedule)TimerSchedule.Create(attribute, nameResolver);
+            schedule = (ConstantSchedule)TimerSchedule.Create(attribute, nameResolver, _traceWriter);
             Assert.True(attribute.UseMonitor);
+            Assert.Empty(_traceWriter.Events);
 
             // verify that if UseMonitor is set explicitly, it is not overridden
             attribute = new TimerTriggerAttribute("01:00:00");
             attribute.UseMonitor = false;
-            schedule = (ConstantSchedule)TimerSchedule.Create(attribute, nameResolver);
+            schedule = (ConstantSchedule)TimerSchedule.Create(attribute, nameResolver, _traceWriter);
             Assert.False(attribute.UseMonitor);
+            Assert.Empty(_traceWriter.Events);
         }
 
         [Fact]
@@ -70,14 +90,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             VerifyConstantSchedule("1.00:00", TimeSpan.FromHours(24));
         }
 
-        private static void VerifyConstantSchedule(string expression, TimeSpan expectedInterval)
+        private void VerifyConstantSchedule(string expression, TimeSpan expectedInterval)
         {
             Assert.True(TimeSpan.TryParse(expression, out TimeSpan timeSpan));
             Assert.Equal(timeSpan, expectedInterval);
 
             TimerTriggerAttribute attribute = new TimerTriggerAttribute(expression);
             INameResolver nameResolver = new TestNameResolver();
-            ConstantSchedule schedule = (ConstantSchedule)TimerSchedule.Create(attribute, nameResolver);
+            ConstantSchedule schedule = (ConstantSchedule)TimerSchedule.Create(attribute, nameResolver, _traceWriter);
 
             DateTime now = new DateTime(2015, 5, 22, 9, 45, 00);
             var occurrences = schedule.GetNextOccurrences(5, now);
@@ -94,14 +114,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         {
             TimerTriggerAttribute attribute = new TimerTriggerAttribute(typeof(CustomSchedule));
             INameResolver nameResolver = new TestNameResolver();
-            CustomSchedule schedule = (CustomSchedule)TimerSchedule.Create(attribute, nameResolver);
+            CustomSchedule schedule = (CustomSchedule)TimerSchedule.Create(attribute, nameResolver, _traceWriter);
             Assert.NotNull(schedule);
             Assert.True(attribute.UseMonitor);
 
             // verify that if UseMonitor is set explicitly, it is not overridden
             attribute = new TimerTriggerAttribute(typeof(CustomSchedule));
             attribute.UseMonitor = false;
-            schedule = (CustomSchedule)TimerSchedule.Create(attribute, nameResolver);
+            schedule = (CustomSchedule)TimerSchedule.Create(attribute, nameResolver, _traceWriter);
             Assert.False(attribute.UseMonitor);
         }
 
@@ -111,7 +131,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             TimerTriggerAttribute attribute = new TimerTriggerAttribute("%test_schedule%");
             TestNameResolver nameResolver = new TestNameResolver();
             nameResolver.Values.Add("test_schedule", "*/15 * * * * *");
-            CronSchedule schedule = (CronSchedule)TimerSchedule.Create(attribute, nameResolver);
+            CronSchedule schedule = (CronSchedule)TimerSchedule.Create(attribute, nameResolver, _traceWriter);
             Assert.False(attribute.UseMonitor);
 
             DateTime now = new DateTime(2015, 5, 22, 9, 45, 00);
@@ -125,10 +145,45 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             TimerTriggerAttribute attribute = new TimerTriggerAttribute("invalid");
             ArgumentException ex = Assert.Throws<ArgumentException>(() =>
             {
-                TimerSchedule.Create(attribute, new TestNameResolver());
+                TimerSchedule.Create(attribute, new TestNameResolver(), _traceWriter);
             });
 
             Assert.Equal("The schedule expression 'invalid' was not recognized as a valid cron expression or timespan string.", ex.Message);
+        }
+
+        [Theory]
+        [InlineData("* * * * * *", null, true)]
+        [InlineData("*/5 * * * * *", null, true)]
+        [InlineData("  */5    * *      * * *", null, true)]
+        [InlineData("10,20,45 * * * * *", null, true)]
+        [InlineData("0 */5 * * * *", null, false)]
+        [InlineData("0 30 * * * *", null, false)]
+        [InlineData("* 30 * * * *", null, false)]
+        [InlineData("* */30 * * * *", null, false)]
+        [InlineData("0 * * * * *", null, false)]
+        [InlineData("30 * * * * *", null, false)]
+        [InlineData("* 1-5 * * * *", null, false)]
+        [InlineData("* */20 * * * *", "10/30/2020 12:00:00 AM", false)]
+        [InlineData("* */20 * * * *", "10/30/2020 12:20:00 AM", false)]
+        [InlineData("* */20 * * * *", "10/30/2020 12:15:00 AM", false)]
+        [InlineData("* */20 * * * *", "10/30/2020 12:19:30 AM", false)]
+        [InlineData("* * 12 * * Mon", null, false)]
+        [InlineData("* 59 11 * * 1,2,3,4,5", null, false)]
+        public void ShouldDisableScheduleMonitor_ReturnsExpectedValue(string schedule, string nowTimestamp, bool expected)
+        {
+            DateTime now;
+            if (!string.IsNullOrEmpty(nowTimestamp))
+            {
+                now = DateTime.Parse(nowTimestamp);
+            }
+            else
+            {
+                now = DateTime.Now;
+            }
+
+            CronSchedule.TryCreate(schedule, out CronSchedule cronSchedule);
+
+            Assert.Equal(expected, TimerSchedule.ShouldDisableScheduleMonitor(cronSchedule, now));
         }
 
         public class CustomSchedule : TimerSchedule
