@@ -485,7 +485,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         private void CreateTestListener(string expression, bool useMonitor = true, Action functionAction = null)
         {
             _attribute = new TimerTriggerAttribute(expression);
-            _schedule = TimerSchedule.Create(_attribute, new TestNameResolver());
+            _schedule = TimerSchedule.Create(_attribute, new TestNameResolver(), _traceWriter);
             _attribute.UseMonitor = useMonitor;
             _config = new TimersConfiguration();
             _mockScheduleMonitor = new Mock<ScheduleMonitor>(MockBehavior.Strict);

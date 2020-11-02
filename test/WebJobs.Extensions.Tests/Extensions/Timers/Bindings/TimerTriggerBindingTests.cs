@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Diagnostics;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +18,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Bindings
 {
     public class TimerTriggerBindingTests
     {
+        private readonly TestTraceWriter _traceWriter;
+
+        public TimerTriggerBindingTests()
+        {
+            _traceWriter = new TestTraceWriter(TraceLevel.Verbose);
+        }
+
         [Fact]
         public async Task BindAsync_ReturnsExpectedTriggerData()
         {
@@ -30,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Bindings
 
             TimerTriggerAttribute attribute = parameter.GetCustomAttribute<TimerTriggerAttribute>();
             INameResolver nameResolver = new TestNameResolver();
-            TimerSchedule schedule = TimerSchedule.Create(attribute, nameResolver);
+            TimerSchedule schedule = TimerSchedule.Create(attribute, nameResolver, _traceWriter);
             TimersConfiguration config = new TimersConfiguration();
             config.ScheduleMonitor = mockScheduleMonitor.Object;
             TestTraceWriter trace = new TestTraceWriter();
