@@ -61,6 +61,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         }
 
         [Fact]
+        public async Task BindToPoco()
+        {
+            JObject jo = new JObject
+            {
+                { "b1", "bodyvalue1" }
+            };
+            string json = jo.ToString();
+
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions.com/api/123/two/test?q1=one&q2=two", body: json);
+            request.Headers.Add("h1", "value1");
+            request.Headers.Add("h2", "value2");
+            var routeDataValues = new Dictionary<string, object>
+            {
+                { "r1", 123 },
+                { "r2",  "two" }
+            };
+            request.HttpContext.Items[HttpExtensionConstants.AzureWebJobsHttpRouteDataKey] = routeDataValues;
+
+            var method = typeof(TestFunctions).GetMethod("TestFunction3");
+            await _jobHost.CallAsync(method, new { poco = request });
+        }
+
+        [Fact]
         public async Task BasicResponse()
         {
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions.com/api/abc");
@@ -158,12 +181,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 blob = headers["testValue"];
             }
 
+            public static void TestFunction3(
+                [HttpTrigger("post")] TestPoco poco)
+            {
+                Assert.Equal("one", poco.Q1);
+                Assert.Equal("bodyvalue1", poco.B1);
+                Assert.Equal(123, poco.R1);
+            }
+
             public static Task<string> TestResponse(
                 [HttpTrigger("get", "post")] HttpRequest req)
             {
                 // Return value becomes the HttpResponseMessage.
                 return Task.FromResult("test-response");
             }
+        }
+
+        public class TestPoco
+        {
+            public string Q1 { get; set; }
+
+            public string B1 { get; set; }
+
+            public int R1 { get; set; }
         }
     }
 }
