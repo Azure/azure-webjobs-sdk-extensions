@@ -161,7 +161,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     body = await request.ReadAsStringAsync();
                 }
 
-                var bindingData = new LazyBindingData(() => GetBindingData(request, poco, body));
+                IReadOnlyDictionary<string, object> bindingData = null;
+                if (poco != null)
+                {
+                    // We're binding to a POCO, so we can't defer binding data resolution.
+                    // We must apply it now to the POCO instance.
+                    bindingData = GetBindingData(request, poco, body);
+                }
+                else
+                {
+                    // In all other cases, binding data resolution can be deferred until it
+                    // is requested by the binding pipeline. In many cases it won't be (e.g.
+                    // if no other input/output bindings are used).
+                    bindingData = new LazyBindingData(() => GetBindingData(request, poco, body));
+                }
+
                 return new TriggerData(valueProvider, bindingData)
                 {
                     ReturnValueProvider = new ResponseHandler(request, _responseHook)
