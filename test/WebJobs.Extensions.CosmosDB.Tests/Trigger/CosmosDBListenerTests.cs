@@ -47,10 +47,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             _mockMonitoredService = new Mock<ICosmosDBService>(MockBehavior.Strict);
             _mockMonitoredService.Setup(m => m.GetClient()).Returns(new DocumentClient(new Uri("http://someurl"), "c29tZV9rZXk="));
             _monitoredInfo = new DocumentCollectionInfo { Uri = new Uri("http://someurl"), MasterKey = "c29tZV9rZXk=", DatabaseName = "MonitoredDB", CollectionName = "MonitoredCollection" };
+            _monitoredInfo.ConnectionPolicy.UserAgentSuffix = Guid.NewGuid().ToString();
 
             _mockLeasesService = new Mock<ICosmosDBService>(MockBehavior.Strict);
             _mockLeasesService.Setup(m => m.GetClient()).Returns(new DocumentClient(new Uri("http://someurl"), "c29tZV9rZXk="));
             _leasesInfo = new DocumentCollectionInfo { Uri = new Uri("http://someurl"), MasterKey = "c29tZV9rZXk=", DatabaseName = "LeasesDB", CollectionName = "LeasesCollection" };
+            _leasesInfo.ConnectionPolicy.UserAgentSuffix = Guid.NewGuid().ToString();
 
             _processorOptions = new ChangeFeedProcessorOptions();
 

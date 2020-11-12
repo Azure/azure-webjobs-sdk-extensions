@@ -12,6 +12,7 @@ using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.ChangeFeedProcessor;
 using Microsoft.Azure.Documents.ChangeFeedProcessor.Monitoring;
 using Microsoft.Azure.Documents.ChangeFeedProcessor.PartitionManagement;
+using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
@@ -176,10 +177,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         {
             if (this._hostBuilder == null)
             {
+                DocumentClient feedDocumentClient = this._monitoredCosmosDBService.GetClient();
+                DocumentClient leasesDocumentClient = this._leasesCosmosDBService.GetClient();
+                feedDocumentClient.ConnectionPolicy.UserAgentSuffix = this._monitorCollection.ConnectionPolicy.UserAgentSuffix;
+                leasesDocumentClient.ConnectionPolicy.UserAgentSuffix = this._leaseCollection.ConnectionPolicy.UserAgentSuffix;
                 this._hostBuilder = new ChangeFeedProcessorBuilder()
                     .WithHostName(this._hostName)
-                    .WithFeedDocumentClient(this._monitoredCosmosDBService.GetClient())
-                    .WithLeaseDocumentClient(this._leasesCosmosDBService.GetClient())
+                    .WithFeedDocumentClient(feedDocumentClient)
+                    .WithLeaseDocumentClient(leasesDocumentClient)
                     .WithFeedCollection(this._monitorCollection)
                     .WithLeaseCollection(this._leaseCollection)
                     .WithProcessorOptions(this._processorOptions)
