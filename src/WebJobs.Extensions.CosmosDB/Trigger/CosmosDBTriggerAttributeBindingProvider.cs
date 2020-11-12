@@ -147,8 +147,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     throw new InvalidOperationException("The monitored collection cannot be the same as the collection storing the leases.");
                 }
 
-                monitoredCosmosDBService = _configProvider.GetService(triggerConnectionString, resolvedPreferredLocations, false, attribute.UseDefaultJsonSerialization);
-                leaseCosmosDBService = _configProvider.GetService(leasesConnectionString, resolvedPreferredLocations, attribute.UseMultipleWriteLocations);
+                monitoredCosmosDBService = _configProvider.GetService(
+                    connectionString: triggerConnectionString, 
+                    preferredLocations: resolvedPreferredLocations, 
+                    useMultipleWriteLocations: false, 
+                    useDefaultJsonSerialization: attribute.UseDefaultJsonSerialization, 
+                    userAgent: CosmosDBTriggerUserAgentSuffix);
+                leaseCosmosDBService = _configProvider.GetService(
+                    connectionString: leasesConnectionString,
+                    preferredLocations: resolvedPreferredLocations,
+                    useMultipleWriteLocations: attribute.UseMultipleWriteLocations,
+                    useDefaultJsonSerialization: false, // Lease collection operations should not be affected by serialization configuration
+                    userAgent: CosmosDBTriggerUserAgentSuffix);
 
                 if (attribute.CreateLeaseCollectionIfNotExists)
                 {

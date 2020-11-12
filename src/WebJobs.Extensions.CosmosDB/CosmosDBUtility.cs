@@ -58,7 +58,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 .Where((region) => !string.IsNullOrEmpty(region));
         }
 
-        internal static ConnectionPolicy BuildConnectionPolicy(ConnectionMode? connectionMode, Protocol? protocol, string preferredLocations, bool useMultipleWriteLocations)
+        internal static ConnectionPolicy BuildConnectionPolicy(ConnectionMode? connectionMode, Protocol? protocol, string preferredLocations, bool useMultipleWriteLocations, string userAgent)
         {
             ConnectionPolicy connectionPolicy = new ConnectionPolicy();
             if (connectionMode.HasValue)
@@ -82,6 +82,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 connectionPolicy.PreferredLocations.Add(location);
             }
+
+            connectionPolicy.UserAgentSuffix = userAgent;
 
             return connectionPolicy;
         }

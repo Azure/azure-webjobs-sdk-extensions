@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using System;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -109,6 +110,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             // Assert
             Assert.Equal(2, parsedLocations.Count());
+        }
+
+        [Fact]
+        public void BuildConnectionPolicy()
+        {
+            // Arrange
+            string preferredLocationsWithEntries = "East US, North Europe,";
+            bool useMultiMaster = true;
+            string userAgent = Guid.NewGuid().ToString();
+
+            // Act
+            var policy = CosmosDBUtility.BuildConnectionPolicy(Documents.Client.ConnectionMode.Direct, Documents.Client.Protocol.Tcp, preferredLocationsWithEntries, useMultiMaster, userAgent);
+
+            // Assert
+            Assert.Equal(userAgent, policy.UserAgentSuffix);
+            Assert.Equal(useMultiMaster, policy.UseMultipleWriteLocations);
+            Assert.Equal(Documents.Client.ConnectionMode.Direct, policy.ConnectionMode);
+            Assert.Equal(Documents.Client.Protocol.Tcp, policy.ConnectionProtocol);
+            Assert.Equal(2, policy.PreferredLocations.Count);
         }
     }
 }

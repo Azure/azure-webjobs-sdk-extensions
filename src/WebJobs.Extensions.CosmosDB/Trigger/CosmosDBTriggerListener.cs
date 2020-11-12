@@ -177,14 +177,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         {
             if (this._hostBuilder == null)
             {
-                DocumentClient feedDocumentClient = this._monitoredCosmosDBService.GetClient();
-                DocumentClient leasesDocumentClient = this._leasesCosmosDBService.GetClient();
-                feedDocumentClient.ConnectionPolicy.UserAgentSuffix = this._monitorCollection.ConnectionPolicy.UserAgentSuffix;
-                leasesDocumentClient.ConnectionPolicy.UserAgentSuffix = this._leaseCollection.ConnectionPolicy.UserAgentSuffix;
                 this._hostBuilder = new ChangeFeedProcessorBuilder()
                     .WithHostName(this._hostName)
-                    .WithFeedDocumentClient(feedDocumentClient)
-                    .WithLeaseDocumentClient(leasesDocumentClient)
+                    .WithFeedDocumentClient(this._monitoredCosmosDBService.GetClient())
+                    .WithLeaseDocumentClient(this._leasesCosmosDBService.GetClient())
                     .WithFeedCollection(this._monitorCollection)
                     .WithLeaseCollection(this._leaseCollection)
                     .WithProcessorOptions(this._processorOptions)
