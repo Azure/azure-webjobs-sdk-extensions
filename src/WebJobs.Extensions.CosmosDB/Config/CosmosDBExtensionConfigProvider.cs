@@ -124,10 +124,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return _options.ConnectionString;
         }
 
-        internal ICosmosDBService GetService(string connectionString, string preferredLocations = "", bool useMultipleWriteLocations = false, bool useDefaultJsonSerialization = false)
+        internal ICosmosDBService GetService(string connectionString, string preferredLocations = "", bool useMultipleWriteLocations = false, bool useDefaultJsonSerialization = false, string userAgent = "")
         {
             string cacheKey = BuildCacheKey(connectionString, preferredLocations, useMultipleWriteLocations, useDefaultJsonSerialization);
-            ConnectionPolicy connectionPolicy = CosmosDBUtility.BuildConnectionPolicy(_options.ConnectionMode, _options.Protocol, preferredLocations, useMultipleWriteLocations);
+            ConnectionPolicy connectionPolicy = CosmosDBUtility.BuildConnectionPolicy(_options.ConnectionMode, _options.Protocol, preferredLocations, useMultipleWriteLocations, userAgent);
             return ClientCache.GetOrAdd(cacheKey, (c) => _cosmosDBServiceFactory.CreateService(connectionString, connectionPolicy, useDefaultJsonSerialization));
         }
 
