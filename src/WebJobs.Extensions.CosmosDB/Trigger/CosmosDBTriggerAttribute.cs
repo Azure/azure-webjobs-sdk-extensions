@@ -166,5 +166,12 @@ namespace Microsoft.Azure.WebJobs
         /// </remarks>
         /// </summary>
         public bool UseDefaultJsonSerialization { get; set; }
+
+        /// <summary>
+        /// Optional.
+        /// Gets or sets the DateTime from which feed should start from. 
+        /// This is useful when you need to skip past and start from a checkpoint. It is best to use UTC date / time format to avoid any discrepencies.
+        /// </summary>
+        public string StartFrom { get; set; }
     }
 }

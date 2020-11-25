@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Globalization;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
@@ -58,10 +59,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             DocumentCollectionInfo documentCollectionLocation;
             DocumentCollectionInfo leaseCollectionLocation;
             ChangeFeedProcessorOptions processorOptions = BuildProcessorOptions(attribute);
+            
             processorOptions.StartFromBeginning = attribute.StartFromBeginning;
+
             if (attribute.MaxItemsPerInvocation > 0)
             {
                 processorOptions.MaxItemCount = attribute.MaxItemsPerInvocation;
+            }
+
+            if (DateTime.TryParse(attribute.StartFrom, out var startFromDateTime))
+            {
+                processorOptions.StartTime = startFromDateTime;
             }
 
             ICosmosDBService monitoredCosmosDBService;
