@@ -71,6 +71,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 processorOptions.StartTime = startFromDateTime;
             }
+            else if (!string.IsNullOrEmpty(attribute.StartFrom))
+            {
+                throw new ArgumentException("Specified StartFrom parameter is not in appropriate DateTime format. Please refer: https://docs.microsoft.com/en-us/dotnet/api/system.datetime.parse?view=net-5.0#parsing-and-cultural-conventions");
+            }
 
             ICosmosDBService monitoredCosmosDBService;
             ICosmosDBService leaseCosmosDBService;
