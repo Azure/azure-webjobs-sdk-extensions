@@ -140,6 +140,13 @@ namespace Microsoft.Azure.WebJobs
 
         /// <summary>
         /// Optional.
+        /// Gets or sets the DateTime from which feed should start from. 
+        /// This is useful when you need to skip past and start from a checkpoint. It is best to use UTC date / time format to avoid any discrepencies.
+        /// </summary>
+        public string StartFromTime { get; set; }
+
+        /// <summary>
+        /// Optional.
         /// Defines preferred locations (regions) for geo-replicated database accounts in the Azure Cosmos DB service.
         /// Values should be comma-separated.
         /// </summary>
@@ -166,12 +173,5 @@ namespace Microsoft.Azure.WebJobs
         /// </remarks>
         /// </summary>
         public bool UseDefaultJsonSerialization { get; set; }
-
-        /// <summary>
-        /// Optional.
-        /// Gets or sets the DateTime from which feed should start from. 
-        /// This is useful when you need to skip past and start from a checkpoint. It is best to use UTC date / time format to avoid any discrepencies.
-        /// </summary>
-        public string StartFrom { get; set; }
     }
 }

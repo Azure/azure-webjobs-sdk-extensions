@@ -67,11 +67,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 processorOptions.MaxItemCount = attribute.MaxItemsPerInvocation;
             }
 
-            if (DateTime.TryParse(attribute.StartFrom, out var startFromDateTime))
+            if (DateTime.TryParse(attribute.StartFromTime, out var startFromDateTime))
             {
                 processorOptions.StartTime = startFromDateTime;
             }
-            else if (!string.IsNullOrEmpty(attribute.StartFrom))
+            else if (!string.IsNullOrEmpty(attribute.StartFromTime))
             {
                 throw new ArgumentException("Specified StartFrom parameter is not in appropriate DateTime format. Please refer: https://docs.microsoft.com/en-us/dotnet/api/system.datetime.parse?view=net-5.0#parsing-and-cultural-conventions");
             }

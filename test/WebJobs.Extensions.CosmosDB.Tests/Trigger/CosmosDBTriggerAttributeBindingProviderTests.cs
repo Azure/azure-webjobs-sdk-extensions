@@ -402,7 +402,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         // These will set ConnectionStringSetting, which LeaseConnectionStringSetting should also use by default
         private static class ValidCosmosDBTriggerBindigsWithChangeFeedOptions
         {
-            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", MaxItemsPerInvocation = 10, StartFromBeginning = true, StartFrom = "2020-11-25T22:36:29Z")] IReadOnlyList<Document> docs)
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", MaxItemsPerInvocation = 10, StartFromBeginning = true, StartFromTime = "2020-11-25T22:36:29Z")] IReadOnlyList<Document> docs)
             {
             }
 
