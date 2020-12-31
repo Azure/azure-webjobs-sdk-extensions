@@ -11,7 +11,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
     public static class HttpExtensionConstants
     {
         /// <summary>
-        /// The default route prefix used by <see cref="HttpRouteFactory"/>.
+        /// The default route prefix.
         /// </summary>
         public const string DefaultRoutePrefix = "api";
 
