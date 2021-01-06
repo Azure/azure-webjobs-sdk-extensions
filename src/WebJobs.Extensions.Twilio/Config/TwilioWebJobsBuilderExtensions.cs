@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Microsoft.Extensions.Hosting
 {
     /// <summary>
-    /// Extension methods for Twilio integration
+    /// Extension methods for Twilio integration.
     /// </summary>
     public static class TwilioWebJobsBuilderExtensions
     {

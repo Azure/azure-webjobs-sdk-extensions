@@ -5,6 +5,7 @@ using System;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
+using Microsoft.Azure.WebJobs.Hosting;
 
 namespace Microsoft.Azure.WebJobs
 {
@@ -96,7 +97,7 @@ namespace Microsoft.Azure.WebJobs
 
         /// <summary>
         /// Optional.
-        /// When specified on an input binding using an <see cref="IEnumerable{T}"/>, defines the query to run against the collection. 
+        /// When specified on an input binding using an <see cref="System.Collections.Generic.IEnumerable{T}"/>, defines the query to run against the collection. 
         /// May include binding parameters.
         /// </summary>
         [AutoResolve(ResolutionPolicyType = typeof(CosmosDBSqlResolutionPolicy))]

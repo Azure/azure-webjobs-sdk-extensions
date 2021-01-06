@@ -1,22 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\..\build\common.props" />
   <PropertyGroup>
-    <Version>$(TwilioVersion)</Version>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Twilio</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Twilio</RootNamespace>
     <PackageId>Microsoft.Azure.WebJobs.Extensions.Twilio</PackageId>
     <Description>This package contains binding extensions for Twilio.</Description>
   </PropertyGroup>
+  <Import Project="..\..\build\common.props" />
+  <PropertyGroup>
+    <Version>$(TwilioVersion)</Version>
+    <NoWarn>$(NoWarn);8002</NoWarn>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
-    <NoWarn>1701;1702;8002</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
-    <NoWarn>1701;1702;8002</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

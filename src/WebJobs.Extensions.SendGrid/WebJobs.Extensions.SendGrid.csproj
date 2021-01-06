@@ -1,12 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\..\build\common.props" />
   <PropertyGroup>
-    <Version>$(SendGridVersion)</Version>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions.SendGrid</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.SendGrid</RootNamespace>
     <PackageId>Microsoft.Azure.WebJobs.Extensions.SendGrid</PackageId>
     <Description>This package contains SendGrid binding extensions.</Description>
+  </PropertyGroup>
+  <Import Project="..\..\build\common.props" />
+  <PropertyGroup>
+    <Version>$(SendGridVersion)</Version>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
