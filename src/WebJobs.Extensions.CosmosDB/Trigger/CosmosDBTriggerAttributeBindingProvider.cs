@@ -67,8 +67,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 processorOptions.MaxItemCount = attribute.MaxItemsPerInvocation;
             }
 
-            var startFromTime = DateTime.UtcNow;
-
             if (!string.IsNullOrEmpty(attribute.StartFromTime))
             {
                 if (attribute.StartFromBeginning)
