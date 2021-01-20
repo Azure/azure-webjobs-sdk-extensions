@@ -69,21 +69,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             var startFromTime = DateTime.UtcNow;
 
-            if (!string.IsNullOrEmpty(attribute.StartFromTime) && 
-                !DateTime.TryParse(attribute.StartFromTime, out DateTime startFromTime))
-            {
-                throw new InvalidOperationException("Specified StartFromTime parameter is not in appropriate DateTime format. Please refer: https://docs.microsoft.com/dotnet/api/system.datetime.parse?view=net-5.0#parsing-and-cultural-conventions");
-            }
-
-            if (attribute.StartFromBeginning && 
-                !string.IsNullOrEmpty(attribute.StartFromTime))
-            {
-                throw new InvalidOperationException("Only one of StartFromBeginning or StartFromTime can be used");
-            }
-
             if (!string.IsNullOrEmpty(attribute.StartFromTime))
             {
+                if (attribute.StartFromBeginning)
+                {
+                    throw new InvalidOperationException("Only one of StartFromBeginning or StartFromTime can be used");
+                }
+
+                if (!DateTime.TryParse(attribute.StartFromTime, out DateTime startFromTime))
+                {
+                    throw new InvalidOperationException("Specified StartFromTime parameter is not in appropriate DateTime format. Please refer: https://docs.microsoft.com/dotnet/api/system.datetime.parse?view=net-5.0#parsing-and-cultural-conventions");
+                }
+
                 processorOptions.StartTime = startFromTime;
+            }
+            else
+            {
+                processorOptions.StartFromBeginning = attribute.StartFromBeginning;
             }
 
             ICosmosDBService monitoredCosmosDBService;
