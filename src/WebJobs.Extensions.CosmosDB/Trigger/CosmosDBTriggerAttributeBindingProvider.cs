@@ -72,7 +72,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (!string.IsNullOrEmpty(attribute.StartFromTime) && 
                 !DateTime.TryParse(attribute.StartFromTime, out DateTime startFromTime))
             {
-                throw new InvalidOperationException("Specified StartFrom parameter is not in appropriate DateTime format. Please refer: https://docs.microsoft.com/dotnet/api/system.datetime.parse?view=net-5.0#parsing-and-cultural-conventions");
+                throw new InvalidOperationException("Specified StartFromTime parameter is not in appropriate DateTime format. Please refer: https://docs.microsoft.com/dotnet/api/system.datetime.parse?view=net-5.0#parsing-and-cultural-conventions");
             }
 
             if (attribute.StartFromBeginning && 
