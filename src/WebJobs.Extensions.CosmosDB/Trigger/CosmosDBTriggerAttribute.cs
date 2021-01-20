@@ -140,7 +140,7 @@ namespace Microsoft.Azure.WebJobs
 
         /// <summary>
         /// Optional.
-        /// Gets or sets the DateTime from which feed should start from. 
+        /// Gets or sets the a date and time to initialize the change feed read operation from.
         /// This is useful when you need to skip past and start from a checkpoint. It is best to use UTC date / time format to avoid any discrepencies.
         /// </summary>
         public string StartFromTime { get; set; }
