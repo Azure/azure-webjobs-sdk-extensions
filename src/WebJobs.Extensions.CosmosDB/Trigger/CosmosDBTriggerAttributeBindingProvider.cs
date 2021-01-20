@@ -81,8 +81,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 throw new InvalidOperationException("Only one of StartFromBeginning or StartFromTime can be used");
             }
 
-            processorOptions.StartFromBeginning = attribute.StartFromBeginning;
-
             if (!attribute.StartFromBeginning &&
                 !string.IsNullOrEmpty(attribute.StartFromTime))
             {
