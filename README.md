@@ -2,13 +2,13 @@
 ===
 |Branch|Status|
 |---|---|
-|master|[![Build status](https://ci.appveyor.com/api/projects/status/5mqrok4j3l89cnvx/branch/master?svg=true)](https://ci.appveyor.com/project/appsvc/azure-webjobs-sdk-extensions/branch/master)|
+|main|[![Build status](https://ci.appveyor.com/api/projects/status/5mqrok4j3l89cnvx/branch/main?svg=true)](https://ci.appveyor.com/project/appsvc/azure-webjobs-sdk-extensions/branch/main)|
 |dev|[![Build status](https://ci.appveyor.com/api/projects/status/5mqrok4j3l89cnvx/branch/dev?svg=true)](https://ci.appveyor.com/project/appsvc/azure-webjobs-sdk-extensions/branch/dev)|
 
 
 This repo contains binding extensions for the **Azure WebJobs SDK**. See the [Azure WebJobs SDK repo](https://github.com/Azure/azure-webjobs-sdk) for more information. The binding extensions in this repo are available as the **Microsoft.Azure.WebJobs.Extensions** [nuget package](http://www.nuget.org/packages/Microsoft.Azure.WebJobs.Extensions). **Note**: some of the extensions in this repo (like SendGrid, etc.) live in their own separate nuget packages following a standard naming scheme (e.g. Microsoft.Azure.WebJobs.Extensions.SendGrid). Also note that some of the features discussed here or in the wiki may still be in **pre-release**. To access those features you may need to pull the very latest pre-release packages from our "nightlies" package feed ([instructions here](https://github.com/Azure/azure-webjobs-sdk/wiki/%22Nightly%22-Builds)).
 
-The [wiki](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki) contains information on how to **author your own binding extensions**. See the [Binding Extensions Overview](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Binding-Extensions-Overview) for more details. A [sample project](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Program.cs) is also provided that demonstrates the bindings in action.
+The [wiki](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki) contains information on how to **author your own binding extensions**. See the [Binding Extensions Overview](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Binding-Extensions-Overview) for more details. A [sample project](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/main/src/ExtensionsSample/Program.cs) is also provided that demonstrates the bindings in action.
 
 Extensions all follow the same "add" pattern for registration - after referencing the package the extension lives in, you call the corresponding "add" method to register the extension. These "add" methods are extension methods that often take optional configuration objects to customize the behavior of the extension. For example, the `b.AddAzureStorage()` call below registers the Azure Storage extension.
 
@@ -76,7 +76,7 @@ The TimerTrigger also handles multi-instance scale out automatically - only a si
 
 The first example above uses a [cron expression](http://en.wikipedia.org/wiki/Cron#CRON_expression) to declare the schedule. Using these **6 fields** `{second} {minute} {hour} {day} {month} {day of the week}` you can express arbitrarily complex schedules very concisely. **Note**: the 6 field format including seconds is less common, so in the various cron expression docs you find online you'll have to adjust for the extra field.
 
-To register the Timer extensions, call `config.UseTimers()` in your startup code. For more information, see the [TimerTrigger wiki page](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/TimerTrigger), and also the [Timer samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/TimerSamples.cs).
+To register the Timer extensions, call `config.UseTimers()` in your startup code. For more information, see the [TimerTrigger wiki page](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/TimerTrigger), and also the [Timer samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/main/src/ExtensionsSample/Samples/TimerSamples.cs).
 
 ### FileTrigger / File
 
@@ -95,7 +95,7 @@ public static void ImportFile(
 }
 ```
 
-To register the File extensions, call `config.UseFiles()` in your startup code. For more information, see the [File samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/FileSamples.cs).
+To register the File extensions, call `config.UseFiles()` in your startup code. For more information, see the [File samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/main/src/ExtensionsSample/Samples/FileSamples.cs).
 
 ### SendGrid
 
@@ -128,7 +128,7 @@ public static void Purge(
 
 The above messages are fully declarative, but you can also set the message properties in your job function code (e.g. add message attachments, etc.). 
 
-To register the SendGrid extensions, call `config.UseSendGrid()` in your startup code. For more information on the SendGrid binding, see the [SendGrid samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/SendGridSamples.cs).
+To register the SendGrid extensions, call `config.UseSendGrid()` in your startup code. For more information on the SendGrid binding, see the [SendGrid samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/main/src/ExtensionsSample/Samples/SendGridSamples.cs).
 
 ### Core Extensions
 
@@ -273,7 +273,7 @@ public static void Purge(
 
 The above messages are fully declarative, but you can also set the message properties in your job function code (e.g. From number, To number, Body, etc.). 
 
-To register the Twilio SMS extensions, call `config.UseTwilioSms()` in your startup code. For more information on the Twilio binding, see the [Twilio samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/TwilioSamples.cs).
+To register the Twilio SMS extensions, call `config.UseTwilioSms()` in your startup code. For more information on the Twilio binding, see the [Twilio samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/main/src/ExtensionsSample/Samples/TwilioSamples.cs).
 
 ## License
 
