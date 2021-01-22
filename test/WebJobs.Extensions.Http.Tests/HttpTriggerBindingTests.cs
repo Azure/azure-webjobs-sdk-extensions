@@ -23,6 +23,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.ObjectPool;
 using Microsoft.Extensions.Options;
+using Microsoft.Net.Http.Headers;
 using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -161,8 +162,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 "{headers.x-ms-id-aad}", "ey456");
         }
 
-        [Fact]
-        public async Task BindAsync_Poco_FromRequestBody()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task BindAsync_Poco_FromRequestBody(bool isChunked)
         {
             ParameterInfo parameterInfo = GetType().GetMethod("TestPocoFunction").GetParameters()[0];
             HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, true);
@@ -176,6 +179,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             var headers = new HeaderDictionary();
             headers.Add("Content-Type", "application/json");
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/myfunc?code=abc123", headers, requestBody.ToString());
+            if (isChunked) 
+            {
+                request.ContentLength = null;
+                request.Headers.Add(HeaderNames.TransferEncoding, "chunked");
+            }
 
             IServiceCollection services = new ServiceCollection();
             services.AddMvc();
