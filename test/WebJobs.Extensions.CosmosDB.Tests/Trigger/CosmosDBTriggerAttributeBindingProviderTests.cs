@@ -415,6 +415,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             {
             }
 
+            public static void Func4([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", MaxItemsPerInvocation = 10, StartFromBeginning = true, StartFromTime = "2020-11-25T22:36:29Z")] IReadOnlyList<Document> docs)
+            {
+            }
+
             public static IEnumerable<ParameterInfo[]> GetParameters()
             {
                 var type = typeof(ValidCosmosDBTriggerBindigsWithChangeFeedOptions);
@@ -423,7 +427,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 {
                     new[] { GetFirstParameter(type, "Func1") },
                     new[] { GetFirstParameter(type, "Func2") },
-                    new[] { GetFirstParameter(type, "Func3") }
+                    new[] { GetFirstParameter(type, "Func3") },
+                    new[] { GetFirstParameter(type, "Func4") }
                 };
             }
         }
