@@ -18,17 +18,9 @@ namespace Client
             _client = new SendGrid.SendGridClient(apiKey);
         }
 
-        public async Task<Response> SendMessageAsync(SendGridMessage msg, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<Response> SendMessageAsync(SendGridMessage msg, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var response = await _client.SendEmailAsync(msg, cancellationToken);
-
-            if ((int)response.StatusCode >= 300)
-            {
-                string body = await response.Body.ReadAsStringAsync();
-                throw new InvalidOperationException(body);
-            }
-
-            return response;
+            return _client.SendEmailAsync(msg, cancellationToken);
         }
     }
 }

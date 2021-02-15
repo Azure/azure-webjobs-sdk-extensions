@@ -24,14 +24,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
         internal const string AzureWebJobsSendGridApiKeyName = "AzureWebJobsSendGridApiKey";
 
         private readonly IOptions<SendGridOptions> _options;
-        private ConcurrentDictionary<string, ISendGridClient> _sendGridClientCache = new ConcurrentDictionary<string, ISendGridClient>();
+        private readonly ISendGridResponseHandler _responseHandler;
 
+        private ConcurrentDictionary<string, ISendGridClient> _sendGridClientCache = new ConcurrentDictionary<string, ISendGridClient>();
+        
         /// <summary>
         /// Creates a new instance.
         /// </summary>
-        public SendGridExtensionConfigProvider(IOptions<SendGridOptions> options, ISendGridClientFactory clientFactory)
+        public SendGridExtensionConfigProvider(IOptions<SendGridOptions> options, ISendGridClientFactory clientFactory, ISendGridResponseHandler responseHandler)
         {
-            _options = options;
+            _options = options;        
+            _responseHandler = responseHandler;
+
             ClientFactory = clientFactory;
         }
 
@@ -58,7 +62,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.SendGrid
         {
             string apiKey = FirstOrDefault(attr.ApiKey, _options.Value.ApiKey);
             ISendGridClient sendGrid = _sendGridClientCache.GetOrAdd(apiKey, a => ClientFactory.Create(a));
-            return new SendGridMessageAsyncCollector(_options.Value, attr, sendGrid);
+            return new SendGridMessageAsyncCollector(_options.Value, attr, sendGrid, _responseHandler);
         }
 
         private void ValidateBinding(SendGridAttribute attribute, Type type)
