@@ -76,7 +76,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
                 if (!DateTime.TryParse(attribute.StartFromTime, out DateTime startFromTime))
                 {
-                    throw new InvalidOperationException("Specified StartFromTime parameter is not in appropriate DateTime format. Please refer: https://docs.microsoft.com/dotnet/api/system.datetime.parse?view=net-5.0#parsing-and-cultural-conventions");
+                    throw new InvalidOperationException(@"The specified StartFromTime parameter is not in the correct format. Please use the ISO 8601 format with the UTC designator. For example: '2021-02-16T14:19:29Z'.");
                 }
 
                 processorOptions.StartTime = startFromTime;
