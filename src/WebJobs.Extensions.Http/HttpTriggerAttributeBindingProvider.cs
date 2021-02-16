@@ -26,6 +26,7 @@ using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ModelBinding = Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -156,7 +157,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 }
 
                 string body = null;
-                if (request.ContentLength != null && request.ContentLength > 0)
+                if (IsRequestPayloadReadable(request))
                 {
                     body = await request.ReadAsStringAsync();
                 }
@@ -382,7 +383,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 // otherwise read from the request body if present
                 if (!request.HttpContext.Items.TryGetValue(HttpExtensionConstants.AzureWebJobsWebHookDataKey, out object value))
                 {
-                    if (request.Body != null && request.ContentLength > 0)
+                    if (IsRequestPayloadReadable(request))
                     {
                         IServiceProvider requestServices = request.HttpContext.RequestServices;
                         var metadata = requestServices
@@ -456,6 +457,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 }
 
                 return value;
+            }
+
+            private bool IsRequestPayloadReadable(HttpRequest request)
+            {
+                return (request.Body != null && request.ContentLength > 0) || string.Equals(request.Headers[HeaderNames.TransferEncoding], "chunked", StringComparison.OrdinalIgnoreCase);
             }
 
             /// <summary>
