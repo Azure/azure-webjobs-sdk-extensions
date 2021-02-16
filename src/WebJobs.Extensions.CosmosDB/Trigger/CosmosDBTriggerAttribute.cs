@@ -141,7 +141,7 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Optional.
         /// Gets or sets the a date and time to initialize the change feed read operation from.
-        /// <remark>It is best to use UTC date / time format to avoid any discrepencies.</remark>
+        /// <remark>The recommended format is ISO 8601 with the UTC designator. For example: "2021-02-16T14:19:29Z"</remark>
         /// </summary>
         public string StartFromTime { get; set; }
 
