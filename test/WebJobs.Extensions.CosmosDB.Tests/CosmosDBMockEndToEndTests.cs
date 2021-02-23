@@ -149,13 +149,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 .ReturnsAsync(new DocumentQueryResponse<JObject>());
 
             serviceMock
-                .Setup(m => m.ExecuteNextAsync<JObject>(
+                .Setup(m => m.ExecuteNextAsync<JToken>(
                     collectionUri,
                     It.Is<SqlQuerySpec>((s) =>
                         s.QueryText == null &&
                         s.Parameters.Count() == 0),
                     null))
-                .ReturnsAsync(new DocumentQueryResponse<JObject>());
+                .ReturnsAsync(new DocumentQueryResponse<JToken>());
 
             // We only expect item2 to be updated
             serviceMock
