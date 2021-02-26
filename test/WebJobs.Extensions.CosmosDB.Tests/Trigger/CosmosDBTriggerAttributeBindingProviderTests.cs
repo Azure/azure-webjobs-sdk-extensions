@@ -354,11 +354,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
             CosmosDBTriggerBinding binding = (CosmosDBTriggerBinding)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
+            CosmosDBTriggerAttribute cosmosDBTriggerAttribute = parameter.GetCustomAttribute<CosmosDBTriggerAttribute>(inherit: false);
+
             Assert.Equal(typeof(IReadOnlyList<Document>), binding.TriggerValueType);
             Assert.Equal(new Uri("https://fromSettings"), binding.DocumentCollectionLocation.Uri);
             Assert.Equal(new Uri("https://fromSettings"), binding.LeaseCollectionLocation.Uri);
-            Assert.Equal(10, binding.ChangeFeedProcessorOptions.MaxItemCount);
-            Assert.True(binding.ChangeFeedProcessorOptions.StartFromBeginning);
+            Assert.Equal(cosmosDBTriggerAttribute.MaxItemsPerInvocation, binding.ChangeFeedProcessorOptions.MaxItemCount);
+            Assert.Equal(cosmosDBTriggerAttribute.StartFromBeginning, binding.ChangeFeedProcessorOptions.StartFromBeginning);
+            Assert.Equal(cosmosDBTriggerAttribute.StartFromTime, binding.ChangeFeedProcessorOptions.StartTime?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss%K"));
         }
 
         private static ParameterInfo GetFirstParameter(Type type, string methodName)
@@ -404,13 +407,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             {
             }
 
+            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", MaxItemsPerInvocation = 10, StartFromTime = "2020-11-25T22:36:29Z")] IReadOnlyList<Document> docs)
+            {
+            }
+
+            public static void Func3([CosmosDBTrigger("aDatabase", "aCollection", ConnectionStringSetting = "CosmosDBConnectionString", MaxItemsPerInvocation = 10, StartFromBeginning = false, StartFromTime = "2020-11-25T22:36:29Z")] IReadOnlyList<Document> docs)
+            {
+            }
+
             public static IEnumerable<ParameterInfo[]> GetParameters()
             {
                 var type = typeof(ValidCosmosDBTriggerBindigsWithChangeFeedOptions);
 
                 return new[]
                 {
-                    new[] { GetFirstParameter(type, "Func1") }
+                    new[] { GetFirstParameter(type, "Func1") },
+                    new[] { GetFirstParameter(type, "Func2") },
+                    new[] { GetFirstParameter(type, "Func3") },
                 };
             }
         }
@@ -433,6 +446,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             {
             }
 
+            public static void Func5([CosmosDBTrigger("aDatabase", "leases", ConnectionStringSetting = "CosmosDBConnectionString", StartFromBeginning = true, StartFromTime = "2020-11-25T22:36:29Z")] IReadOnlyList<Document> docs)
+            {
+            }
+
+            public static void Func6([CosmosDBTrigger("aDatabase", "leases", ConnectionStringSetting = "CosmosDBConnectionString", StartFromTime = "blah")] IReadOnlyList<Document> docs)
+            {
+            }
+
+            public static void Func7([CosmosDBTrigger("aDatabase", "leases", ConnectionStringSetting = "CosmosDBConnectionString", StartFromBeginning = true, StartFromTime = "blah")] IReadOnlyList<Document> docs)
+            {
+            }
+
             public static IEnumerable<ParameterInfo[]> GetParameters()
             {
                 var type = typeof(InvalidCosmosDBTriggerBindings);
@@ -442,7 +467,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                     new[] { GetFirstParameter(type, "Func1") },
                     new[] { GetFirstParameter(type, "Func2") },
                     new[] { GetFirstParameter(type, "Func3") },
-                    new[] { GetFirstParameter(type, "Func4") }
+                    new[] { GetFirstParameter(type, "Func4") },
+                    new[] { GetFirstParameter(type, "Func5") },
+                    new[] { GetFirstParameter(type, "Func6") },
+                    new[] { GetFirstParameter(type, "Func7") },
                 };
             }
         }

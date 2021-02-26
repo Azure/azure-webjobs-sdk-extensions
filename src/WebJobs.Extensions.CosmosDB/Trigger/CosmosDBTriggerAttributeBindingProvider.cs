@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Globalization;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
@@ -58,10 +59,31 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             DocumentCollectionInfo documentCollectionLocation;
             DocumentCollectionInfo leaseCollectionLocation;
             ChangeFeedProcessorOptions processorOptions = BuildProcessorOptions(attribute);
+            
             processorOptions.StartFromBeginning = attribute.StartFromBeginning;
+
             if (attribute.MaxItemsPerInvocation > 0)
             {
                 processorOptions.MaxItemCount = attribute.MaxItemsPerInvocation;
+            }
+
+            if (!string.IsNullOrEmpty(attribute.StartFromTime))
+            {
+                if (attribute.StartFromBeginning)
+                {
+                    throw new InvalidOperationException("Only one of StartFromBeginning or StartFromTime can be used");
+                }
+
+                if (!DateTime.TryParse(attribute.StartFromTime, out DateTime startFromTime))
+                {
+                    throw new InvalidOperationException(@"The specified StartFromTime parameter is not in the correct format. Please use the ISO 8601 format with the UTC designator. For example: '2021-02-16T14:19:29Z'.");
+                }
+
+                processorOptions.StartTime = startFromTime;
+            }
+            else
+            {
+                processorOptions.StartFromBeginning = attribute.StartFromBeginning;
             }
 
             ICosmosDBService monitoredCosmosDBService;
