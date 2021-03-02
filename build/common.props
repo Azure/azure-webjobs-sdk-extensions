@@ -6,8 +6,8 @@
     <CosmosDBVersion>3.0.9$(VersionSuffix)</CosmosDBVersion>
     <HttpVersion>3.0.12$(VersionSuffix)</HttpVersion>
     <MobileAppsVersion>3.0.0$(VersionSuffix)</MobileAppsVersion>
-    <SendGridVersion>3.0.1$(VersionSuffix)</SendGridVersion>
-    <TwilioVersion>3.0.1$(VersionSuffix)</TwilioVersion>
+    <SendGridVersion>3.0.3$(VersionSuffix)</SendGridVersion>
+    <TwilioVersion>3.0.3$(VersionSuffix)</TwilioVersion>
     <DebugType>embedded</DebugType>    
     <LatestCommit Condition="$(LatestCommit) == ''">$(CommitHash)</LatestCommit>
     <CommitHash Condition="$(CommitHash) == ''">N/A</CommitHash>
