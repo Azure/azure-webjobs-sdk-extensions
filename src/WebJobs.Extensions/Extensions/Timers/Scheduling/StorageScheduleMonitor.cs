@@ -3,10 +3,11 @@
 
 using System;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.Storage;
-using Microsoft.Azure.Storage.Blob;
+using Azure;
+using Azure.Storage.Blobs;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.Configuration;
@@ -26,7 +27,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         private readonly ILogger _logger;
         private readonly IHostIdProvider _hostIdProvider;
         private readonly IConfiguration _configuration;
-        private CloudBlobDirectory _timerStatusDirectory;
+        private readonly HostStorageProvider _hostStorageProvider;
+        private string _timerStatusPath;
+        private BlobContainerClient _containerClient;
 
         /// <summary>
         /// Constructs a new instance.
@@ -36,12 +39,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// <param name="configuration"></param>
         /// <param name="loggerFactory"></param>
         public StorageScheduleMonitor(DistributedLockManagerContainerProvider lockContainerProvider, IHostIdProvider hostIdProvider, 
-            IConfiguration configuration, ILoggerFactory loggerFactory)
+            IConfiguration configuration, ILoggerFactory loggerFactory, HostStorageProvider hostStorageProvider)
         {
             _lockContainerProvider = lockContainerProvider ?? throw new ArgumentNullException(nameof(lockContainerProvider));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _hostIdProvider = hostIdProvider ?? throw new ArgumentNullException(nameof(hostIdProvider));
             _logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Timer"));
+            _hostStorageProvider = hostStorageProvider ?? throw new ArgumentNullException(nameof(hostStorageProvider));
 
             JsonSerializerSettings settings = new JsonSerializerSettings
             {
@@ -53,13 +57,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// <summary>
         /// Gets the blob directory where timer statuses will be stored.
         /// </summary>
-        internal CloudBlobDirectory TimerStatusDirectory
+        internal string TimerStatusPath
         {
             get
             {
                 // We have to delay create the blob directory since we require the JobHost ID, and that will only
                 // be available AFTER the host as been started
-                if (_timerStatusDirectory == null)
+                if (string.IsNullOrEmpty(_timerStatusPath))
                 {
                     string hostId = _hostIdProvider.GetHostIdAsync(CancellationToken.None).GetAwaiter().GetResult();
                     if (string.IsNullOrEmpty(hostId))
@@ -67,34 +71,49 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                         throw new InvalidOperationException("Unable to determine host ID.");
                     }
 
-                    CloudBlobContainer container;
-                    if (_lockContainerProvider.InternalContainer != null)
+                    _timerStatusPath = string.Format("timers/{0}", hostId);
+                }
+
+                return _timerStatusPath;
+            }
+        }
+
+        internal BlobContainerClient ContainerClient
+        {
+            get
+            {
+                if (_containerClient == null)
+                {
+                    if (_lockContainerProvider.InternalContainerClient != null)
                     {
-                        container = _lockContainerProvider.InternalContainer;
+                        _containerClient = _lockContainerProvider.InternalContainerClient;
                     }
                     else
                     {
                         var connectionString = _configuration.GetWebJobsConnectionString(ConnectionStringNames.Storage);
-                        CloudStorageAccount storageAccount = CloudStorageAccount.Parse(connectionString);
-                        CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
-                        container = blobClient.GetContainerReference(HostContainerName);
+                        var blobServiceClient = _hostStorageProvider.GetBlobServiceClient(connectionString);
+                        _containerClient = blobServiceClient.GetBlobContainerClient(HostContainerName);
                     }
-
-                    string timerStatusDirectoryPath = string.Format("timers/{0}", hostId);
-                    _timerStatusDirectory = container.GetDirectoryReference(timerStatusDirectoryPath);
                 }
-                return _timerStatusDirectory;
+
+                return _containerClient;
             }
         }
 
         /// <inheritdoc/>
         public override async Task<ScheduleStatus> GetStatusAsync(string timerName)
         {
-            CloudBlockBlob statusBlob = GetStatusBlobReference(timerName);
+            BlobClient statusBlobClient = GetStatusBlobReference(timerName);
 
             try
             {
-                string statusLine = await statusBlob.DownloadTextAsync();
+                string statusLine;
+                var downloadResponse = await statusBlobClient.DownloadAsync();
+                using (StreamReader reader = new StreamReader(downloadResponse.Value.Content))
+                {
+                    statusLine = reader.ReadToEnd();
+                }
+
                 ScheduleStatus status;
                 using (StringReader stringReader = new StringReader(statusLine))
                 {
@@ -102,10 +121,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 }
                 return status;
             }
-            catch (StorageException exception)
+            catch (RequestFailedException exception)
             {
-                if (exception.RequestInformation != null &&
-                    exception.RequestInformation.HttpStatusCode == 404)
+                if (exception.Status == 404)
                 {
                     // we haven't recorded a status yet
                     return null;
@@ -126,8 +144,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
 
             try
             {
-                CloudBlockBlob statusBlob = GetStatusBlobReference(timerName);
-                await statusBlob.UploadTextAsync(statusLine);
+                BlobClient statusBlobClient = GetStatusBlobReference(timerName);
+                using (Stream stream = new MemoryStream(Encoding.UTF8.GetBytes(statusLine)))
+                {
+                    await statusBlobClient.UploadAsync(stream, overwrite: true);
+                }
             }
             catch (Exception ex)
             {
@@ -136,12 +157,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             }
         }
 
-        private CloudBlockBlob GetStatusBlobReference(string timerName)
+        private BlobClient GetStatusBlobReference(string timerName)
         {
             // Path to the status blob is:
             // timers/{hostId}/{timerName}/status
-            string blobName = string.Format("{0}/status", timerName);
-            return TimerStatusDirectory.GetBlockBlobReference(blobName);
+            string blobName = string.Format("{0}/{1}/status", TimerStatusPath, timerName);
+            return ContainerClient.GetBlobClient(blobName);
         }
     }
 }
