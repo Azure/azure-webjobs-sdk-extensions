@@ -149,7 +149,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                     .FormattedMessage;
                 JObject loggedOptions = JObject.Parse(optionsMessage.Substring(optionsMessage.IndexOf(Environment.NewLine)));
                 Assert.False(loggedOptions["DynamicThrottlesEnabled"].Value<bool>());
-                Assert.False(loggedOptions["ChunkedTransferEnabled"].Value<bool>());
+                Assert.False(loggedOptions["EnableChunkedRequestBinding"].Value<bool>());
                 Assert.Equal("api", loggedOptions["RoutePrefix"].Value<string>());
             }
         }

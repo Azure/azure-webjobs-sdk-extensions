@@ -179,7 +179,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
                 return new TriggerData(valueProvider, bindingData)
                 {
-                    ReturnValueProvider = new ResponseHandler(request, _options != null ? _options.SetResponse : null)
+                    ReturnValueProvider = new ResponseHandler(request, _options?.SetResponse)
                 };
             }
 
@@ -462,7 +462,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             private bool IsRequestPayloadReadable(HttpRequest request)
             {                
                 return (request.Body != null && request.ContentLength > 0) 
-                    || (string.Equals(request.Headers[HeaderNames.TransferEncoding], "chunked", StringComparison.OrdinalIgnoreCase) && _options.ChunkedTransferEnabled);
+                    || (_options.EnableChunkedRequestBinding && string.Equals(request.Headers[HeaderNames.TransferEncoding], "chunked", StringComparison.OrdinalIgnoreCase));
             }
 
             /// <summary>

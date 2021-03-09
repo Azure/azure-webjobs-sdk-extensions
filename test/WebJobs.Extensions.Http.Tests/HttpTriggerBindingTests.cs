@@ -170,7 +170,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ParameterInfo parameterInfo = GetType().GetMethod("TestPocoFunction").GetParameters()[0];
             HttpOptions httpOptions = new HttpOptions()
             {
-                ChunkedTransferEnabled = isChunked
+                EnableChunkedRequestBinding = isChunked
             };
             HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, true, httpOptions);
 
