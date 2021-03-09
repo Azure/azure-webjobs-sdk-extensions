@@ -462,7 +462,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             private bool IsRequestPayloadReadable(HttpRequest request)
             {                
                 return (request.Body != null && request.ContentLength > 0) 
-                    || (_options.EnableChunkedRequestBinding && string.Equals(request.Headers[HeaderNames.TransferEncoding], "chunked", StringComparison.OrdinalIgnoreCase));
+                    || (_options != null && _options.EnableChunkedRequestBinding && string.Equals(request.Headers[HeaderNames.TransferEncoding], "chunked", StringComparison.OrdinalIgnoreCase));
             }
 
             /// <summary>
