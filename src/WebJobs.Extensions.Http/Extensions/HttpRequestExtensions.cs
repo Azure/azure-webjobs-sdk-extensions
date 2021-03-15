@@ -57,30 +57,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 string.Equals(headerValue.MediaType, "application/json", StringComparison.OrdinalIgnoreCase);
         }
 
-        public static bool TryGetAuthIdentity(this HttpRequest request, AuthIdentityEnum authIdentity, out ClaimsIdentity claimsIdentity)
+        public static ClaimsIdentity GetAppServiceIdentity(this HttpRequest request)
         {
-            claimsIdentity = null;
             if (!request.Headers.ContainsKey(EasyAuthIdentityHeader))
             {
-                return false;
+                return null;
             }
 
             string headerValue = request.Headers[EasyAuthIdentityHeader].First();
 
-            switch (authIdentity)
+            if (TryConvertFromBase64EncodedJson<ClaimsIdentitySlim>(headerValue, EasyAuthClaimsIdentitySerializer.Value, out ClaimsIdentity claimsIdentity)
+                || TryConvertFromBase64EncodedJson<StaticWebAppsClientPrincipal>(headerValue, StaticWebAppsClaimsIdentitySerializer.Value, out claimsIdentity))
             {
-                case AuthIdentityEnum.StaticWebAppsIdentity:
-                    return TryConvertFromBase64EncodedJson<StaticWebAppsClientPrincipal>(
-                        headerValue,
-                        StaticWebAppsClaimsIdentitySerializer.Value,
-                        out claimsIdentity);
-                case AuthIdentityEnum.AppServiceIdentity:
-                default:
-                    return TryConvertFromBase64EncodedJson<ClaimsIdentitySlim>(
-                        headerValue,
-                        EasyAuthClaimsIdentitySerializer.Value,
-                        out claimsIdentity);
+                return claimsIdentity;
             }
+
+            return null;
         }
 
         private static bool TryConvertFromBase64EncodedJson<T>(
@@ -92,7 +84,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             claimsIdentity = null;
             using (var buffer = new MemoryStream(Convert.FromBase64String(payload)))
             {
-                T deserializedPayLoad = (T)serializer.ReadObject(buffer);
+                T deserializedPayLoad = default(T);
+                try
+                {
+                    deserializedPayLoad = (T)serializer.ReadObject(buffer);
+                }
+                catch (SerializationException)
+                {
+                    return false;
+                }
+
                 if (deserializedPayLoad.Equals(default(T)))
                 {
                     return false;

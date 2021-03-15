@@ -15,7 +15,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
     public class HttpRequestExtensionTests
     {
         [Fact]
-        public void TryGetAppServiceIdentity_XMsClientPrincipalCorrectFormat_ReturnsIdentity()
+        public void GetAppServiceIdentity_XMsClientPrincipalCorrectEasyAuthFormat_ReturnsEasyAuthIdentity()
         {
             HttpRequest req = new DefaultHttpContext().Request;
             var claims = new List<Claim>();
@@ -29,8 +29,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
             string encodedHeaderValue = Convert.ToBase64String(bytes);
             req.Headers["x-ms-client-principal"] = encodedHeaderValue;
 
-            Assert.True(req.TryGetAuthIdentity(AuthIdentityEnum.AppServiceIdentity, out ClaimsIdentity easyAuthIdentity));
-
+            ClaimsIdentity easyAuthIdentity = req.GetAppServiceIdentity();
+            Assert.NotNull(easyAuthIdentity);
             Assert.Equal("aad", easyAuthIdentity.AuthenticationType);
             Assert.Equal("name", easyAuthIdentity.NameClaimType);
             Assert.Equal("role", easyAuthIdentity.RoleClaimType);
@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
         }
 
         [Fact]
-        public void TryGetStaticWebAppsIdentity_XMsClientPrincipalCorrectFormat_ReturnsIdentity()
+        public void GetAppServiceIdentity_XMsClientPrincipalCorrectStaticWebAppsFormat_ReturnsStaticWebAppsIdentity()
         {
             HttpRequest req = new DefaultHttpContext().Request;
 
@@ -65,8 +65,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
             string encodedHeaderValue = Convert.ToBase64String(bytes);
             req.Headers["x-ms-client-principal"] = encodedHeaderValue;
 
-            Assert.True(req.TryGetAuthIdentity(AuthIdentityEnum.StaticWebAppsIdentity, out ClaimsIdentity staticWebAppsIdentity));
-
+            ClaimsIdentity staticWebAppsIdentity = req.GetAppServiceIdentity();
+            Assert.NotNull(staticWebAppsIdentity);
             Assert.Equal("facebook", staticWebAppsIdentity.AuthenticationType);
             var userIdClaim = staticWebAppsIdentity.Claims.ElementAt(0);
             Assert.Equal(ClaimTypes.NameIdentifier, userIdClaim.Type);
@@ -83,34 +83,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
         }
 
         [Fact]
-        public void TryGetAppServiceIdentity_XMsClientPrincipalWrongFormat_ReturnsFalse()
-        {
-            HttpRequest req = new DefaultHttpContext().Request;
-
-            var staticWebAppsClientPrincipal = new StaticWebAppsClientPrincipal
-            {
-                IdentityProvider = "facebook",
-                UserId = "50cf51ecad1a49429e35243afde6b92b",
-                UserDetails = "mikarmar@microsoft.com",
-                UserRoles = new List<string>
-                {
-                    "admin",
-                    "super_admin",
-                },
-            };
-
-            //Load onto header
-            string json = JsonConvert.SerializeObject(staticWebAppsClientPrincipal);
-            byte[] bytes = Encoding.UTF8.GetBytes(json);
-            string encodedHeaderValue = Convert.ToBase64String(bytes);
-            req.Headers["x-ms-client-principal"] = encodedHeaderValue;
-
-            Assert.False(req.TryGetAuthIdentity(AuthIdentityEnum.AppServiceIdentity, out ClaimsIdentity staticWebAppsIdentity));
-            Assert.Null(staticWebAppsIdentity);
-        }
-
-        [Fact]
-        public void TryGetStaticWebAppsIdentity_XMsClientPrincipalWrongFormat_ReturnsFalse()
+        public void GetAppServiceIdentity_XMsClientPrincipalInvalidJson_ReturnsNull()
         {
             HttpRequest req = new DefaultHttpContext().Request;
             var claims = new List<Claim>();
@@ -120,12 +93,43 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
 
             //Load onto header
             string json = JsonConvert.SerializeObject(ClaimsIdentitySlim.FromClaimsIdentity(identity));
+            json = json.Replace("[", "{");
+            json = json.Replace("]", "}");
             byte[] bytes = Encoding.UTF8.GetBytes(json);
             string encodedHeaderValue = Convert.ToBase64String(bytes);
             req.Headers["x-ms-client-principal"] = encodedHeaderValue;
 
-            Assert.False(req.TryGetAuthIdentity(AuthIdentityEnum.StaticWebAppsIdentity, out ClaimsIdentity easyAuthIdentity));
-            Assert.Null(easyAuthIdentity);
+            Assert.Null(req.GetAppServiceIdentity());
+        }
+
+        [Fact]
+        public void GetAppServiceIdentity_DefaultClaimsIdentity_ReturnsNull()
+        {
+            HttpRequest req = new DefaultHttpContext().Request;
+            var identitySlim = default(ClaimsIdentitySlim);
+
+            //Load onto header
+            string json = JsonConvert.SerializeObject(identitySlim);
+            byte[] bytes = Encoding.UTF8.GetBytes(json);
+            string encodedHeaderValue = Convert.ToBase64String(bytes);
+            req.Headers["x-ms-client-principal"] = encodedHeaderValue;
+
+            Assert.Null(req.GetAppServiceIdentity());
+        }
+
+        [Fact]
+        public void GetAppServiceIdentity_DefaultStaticWebAppsClientPrincipal_ReturnsNull()
+        {
+            HttpRequest req = new DefaultHttpContext().Request;
+            var staticWebAppsClientPrincipal = default(StaticWebAppsClientPrincipal);
+
+            //Load onto header
+            string json = JsonConvert.SerializeObject(staticWebAppsClientPrincipal);
+            byte[] bytes = Encoding.UTF8.GetBytes(json);
+            string encodedHeaderValue = Convert.ToBase64String(bytes);
+            req.Headers["x-ms-client-principal"] = encodedHeaderValue;
+
+            Assert.Null(req.GetAppServiceIdentity());
         }
     }
 }
