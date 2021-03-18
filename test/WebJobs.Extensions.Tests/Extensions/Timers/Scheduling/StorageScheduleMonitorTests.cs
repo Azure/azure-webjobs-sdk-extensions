@@ -9,7 +9,10 @@ using System.Threading.Tasks;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
+using Microsoft.Azure.WebJobs.StorageProvider.Blobs;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -166,9 +169,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             var lockContainerManager = new DistributedLockManagerContainerProvider();
             ILoggerFactory loggerFactory = new LoggerFactory();
             loggerFactory.AddProvider(new TestLoggerProvider());
-            HostStorageProvider hostStorageProvider = new HostStorageProvider();
+
+            var blobServiceClientProvider = GetAzureStorageService<BlobServiceClientProvider>(config);
+            HostStorageProvider hostStorageProvider = new HostStorageProvider(config, blobServiceClientProvider);
 
             return new StorageScheduleMonitor(lockContainerManager, new TestIdProvider(hostId), config, loggerFactory, hostStorageProvider);
+        }
+
+        private static T GetAzureStorageService<T>(IConfiguration configuration)
+        {
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddHostStorageProvider();
+            serviceCollection.AddSingleton(configuration); // Override configuration
+            ServiceProvider provider = serviceCollection.BuildServiceProvider();
+            var service = provider.GetService<T>();
+            return service;
         }
 
         private class TestIdProvider : Host.Executors.IHostIdProvider

@@ -90,8 +90,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                     }
                     else
                     {
-                        var connectionString = _configuration.GetWebJobsConnectionString(ConnectionStringNames.Storage);
-                        var blobServiceClient = _hostStorageProvider.GetBlobServiceClient(connectionString);
+                        // TODO: Should we throw if we can't create the client?
+                        if (!_hostStorageProvider.TryGetBlobServiceClientFromConnection(out BlobServiceClient blobServiceClient, ConnectionStringNames.Storage))
+                        {
+                            throw new InvalidOperationException($"Could not create BlobServiceClient with connection {ConnectionStringNames.Storage}");
+                        }
                         _containerClient = blobServiceClient.GetBlobContainerClient(HostContainerName);
                     }
                 }
