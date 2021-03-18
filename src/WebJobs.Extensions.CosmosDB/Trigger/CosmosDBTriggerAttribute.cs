@@ -140,6 +140,13 @@ namespace Microsoft.Azure.WebJobs
 
         /// <summary>
         /// Optional.
+        /// Gets or sets the a date and time to initialize the change feed read operation from.
+        /// <remark>The recommended format is ISO 8601 with the UTC designator. For example: "2021-02-16T14:19:29Z"</remark>
+        /// </summary>
+        public string StartFromTime { get; set; }
+
+        /// <summary>
+        /// Optional.
         /// Defines preferred locations (regions) for geo-replicated database accounts in the Azure Cosmos DB service.
         /// Values should be comma-separated.
         /// </summary>
