@@ -21,11 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         /// </summary>
         public HttpExtensionConfigProvider(IOptions<HttpOptions> options)
         {
-            if (options == null)
-            {
-                throw new ArgumentNullException("options");
-            }
-            _options = options;        
+            _options = options ?? throw new ArgumentNullException(nameof(options));        
         }
 
         public void Initialize(ExtensionConfigContext context)
