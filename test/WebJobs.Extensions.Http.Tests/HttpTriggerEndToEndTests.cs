@@ -142,6 +142,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             using (_host)
             {
                 _host.Start();
+                var options = _host.GetOptions<HttpOptions>();
+                Assert.NotNull(options);
 
                 // Make sure the Options were logged. Just check a few values.
                 string optionsMessage = _host.GetTestLoggerProvider().GetAllLogMessages()

@@ -168,10 +168,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         public async Task BindAsync_Poco_FromRequestBody(bool isChunked)
         {
             ParameterInfo parameterInfo = GetType().GetMethod("TestPocoFunction").GetParameters()[0];
-            HttpOptions httpOptions = new HttpOptions()
+            var httpOptions = Options.Create<HttpOptions>(new HttpOptions()
             {
                 EnableChunkedRequestBinding = isChunked
-            };
+            });
             HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, true, httpOptions);
 
             JObject requestBody = new JObject

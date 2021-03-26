@@ -26,7 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
         public void Initialize(ExtensionConfigContext context)
         {
-            var httpBindingProvider = new HttpTriggerAttributeBindingProvider(_options.Value);
+            var httpBindingProvider = new HttpTriggerAttributeBindingProvider(_options);
             context.AddBindingRule<HttpTriggerAttribute>()
                 .BindToTrigger(httpBindingProvider);
         }

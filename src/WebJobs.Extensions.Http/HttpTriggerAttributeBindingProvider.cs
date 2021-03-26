@@ -41,7 +41,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         // Name of binding data slot where we place the full HttpRequestMessage
         internal const string RequestBindingName = "$request";
 
-        private readonly HttpOptions _options;
+        private readonly IOptions<HttpOptions> _options;
         private static readonly Type[] _supportedTypes = new Type[]
         {
             typeof(Stream),
@@ -54,7 +54,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             typeof(HttpRequestMessage)
         };
 
-        public HttpTriggerAttributeBindingProvider(HttpOptions options)
+        public HttpTriggerAttributeBindingProvider(IOptions<HttpOptions> options)
         {
             _options = options;
         }
@@ -95,9 +95,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             private readonly IBindingDataProvider _bindingDataProvider;
             private readonly bool _isUserTypeBinding;
             private readonly Dictionary<string, Type> _bindingDataContract;
-            private readonly HttpOptions _options;
+            private readonly IOptions<HttpOptions> _options;
 
-            public HttpTriggerBinding(HttpTriggerAttribute attribute, ParameterInfo parameter, bool isUserTypeBinding, HttpOptions options = null)
+            public HttpTriggerBinding(HttpTriggerAttribute attribute, ParameterInfo parameter, bool isUserTypeBinding, IOptions<HttpOptions> options = null)
             {
                 _options = options;
                 _parameter = parameter;
@@ -179,7 +179,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
                 return new TriggerData(valueProvider, bindingData)
                 {
-                    ReturnValueProvider = new ResponseHandler(request, _options?.SetResponse)
+                    ReturnValueProvider = new ResponseHandler(request, _options?.Value.SetResponse)
                 };
             }
 
@@ -462,7 +462,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             private bool IsRequestPayloadReadable(HttpRequest request)
             {                
                 return (request.Body != null && request.ContentLength > 0) 
-                    || (_options != null && _options.EnableChunkedRequestBinding && string.Equals(request.Headers[HeaderNames.TransferEncoding], "chunked", StringComparison.OrdinalIgnoreCase));
+                    || (_options != null && _options.Value.EnableChunkedRequestBinding && string.Equals(request.Headers[HeaderNames.TransferEncoding], "chunked", StringComparison.OrdinalIgnoreCase));
             }
 
             /// <summary>
