@@ -131,5 +131,38 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
 
             Assert.Null(req.GetAppServiceIdentity());
         }
+
+        [Fact]
+        public void GetAppServiceIdentity_EmptyStringClientPrincipal_ReturnsNull()
+        {
+            HttpRequest req = new DefaultHttpContext().Request;
+
+            //Load onto header
+            byte[] bytes = Encoding.UTF8.GetBytes(string.Empty);
+            string encodedHeaderValue = Convert.ToBase64String(bytes);
+            req.Headers["x-ms-client-principal"] = encodedHeaderValue;
+
+            Assert.Null(req.GetAppServiceIdentity());
+        }
+
+        [Fact]
+        public void GetAppServiceIdentity_EmptyObjectClientPrincipal_ReturnsNull()
+        {
+            HttpRequest req = new DefaultHttpContext().Request;
+
+            //Load onto header
+            byte[] bytes = Encoding.UTF8.GetBytes("{}");
+            string encodedHeaderValue = Convert.ToBase64String(bytes);
+            req.Headers["x-ms-client-principal"] = encodedHeaderValue;
+
+            Assert.Null(req.GetAppServiceIdentity());
+        }
+
+        [Fact]
+        public void GetAppServiceIdentity_NoXMsClientPrincipalHeader_ReturnsNull()
+        {
+            HttpRequest req = new DefaultHttpContext().Request;
+            Assert.Null(req.GetAppServiceIdentity());
+        }
     }
 }
