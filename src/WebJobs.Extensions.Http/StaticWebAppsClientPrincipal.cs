@@ -31,10 +31,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
         public ClaimsIdentity ToClaimsIdentity()
         {
-            var staticWebAppsIdentity = new ClaimsIdentity(this.IdentityProvider);
-            staticWebAppsIdentity.AddClaim(new Claim(ClaimTypes.NameIdentifier, this.UserId));
-            staticWebAppsIdentity.AddClaim(new Claim(ClaimTypes.Name, this.UserDetails));
-            staticWebAppsIdentity.AddClaims(this.UserRoles.Select(r => new Claim(ClaimTypes.Role, r)));
+            var staticWebAppsIdentity = new ClaimsIdentity(IdentityProvider);
+            staticWebAppsIdentity.AddClaim(new Claim(ClaimTypes.NameIdentifier, UserId));
+            staticWebAppsIdentity.AddClaim(new Claim(ClaimTypes.Name, UserDetails));
+            staticWebAppsIdentity.AddClaims(UserRoles.Select(r => new Claim(ClaimTypes.Role, r)));
             return staticWebAppsIdentity;
         }
     }
