@@ -141,9 +141,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             // The outer host needs to start in order for options to be logged         
             using (_host)
             {
-                _host.Start();
                 var options = _host.GetOptions<HttpOptions>();
                 Assert.NotNull(options);
+                _host.Start();
 
                 // Make sure the Options were logged. Just check a few values.
                 string optionsMessage = _host.GetTestLoggerProvider().GetAllLogMessages()
