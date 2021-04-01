@@ -41,7 +41,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         // Name of binding data slot where we place the full HttpRequestMessage
         internal const string RequestBindingName = "$request";
 
-        private readonly Action<HttpRequest, object> _responseHook;
+        private readonly IOptions<HttpOptions> _options;
         private static readonly Type[] _supportedTypes = new Type[]
         {
             typeof(Stream),
@@ -54,9 +54,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             typeof(HttpRequestMessage)
         };
 
-        public HttpTriggerAttributeBindingProvider(Action<HttpRequest, object> responseHook)
+        public HttpTriggerAttributeBindingProvider(IOptions<HttpOptions> options)
         {
-            _responseHook = responseHook;
+            _options = options;
         }
 
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
@@ -81,7 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                     "Can't bind HttpTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            return Task.FromResult<ITriggerBinding>(new HttpTriggerBinding(attribute, context.Parameter, isUserTypeBinding, _responseHook));
+            return Task.FromResult<ITriggerBinding>(new HttpTriggerBinding(attribute, context.Parameter, isUserTypeBinding, _options));
         }
 
         private static bool IsValidUserType(Type type)
@@ -95,11 +95,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             private readonly IBindingDataProvider _bindingDataProvider;
             private readonly bool _isUserTypeBinding;
             private readonly Dictionary<string, Type> _bindingDataContract;
-            private readonly Action<HttpRequest, object> _responseHook;
+            private readonly IOptions<HttpOptions> _options;
 
-            public HttpTriggerBinding(HttpTriggerAttribute attribute, ParameterInfo parameter, bool isUserTypeBinding, Action<HttpRequest, object> responseHook = null)
+            public HttpTriggerBinding(HttpTriggerAttribute attribute, ParameterInfo parameter, bool isUserTypeBinding, IOptions<HttpOptions> options = null)
             {
-                _responseHook = responseHook;
+                _options = options;
                 _parameter = parameter;
                 _isUserTypeBinding = isUserTypeBinding;
 
@@ -179,7 +179,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
                 return new TriggerData(valueProvider, bindingData)
                 {
-                    ReturnValueProvider = new ResponseHandler(request, _responseHook)
+                    ReturnValueProvider = new ResponseHandler(request, _options?.Value.SetResponse)
                 };
             }
 
@@ -460,8 +460,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             }
 
             private bool IsRequestPayloadReadable(HttpRequest request)
-            {
-                return (request.Body != null && request.ContentLength > 0) || string.Equals(request.Headers[HeaderNames.TransferEncoding], "chunked", StringComparison.OrdinalIgnoreCase);
+            {                
+                return (request.Body != null && request.ContentLength > 0) 
+                    || (_options != null && _options.Value.EnableChunkedRequestBinding && string.Equals(request.Headers[HeaderNames.TransferEncoding], "chunked", StringComparison.OrdinalIgnoreCase));
             }
 
             /// <summary>

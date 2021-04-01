@@ -53,6 +53,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         public bool DynamicThrottlesEnabled { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether binding to body 
+        /// properties on chunked requests should be enabled.
+        /// </summary>
+        public bool EnableChunkedRequestBinding { get; set; }
+
+        /// <summary>
         /// Gets or sets the Action used to receive the response.
         /// </summary>
         [JsonIgnore]
@@ -67,6 +73,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
 
                 writer.WritePropertyName(nameof(DynamicThrottlesEnabled));
                 writer.WriteValue(DynamicThrottlesEnabled);
+
+                writer.WritePropertyName(nameof(EnableChunkedRequestBinding));
+                writer.WriteValue(EnableChunkedRequestBinding);
 
                 writer.WritePropertyName(nameof(MaxConcurrentRequests));
                 writer.WriteValue(MaxConcurrentRequests);

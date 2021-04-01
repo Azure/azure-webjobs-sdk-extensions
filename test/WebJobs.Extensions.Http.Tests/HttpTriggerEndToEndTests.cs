@@ -141,6 +141,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             // The outer host needs to start in order for options to be logged         
             using (_host)
             {
+                var options = _host.GetOptions<HttpOptions>();
+                Assert.NotNull(options);
                 _host.Start();
 
                 // Make sure the Options were logged. Just check a few values.
@@ -149,6 +151,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                     .FormattedMessage;
                 JObject loggedOptions = JObject.Parse(optionsMessage.Substring(optionsMessage.IndexOf(Environment.NewLine)));
                 Assert.False(loggedOptions["DynamicThrottlesEnabled"].Value<bool>());
+                Assert.False(loggedOptions["EnableChunkedRequestBinding"].Value<bool>());
                 Assert.Equal("api", loggedOptions["RoutePrefix"].Value<string>());
             }
         }
