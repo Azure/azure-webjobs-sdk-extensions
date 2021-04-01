@@ -21,7 +21,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         private const string EasyAuthIdentityHeader = "x-ms-client-principal";
 
         // Shared serializer instance. This is safe for multi-threaded use.
-        private static readonly Lazy<DataContractJsonSerializer> ClaimsIdentitySerializer = new Lazy<DataContractJsonSerializer>(GetClaimsIdentitySerializer);
+        private static readonly Lazy<DataContractJsonSerializer> EasyAuthClaimsIdentitySerializer = new Lazy<DataContractJsonSerializer>(GetClaimsIdentitySerializer<ClaimsIdentitySlim>);
+        private static readonly Lazy<DataContractJsonSerializer> StaticWebAppsClaimsIdentitySerializer = new Lazy<DataContractJsonSerializer>(GetClaimsIdentitySerializer<StaticWebAppsClientPrincipal>);
 
         public static async Task<string> ReadAsStringAsync(this HttpRequest request)
         {
@@ -62,26 +63,54 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             {
                 return null;
             }
+
             string headerValue = request.Headers[EasyAuthIdentityHeader].First();
-            return FromBase64EncodedJson(headerValue);
+
+            if (TryConvertFromBase64EncodedJson<ClaimsIdentitySlim>(headerValue, EasyAuthClaimsIdentitySerializer.Value, out ClaimsIdentity claimsIdentity)
+                || TryConvertFromBase64EncodedJson<StaticWebAppsClientPrincipal>(headerValue, StaticWebAppsClaimsIdentitySerializer.Value, out claimsIdentity))
+            {
+                return claimsIdentity;
+            }
+
+            return null;
         }
 
-        private static ClaimsIdentity FromBase64EncodedJson(string payload)
+        private static bool TryConvertFromBase64EncodedJson<T>(
+            string payload,
+            DataContractJsonSerializer serializer,
+            out ClaimsIdentity claimsIdentity)
+            where T : IIdentityPrincipal
         {
+            claimsIdentity = null;
             using (var buffer = new MemoryStream(Convert.FromBase64String(payload)))
             {
-                ClaimsIdentitySlim slim = (ClaimsIdentitySlim)ClaimsIdentitySerializer.Value.ReadObject(buffer);
-                return slim.ToClaimsIdentity();
+                T deserializedPayLoad = default(T);
+                try
+                {
+                    deserializedPayLoad = (T)serializer.ReadObject(buffer);
+                }
+                catch (SerializationException)
+                {
+                    return false;
+                }
+
+                if (deserializedPayLoad.Equals(default(T)))
+                {
+                    return false;
+                }
+
+                claimsIdentity = deserializedPayLoad.ToClaimsIdentity();
+                return true;
             }
         }
 
-        private static DataContractJsonSerializer GetClaimsIdentitySerializer()
+        private static DataContractJsonSerializer GetClaimsIdentitySerializer<T>()
         {
             // This serializer has the exact same settings as used by EasyAuth to ensure compatibility
             var settings = new DataContractJsonSerializerSettings();
             settings.UseSimpleDictionaryFormat = true;
             settings.DateTimeFormat = new DateTimeFormat("o");
-            return new DataContractJsonSerializer(typeof(ClaimsIdentitySlim), settings);
+            return new DataContractJsonSerializer(typeof(T), settings);
         }
     }
 }
