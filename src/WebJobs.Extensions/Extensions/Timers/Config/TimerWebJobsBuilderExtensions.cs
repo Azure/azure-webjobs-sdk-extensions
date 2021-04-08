@@ -29,6 +29,7 @@ namespace Microsoft.Extensions.Hosting
                 .BindOptions<TimersOptions>();
             builder.Services.AddSingleton<ScheduleMonitor, StorageScheduleMonitor>();
 
+            // TODO: should we register StorageScheduleMonitorV2 here or overwrite in the Host?
             return builder;
         }
 
