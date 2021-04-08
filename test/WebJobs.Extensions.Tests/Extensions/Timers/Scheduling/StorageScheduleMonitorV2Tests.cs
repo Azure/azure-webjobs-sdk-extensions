@@ -12,8 +12,10 @@ using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Azure.WebJobs.StorageProvider.Blobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
@@ -23,13 +25,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
     {
         private const string TestTimerName = "TestProgram.TestTimer";
         private const string TestHostId = "testhostid";
-        private readonly StorageScheduleMonitor _scheduleMonitor;
+        private readonly StorageScheduleMonitorV2 _scheduleMonitor;
 
         public StorageScheduleMonitorV2Tests()
         {
             _scheduleMonitor = CreateScheduleMonitor(TestHostId);
 
-            Cleanup();
+            Cleanup().GetAwaiter().GetResult();
         }
 
         [Fact]
@@ -43,7 +45,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         [Fact]
         public void TimerStatusDirectory_HostIdNull_Throws()
         {
-            StorageScheduleMonitor localScheduleMonitor = CreateScheduleMonitor(null);
+            StorageScheduleMonitorV2 localScheduleMonitor = CreateScheduleMonitor(null);
 
             string path = null;
             var ex = Assert.Throws<InvalidOperationException>(() =>
@@ -161,7 +163,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             Cleanup().GetAwaiter().GetResult();
         }
 
-        private static StorageScheduleMonitor CreateScheduleMonitor(string hostId = null)
+        private static StorageScheduleMonitorV2 CreateScheduleMonitor(string hostId = null)
         {
             var config = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
@@ -170,16 +172,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             ILoggerFactory loggerFactory = new LoggerFactory();
             loggerFactory.AddProvider(new TestLoggerProvider());
 
-            var blobServiceClientProvider = GetAzureStorageService<BlobServiceClientProvider>(config);
-            HostStorageProvider hostStorageProvider = new HostStorageProvider(config, blobServiceClientProvider);
-
-            return new StorageScheduleMonitor(lockContainerManager, new TestIdProvider(hostId), config, loggerFactory, hostStorageProvider);
+            var azureStorageProvider = GetAzureStorageService<AzureStorageProvider>(config);
+            var emptyOptions = new JobHostInternalStorageOptions();
+            return new StorageScheduleMonitorV2(new OptionsWrapper<JobHostInternalStorageOptions>(emptyOptions), new TestIdProvider(hostId), config, loggerFactory, azureStorageProvider);
         }
 
         private static T GetAzureStorageService<T>(IConfiguration configuration)
         {
             var serviceCollection = new ServiceCollection();
-            serviceCollection.AddHostStorageProvider();
+            serviceCollection.AddAzureStorageProvider();
             serviceCollection.AddSingleton(configuration); // Override configuration
             ServiceProvider provider = serviceCollection.BuildServiceProvider();
             var service = provider.GetService<T>();

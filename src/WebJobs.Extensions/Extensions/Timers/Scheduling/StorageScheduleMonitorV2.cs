@@ -24,7 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     {
         private const string HostContainerName = "azure-webjobs-hosts";
 
-        private readonly HostStorageProvider _hostStorageProvider;
+        private readonly AzureStorageProvider _azureStorageProvider;
         private readonly JobHostInternalStorageOptions _storageOptions;
         
         private readonly JsonSerializer _serializer;
@@ -42,13 +42,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// <param name="configuration"></param>
         /// <param name="loggerFactory"></param>
         public StorageScheduleMonitorV2(IOptions<JobHostInternalStorageOptions> options, IHostIdProvider hostIdProvider,
-            IConfiguration configuration, ILoggerFactory loggerFactory, HostStorageProvider hostStorageProvider)
+            IConfiguration configuration, ILoggerFactory loggerFactory, AzureStorageProvider azureStorageProvider)
         {
             _storageOptions = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _hostIdProvider = hostIdProvider ?? throw new ArgumentNullException(nameof(hostIdProvider));
             _logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Timer"));
-            _hostStorageProvider = hostStorageProvider ?? throw new ArgumentNullException(nameof(hostStorageProvider));
+            _azureStorageProvider = azureStorageProvider ?? throw new ArgumentNullException(nameof(azureStorageProvider));
 
             JsonSerializerSettings settings = new JsonSerializerSettings
             {
@@ -94,7 +94,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                     else if (_storageOptions.InternalContainerName != null)
                     {
                         // TODO: Should we throw if we can't create the client?
-                        if (!_hostStorageProvider.TryGetBlobServiceClientFromConnection(out BlobServiceClient blobServiceClient, ConnectionStringNames.Storage))
+                        if (!_azureStorageProvider.TryGetBlobServiceClientFromConnection(out BlobServiceClient blobServiceClient, ConnectionStringNames.Storage))
                         {
                             throw new InvalidOperationException($"Could not create BlobServiceClient with connection {ConnectionStringNames.Storage}");
                         }
@@ -103,7 +103,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                     else
                     {
                         // TODO: Should we throw if we can't create the client?
-                        if (!_hostStorageProvider.TryGetBlobServiceClientFromConnection(out BlobServiceClient blobServiceClient, ConnectionStringNames.Storage))
+                        if (!_azureStorageProvider.TryGetBlobServiceClientFromConnection(out BlobServiceClient blobServiceClient, ConnectionStringNames.Storage))
                         {
                             throw new InvalidOperationException($"Could not create BlobServiceClient with connection {ConnectionStringNames.Storage}");
                         }
