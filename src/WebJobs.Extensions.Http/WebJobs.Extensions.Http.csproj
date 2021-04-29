@@ -31,7 +31,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.WebApiCompatShim" Version="2.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Routing" Version="2.1.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.25" />
-    <PackageReference Include="System.Text.Encodings.Web" Version="4.5.1" />
   </ItemGroup>
 
   <ItemGroup>
