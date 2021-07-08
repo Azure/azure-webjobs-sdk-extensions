@@ -57,6 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             string leasesDatabaseName = ResolveAttributeValue(attribute.LeaseDatabaseName);
             string leasesCollectionName = ResolveAttributeValue(attribute.LeaseCollectionName);
             string processorName = ResolveAttributeValue(attribute.LeaseCollectionPrefix) ?? string.Empty;
+            string preferredLocations = ResolveAttributeValue(attribute.PreferredLocations);
 
             try
             {
@@ -89,11 +90,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
                 CosmosClient monitoredCosmosDBService = _configProvider.GetService(
                     connectionString: triggerConnectionString, 
-                    preferredLocations: attribute.PreferredLocations, 
+                    preferredLocations: preferredLocations, 
                     userAgent: CosmosDBTriggerUserAgentSuffix);
                 CosmosClient leaseCosmosDBService = _configProvider.GetService(
                     connectionString: leasesConnectionString, 
-                    preferredLocations: attribute.PreferredLocations, 
+                    preferredLocations: preferredLocations, 
                     userAgent: CosmosDBTriggerUserAgentSuffix);
 
                 if (attribute.CreateLeaseCollectionIfNotExists)
