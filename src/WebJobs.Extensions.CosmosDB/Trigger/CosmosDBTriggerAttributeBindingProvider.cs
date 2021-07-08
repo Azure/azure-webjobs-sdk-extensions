@@ -18,6 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private const string CosmosDBTriggerUserAgentSuffix = "CosmosDBTriggerFunctions";
         private const string SharedThroughputRequirementException = "Shared throughput collection should have a partition key";
         private const string LeaseCollectionRequiredPartitionKey = "/id";
+        private const string LeaseCollectionRequiredPartitionKeyFromGremlin = "/partitionKey";
         private readonly IConfiguration _configuration;
         private readonly INameResolver _nameResolver;
         private readonly CosmosDBOptions _options;
@@ -134,7 +135,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         private static async Task CreateLeaseCollectionIfNotExistsAsync(CosmosClient cosmosClient, string databaseName, string collectionName, int? throughput)
         {
-            await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(cosmosClient, databaseName, collectionName, LeaseCollectionRequiredPartitionKey, throughput);
+            try
+            {
+                await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(cosmosClient, databaseName, collectionName, LeaseCollectionRequiredPartitionKey, throughput);
+            }
+            catch (CosmosException cosmosException) 
+                when (cosmosException.StatusCode == System.Net.HttpStatusCode.BadRequest
+                    && cosmosException.Message.Contains("invalid for Gremlin API"))
+            {
+                await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(cosmosClient, databaseName, collectionName, LeaseCollectionRequiredPartitionKeyFromGremlin, throughput);
+            }
         }
 
         private string ResolveAttributeConnectionString(CosmosDBTriggerAttribute attribute)
