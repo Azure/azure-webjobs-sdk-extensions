@@ -16,6 +16,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
@@ -61,6 +62,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsPreferredLocationsParameters
         {
             get { return ValidCosmosDBTriggerBindigsPreferredLocations.GetParameters(); }
+        }
+
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsCreateLeaseContainerParameters
+        {
+            get { return ValidCosmosDBTriggerBindingsCreateLeaseContainer.GetParameters(); }
         }
 
         [Theory]
@@ -264,6 +270,121 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         }
 
         [Theory]
+        [MemberData(nameof(ValidCosmosDBTriggerBindingsCreateLeaseContainerParameters))]
+        public async Task ValidCreateIfNotExists(ParameterInfo parameter)
+        {
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    // Verify we load from root config
+                    { "CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;" }
+                })
+                .Build();
+
+            var serviceMock = new Mock<CosmosClient>(MockBehavior.Strict);
+
+            var mockDatabase = CosmosDBTestUtility.SetupDatabaseMock(serviceMock);
+
+            serviceMock
+                .Setup(m => m.GetDatabase(It.IsAny<string>()))
+                .Returns(mockDatabase.Object);
+
+            var mockContainer = new Mock<Container>(MockBehavior.Strict);
+
+            serviceMock
+                .Setup(m => m.GetContainer(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(mockContainer.Object);
+
+            mockDatabase
+                .Setup(m => m.GetContainer(It.IsAny<string>()))
+                .Returns(mockContainer.Object);
+
+            // Forcing creation of the container because it does not exist
+            mockContainer
+                .Setup(m => m.ReadContainerAsync(It.IsAny<ContainerRequestOptions>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new CosmosException("not found", System.Net.HttpStatusCode.NotFound, 0, Guid.NewGuid().ToString(), 0));
+
+            mockDatabase
+                .Setup(m => m.CreateContainerAsync(It.IsAny<string>(), It.Is<string>(pk => pk == "/id"), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Mock.Of<ContainerResponse>());
+
+            var factoryMock = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
+            factoryMock
+                .Setup(f => f.CreateService(It.IsAny<string>(), It.IsAny<CosmosClientOptions>()))
+                .Returns(serviceMock.Object);
+
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(config, new TestNameResolver(), _options, CreateExtensionConfigProvider(factoryMock.Object, _options), _loggerFactory);
+
+            CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+
+            CosmosDBTriggerAttribute cosmosDBTriggerAttribute = parameter.GetCustomAttribute<CosmosDBTriggerAttribute>(inherit: false);
+
+            mockDatabase
+                .Verify(m => m.CreateContainerAsync(It.IsAny<string>(), It.Is<string>(pk => pk == "/id"), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Theory]
+        [MemberData(nameof(ValidCosmosDBTriggerBindingsCreateLeaseContainerParameters))]
+        public async Task ValidCreateIfNotExistsForGremlin(ParameterInfo parameter)
+        {
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    // Verify we load from root config
+                    { "CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;" }
+                })
+                .Build();
+
+            var serviceMock = new Mock<CosmosClient>(MockBehavior.Strict);
+
+            var mockDatabase = CosmosDBTestUtility.SetupDatabaseMock(serviceMock);
+
+            serviceMock
+                .Setup(m => m.GetDatabase(It.IsAny<string>()))
+                .Returns(mockDatabase.Object);
+
+            var mockContainer = new Mock<Container>(MockBehavior.Strict);
+
+            serviceMock
+                .Setup(m => m.GetContainer(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(mockContainer.Object);
+
+            mockDatabase
+                .Setup(m => m.GetContainer(It.IsAny<string>()))
+                .Returns(mockContainer.Object);
+
+            // Forcing creation of the container because it does not exist
+            mockContainer
+                .Setup(m => m.ReadContainerAsync(It.IsAny<ContainerRequestOptions>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new CosmosException("not found", System.Net.HttpStatusCode.NotFound, 0, Guid.NewGuid().ToString(), 0));
+
+            mockDatabase
+                .Setup(m => m.CreateContainerAsync(It.IsAny<string>(), It.Is<string>(pk => pk == "/id"), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new CosmosException("invalid for Gremlin API", System.Net.HttpStatusCode.BadRequest, 0, Guid.NewGuid().ToString(), 0));
+
+            mockDatabase
+                .Setup(m => m.CreateContainerAsync(It.IsAny<string>(), It.Is<string>(pk => pk == "/partitionKey"), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Mock.Of<ContainerResponse>());
+
+            var factoryMock = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
+            factoryMock
+                .Setup(f => f.CreateService(It.IsAny<string>(), It.IsAny<CosmosClientOptions>()))
+                .Returns(serviceMock.Object);
+
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(config, new TestNameResolver(), _options, CreateExtensionConfigProvider(factoryMock.Object, _options), _loggerFactory);
+
+            CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+
+            CosmosDBTriggerAttribute cosmosDBTriggerAttribute = parameter.GetCustomAttribute<CosmosDBTriggerAttribute>(inherit: false);
+
+            mockDatabase
+                .Verify(m => m.CreateContainerAsync(It.IsAny<string>(), It.Is<string>(pk => pk == "/id"), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+
+            mockDatabase
+                .Verify(m => m.CreateContainerAsync(It.IsAny<string>(), It.Is<string>(pk => pk == "/partitionKey"), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Theory]
         [MemberData(nameof(ValidCosmosDBTriggerBindigsWithChangeFeedOptionsParameters))]
         public async Task ValidChangeFeedOptions_Succeed(ParameterInfo parameter)
         {
@@ -296,7 +417,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
         private static CosmosDBExtensionConfigProvider CreateExtensionConfigProvider(CosmosDBOptions options)
         {
-            return new CosmosDBExtensionConfigProvider(new OptionsWrapper<CosmosDBOptions>(options), new DefaultCosmosDBServiceFactory(), new DefaultCosmosDBSerializerFactory(), _emptyConfig, new TestNameResolver(), NullLoggerFactory.Instance);
+            return CreateExtensionConfigProvider(new DefaultCosmosDBServiceFactory(), options);
+        }
+
+        private static CosmosDBExtensionConfigProvider CreateExtensionConfigProvider(ICosmosDBServiceFactory serviceFactory, CosmosDBOptions options)
+        {
+            return new CosmosDBExtensionConfigProvider(new OptionsWrapper<CosmosDBOptions>(options), serviceFactory, new DefaultCosmosDBSerializerFactory(), _emptyConfig, new TestNameResolver(), NullLoggerFactory.Instance);
         }
 
         // These will use the default for ConnectionStringSetting, but override LeaseConnectionStringSetting
@@ -513,6 +639,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             public static IEnumerable<ParameterInfo[]> GetParameters()
             {
                 var type = typeof(ValidCosmosDBTriggerBindigsPreferredLocations);
+
+                return new[]
+                {
+                    new[] { GetFirstParameter(type, "Func1") },
+                    new[] { GetFirstParameter(type, "Func2") }
+                };
+            }
+        }
+
+        private static class ValidCosmosDBTriggerBindingsCreateLeaseContainer
+        {
+            public static void Func1([CosmosDBTrigger("ItemDB", "ItemCollection", CreateLeaseCollectionIfNotExists = true)] IReadOnlyList<dynamic> docs)
+            {
+            }
+
+            public static IEnumerable<ParameterInfo[]> GetParameters()
+            {
+                var type = typeof(ValidCosmosDBTriggerBindingsCreateLeaseContainer);
 
                 return new[]
                 {
