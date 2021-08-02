@@ -150,7 +150,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         private string ResolveAttributeConnectionString(CosmosDBTriggerAttribute attribute)
         {
-            string connectionString = ResolveConnectionString(attribute.ConnectionStringSetting, nameof(CosmosDBTriggerAttribute.ConnectionStringSetting));
+            string connectionString = ResolveConnectionString(attribute.Connection, nameof(CosmosDBTriggerAttribute.Connection));
 
             if (string.IsNullOrEmpty(connectionString))
             {
@@ -163,13 +163,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private string ResolveAttributeLeasesConnectionString(CosmosDBTriggerAttribute attribute)
         {
             // If the lease connection string is not set, use the trigger's
-            string keyToResolve = attribute.LeaseConnectionStringSetting;
+            string keyToResolve = attribute.LeaseConnection;
             if (string.IsNullOrEmpty(keyToResolve))
             {
-                keyToResolve = attribute.ConnectionStringSetting;
+                keyToResolve = attribute.Connection;
             }
 
-            string connectionString = ResolveConnectionString(keyToResolve, nameof(CosmosDBTriggerAttribute.LeaseConnectionStringSetting));
+            string connectionString = ResolveConnectionString(keyToResolve, nameof(CosmosDBTriggerAttribute.LeaseConnection));
 
             if (string.IsNullOrEmpty(connectionString))
             {
@@ -182,8 +182,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private void ThrowMissingConnectionStringException(bool isLeaseConnectionString = false)
         {
             string attributeProperty = isLeaseConnectionString ?
-                $"{nameof(CosmosDBTriggerAttribute)}.{nameof(CosmosDBTriggerAttribute.LeaseConnectionStringSetting)}" :
-                $"{nameof(CosmosDBTriggerAttribute)}.{nameof(CosmosDBTriggerAttribute.ConnectionStringSetting)}";
+                $"{nameof(CosmosDBTriggerAttribute)}.{nameof(CosmosDBTriggerAttribute.LeaseConnection)}" :
+                $"{nameof(CosmosDBTriggerAttribute)}.{nameof(CosmosDBTriggerAttribute.Connection)}";
 
             string optionsProperty = $"{nameof(CosmosDBOptions)}.{nameof(CosmosDBOptions.ConnectionString)}";
 

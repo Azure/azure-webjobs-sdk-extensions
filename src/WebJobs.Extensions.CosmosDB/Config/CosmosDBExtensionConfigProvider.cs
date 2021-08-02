@@ -83,9 +83,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         internal void ValidateConnection(CosmosDBAttribute attribute, Type paramType)
         {
             if (string.IsNullOrEmpty(_options.ConnectionString) &&
-                string.IsNullOrEmpty(attribute.ConnectionStringSetting))
+                string.IsNullOrEmpty(attribute.Connection))
             {
-                string attributeProperty = $"{nameof(CosmosDBAttribute)}.{nameof(CosmosDBAttribute.ConnectionStringSetting)}";
+                string attributeProperty = $"{nameof(CosmosDBAttribute)}.{nameof(CosmosDBAttribute.Connection)}";
                 string optionsProperty = $"{nameof(CosmosDBOptions)}.{nameof(CosmosDBOptions.ConnectionString)}";
                 throw new InvalidOperationException(
                     $"The CosmosDB connection string must be set either via the '{Constants.DefaultConnectionStringName}' IConfiguration connection string, via the {attributeProperty} property or via {optionsProperty}.");
@@ -94,7 +94,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         internal CosmosClient BindForClient(CosmosDBAttribute attribute)
         {
-            string resolvedConnectionString = ResolveConnectionString(attribute.ConnectionStringSetting);
+            string resolvedConnectionString = ResolveConnectionString(attribute.Connection);
             return GetService(
                 connectionString: resolvedConnectionString, 
                 preferredLocations: attribute.PreferredLocations);
@@ -136,7 +136,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         internal CosmosDBContext CreateContext(CosmosDBAttribute attribute)
         {
-            string resolvedConnectionString = ResolveConnectionString(attribute.ConnectionStringSetting);
+            string resolvedConnectionString = ResolveConnectionString(attribute.Connection);
 
             CosmosClient service = GetService(
                 connectionString: resolvedConnectionString, 

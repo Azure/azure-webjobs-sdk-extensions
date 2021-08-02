@@ -69,7 +69,7 @@ namespace Microsoft.Azure.WebJobs
         /// Gets or sets the connection string for the service containing the collection to monitor.
         /// </summary>
         [ConnectionString]
-        public string ConnectionStringSetting { get; set; }
+        public string Connection { get; set; }
 
         /// <summary>
         /// Gets or sets the Id of the document to retrieve from the collection.

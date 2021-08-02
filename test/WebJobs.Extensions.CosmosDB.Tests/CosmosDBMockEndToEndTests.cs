@@ -532,7 +532,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             [NoAutomaticTrigger]
             public static void TriggerObject(
                 [QueueTrigger("fakequeue1")] QueueData triggerData,
-                [CosmosDB(DatabaseName, CollectionName, Id = "{DocumentId}", PartitionKey = "{PartitionKey}", ConnectionStringSetting = "MyConnectionString")] dynamic item1,
+                [CosmosDB(DatabaseName, CollectionName, Id = "{DocumentId}", PartitionKey = "{PartitionKey}", Connection = "MyConnectionString")] dynamic item1,
                 TraceWriter trace)
             {
                 Assert.NotNull(item1);

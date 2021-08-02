@@ -42,7 +42,7 @@ namespace Microsoft.Azure.WebJobs
         /// Gets or sets the connection string for the service containing the collection to monitor.
         /// </summary>
         [ConnectionString]
-        public string ConnectionStringSetting { get; set; }
+        public string Connection { get; set; }
 
         /// <summary>
         /// Gets the name of the collection to monitor for changes.
@@ -58,7 +58,7 @@ namespace Microsoft.Azure.WebJobs
         /// Gets or sets the connection string for the service containing the lease collection.
         /// </summary>
         [ConnectionString]
-        public string LeaseConnectionStringSetting { get; set; }
+        public string LeaseConnection { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the lease collection. Default value is "leases".
