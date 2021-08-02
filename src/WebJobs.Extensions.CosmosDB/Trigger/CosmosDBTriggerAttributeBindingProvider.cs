@@ -64,13 +64,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 string triggerConnectionString = ResolveAttributeConnectionString(attribute);
                 if (string.IsNullOrEmpty(triggerConnectionString))
                 {
-                    throw new InvalidOperationException("The connection string for the monitored collection is in an invalid format, please use AccountEndpoint=XXXXXX;AccountKey=XXXXXX;.");
+                    throw new InvalidOperationException("The connection string for the monitored container is in an invalid format, please use AccountEndpoint=XXXXXX;AccountKey=XXXXXX;.");
                 }
 
                 string leasesConnectionString = ResolveAttributeLeasesConnectionString(attribute);
                 if (string.IsNullOrEmpty(leasesConnectionString))
                 {
-                    throw new InvalidOperationException("The connection string for the leases collection is in an invalid format, please use AccountEndpoint=XXXXXX;AccountKey=XXXXXX;.");
+                    throw new InvalidOperationException("The connection string for the leases container is in an invalid format, please use AccountEndpoint=XXXXXX;AccountKey=XXXXXX;.");
                 }
 
                 if (string.IsNullOrEmpty(monitoredDatabaseName)
@@ -78,14 +78,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     || string.IsNullOrEmpty(leasesDatabaseName)
                     || string.IsNullOrEmpty(leasesCollectionName))
                 {
-                    throw new InvalidOperationException("Cannot establish database and collection values. If you are using environment and configuration values, please ensure these are correctly set.");
+                    throw new InvalidOperationException("Cannot establish database and container values. If you are using environment and configuration values, please ensure these are correctly set.");
                 }
 
                 if (triggerConnectionString.Equals(leasesConnectionString, StringComparison.InvariantCultureIgnoreCase)
                     && monitoredDatabaseName.Equals(leasesDatabaseName, StringComparison.InvariantCultureIgnoreCase)
                     && monitoredCollectionName.Equals(leasesCollectionName, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    throw new InvalidOperationException("The monitored collection cannot be the same as the collection storing the leases.");
+                    throw new InvalidOperationException("The monitored container cannot be the same as the container storing the leases.");
                 }
 
                 CosmosClient monitoredCosmosDBService = _configProvider.GetService(
@@ -107,7 +107,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
             catch (Exception ex)
             {
-                throw new InvalidOperationException(string.Format("Cannot create Collection Information for {0} in database {1} with lease {2} in database {3} : {4}", attribute.ContainerName, attribute.DatabaseName, attribute.LeaseContainerName, attribute.LeaseDatabaseName, ex.Message), ex);
+                throw new InvalidOperationException(string.Format("Cannot create container information for {0} in database {1} with lease {2} in database {3} : {4}", attribute.ContainerName, attribute.DatabaseName, attribute.LeaseContainerName, attribute.LeaseDatabaseName, ex.Message), ex);
             }
 
             return new CosmosDBTriggerBinding<T>(

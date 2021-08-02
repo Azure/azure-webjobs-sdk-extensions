@@ -9,7 +9,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public const string TriggerName = "CosmosDBTrigger";
 
-        public const string TriggerDescription = "New changes on collection {0} at {1}";
+        public const string TriggerDescription = "New changes on container {0} at {1}";
 
         public const string InvokeString = "{0} changes detected.";
     }
