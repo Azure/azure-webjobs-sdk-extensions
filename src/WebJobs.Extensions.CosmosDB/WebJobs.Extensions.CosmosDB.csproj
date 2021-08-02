@@ -22,7 +22,6 @@
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.20.1" />
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.23" />
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
-    <PackageReference Include="Microsoft.Extensions.Azure" Version="1.1.0"/>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Update="StyleCop.Analyzers" Version="1.1.0-beta009" />
