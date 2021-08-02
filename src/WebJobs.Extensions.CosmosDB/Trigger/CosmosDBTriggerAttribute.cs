@@ -16,75 +16,75 @@ namespace Microsoft.Azure.WebJobs
     public sealed class CosmosDBTriggerAttribute : Attribute
     {
         /// <summary>
-        /// Triggers an event when changes occur on a monitored collection.
+        /// Triggers an event when changes occur on a monitored container.
         /// </summary>
-        /// <param name="databaseName">Name of the database of the collection to monitor for changes.</param>
-        /// <param name="collectionName">Name of the collection to monitor for changes.</param>
-        public CosmosDBTriggerAttribute(string databaseName, string collectionName)
+        /// <param name="databaseName">Name of the database of the container to monitor for changes.</param>
+        /// <param name="containerName">Name of the container to monitor for changes.</param>
+        public CosmosDBTriggerAttribute(string databaseName, string containerName)
         {
-            if (string.IsNullOrWhiteSpace(collectionName))
+            if (string.IsNullOrWhiteSpace(containerName))
             {
-                throw new ArgumentException("Missing information for the collection to monitor", "collectionName");
+                throw new ArgumentException("Missing information for the container to monitor", "containerName");
             }
 
             if (string.IsNullOrWhiteSpace(databaseName))
             {
-                throw new ArgumentException("Missing information for the collection to monitor", "databaseName");
+                throw new ArgumentException("Missing information for the container to monitor", "databaseName");
             }
 
-            CollectionName = collectionName;
+            ContainerName = containerName;
             DatabaseName = databaseName;
-            LeaseCollectionName = CosmosDBTriggerConstants.DefaultLeaseCollectionName;
+            LeaseContainerName = CosmosDBTriggerConstants.DefaultLeaseCollectionName;
             LeaseDatabaseName = this.DatabaseName;
         }
 
         /// <summary>
-        /// Gets or sets the connection string for the service containing the collection to monitor.
+        /// Gets or sets the connection string for the service containing the container to monitor.
         /// </summary>
         [ConnectionString]
         public string Connection { get; set; }
 
         /// <summary>
-        /// Gets the name of the collection to monitor for changes.
+        /// Gets the name of the container to monitor for changes.
         /// </summary>
-        public string CollectionName { get; private set; }
+        public string ContainerName { get; private set; }
 
         /// <summary>
-        /// Gets the name of the database containing the collection to monitor for changes.
+        /// Gets the name of the database containing the container to monitor for changes.
         /// </summary>
         public string DatabaseName { get; private set; }
 
         /// <summary>
-        /// Gets or sets the connection string for the service containing the lease collection.
+        /// Gets or sets the connection string for the service containing the lease container.
         /// </summary>
         [ConnectionString]
         public string LeaseConnection { get; set; }
 
         /// <summary>
-        /// Gets or sets the name of the lease collection. Default value is "leases".
+        /// Gets or sets the name of the lease container. Default value is "leases".
         /// </summary>
-        public string LeaseCollectionName { get; set; }
+        public string LeaseContainerName { get; set; }
 
         /// <summary>
-        /// Gets or sets the name of the database containing the lease collection.
+        /// Gets or sets the name of the database containing the lease container.
         /// </summary>
         public string LeaseDatabaseName { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the database and collection for leases will be automatically created if it does not exist.
+        /// Gets or sets a value indicating whether the database and container for leases will be automatically created if it does not exist.
         /// </summary>
-        public bool CreateLeaseCollectionIfNotExists { get; set; } = false;
+        public bool CreateLeaseContainerIfNotExists { get; set; } = false;
 
         /// <summary>
-        /// Gets or sets the throughput to be used when creating the collection if <see cref="CreateLeaseCollectionIfNotExists"/> is true.
-        /// collection.
+        /// Gets or sets the throughput to be used when creating the container if <see cref="CreateLeaseContainerIfNotExists"/> is true.
+        /// container.
         /// </summary>
-        public int? LeasesCollectionThroughput { get; set; }
+        public int? LeasesContainerThroughput { get; set; }
 
         /// <summary>
-        /// Gets or sets a prefix to be used within a Leases collection for this Trigger. Useful when sharing the same Lease collection among multiple Triggers.
+        /// Gets or sets a prefix to be used within a Leases container for this Trigger. Useful when sharing the same Lease container among multiple Triggers.
         /// </summary>
-        public string LeaseCollectionPrefix { get; set; }
+        public string LeaseContainerPrefix { get; set; }
         
         /// <summary>
         /// Gets or sets the delay in milliseconds in between polling a partition for new changes on the feed, after all current changes are drained.  Default is 5000 (5 seconds).

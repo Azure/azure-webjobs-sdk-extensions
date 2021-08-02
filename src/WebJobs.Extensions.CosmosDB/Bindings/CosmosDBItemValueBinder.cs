@@ -49,7 +49,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 try
                 {
-                    document = await _context.Service.GetContainer(_context.ResolvedAttribute.DatabaseName, _context.ResolvedAttribute.CollectionName)
+                    document = await _context.Service.GetContainer(_context.ResolvedAttribute.DatabaseName, _context.ResolvedAttribute.ContainerName)
                         .ReadItemAsync<T>(_context.ResolvedAttribute.Id, partitionKey);
 
                     _originalItem = JObject.FromObject(document);
@@ -61,7 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
             else
             {
-                JObject jObject = await _context.Service.GetContainer(_context.ResolvedAttribute.DatabaseName, _context.ResolvedAttribute.CollectionName)
+                JObject jObject = await _context.Service.GetContainer(_context.ResolvedAttribute.DatabaseName, _context.ResolvedAttribute.ContainerName)
                         .ReadItemAsync<JObject>(_context.ResolvedAttribute.Id, partitionKey);
                 _originalItem = jObject;
 
@@ -107,7 +107,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     throw new InvalidOperationException(string.Format("The document must have an 'id' property."));
                 }
 
-                Container container = context.Service.GetContainer(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName);
+                Container container = context.Service.GetContainer(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.ContainerName);
                 await container.ReplaceItemAsync<T>(newItem, originalId);
             }
         }

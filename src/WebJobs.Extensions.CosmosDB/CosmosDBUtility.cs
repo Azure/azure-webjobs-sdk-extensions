@@ -37,8 +37,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         internal static async Task CreateDatabaseAndCollectionIfNotExistAsync(CosmosDBContext context)
         {
-            await CreateDatabaseAndCollectionIfNotExistAsync(context.Service, context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName,
-                context.ResolvedAttribute.PartitionKey, context.ResolvedAttribute.CollectionThroughput);
+            await CreateDatabaseAndCollectionIfNotExistAsync(context.Service, context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.ContainerName,
+                context.ResolvedAttribute.PartitionKey, context.ResolvedAttribute.ContainerThroughput);
         }
 
         internal static async Task CreateDatabaseAndCollectionIfNotExistAsync(CosmosClient service, string databaseName, string containerName, string partitionKey, int? throughput)

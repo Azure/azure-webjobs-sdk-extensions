@@ -428,11 +428,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         // These will use the default for ConnectionStringSetting, but override LeaseConnectionStringSetting
         private static class ValidCosmosDBTriggerBindigsWithLeaseHostOptions
         {
-            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", LeaseConnection = "LeaseConnectionString", LeaseCollectionPrefix = "someLeasePrefix")] IReadOnlyList<dynamic> docs)
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", LeaseConnection = "LeaseConnectionString", LeaseContainerPrefix = "someLeasePrefix")] IReadOnlyList<dynamic> docs)
             {
             }
 
-            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", LeaseConnection = "LeaseConnectionString", LeaseCollectionPrefix = "%dynamicLeasePrefix%")] IReadOnlyList<dynamic> docs)
+            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", LeaseConnection = "LeaseConnectionString", LeaseContainerPrefix = "%dynamicLeasePrefix%")] IReadOnlyList<dynamic> docs)
             {
             }
 
@@ -482,11 +482,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             {
             }
 
-            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", Connection = "notAConnectionString", LeaseConnection = "notAConnectionString", LeaseDatabaseName = "aDatabase", LeaseCollectionName = "aCollection")] IReadOnlyList<dynamic> docs)
+            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", Connection = "notAConnectionString", LeaseConnection = "notAConnectionString", LeaseDatabaseName = "aDatabase", LeaseContainerName = "aCollection")] IReadOnlyList<dynamic> docs)
             {
             }
 
-            public static void Func3([CosmosDBTrigger("aDatabase", "aCollection", Connection = "CosmosDBConnectionString", LeaseConnection = "CosmosDBConnectionString", LeaseDatabaseName = "aDatabase", LeaseCollectionName = "aCollection")] IReadOnlyList<dynamic> docs)
+            public static void Func3([CosmosDBTrigger("aDatabase", "aCollection", Connection = "CosmosDBConnectionString", LeaseConnection = "CosmosDBConnectionString", LeaseDatabaseName = "aDatabase", LeaseContainerName = "aCollection")] IReadOnlyList<dynamic> docs)
             {
             }
 
@@ -556,7 +556,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             {
             }
 
-            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", Connection = "CosmosDBConnectionString", LeaseConnection = "LeaseCosmosDBConnectionString", LeaseDatabaseName = "aDatabase", LeaseCollectionName = "aLeaseCollection")] IReadOnlyList<dynamic> docs)
+            public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", Connection = "CosmosDBConnectionString", LeaseConnection = "LeaseCosmosDBConnectionString", LeaseDatabaseName = "aDatabase", LeaseContainerName = "aLeaseCollection")] IReadOnlyList<dynamic> docs)
             {
             }
 
@@ -582,7 +582,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             {
             }
 
-            public static void Func3([CosmosDBTrigger("aDatabase", "aCollection", LeaseDatabaseName = "aDatabase", LeaseCollectionName = "aLeaseCollection")] IReadOnlyList<dynamic> docs)
+            public static void Func3([CosmosDBTrigger("aDatabase", "aCollection", LeaseDatabaseName = "aDatabase", LeaseContainerName = "aLeaseCollection")] IReadOnlyList<dynamic> docs)
             {
             }
 
@@ -650,7 +650,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
         private static class ValidCosmosDBTriggerBindingsCreateLeaseContainer
         {
-            public static void Func1([CosmosDBTrigger("ItemDB", "ItemCollection", CreateLeaseCollectionIfNotExists = true)] IReadOnlyList<dynamic> docs)
+            public static void Func1([CosmosDBTrigger("ItemDB", "ItemCollection", CreateLeaseContainerIfNotExists = true)] IReadOnlyList<dynamic> docs)
             {
             }
 

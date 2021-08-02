@@ -39,7 +39,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     else
                     {
                         // Throw a custom error so that it's easier to decipher.
-                        string message = $"The collection '{_docDBContext.ResolvedAttribute.CollectionName}' (in database '{_docDBContext.ResolvedAttribute.DatabaseName}') does not exist. To automatically create the collection, set '{nameof(CosmosDBAttribute.CreateIfNotExists)}' to 'true'.";
+                        string message = $"The collection '{_docDBContext.ResolvedAttribute.ContainerName}' (in database '{_docDBContext.ResolvedAttribute.DatabaseName}') does not exist. To automatically create the collection, set '{nameof(CosmosDBAttribute.CreateIfNotExists)}' to 'true'.";
                         throw new InvalidOperationException(message, ex);
                     }
                 }
@@ -62,10 +62,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (item is string)
             {
                 JObject asJObject = JObject.Parse(item.ToString());
-                return context.Service.GetContainer(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName).UpsertItemAsync(asJObject);
+                return context.Service.GetContainer(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.ContainerName).UpsertItemAsync(asJObject);
             }
 
-            return context.Service.GetContainer(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName).UpsertItemAsync(item);
+            return context.Service.GetContainer(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.ContainerName).UpsertItemAsync(item);
         }
     }
 }

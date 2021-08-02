@@ -53,10 +53,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             Container monitoredContainer;
             Container leasesContainer;
             string monitoredDatabaseName = ResolveAttributeValue(attribute.DatabaseName);
-            string monitoredCollectionName = ResolveAttributeValue(attribute.CollectionName);
+            string monitoredCollectionName = ResolveAttributeValue(attribute.ContainerName);
             string leasesDatabaseName = ResolveAttributeValue(attribute.LeaseDatabaseName);
-            string leasesCollectionName = ResolveAttributeValue(attribute.LeaseCollectionName);
-            string processorName = ResolveAttributeValue(attribute.LeaseCollectionPrefix) ?? string.Empty;
+            string leasesCollectionName = ResolveAttributeValue(attribute.LeaseContainerName);
+            string processorName = ResolveAttributeValue(attribute.LeaseContainerPrefix) ?? string.Empty;
             string preferredLocations = ResolveAttributeValue(attribute.PreferredLocations);
 
             try
@@ -97,9 +97,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     preferredLocations: preferredLocations, 
                     userAgent: CosmosDBTriggerUserAgentSuffix);
 
-                if (attribute.CreateLeaseCollectionIfNotExists)
+                if (attribute.CreateLeaseContainerIfNotExists)
                 {
-                    await CreateLeaseCollectionIfNotExistsAsync(leaseCosmosDBService, leasesDatabaseName, leasesCollectionName, attribute.LeasesCollectionThroughput);
+                    await CreateLeaseCollectionIfNotExistsAsync(leaseCosmosDBService, leasesDatabaseName, leasesCollectionName, attribute.LeasesContainerThroughput);
                 }
 
                 monitoredContainer = monitoredCosmosDBService.GetContainer(monitoredDatabaseName, monitoredCollectionName);
@@ -107,7 +107,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
             catch (Exception ex)
             {
-                throw new InvalidOperationException(string.Format("Cannot create Collection Information for {0} in database {1} with lease {2} in database {3} : {4}", attribute.CollectionName, attribute.DatabaseName, attribute.LeaseCollectionName, attribute.LeaseDatabaseName, ex.Message), ex);
+                throw new InvalidOperationException(string.Format("Cannot create Collection Information for {0} in database {1} with lease {2} in database {3} : {4}", attribute.ContainerName, attribute.DatabaseName, attribute.LeaseContainerName, attribute.LeaseDatabaseName, ex.Message), ex);
             }
 
             return new CosmosDBTriggerBinding<T>(

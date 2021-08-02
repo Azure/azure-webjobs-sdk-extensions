@@ -154,7 +154,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
 
             public static void Trigger(
-                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseCollectionIfNotExists = true)]IReadOnlyList<Item> documents,
+                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true)]IReadOnlyList<Item> documents,
                 ILogger log)
             {
                 foreach (var document in documents)
@@ -164,7 +164,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
 
             public static void TriggerWithString(
-                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseCollectionIfNotExists = true, LeaseCollectionPrefix = "withstring")] string documents,
+                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "withstring")] string documents,
                 ILogger log)
             {
                 foreach (var document in JArray.Parse(documents))

@@ -130,7 +130,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             {
                 CreateIfNotExists = createIfNotExists,
                 PartitionKey = partitionKeyPath,
-                CollectionThroughput = throughput
+                ContainerThroughput = throughput
             };
 
             return new CosmosDBContext

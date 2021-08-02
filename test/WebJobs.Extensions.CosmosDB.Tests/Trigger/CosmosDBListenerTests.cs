@@ -342,7 +342,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
         [Fact]
         public async Task StartAsync_Retries()
         {
-            var attribute = new CosmosDBTriggerAttribute("test", "test") { LeaseCollectionPrefix = Guid.NewGuid().ToString() };
+            var attribute = new CosmosDBTriggerAttribute("test", "test") { LeaseContainerPrefix = Guid.NewGuid().ToString() };
            
             var mockExecutor = new Mock<ITriggeredFunctionExecutor>();
 

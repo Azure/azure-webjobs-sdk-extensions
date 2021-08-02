@@ -111,7 +111,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 if (ex is CosmosException docEx && docEx.StatusCode == HttpStatusCode.NotFound)
                 {
                     // Throw a custom error so that it's easier to decipher.
-                    string message = $"Either the source collection '{this._cosmosDBAttribute.CollectionName}' (in database '{this._cosmosDBAttribute.DatabaseName}')  or the lease collection '{this._cosmosDBAttribute.LeaseCollectionName}' (in database '{this._cosmosDBAttribute.LeaseDatabaseName}') does not exist. Both collections must exist before the listener starts. To automatically create the lease collection, set '{nameof(CosmosDBTriggerAttribute.CreateLeaseCollectionIfNotExists)}' to 'true'.";
+                    string message = $"Either the source collection '{this._cosmosDBAttribute.ContainerName}' (in database '{this._cosmosDBAttribute.DatabaseName}')  or the lease collection '{this._cosmosDBAttribute.LeaseContainerName}' (in database '{this._cosmosDBAttribute.LeaseDatabaseName}') does not exist. Both collections must exist before the listener starts. To automatically create the lease collection, set '{nameof(CosmosDBTriggerAttribute.CreateLeaseContainerIfNotExists)}' to 'true'.";
                     this._host = null;
                     throw new InvalidOperationException(message, ex);
                 }
