@@ -53,10 +53,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             Container monitoredContainer;
             Container leasesContainer;
             string monitoredDatabaseName = ResolveAttributeValue(attribute.DatabaseName);
-            string monitoredCollectionName = ResolveAttributeValue(attribute.CollectionName);
+            string monitoredCollectionName = ResolveAttributeValue(attribute.ContainerName);
             string leasesDatabaseName = ResolveAttributeValue(attribute.LeaseDatabaseName);
-            string leasesCollectionName = ResolveAttributeValue(attribute.LeaseCollectionName);
-            string processorName = ResolveAttributeValue(attribute.LeaseCollectionPrefix) ?? string.Empty;
+            string leasesCollectionName = ResolveAttributeValue(attribute.LeaseContainerName);
+            string processorName = ResolveAttributeValue(attribute.LeaseContainerPrefix) ?? string.Empty;
             string preferredLocations = ResolveAttributeValue(attribute.PreferredLocations);
 
             try
@@ -64,13 +64,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 string triggerConnectionString = ResolveAttributeConnectionString(attribute);
                 if (string.IsNullOrEmpty(triggerConnectionString))
                 {
-                    throw new InvalidOperationException("The connection string for the monitored collection is in an invalid format, please use AccountEndpoint=XXXXXX;AccountKey=XXXXXX;.");
+                    throw new InvalidOperationException("The connection string for the monitored container is in an invalid format, please use AccountEndpoint=XXXXXX;AccountKey=XXXXXX;.");
                 }
 
                 string leasesConnectionString = ResolveAttributeLeasesConnectionString(attribute);
                 if (string.IsNullOrEmpty(leasesConnectionString))
                 {
-                    throw new InvalidOperationException("The connection string for the leases collection is in an invalid format, please use AccountEndpoint=XXXXXX;AccountKey=XXXXXX;.");
+                    throw new InvalidOperationException("The connection string for the leases container is in an invalid format, please use AccountEndpoint=XXXXXX;AccountKey=XXXXXX;.");
                 }
 
                 if (string.IsNullOrEmpty(monitoredDatabaseName)
@@ -78,14 +78,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     || string.IsNullOrEmpty(leasesDatabaseName)
                     || string.IsNullOrEmpty(leasesCollectionName))
                 {
-                    throw new InvalidOperationException("Cannot establish database and collection values. If you are using environment and configuration values, please ensure these are correctly set.");
+                    throw new InvalidOperationException("Cannot establish database and container values. If you are using environment and configuration values, please ensure these are correctly set.");
                 }
 
                 if (triggerConnectionString.Equals(leasesConnectionString, StringComparison.InvariantCultureIgnoreCase)
                     && monitoredDatabaseName.Equals(leasesDatabaseName, StringComparison.InvariantCultureIgnoreCase)
                     && monitoredCollectionName.Equals(leasesCollectionName, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    throw new InvalidOperationException("The monitored collection cannot be the same as the collection storing the leases.");
+                    throw new InvalidOperationException("The monitored container cannot be the same as the container storing the leases.");
                 }
 
                 CosmosClient monitoredCosmosDBService = _configProvider.GetService(
@@ -97,9 +97,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     preferredLocations: preferredLocations, 
                     userAgent: CosmosDBTriggerUserAgentSuffix);
 
-                if (attribute.CreateLeaseCollectionIfNotExists)
+                if (attribute.CreateLeaseContainerIfNotExists)
                 {
-                    await CreateLeaseCollectionIfNotExistsAsync(leaseCosmosDBService, leasesDatabaseName, leasesCollectionName, attribute.LeasesCollectionThroughput);
+                    await CreateLeaseCollectionIfNotExistsAsync(leaseCosmosDBService, leasesDatabaseName, leasesCollectionName, attribute.LeasesContainerThroughput);
                 }
 
                 monitoredContainer = monitoredCosmosDBService.GetContainer(monitoredDatabaseName, monitoredCollectionName);
@@ -107,7 +107,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
             catch (Exception ex)
             {
-                throw new InvalidOperationException(string.Format("Cannot create Collection Information for {0} in database {1} with lease {2} in database {3} : {4}", attribute.CollectionName, attribute.DatabaseName, attribute.LeaseCollectionName, attribute.LeaseDatabaseName, ex.Message), ex);
+                throw new InvalidOperationException(string.Format("Cannot create container information for {0} in database {1} with lease {2} in database {3} : {4}", attribute.ContainerName, attribute.DatabaseName, attribute.LeaseContainerName, attribute.LeaseDatabaseName, ex.Message), ex);
             }
 
             return new CosmosDBTriggerBinding<T>(
@@ -150,7 +150,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         private string ResolveAttributeConnectionString(CosmosDBTriggerAttribute attribute)
         {
-            string connectionString = ResolveConnectionString(attribute.ConnectionStringSetting, nameof(CosmosDBTriggerAttribute.ConnectionStringSetting));
+            string connectionString = ResolveConnectionString(attribute.Connection, nameof(CosmosDBTriggerAttribute.Connection));
 
             if (string.IsNullOrEmpty(connectionString))
             {
@@ -163,13 +163,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private string ResolveAttributeLeasesConnectionString(CosmosDBTriggerAttribute attribute)
         {
             // If the lease connection string is not set, use the trigger's
-            string keyToResolve = attribute.LeaseConnectionStringSetting;
+            string keyToResolve = attribute.LeaseConnection;
             if (string.IsNullOrEmpty(keyToResolve))
             {
-                keyToResolve = attribute.ConnectionStringSetting;
+                keyToResolve = attribute.Connection;
             }
 
-            string connectionString = ResolveConnectionString(keyToResolve, nameof(CosmosDBTriggerAttribute.LeaseConnectionStringSetting));
+            string connectionString = ResolveConnectionString(keyToResolve, nameof(CosmosDBTriggerAttribute.LeaseConnection));
 
             if (string.IsNullOrEmpty(connectionString))
             {
@@ -182,8 +182,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private void ThrowMissingConnectionStringException(bool isLeaseConnectionString = false)
         {
             string attributeProperty = isLeaseConnectionString ?
-                $"{nameof(CosmosDBTriggerAttribute)}.{nameof(CosmosDBTriggerAttribute.LeaseConnectionStringSetting)}" :
-                $"{nameof(CosmosDBTriggerAttribute)}.{nameof(CosmosDBTriggerAttribute.ConnectionStringSetting)}";
+                $"{nameof(CosmosDBTriggerAttribute)}.{nameof(CosmosDBTriggerAttribute.LeaseConnection)}" :
+                $"{nameof(CosmosDBTriggerAttribute)}.{nameof(CosmosDBTriggerAttribute.Connection)}";
 
             string optionsProperty = $"{nameof(CosmosDBOptions)}.{nameof(CosmosDBOptions.ConnectionString)}";
 

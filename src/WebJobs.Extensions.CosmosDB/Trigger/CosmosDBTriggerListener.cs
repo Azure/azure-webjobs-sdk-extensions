@@ -37,14 +37,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         private static readonly Dictionary<string, string> KnownDocumentClientErrors = new Dictionary<string, string>()
         {
-            { "Resource Not Found", "Please check that the CosmosDB collection and leases collection exist and are listed correctly in Functions config files." },
+            { "Resource Not Found", "Please check that the CosmosDB container and leases container exist and are listed correctly in Functions config files." },
             { "The input authorization token can't serve the request", string.Empty },
             { "The MAC signature found in the HTTP request is not the same", string.Empty },
             { "Service is currently unavailable.", string.Empty },
             { "Entity with the specified id does not exist in the system.", string.Empty },
             { "Subscription owning the database account is disabled.", string.Empty },
             { "Request rate is large", string.Empty },
-            { "PartitionKey value must be supplied for this operation.", "We do not support lease collections with partitions at this time. Please create a new lease collection without partitions." },
+            { "PartitionKey value must be supplied for this operation.", "We do not support lease containers with partitions at this time. Please create a new lease collection without partitions." },
             { "The remote name could not be resolved:", string.Empty },
             { "Owner resource does not exist", string.Empty },
             { "The specified document collection is invalid", string.Empty }
@@ -111,7 +111,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 if (ex is CosmosException docEx && docEx.StatusCode == HttpStatusCode.NotFound)
                 {
                     // Throw a custom error so that it's easier to decipher.
-                    string message = $"Either the source collection '{this._cosmosDBAttribute.CollectionName}' (in database '{this._cosmosDBAttribute.DatabaseName}')  or the lease collection '{this._cosmosDBAttribute.LeaseCollectionName}' (in database '{this._cosmosDBAttribute.LeaseDatabaseName}') does not exist. Both collections must exist before the listener starts. To automatically create the lease collection, set '{nameof(CosmosDBTriggerAttribute.CreateLeaseCollectionIfNotExists)}' to 'true'.";
+                    string message = $"Either the source container '{this._cosmosDBAttribute.ContainerName}' (in database '{this._cosmosDBAttribute.DatabaseName}')  or the lease container '{this._cosmosDBAttribute.LeaseContainerName}' (in database '{this._cosmosDBAttribute.LeaseDatabaseName}') does not exist. Both containers must exist before the listener starts. To automatically create the lease container, set '{nameof(CosmosDBTriggerAttribute.CreateLeaseContainerIfNotExists)}' to 'true'.";
                     this._host = null;
                     throw new InvalidOperationException(message, ex);
                 }
@@ -316,7 +316,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 status.Vote = ScaleVote.ScaleIn;
                 _logger.LogInformation(string.Format($"WorkerCount ({workerCount}) > PartitionCount ({partitionCount})."));
                 _logger.LogInformation(string.Format($"Number of instances ({workerCount}) is too high relative to number " +
-                                                     $"of partitions for collection ({this._monitoredContainer.Id}, {partitionCount})."));
+                                                     $"of partitions for container ({this._monitoredContainer.Id}, {partitionCount})."));
                 return status;
             }
 
@@ -332,7 +332,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 status.Vote = ScaleVote.ScaleOut;
                 _logger.LogInformation(string.Format($"RemainingWork ({latestRemainingWork}) > WorkerCount ({workerCount}) * 1,000."));
-                _logger.LogInformation(string.Format($"Remaining work for collection ({this._monitoredContainer.Id}, {latestRemainingWork}) " +
+                _logger.LogInformation(string.Format($"Remaining work for container ({this._monitoredContainer.Id}, {latestRemainingWork}) " +
                                                      $"is too high relative to the number of instances ({workerCount})."));
                 return status;
             }
@@ -341,7 +341,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (documentsWaiting && partitionCount > 0 && partitionCount > workerCount)
             {
                 status.Vote = ScaleVote.ScaleOut;
-                _logger.LogInformation(string.Format($"CosmosDB collection '{this._monitoredContainer.Id}' has documents waiting to be processed."));
+                _logger.LogInformation(string.Format($"CosmosDB container '{this._monitoredContainer.Id}' has documents waiting to be processed."));
                 _logger.LogInformation(string.Format($"There are {workerCount} instances relative to {partitionCount} partitions."));
                 return status;
             }
@@ -381,7 +381,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 return status;
             }
 
-            _logger.LogInformation($"CosmosDB collection '{this._monitoredContainer.Id}' is steady.");
+            _logger.LogInformation($"CosmosDB container '{this._monitoredContainer.Id}' is steady.");
 
             return status;
         }

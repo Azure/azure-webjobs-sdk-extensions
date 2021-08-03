@@ -22,7 +22,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings
                 throw new ArgumentNullException(nameof(attribute));
             }
 
-            string resolvedConnectionString = _configProvider.ResolveConnectionString(attribute.ConnectionStringSetting);
+            string resolvedConnectionString = _configProvider.ResolveConnectionString(attribute.Connection);
             return _configProvider.GetService(
                 connectionString: resolvedConnectionString, 
                 preferredLocations: attribute.PreferredLocations);

@@ -160,7 +160,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             Assert.NotEqual(default(DateTime), metrics.Timestamp);
 
             var warning = _loggerProvider.GetAllLogMessages().Single(p => p.Level == Microsoft.Extensions.Logging.LogLevel.Warning);
-            Assert.Equal("Please check that the CosmosDB collection and leases collection exist and are listed correctly in Functions config files.", warning.FormattedMessage);
+            Assert.Equal("Please check that the CosmosDB container and leases container exist and are listed correctly in Functions config files.", warning.FormattedMessage);
             _loggerProvider.ClearAllLogMessages();
 
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await _listener.GetMetricsAsync());
@@ -222,7 +222,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             Assert.Equal("WorkerCount (2) > PartitionCount (1).", log.FormattedMessage);
             log = logs[1];
             Assert.Equal(Microsoft.Extensions.Logging.LogLevel.Information, log.Level);
-            Assert.Equal($"Number of instances (2) is too high relative to number of partitions for collection ({ContainerName}, 1).", log.FormattedMessage);
+            Assert.Equal($"Number of instances (2) is too high relative to number of partitions for container ({ContainerName}, 1).", log.FormattedMessage);
         }
 
         [Fact]
@@ -252,7 +252,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             Assert.Equal("RemainingWork (2900) > WorkerCount (1) * 1,000.", log.FormattedMessage);
             log = logs[1];
             Assert.Equal(Microsoft.Extensions.Logging.LogLevel.Information, log.Level);
-            Assert.Equal($"Remaining work for collection ({ContainerName}, 2900) is too high relative to the number of instances (1).", log.FormattedMessage);
+            Assert.Equal($"Remaining work for container ({ContainerName}, 2900) is too high relative to the number of instances (1).", log.FormattedMessage);
         }
 
         [Fact]
@@ -279,7 +279,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             var logs = _loggerProvider.GetAllLogMessages().ToArray();
             var log = logs[0];
             Assert.Equal(Microsoft.Extensions.Logging.LogLevel.Information, log.Level);
-            Assert.Equal($"CosmosDB collection '{ContainerName}' has documents waiting to be processed.", log.FormattedMessage);
+            Assert.Equal($"CosmosDB container '{ContainerName}' has documents waiting to be processed.", log.FormattedMessage);
             log = logs[1];
             Assert.Equal(Microsoft.Extensions.Logging.LogLevel.Information, log.Level);
             Assert.Equal("There are 1 instances relative to 2 partitions.", log.FormattedMessage);
@@ -342,7 +342,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
         [Fact]
         public async Task StartAsync_Retries()
         {
-            var attribute = new CosmosDBTriggerAttribute("test", "test") { LeaseCollectionPrefix = Guid.NewGuid().ToString() };
+            var attribute = new CosmosDBTriggerAttribute("test", "test") { LeaseContainerPrefix = Guid.NewGuid().ToString() };
            
             var mockExecutor = new Mock<ITriggeredFunctionExecutor>();
 

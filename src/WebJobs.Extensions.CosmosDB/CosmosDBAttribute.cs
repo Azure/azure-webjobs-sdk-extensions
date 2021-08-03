@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 
@@ -36,11 +35,11 @@ namespace Microsoft.Azure.WebJobs
         /// Constructs a new instance.
         /// </summary>
         /// <param name="databaseName">The Azure Cosmos database name.</param>
-        /// <param name="collectionName">The Azure Cosmos container name.</param>
-        public CosmosDBAttribute(string databaseName, string collectionName)
+        /// <param name="containerName">The Azure Cosmos container name.</param>
+        public CosmosDBAttribute(string databaseName, string containerName)
         {
             DatabaseName = databaseName;
-            CollectionName = collectionName;
+            ContainerName = containerName;
         }
 
         /// <summary>
@@ -51,14 +50,14 @@ namespace Microsoft.Azure.WebJobs
         public string DatabaseName { get; private set; }
 
         /// <summary>
-        /// Gets the name of the collection to which the parameter applies. 
+        /// Gets the name of the container to which the parameter applies. 
         /// May include binding parameters.
         /// </summary>
         [AutoResolve]
-        public string CollectionName { get; private set; }
+        public string ContainerName { get; private set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the database and collection will be automatically created if they do not exist.
+        /// Gets or sets a value indicating whether the database and container will be automatically created if they do not exist.
         /// </summary>
         /// <remarks>
         /// Only applies to output bindings.
@@ -66,13 +65,13 @@ namespace Microsoft.Azure.WebJobs
         public bool CreateIfNotExists { get; set; }
 
         /// <summary>
-        /// Gets or sets the connection string for the service containing the collection to monitor.
+        /// Gets or sets the connection string for the service containing the container to monitor.
         /// </summary>
         [ConnectionString]
-        public string ConnectionStringSetting { get; set; }
+        public string Connection { get; set; }
 
         /// <summary>
-        /// Gets or sets the Id of the document to retrieve from the collection.
+        /// Gets or sets the Id of the document to retrieve from the container.
         /// May include binding parameters.
         /// </summary>
         [AutoResolve]
@@ -87,13 +86,12 @@ namespace Microsoft.Azure.WebJobs
         public string PartitionKey { get; set; }
 
         /// <summary>
-        /// Gets or sets the throughput to be used when creating the collection if <see cref="CreateIfNotExists"/> is true.
-        /// collection.
+        /// Gets or sets the throughput to be used when creating the container if <see cref="CreateIfNotExists"/> is true.
         /// </summary>
-        public int? CollectionThroughput { get; set; }
+        public int? ContainerThroughput { get; set; }
 
         /// <summary>
-        /// Gets or sets a sql query expression for an input binding to execute on the collection and produce results.
+        /// Gets or sets a sql query expression for an input binding to execute on the container and produce results.
         /// May include binding parameters.
         /// </summary>
         [AutoResolve(ResolutionPolicyType = typeof(CosmosDBSqlResolutionPolicy))]

@@ -24,7 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             List<T> finalResults = new List<T>();
 
-            Container container = context.Service.GetContainer(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.CollectionName);
+            Container container = context.Service.GetContainer(context.ResolvedAttribute.DatabaseName, context.ResolvedAttribute.ContainerName);
 
             QueryDefinition queryDefinition = null;
             if (!string.IsNullOrEmpty(attribute.SqlQuery))

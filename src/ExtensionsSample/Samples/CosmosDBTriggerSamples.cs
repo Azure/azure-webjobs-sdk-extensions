@@ -23,7 +23,7 @@ namespace ExtensionsSample
         // Sample implementation of the CosmosDBTrigger that listens for changes in a collection.
         // The trigger uses an auxiliary collection for leases for multiple partitions.
         public static void Listen(
-            [CosmosDBTrigger("ItemDb", "ItemCollection", LeaseCollectionName = "Leases")] IReadOnlyList<Document> modifiedDocuments,
+            [CosmosDBTrigger("ItemDb", "ItemCollection", LeaseContainerName = "Leases")] IReadOnlyList<Document> modifiedDocuments,
             TraceWriter log)
         {
             foreach (Document modifiedDocument in modifiedDocuments)
@@ -33,7 +33,7 @@ namespace ExtensionsSample
         }
 
         public static void ListenJArray(
-            [CosmosDBTrigger("ItemDb", "ItemCollection", LeaseCollectionName = "Leases")] JArray modifiedDocuments,
+            [CosmosDBTrigger("ItemDb", "ItemCollection", LeaseContainerName = "Leases")] JArray modifiedDocuments,
             TraceWriter log)
         {
             foreach (var modifiedDocument in modifiedDocuments.Children())
@@ -46,7 +46,7 @@ namespace ExtensionsSample
         // The trigger uses an auxiliary collection for leases for multiple partitions.
         // This sample will also copy modifications to another target collection.        
         public static async Task ListenAndCopy(
-            [CosmosDBTrigger("ItemDb", "ItemCollection", LeaseCollectionName = "Leases")] IReadOnlyList<Document> modifiedDocuments,
+            [CosmosDBTrigger("ItemDb", "ItemCollection", LeaseContainerName = "Leases")] IReadOnlyList<Document> modifiedDocuments,
             [CosmosDB("ItemDb", "ItemCollectionCopy")] IAsyncCollector<Document> copyItems)
         {
             foreach (Document modifiedDocument in modifiedDocuments)
