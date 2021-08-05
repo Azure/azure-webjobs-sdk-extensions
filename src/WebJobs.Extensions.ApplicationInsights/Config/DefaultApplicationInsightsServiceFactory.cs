@@ -1,0 +1,17 @@
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using System;
+using System.Diagnostics;
+
+namespace Microsoft.Azure.WebJobs.Extensions.ApplicationInsights
+{
+    internal class DefaultApplicationInsightsServiceFactory : IApplicationInsightsServiceFactory
+    {
+        public IApplicationInsightsService CreateService(string instrumentationKey, string connectionString)
+        {
+            Debugger.Launch();
+            return new ApplicationInsightsService(instrumentationKey, connectionString);
+        }
+    }
+}

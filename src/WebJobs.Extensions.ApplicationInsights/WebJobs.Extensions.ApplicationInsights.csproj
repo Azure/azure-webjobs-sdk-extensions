@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.ApplicationInsights</AssemblyName>
+    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.ApplicationInsights</RootNamespace>
+    <PackageId>Microsoft.Azure.WebJobs.Extensions.ApplicationInsights</PackageId>
+    <Description>This package contains the extension for Application Insights.</Description>
+  </PropertyGroup>
+  <Import Project="..\..\build\common.props" />
+  <PropertyGroup>
+    <Version>$(ApplicationInsightsVersion)</Version>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.29" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Logging.ApplicationInsights" Version="3.0.29" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.1.0" />
+  </ItemGroup>
+  <ItemGroup>
+      <PackageReference Update="StyleCop.Analyzers" Version="1.1.0-beta009" />
+  </ItemGroup>
+</Project>
