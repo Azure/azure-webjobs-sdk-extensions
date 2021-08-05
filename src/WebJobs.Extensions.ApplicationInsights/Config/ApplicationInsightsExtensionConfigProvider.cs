@@ -21,20 +21,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApplicationInsights
     internal class ApplicationInsightsExtensionConfigProvider : IExtensionConfigProvider
     {
         private readonly IConfiguration _configuration;
-        private readonly IApplicationInsightsServiceFactory _applicationInsightsServiceFactory;
         private readonly INameResolver _nameResolver;
         private readonly ApplicationInsightsLoggerOptions _options;
         private readonly ILoggerFactory _loggerFactory;
 
         public ApplicationInsightsExtensionConfigProvider(
             IOptions<ApplicationInsightsLoggerOptions> options,
-            IApplicationInsightsServiceFactory applicationInsightsServiceFactory,
             IConfiguration configuration,
             INameResolver nameResolver,
             ILoggerFactory loggerFactory)
         {
             _configuration = configuration;
-            _applicationInsightsServiceFactory = applicationInsightsServiceFactory;
             _nameResolver = nameResolver;
             _options = options.Value;
             _loggerFactory = loggerFactory;
@@ -48,12 +45,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.ApplicationInsights
                 throw new ArgumentNullException("context");
             }
 
-            string appInsightsInstrumentationKey = _configuration["APPINSIGHTS_INSTRUMENTATIONKEY"];
-            string appInsightsConnectionString = _configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
-
-            Console.WriteLine("*** CONNECTION STRING: " + appInsightsConnectionString + " ***");
-
-            //_loggerFactory.AddApplicationInsights()
+            return;
         }
     }
 }

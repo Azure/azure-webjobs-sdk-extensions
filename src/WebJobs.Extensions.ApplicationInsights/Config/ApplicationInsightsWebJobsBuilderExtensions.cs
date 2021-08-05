@@ -6,7 +6,6 @@ using System.Diagnostics;
 using Microsoft.ApplicationInsights.WindowsServer.Channel.Implementation;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.ApplicationInsights;
-using Microsoft.Azure.WebJobs.Extensions.ApplicationInsights.Configuration;
 using Microsoft.Azure.WebJobs.Logging.ApplicationInsights;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +20,7 @@ namespace Microsoft.Extensions.Hosting
     public static class ApplicationInsightsWebJobsBuilderExtensions
     {
         private static IConfiguration _configuration;
+
         /// <summary>
         /// Adds the ApplicationInsights extension to the provided <see cref="IWebJobsBuilder"/>.
         /// </summary>
