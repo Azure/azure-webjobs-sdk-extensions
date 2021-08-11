@@ -28,8 +28,6 @@ namespace Microsoft.Extensions.Hosting
             builder.AddExtension<CosmosDBExtensionConfigProvider>()               
                 .ConfigureOptions<CosmosDBOptions>((config, path, options) =>
                 {
-                    options.ConnectionString = config.GetConnectionStringOrSetting(Constants.DefaultConnectionStringName);
-
                     IConfigurationSection section = config.GetSection(path);
                     section.Bind(options);
                 });                
