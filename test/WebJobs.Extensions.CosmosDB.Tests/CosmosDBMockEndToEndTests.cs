@@ -11,6 +11,7 @@ using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Indexers;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -27,8 +28,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         private const string CollectionName = "TestCollection";
 
         private const string AttributeConnStr = "AccountEndpoint=https://attribute;AccountKey=YXR0cmlidXRl;";
-        private const string ConfigConnStr = "AccountEndpoint=https://config;AccountKey=Y29uZmln;";
         private const string DefaultConnStr = "AccountEndpoint=https://default;AccountKey=ZGVmYXVsdA==;";
+
+        private static readonly IConfiguration _baseConfig = CosmosDBTestUtility.BuildConfiguration(new List<Tuple<string, string>>()
+        {
+            Tuple.Create(Constants.DefaultConnectionStringName, DefaultConnStr),
+            Tuple.Create("MyConnectionString", AttributeConnStr)
+        });
 
         private readonly ILoggerFactory _loggerFactory = new LoggerFactory();
         private readonly TestLoggerProvider _loggerProvider = new TestLoggerProvider();
@@ -76,14 +82,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             var factoryMock = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(ConfigConnStr, It.IsAny<CosmosClientOptions>()))
+                .Setup(f => f.CreateService(Constants.DefaultConnectionStringName, It.IsAny<CosmosClientOptions>()))
                 .Returns(serviceMock.Object);
 
             //Act
             await RunTestAsync("Outputs", factoryMock.Object);
 
             // Assert
-            factoryMock.Verify(f => f.CreateService(ConfigConnStr, It.IsAny<CosmosClientOptions>()), Times.Once());
+            factoryMock.Verify(f => f.CreateService(Constants.DefaultConnectionStringName, It.IsAny<CosmosClientOptions>()), Times.Once());
             mockContainer.Verify(m => m.UpsertItemAsync<object>(It.IsAny<object>(), It.IsAny<PartitionKey?>(), It.IsAny<ItemRequestOptions>(), It.IsAny<CancellationToken>()), Times.Exactly(7));
             mockContainer.Verify(m => m.UpsertItemAsync<JObject>(It.IsAny<JObject>(), It.IsAny<PartitionKey?>(), It.IsAny<ItemRequestOptions>(), It.IsAny<CancellationToken>()), Times.Exactly(1));
             Assert.Equal("Outputs", _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
@@ -95,15 +101,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             // Arrange
             var factoryMock = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(DefaultConnStr, It.IsAny<CosmosClientOptions>()))
-                .Returns<string, CosmosClientOptions>((connectionString, connectionPolicy) => new CosmosClient(connectionString, connectionPolicy));
+                .Setup(f => f.CreateService(Constants.DefaultConnectionStringName, It.IsAny<CosmosClientOptions>()))
+                .Returns<string, CosmosClientOptions>((connectionString, connectionPolicy) => new CosmosClient(DefaultConnStr, connectionPolicy));
 
             // Act
             // Also verify that this falls back to the default by setting the config connection string to null
-            await RunTestAsync("Client", factoryMock.Object, configConnectionString: null);
+            await RunTestAsync("Client", factoryMock.Object);
 
             //Assert
-            factoryMock.Verify(f => f.CreateService(DefaultConnStr, It.IsAny<CosmosClientOptions>()), Times.Once());
+            factoryMock.Verify(f => f.CreateService(Constants.DefaultConnectionStringName, It.IsAny<CosmosClientOptions>()), Times.Once());
             Assert.Equal("Client", _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
         }
 
@@ -321,8 +327,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         public async Task NoConnectionStringSet()
         {
             // Act
-            var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
-                () => RunTestAsync(typeof(NoConnectionString), nameof(NoConnectionString.Broken), new DefaultCosmosDBServiceFactory(), configConnectionString: null, includeDefaultConnectionString: false));
+            var ex = await Assert.ThrowsAsync<FunctionInvocationException>(
+                () => RunTestAsync(typeof(NoConnectionString), nameof(NoConnectionString.Broken), new DefaultCosmosDBServiceFactory(Mock.Of<IConfiguration>(), Mock.Of<AzureComponentFactory>()), includeDefaultConnectionString: false));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex.InnerException);
@@ -333,7 +339,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         {
             // Act
             var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
-                () => RunTestAsync(typeof(InvalidEnumerable), nameof(InvalidEnumerable.BrokenEnumerable), new DefaultCosmosDBServiceFactory()));
+                () => RunTestAsync(typeof(InvalidEnumerable), nameof(InvalidEnumerable.BrokenEnumerable), new DefaultCosmosDBServiceFactory(_baseConfig, Mock.Of<AzureComponentFactory>())));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex.InnerException);
@@ -347,7 +353,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         {
             // Act
             var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
-                () => RunTestAsync(typeof(InvalidItem), nameof(InvalidItem.BrokenItem), new DefaultCosmosDBServiceFactory()));
+                () => RunTestAsync(typeof(InvalidItem), nameof(InvalidItem.BrokenItem), new DefaultCosmosDBServiceFactory(_baseConfig, Mock.Of<AzureComponentFactory>())));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex.InnerException);
@@ -362,7 +368,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             // byte[] isn't supported by DocumentClient, so we need to make sure we reject it early.
             // Act
             var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
-                () => RunTestAsync(typeof(InvalidByteArrayEnumerable), nameof(InvalidByteArrayEnumerable.BrokenEnumerable), new DefaultCosmosDBServiceFactory()));
+                () => RunTestAsync(typeof(InvalidByteArrayEnumerable), nameof(InvalidByteArrayEnumerable.BrokenEnumerable), new DefaultCosmosDBServiceFactory(_baseConfig, Mock.Of<AzureComponentFactory>())));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex.InnerException);
@@ -375,7 +381,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             // byte[] isn't supported by DocumentClient, so we need to make sure we reject it early.
             // Act
             var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
-                () => RunTestAsync(typeof(InvalidByteArrayItem), nameof(InvalidByteArrayItem.BrokenItem), new DefaultCosmosDBServiceFactory()));
+                () => RunTestAsync(typeof(InvalidByteArrayItem), nameof(InvalidByteArrayItem.BrokenItem), new DefaultCosmosDBServiceFactory(_baseConfig, Mock.Of<AzureComponentFactory>())));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex.InnerException);
@@ -388,19 +394,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             // byte[] isn't supported by DocumentClient, so we need to make sure we reject it early.
             // Act
             var ex = await Assert.ThrowsAsync<FunctionIndexingException>(
-                () => RunTestAsync(typeof(InvalidByteArrayCollector), nameof(InvalidByteArrayCollector.BrokenCollector), new DefaultCosmosDBServiceFactory()));
+                () => RunTestAsync(typeof(InvalidByteArrayCollector), nameof(InvalidByteArrayCollector.BrokenCollector), new DefaultCosmosDBServiceFactory(_baseConfig, Mock.Of<AzureComponentFactory>())));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex.InnerException);
             Assert.StartsWith("Nested collections are not supported", ex.InnerException.Message);
         }
 
-        private Task RunTestAsync(string testName, ICosmosDBServiceFactory factory, object argument = null, string configConnectionString = ConfigConnStr)
+        private Task RunTestAsync(string testName, ICosmosDBServiceFactory factory, object argument = null)
         {
-            return RunTestAsync(typeof(CosmosDBEndToEndFunctions), testName, factory, argument, configConnectionString);
+            return RunTestAsync(typeof(CosmosDBEndToEndFunctions), testName, factory, argument);
         }
 
-        private async Task RunTestAsync(Type testType, string testName, ICosmosDBServiceFactory factory, object argument = null, string configConnectionString = ConfigConnStr, bool includeDefaultConnectionString = true)
+        private async Task RunTestAsync(Type testType, string testName, ICosmosDBServiceFactory factory, object argument = null, bool includeDefaultConnectionString = true)
         {
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
 
@@ -438,11 +444,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                     services.AddSingleton<ICosmosDBServiceFactory>(factory);
                     services.AddSingleton<INameResolver>(resolver);
                     services.AddSingleton<ITypeLocator>(locator);
-
-                    if (configConnectionString != null)
-                    {
-                        services.Configure<CosmosDBOptions>(o => o.ConnectionString = configConnectionString);
-                    }
                 })
                 .ConfigureLogging(logging =>
                 {

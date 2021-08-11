@@ -12,9 +12,6 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json.Linq;
 
@@ -24,40 +21,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
     {
         public const string DatabaseName = "ItemDB";
         public const string ContainerName = "ItemCollection";
-
-        // Runs the standard options pipeline for initialization
-        public static IOptions<CosmosDBOptions> InitializeOptions(string defaultConnectionString, string optionsConnectionString)
-        {
-            // Create the Options like we do during host build
-            var builder = new HostBuilder()               
-                .ConfigureWebJobs(b =>
-                {
-                    // This wires up our options pipeline.
-                    b.AddCosmosDB();
-
-                    // If someone is updating the ConnectionString, they'd do it like this.
-                    if (optionsConnectionString != null)
-                    {
-                        b.Services.Configure<CosmosDBOptions>(o =>
-                        {
-                            o.ConnectionString = optionsConnectionString;
-                        });
-                    }
-                })
-                .ConfigureAppConfiguration(b =>
-                {
-                    b.Sources.Clear();
-                    if (defaultConnectionString != null)
-                    {
-                        b.AddInMemoryCollection(new Dictionary<string, string>
-                        {
-                            { $"ConnectionStrings:{Constants.DefaultConnectionStringName}", defaultConnectionString }
-                        });
-                    }
-                });
-
-            return builder.Build().Services.GetService<IOptions<CosmosDBOptions>>();
-        }
 
         public static Mock<Container> SetupCollectionMock(Mock<CosmosClient> mockService, Mock<Database> mockDatabase, string partitionKeyPath = null, int throughput = 0)
         {
@@ -138,6 +101,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 Service = service,
                 ResolvedAttribute = attribute
             };
+        }
+
+        public static IConfiguration BuildConfiguration(List<Tuple<string,string>> configs)
+        {
+            var mock = new Mock<IConfiguration>();
+            foreach (var config in configs)
+            {
+                var section = new Mock<IConfigurationSection>();
+                section.Setup(s => s.Value).Returns(config.Item2);
+                mock.Setup(c => c.GetSection(It.Is<string>(sectionName => sectionName == config.Item1))).Returns(section.Object);
+            }
+
+            return mock.Object;
         }
 
         public static IOrderedQueryable<T> AsOrderedQueryable<T, TKey>(this IEnumerable<T> enumerable, Expression<Func<T, TKey>> keySelector)

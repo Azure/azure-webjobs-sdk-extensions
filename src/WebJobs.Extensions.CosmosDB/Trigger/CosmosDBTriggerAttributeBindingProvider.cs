@@ -8,7 +8,6 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Azure.WebJobs.Logging;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
@@ -19,16 +18,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private const string SharedThroughputRequirementException = "Shared throughput collection should have a partition key";
         private const string LeaseCollectionRequiredPartitionKey = "/id";
         private const string LeaseCollectionRequiredPartitionKeyFromGremlin = "/partitionKey";
-        private readonly IConfiguration _configuration;
         private readonly INameResolver _nameResolver;
         private readonly CosmosDBOptions _options;
         private readonly ILogger _logger;
         private readonly CosmosDBExtensionConfigProvider _configProvider;
 
-        public CosmosDBTriggerAttributeBindingProvider(IConfiguration configuration, INameResolver nameResolver, CosmosDBOptions options,
+        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, CosmosDBOptions options,
             CosmosDBExtensionConfigProvider configProvider, ILoggerFactory loggerFactory)
         {
-            _configuration = configuration;
             _nameResolver = nameResolver;
             _options = options;
             _configProvider = configProvider;

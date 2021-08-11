@@ -16,16 +16,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
     /// </summary>
     internal class CosmosDBTriggerAttributeBindingProviderGenerator : ITriggerBindingProvider
     {
-        private readonly IConfiguration _configuration;
         private readonly INameResolver _nameResolver;
         private readonly CosmosDBOptions _options;
         private readonly ILoggerFactory _loggerFactory;
         private readonly CosmosDBExtensionConfigProvider _configProvider;
 
-        public CosmosDBTriggerAttributeBindingProviderGenerator(IConfiguration configuration, INameResolver nameResolver, CosmosDBOptions options,
+        public CosmosDBTriggerAttributeBindingProviderGenerator(INameResolver nameResolver, CosmosDBOptions options,
             CosmosDBExtensionConfigProvider configProvider, ILoggerFactory loggerFactory)
         {
-            _configuration = configuration;
             _nameResolver = nameResolver;
             _options = options;
             _configProvider = configProvider;
@@ -59,11 +57,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             Type genericBindingType = baseType.MakeGenericType(documentType);
 
-            Type[] typeArgs = { typeof(IConfiguration), typeof(INameResolver), typeof(CosmosDBOptions), typeof(CosmosDBExtensionConfigProvider), typeof(ILoggerFactory) };
+            Type[] typeArgs = { typeof(INameResolver), typeof(CosmosDBOptions), typeof(CosmosDBExtensionConfigProvider), typeof(ILoggerFactory) };
 
             ConstructorInfo constructor = genericBindingType.GetConstructor(typeArgs);
 
-            object[] constructorParameterValues = { _configuration, _nameResolver, _options, _configProvider, _loggerFactory };
+            object[] constructorParameterValues = { _nameResolver, _options, _configProvider, _loggerFactory };
 
             object cosmosDBTriggerAttributeBindingProvider = constructor.Invoke(constructorParameterValues);
 

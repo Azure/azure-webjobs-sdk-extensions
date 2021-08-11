@@ -23,7 +23,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
     [Extension("CosmosDB")]
     internal class CosmosDBExtensionConfigProvider : IExtensionConfigProvider
     {
-        private readonly IConfiguration _configuration;
         private readonly ICosmosDBServiceFactory _cosmosDBServiceFactory;
         private readonly ICosmosDBSerializerFactory _cosmosSerializerFactory;
         private readonly INameResolver _nameResolver;
@@ -34,11 +33,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             IOptions<CosmosDBOptions> options, 
             ICosmosDBServiceFactory cosmosDBServiceFactory, 
             ICosmosDBSerializerFactory cosmosSerializerFactory,
-            IConfiguration configuration, 
             INameResolver nameResolver, 
             ILoggerFactory loggerFactory)
         {
-            _configuration = configuration;
             _cosmosDBServiceFactory = cosmosDBServiceFactory;
             _cosmosSerializerFactory = cosmosSerializerFactory;
             _nameResolver = nameResolver;
@@ -77,16 +74,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             // Trigger
             var rule2 = context.AddBindingRule<CosmosDBTriggerAttribute>();
-            rule2.BindToTrigger(new CosmosDBTriggerAttributeBindingProviderGenerator(_configuration, _nameResolver, _options, this, _loggerFactory));
+            rule2.BindToTrigger(new CosmosDBTriggerAttributeBindingProviderGenerator(_nameResolver, _options, this, _loggerFactory));
         }
 
         internal void ValidateConnection(CosmosDBAttribute attribute, Type paramType)
         {
-            if (string.IsNullOrEmpty(attribute.Connection))
+            if (attribute.Connection == string.Empty)
             {
                 string attributeProperty = $"{nameof(CosmosDBAttribute)}.{nameof(CosmosDBAttribute.Connection)}";
                 throw new InvalidOperationException(
-                    $"The CosmosDB connection must be set either via the '{Constants.DefaultConnectionStringName}' IConfiguration connection or via the {attributeProperty} property.");
+                    $"The {attributeProperty} property cannot be an empty value.");
             }
         }
 
