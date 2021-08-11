@@ -3,12 +3,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 using Azure.Core;
 using Microsoft.Azure.Cosmos;
-using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Moq;
@@ -83,9 +79,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             // Arrange
             var myConfiguration = new Dictionary<string, string>
             {
-                {"Credentials:tenantId", "ConfigurationTenant"},
-                {"Credentials:clientId", "ConfigurationClientId"},
-                {"Credentials:clientSecret", "ConfigurationSecret"}
+                { "Credentials:tenantId", "ConfigurationTenant" },
+                { "Credentials:clientId", "ConfigurationClientId" },
+                { "Credentials:clientSecret", "ConfigurationSecret" }
             };
 
             var configuration = new ConfigurationBuilder()
@@ -104,10 +100,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             // Arrange
             var myConfiguration = new Dictionary<string, string>
             {
-                {"Credentials:accountEndpoint", "http://someEndpoint"},
-                {"Credentials:tenantId", "ConfigurationTenant"},
-                {"Credentials:clientId", "ConfigurationClientId"},
-                {"Credentials:clientSecret", "ConfigurationSecret"}
+                { "Credentials:accountEndpoint", "http://someEndpoint" },
+                { "Credentials:tenantId", "ConfigurationTenant" },
+                { "Credentials:clientId", "ConfigurationClientId" },
+                { "Credentials:clientSecret", "ConfigurationSecret" }
             };
 
             var configuration = new ConfigurationBuilder()

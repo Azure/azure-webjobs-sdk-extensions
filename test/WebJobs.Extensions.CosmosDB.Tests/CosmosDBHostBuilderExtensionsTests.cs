@@ -8,6 +8,7 @@ using System.Linq;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Extensions.Azure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -77,16 +78,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 .ConfigureAppConfiguration(c =>
                 {
                     c.Sources.Clear();
-
-                    var source = new MemoryConfigurationSource
+                    c.AddInMemoryCollection(new Dictionary<string, string>
                     {
-                        InitialData = new Dictionary<string, string>
-                        {
-                            { "TestConnection",  "AccountEndpoint=https://defaultUri;AccountKey=c29tZV9rZXk=;" }
-                        }
-                    };
-
-                    c.Add(source);
+                        { "TestConnection", "AccountEndpoint=https://defaultUri;AccountKey=c29tZV9rZXk=;" }
+                    });
                 })
                  .ConfigureWebJobs(builder =>
                  {
