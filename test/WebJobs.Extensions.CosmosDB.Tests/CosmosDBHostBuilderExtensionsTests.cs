@@ -80,7 +80,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                     c.Sources.Clear();
                     c.AddInMemoryCollection(new Dictionary<string, string>
                     {
-                        { "TestConnection", "AccountEndpoint=https://defaultUri;AccountKey=c29tZV9rZXk=;" }
+                        { Constants.DefaultConnectionStringName, "AccountEndpoint=https://defaultUri;AccountKey=c29tZV9rZXk=;" }
                     });
                 })
                  .ConfigureWebJobs(builder =>
@@ -99,7 +99,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             Assert.IsType<CosmosDBExtensionConfigProvider>(extensionConfig);
 
             CosmosDBExtensionConfigProvider cosmosDBExtensionConfigProvider = (CosmosDBExtensionConfigProvider)extensionConfig;
-            CosmosClient dummyClient = cosmosDBExtensionConfigProvider.GetService("TestConnection");
+            CosmosClient dummyClient = cosmosDBExtensionConfigProvider.GetService(Constants.DefaultConnectionStringName);
             Assert.True(customFactory.CreateWasCalled);
         }
 
