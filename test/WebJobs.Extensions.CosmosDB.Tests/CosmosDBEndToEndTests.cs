@@ -112,7 +112,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 .ConfigureServices(services =>
                 {
                     services.AddSingleton<ITypeLocator>(locator);
-                    services.TryAddSingleton(Mock.Of<AzureComponentFactory>());
+                    services.AddAzureClientsCore();
                 })
                 .ConfigureLogging(logging =>
                 {
