@@ -172,7 +172,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         }
 
         [Fact]
-        public async Task StartAsync_SchedulePastDue_InvokesJobFunctionImmediately()
+        public async Task StartAsync_SchedulePastDue_SchedulesImmediateInvocation()
         {
             // Set this to true to ensure that the function is only executed once
             // In this case, because it is run on startup due to being behind schedule,
@@ -203,6 +203,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
 
+            var startupInvocation = _listener.StartupInvocation;
+            Assert.NotNull(startupInvocation);
+            Assert.False(startupInvocation.RunOnStartup);
+            Assert.Equal(TimerListener.StartupInvocationContext.IntervalMS, _listener.Timer.Interval);
+            Assert.True(startupInvocation.IsPastDue);
+            Assert.Equal(default(DateTime), startupInvocation.OriginalSchedule);
+
+            await Task.Delay(100);
+
             TimerInfo timerInfo = (TimerInfo)_triggeredFunctionData.TriggerValue;
             Assert.Same(status, timerInfo.ScheduleStatus);
             Assert.True(timerInfo.IsPastDue);
@@ -213,11 +222,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             Assert.Equal(default(DateTime).ToString("o"), _triggeredFunctionData.TriggerDetails[TimerListener.OriginalScheduleKey]);
             Assert.Equal("IsPastDue", _triggeredFunctionData.TriggerDetails[TimerListener.UnscheduledInvocationReasonKey]);
 
+            Assert.Null(_listener.StartupInvocation);
+
             _listener.Dispose();
         }
 
         [Fact]
-        public async Task StartAsync_ScheduleNotPastDue_DoesNotInvokeJobFunctionImmediately()
+        public async Task StartAsync_ScheduleNotPastDue_DoesNotScheduleImmediateInvocation()
         {
             var now = DateTime.Now;
             ScheduleStatus status = new ScheduleStatus
@@ -234,13 +245,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
 
+            Assert.Null(_listener.StartupInvocation);
+
             _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Never());
 
             _listener.Dispose();
         }
 
         [Fact]
-        public async Task StartAsync_RunOnStartup_InvokesJobFunctionImmediately()
+        public async Task StartAsync_RunOnStartup_SchedulesImmediateInvocation()
         {
             _listener.ScheduleMonitor = null;
             _attribute.RunOnStartup = true;
@@ -248,11 +261,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
 
+            var startupInvocation = _listener.StartupInvocation;
+            Assert.NotNull(startupInvocation);
+            Assert.True(startupInvocation.RunOnStartup);
+            Assert.Equal(TimerListener.StartupInvocationContext.IntervalMS, _listener.Timer.Interval);
+            Assert.False(startupInvocation.IsPastDue);
+            Assert.Equal(default(DateTime), startupInvocation.OriginalSchedule);
+
+            await Task.Delay(100);
+
             _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Once());
 
             // Make sure we've added the reason for the invocation into the Details
             Assert.False(_triggeredFunctionData.TriggerDetails.ContainsKey(TimerListener.OriginalScheduleKey));
             Assert.Equal("RunOnStartup", _triggeredFunctionData.TriggerDetails[TimerListener.UnscheduledInvocationReasonKey]);
+
+            Assert.Null(_listener.StartupInvocation);
 
             _listener.Dispose();
         }
@@ -345,7 +369,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
             await _listener.StartAsync(CancellationToken.None);
 
-            Assert.True(updateCalled);
+            await TestHelpers.Await(() =>
+            {
+                return updateCalled;
+            });
         }
 
         [Fact]
