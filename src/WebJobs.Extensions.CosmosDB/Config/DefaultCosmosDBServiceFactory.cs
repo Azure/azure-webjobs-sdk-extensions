@@ -38,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private CosmosConnectionInformation ResolveConnectionInformation(string connection)
         {
             var connectionSetting = connection ?? Constants.DefaultConnectionStringName;
-            IConfigurationSection connectionSection = GetWebJobsConnectionStringSectionCosmos(this._configuration, connectionSetting);
+            IConfigurationSection connectionSection = WebJobsConfigurationExtensions.GetWebJobsConnectionStringSection(this._configuration, connectionSetting);
             if (!connectionSection.Exists())
             {
                 // Not found
@@ -63,21 +63,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 TokenCredential credential = _componentFactory.CreateTokenCredential(connectionSection);
                 return new CosmosConnectionInformation(accountEndpoint, credential);
             }
-        }
-
-        public static IConfigurationSection GetWebJobsConnectionStringSectionCosmos(IConfiguration configuration, string connectionStringName)
-        {
-            // first try a direct unprefixed lookup
-            IConfigurationSection section = WebJobsConfigurationExtensions.GetConnectionStringOrSetting(configuration, connectionStringName);
-
-            if (!section.Exists())
-            {
-                // next try prefixing
-                string prefixedConnectionStringName = WebJobsConfigurationExtensions.GetPrefixedConnectionStringName(connectionStringName);
-                section = WebJobsConfigurationExtensions.GetConnectionStringOrSetting(configuration, prefixedConnectionStringName);
-            }
-
-            return section;
         }
 
         private class CosmosConnectionInformation
