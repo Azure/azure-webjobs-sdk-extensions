@@ -23,7 +23,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
     [Extension("CosmosDB")]
     internal class CosmosDBExtensionConfigProvider : IExtensionConfigProvider
     {
-        private readonly IConfiguration _configuration;
         private readonly ICosmosDBServiceFactory _cosmosDBServiceFactory;
         private readonly ICosmosDBSerializerFactory _cosmosSerializerFactory;
         private readonly INameResolver _nameResolver;
@@ -34,11 +33,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             IOptions<CosmosDBOptions> options, 
             ICosmosDBServiceFactory cosmosDBServiceFactory, 
             ICosmosDBSerializerFactory cosmosSerializerFactory,
-            IConfiguration configuration, 
             INameResolver nameResolver, 
             ILoggerFactory loggerFactory)
         {
-            _configuration = configuration;
             _cosmosDBServiceFactory = cosmosDBServiceFactory;
             _cosmosSerializerFactory = cosmosSerializerFactory;
             _nameResolver = nameResolver;
@@ -77,27 +74,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             // Trigger
             var rule2 = context.AddBindingRule<CosmosDBTriggerAttribute>();
-            rule2.BindToTrigger(new CosmosDBTriggerAttributeBindingProviderGenerator(_configuration, _nameResolver, _options, this, _loggerFactory));
+            rule2.BindToTrigger(new CosmosDBTriggerAttributeBindingProviderGenerator(_nameResolver, _options, this, _loggerFactory));
         }
 
         internal void ValidateConnection(CosmosDBAttribute attribute, Type paramType)
         {
-            if (string.IsNullOrEmpty(_options.ConnectionString) &&
-                string.IsNullOrEmpty(attribute.Connection))
+            if (attribute.Connection == string.Empty)
             {
                 string attributeProperty = $"{nameof(CosmosDBAttribute)}.{nameof(CosmosDBAttribute.Connection)}";
-                string optionsProperty = $"{nameof(CosmosDBOptions)}.{nameof(CosmosDBOptions.ConnectionString)}";
                 throw new InvalidOperationException(
-                    $"The CosmosDB connection string must be set either via the '{Constants.DefaultConnectionStringName}' IConfiguration connection string, via the {attributeProperty} property or via {optionsProperty}.");
+                    $"The {attributeProperty} property cannot be an empty value.");
             }
-        }
-
-        internal CosmosClient BindForClient(CosmosDBAttribute attribute)
-        {
-            string resolvedConnectionString = ResolveConnectionString(attribute.Connection);
-            return GetService(
-                connectionString: resolvedConnectionString, 
-                preferredLocations: attribute.PreferredLocations);
         }
 
         internal Task<IValueBinder> BindForItemAsync(CosmosDBAttribute attribute, Type type)
@@ -115,31 +102,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return Task.FromResult(binder);
         }
 
-        internal string ResolveConnectionString(string attributeConnectionString)
+        internal CosmosClient GetService(string connection, string preferredLocations = "", string userAgent = "")
         {
-            // First, try the Attribute's string.
-            if (!string.IsNullOrEmpty(attributeConnectionString))
-            {
-                return attributeConnectionString;
-            }
-
-            // Then use the options.
-            return _options.ConnectionString;
-        }
-
-        internal CosmosClient GetService(string connectionString, string preferredLocations = "", string userAgent = "")
-        {
-            string cacheKey = BuildCacheKey(connectionString, preferredLocations);
+            string cacheKey = BuildCacheKey(connection, preferredLocations);
             CosmosClientOptions cosmosClientOptions = CosmosDBUtility.BuildClientOptions(_options.ConnectionMode, _cosmosSerializerFactory.CreateSerializer(), preferredLocations, userAgent);
-            return ClientCache.GetOrAdd(cacheKey, (c) => _cosmosDBServiceFactory.CreateService(connectionString, cosmosClientOptions));
+            return ClientCache.GetOrAdd(cacheKey, (c) => _cosmosDBServiceFactory.CreateService(connection, cosmosClientOptions));
         }
 
         internal CosmosDBContext CreateContext(CosmosDBAttribute attribute)
         {
-            string resolvedConnectionString = ResolveConnectionString(attribute.Connection);
-
             CosmosClient service = GetService(
-                connectionString: resolvedConnectionString, 
+                connection: attribute.Connection ?? Constants.DefaultConnectionStringName, 
                 preferredLocations: attribute.PreferredLocations);
 
             return new CosmosDBContext

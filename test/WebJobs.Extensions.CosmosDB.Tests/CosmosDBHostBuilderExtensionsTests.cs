@@ -7,10 +7,14 @@ using System.IO;
 using System.Linq;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Host.Config;
+using Microsoft.Extensions.Azure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Memory;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Moq;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
@@ -71,6 +75,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         {
             CustomFactory customFactory = new CustomFactory();
             IHost host = new HostBuilder()
+                .ConfigureAppConfiguration(c =>
+                {
+                    c.Sources.Clear();
+                    c.AddInMemoryCollection(new Dictionary<string, string>
+                    {
+                        { Constants.DefaultConnectionStringName, "AccountEndpoint=https://defaultUri;AccountKey=c29tZV9rZXk=;" }
+                    });
+                })
                  .ConfigureWebJobs(builder =>
                  {
                      builder.AddCosmosDB();
@@ -78,6 +90,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 .ConfigureServices(s =>
                 {
                     s.AddSingleton<ICosmosDBSerializerFactory>(customFactory);
+                    s.TryAddSingleton(Mock.Of<AzureComponentFactory>());
                 })
                 .Build();
 
@@ -86,7 +99,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             Assert.IsType<CosmosDBExtensionConfigProvider>(extensionConfig);
 
             CosmosDBExtensionConfigProvider cosmosDBExtensionConfigProvider = (CosmosDBExtensionConfigProvider)extensionConfig;
-            CosmosClient dummyClient = cosmosDBExtensionConfigProvider.GetService("AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;");
+            CosmosClient dummyClient = cosmosDBExtensionConfigProvider.GetService(Constants.DefaultConnectionStringName);
             Assert.True(customFactory.CreateWasCalled);
         }
 

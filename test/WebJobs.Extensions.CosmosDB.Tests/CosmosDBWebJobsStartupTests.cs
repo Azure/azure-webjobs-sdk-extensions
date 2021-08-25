@@ -6,8 +6,11 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Azure.WebJobs.Hosting;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Moq;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
@@ -22,6 +25,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 .ConfigureWebJobs(builder =>
                 {
                     builder.UseExternalStartup(new TestStartupTypeLocator());
+                })
+                .ConfigureServices(s =>
+                {
+                    s.TryAddSingleton(Mock.Of<AzureComponentFactory>());
                 })
                 .Build();
 

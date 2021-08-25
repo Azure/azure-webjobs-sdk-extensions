@@ -10,10 +10,13 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Extensions.Tests;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
@@ -75,7 +78,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
         private async Task<CosmosClient> InitializeDocumentClientAsync(IConfiguration configuration)
         {
-            var client = new CosmosClient(configuration.GetConnectionStringOrSetting(Constants.DefaultConnectionStringName));
+            var client = new CosmosClient(configuration.GetConnectionStringOrSetting(Constants.DefaultConnectionStringName).Value);
 
             Database database = await client.CreateDatabaseIfNotExistsAsync(DatabaseName);
 
@@ -109,6 +112,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 .ConfigureServices(services =>
                 {
                     services.AddSingleton<ITypeLocator>(locator);
+                    services.AddAzureClientsCore();
                 })
                 .ConfigureLogging(logging =>
                 {

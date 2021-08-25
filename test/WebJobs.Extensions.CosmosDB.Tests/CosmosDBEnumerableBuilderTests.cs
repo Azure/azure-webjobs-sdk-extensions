@@ -22,7 +22,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
     {
         private const string DatabaseName = "ItemDb";
         private const string CollectionName = "ItemCollection";
-        private static readonly IConfiguration _emptyConfig = new ConfigurationBuilder().Build();
+        private static readonly IConfiguration _baseConfig = CosmosDBTestUtility.BuildConfiguration(new List<Tuple<string, string>>()
+        {
+            Tuple.Create(Constants.DefaultConnectionStringName, "AccountEndpoint=https://defaultUri;AccountKey=c29tZV9rZXk=;")
+        });
 
         [Fact]
         public async Task ConvertAsync_Succeeds_NoContinuation()
@@ -217,9 +220,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             var options = new OptionsWrapper<CosmosDBOptions>(new CosmosDBOptions
             {
-                ConnectionString = "AccountEndpoint=https://someuri;AccountKey=c29tZV9rZXk=;"
             });
-            var configProvider = new CosmosDBExtensionConfigProvider(options, mockServiceFactory.Object, new DefaultCosmosDBSerializerFactory(), _emptyConfig, new TestNameResolver(), NullLoggerFactory.Instance);
+            var configProvider = new CosmosDBExtensionConfigProvider(options, mockServiceFactory.Object, new DefaultCosmosDBSerializerFactory(), new TestNameResolver(), NullLoggerFactory.Instance);
 
             return new CosmosDBEnumerableBuilder<T>(configProvider);
         }

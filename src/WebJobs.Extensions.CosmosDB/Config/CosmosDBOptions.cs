@@ -11,11 +11,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
     public class CosmosDBOptions : IOptionsFormatter
     {
         /// <summary>
-        /// Gets or sets the CosmosDB connection string.
-        /// </summary>
-        public string ConnectionString { get; set; }
-
-        /// <summary>
         /// Gets or sets the ConnectionMode used in the CosmosClient instances.
         /// </summary>
         /// <remarks>Default is Gateway mode.</remarks>

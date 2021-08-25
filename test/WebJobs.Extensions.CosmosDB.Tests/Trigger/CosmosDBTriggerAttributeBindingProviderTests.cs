@@ -12,6 +12,7 @@ using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -25,8 +26,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
     public class CosmosDBTriggerAttributeBindingProviderTests
     {
         private readonly ILoggerFactory _loggerFactory = new LoggerFactory();
-        private static readonly IConfiguration _emptyConfig = new ConfigurationBuilder().Build();
-        private readonly CosmosDBOptions _options = CosmosDBTestUtility.InitializeOptions("AccountEndpoint=https://fromEnvironment;AccountKey=c29tZV9rZXk=;", null).Value;
+        private static readonly IConfiguration _baseConfig = CosmosDBTestUtility.BuildConfiguration(new List<Tuple<string, string>>()
+        {
+            Tuple.Create(Constants.DefaultConnectionStringName, "AccountEndpoint=https://fromEnvironment;AccountKey=c29tZV9rZXk=;")
+        });
+
+        private readonly CosmosDBOptions _options = new CosmosDBOptions();
 
         public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsWithLeaseHostOptionsParameters
             => ValidCosmosDBTriggerBindigsWithLeaseHostOptions.GetParameters();
@@ -73,7 +78,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         [MemberData(nameof(InvalidCosmosDBTriggerParameters))]
         public async Task InvalidParameters_Fail(ParameterInfo parameter)
         {
-            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(_emptyConfig, new TestNameResolver(), _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(new TestNameResolver(), _options, CreateExtensionConfigProvider(_options, _baseConfig), _loggerFactory);
 
             InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() => provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None)));
 
@@ -88,11 +93,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             var config = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string>
                 {
+                    { "ConnectionStrings:CosmosDB", "AccountEndpoint=https://fromEnvironment;AccountKey=c29tZV9rZXk=;" },
                     { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;" }
                 })
                 .Build();
 
-            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(nameResolver, _options, CreateExtensionConfigProvider(_options, config), _loggerFactory);
 
             CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
@@ -118,7 +124,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 })
                 .Build();
 
-            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(nameResolver, _options, CreateExtensionConfigProvider(_options, config), _loggerFactory);
 
             CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
@@ -140,7 +146,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             nameResolver.Values["aDatabase"] = "myDatabase";
             nameResolver.Values["aCollection"] = "myCollection";
 
-            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(_emptyConfig, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(nameResolver, _options, CreateExtensionConfigProvider(_options, _baseConfig), _loggerFactory);
 
             CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
@@ -169,7 +175,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 })
                 .Build();
 
-            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(nameResolver, _options, CreateExtensionConfigProvider(_options, config), _loggerFactory);
 
             CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
@@ -186,13 +192,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             var config = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string>
                 {
+                    { "ConnectionStrings:CosmosDB", "AccountEndpoint=https://fromEnvironment;AccountKey=c29tZV9rZXk=;" },
                     { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;" }
                 })
                 .Build();
 
             _options.ConnectionMode = ConnectionMode.Direct;
 
-            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(nameResolver, _options, CreateExtensionConfigProvider(_options, config), _loggerFactory);
 
             CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
@@ -209,7 +216,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             var nameResolver = new TestNameResolver();
             nameResolver.Values["regions"] = "East US, North Europe,";
 
-            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(_emptyConfig, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(nameResolver, _options, CreateExtensionConfigProvider(_options, _baseConfig), _loggerFactory);
 
             CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
@@ -250,6 +257,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 .AddInMemoryCollection(new Dictionary<string, string>
                 {
                     // Verify we load from connection strings first
+                    { "ConnectionStrings:CosmosDB", "AccountEndpoint=https://fromEnvironment;AccountKey=c29tZV9rZXk=;" },
                     { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;" },
                     { "CosmosDBConnectionString", "will not work" },
                     { "ConnectionStrings:LeaseConnectionString", "AccountEndpoint=https://overridden;AccountKey=c29tZV9rZXk=;" },
@@ -257,7 +265,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 })
                 .Build();
 
-            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(config, nameResolver, _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(nameResolver, _options, CreateExtensionConfigProvider(_options, config), _loggerFactory);
 
             CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
@@ -313,7 +321,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 .Setup(f => f.CreateService(It.IsAny<string>(), It.IsAny<CosmosClientOptions>()))
                 .Returns(serviceMock.Object);
 
-            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(config, new TestNameResolver(), _options, CreateExtensionConfigProvider(factoryMock.Object, _options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(new TestNameResolver(), _options, CreateExtensionConfigProvider(factoryMock.Object, _options, config), _loggerFactory);
 
             CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
@@ -371,7 +379,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 .Setup(f => f.CreateService(It.IsAny<string>(), It.IsAny<CosmosClientOptions>()))
                 .Returns(serviceMock.Object);
 
-            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(config, new TestNameResolver(), _options, CreateExtensionConfigProvider(factoryMock.Object, _options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(new TestNameResolver(), _options, CreateExtensionConfigProvider(factoryMock.Object, _options, config), _loggerFactory);
 
             CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
@@ -396,7 +404,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 })
                 .Build();
 
-            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(config, new TestNameResolver(), _options, CreateExtensionConfigProvider(_options), _loggerFactory);
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(new TestNameResolver(), _options, CreateExtensionConfigProvider(_options, config), _loggerFactory);
 
             CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
@@ -415,14 +423,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             return paramInfo;
         }
 
-        private static CosmosDBExtensionConfigProvider CreateExtensionConfigProvider(CosmosDBOptions options)
+        private static CosmosDBExtensionConfigProvider CreateExtensionConfigProvider(CosmosDBOptions options, IConfiguration config = null)
         {
-            return CreateExtensionConfigProvider(new DefaultCosmosDBServiceFactory(), options);
+            return CreateExtensionConfigProvider(new DefaultCosmosDBServiceFactory(config ?? _baseConfig, Mock.Of<AzureComponentFactory>()), options);
         }
 
-        private static CosmosDBExtensionConfigProvider CreateExtensionConfigProvider(ICosmosDBServiceFactory serviceFactory, CosmosDBOptions options)
+        private static CosmosDBExtensionConfigProvider CreateExtensionConfigProvider(ICosmosDBServiceFactory serviceFactory, CosmosDBOptions options, IConfiguration config = null)
         {
-            return new CosmosDBExtensionConfigProvider(new OptionsWrapper<CosmosDBOptions>(options), serviceFactory, new DefaultCosmosDBSerializerFactory(), _emptyConfig, new TestNameResolver(), NullLoggerFactory.Instance);
+            return new CosmosDBExtensionConfigProvider(new OptionsWrapper<CosmosDBOptions>(options), serviceFactory, new DefaultCosmosDBSerializerFactory(), new TestNameResolver(), NullLoggerFactory.Instance);
         }
 
         // These will use the default for ConnectionStringSetting, but override LeaseConnectionStringSetting

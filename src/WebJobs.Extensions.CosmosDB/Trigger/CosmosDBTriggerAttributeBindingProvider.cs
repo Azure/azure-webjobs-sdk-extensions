@@ -8,7 +8,6 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Azure.WebJobs.Logging;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
@@ -19,16 +18,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private const string SharedThroughputRequirementException = "Shared throughput collection should have a partition key";
         private const string LeaseCollectionRequiredPartitionKey = "/id";
         private const string LeaseCollectionRequiredPartitionKeyFromGremlin = "/partitionKey";
-        private readonly IConfiguration _configuration;
         private readonly INameResolver _nameResolver;
         private readonly CosmosDBOptions _options;
         private readonly ILogger _logger;
         private readonly CosmosDBExtensionConfigProvider _configProvider;
 
-        public CosmosDBTriggerAttributeBindingProvider(IConfiguration configuration, INameResolver nameResolver, CosmosDBOptions options,
+        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, CosmosDBOptions options,
             CosmosDBExtensionConfigProvider configProvider, ILoggerFactory loggerFactory)
         {
-            _configuration = configuration;
             _nameResolver = nameResolver;
             _options = options;
             _configProvider = configProvider;
@@ -61,16 +58,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             try
             {
-                string triggerConnectionString = ResolveAttributeConnectionString(attribute);
-                if (string.IsNullOrEmpty(triggerConnectionString))
+                string triggerConnection = ResolveAttributeConnection(attribute);
+                if (string.IsNullOrEmpty(triggerConnection))
                 {
-                    throw new InvalidOperationException("The connection string for the monitored container is in an invalid format, please use AccountEndpoint=XXXXXX;AccountKey=XXXXXX;.");
+                    throw new InvalidOperationException($"The attribute {nameof(attribute.Connection)} for the monitored container is in an invalid format, please use AccountEndpoint=XXXXXX;AccountKey=XXXXXX; or a node representing token authentication information.");
                 }
 
-                string leasesConnectionString = ResolveAttributeLeasesConnectionString(attribute);
-                if (string.IsNullOrEmpty(leasesConnectionString))
+                string leasesConnection = ResolveAttributeLeasesConnection(attribute);
+                if (string.IsNullOrEmpty(leasesConnection))
                 {
-                    throw new InvalidOperationException("The connection string for the leases container is in an invalid format, please use AccountEndpoint=XXXXXX;AccountKey=XXXXXX;.");
+                    throw new InvalidOperationException($"The attribute {nameof(attribute.LeaseConnection)} for the leases container is in an invalid format, please use AccountEndpoint=XXXXXX;AccountKey=XXXXXX;. or a node representing token authentication information.");
                 }
 
                 if (string.IsNullOrEmpty(monitoredDatabaseName)
@@ -81,7 +78,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     throw new InvalidOperationException("Cannot establish database and container values. If you are using environment and configuration values, please ensure these are correctly set.");
                 }
 
-                if (triggerConnectionString.Equals(leasesConnectionString, StringComparison.InvariantCultureIgnoreCase)
+                if (triggerConnection.Equals(leasesConnection, StringComparison.InvariantCultureIgnoreCase)
                     && monitoredDatabaseName.Equals(leasesDatabaseName, StringComparison.InvariantCultureIgnoreCase)
                     && monitoredCollectionName.Equals(leasesCollectionName, StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -89,11 +86,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 }
 
                 CosmosClient monitoredCosmosDBService = _configProvider.GetService(
-                    connectionString: triggerConnectionString, 
+                    connection: triggerConnection, 
                     preferredLocations: preferredLocations, 
                     userAgent: CosmosDBTriggerUserAgentSuffix);
                 CosmosClient leaseCosmosDBService = _configProvider.GetService(
-                    connectionString: leasesConnectionString, 
+                    connection: leasesConnection, 
                     preferredLocations: preferredLocations, 
                     userAgent: CosmosDBTriggerUserAgentSuffix);
 
@@ -148,9 +145,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
         }
 
-        private string ResolveAttributeConnectionString(CosmosDBTriggerAttribute attribute)
+        private string ResolveAttributeConnection(CosmosDBTriggerAttribute attribute)
         {
-            string connectionString = ResolveConnectionString(attribute.Connection, nameof(CosmosDBTriggerAttribute.Connection));
+            string connectionString = attribute.Connection ?? Constants.DefaultConnectionStringName;
 
             if (string.IsNullOrEmpty(connectionString))
             {
@@ -160,7 +157,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return connectionString;
         }
 
-        private string ResolveAttributeLeasesConnectionString(CosmosDBTriggerAttribute attribute)
+        private string ResolveAttributeLeasesConnection(CosmosDBTriggerAttribute attribute)
         {
             // If the lease connection string is not set, use the trigger's
             string keyToResolve = attribute.LeaseConnection;
@@ -169,7 +166,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 keyToResolve = attribute.Connection;
             }
 
-            string connectionString = ResolveConnectionString(keyToResolve, nameof(CosmosDBTriggerAttribute.LeaseConnection));
+            string connectionString = keyToResolve ?? Constants.DefaultConnectionStringName;
 
             if (string.IsNullOrEmpty(connectionString))
             {
@@ -185,31 +182,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 $"{nameof(CosmosDBTriggerAttribute)}.{nameof(CosmosDBTriggerAttribute.LeaseConnection)}" :
                 $"{nameof(CosmosDBTriggerAttribute)}.{nameof(CosmosDBTriggerAttribute.Connection)}";
 
-            string optionsProperty = $"{nameof(CosmosDBOptions)}.{nameof(CosmosDBOptions.ConnectionString)}";
-
             string leaseString = isLeaseConnectionString ? "lease " : string.Empty;
 
             throw new InvalidOperationException(
-                $"The CosmosDBTrigger {leaseString}connection string must be set either via a '{Constants.DefaultConnectionStringName}' configuration connection string, via the {attributeProperty} property or via {optionsProperty}.");
-        }
-
-        internal string ResolveConnectionString(string unresolvedConnectionString, string propertyName)
-        {
-            // First, resolve the string.
-            if (!string.IsNullOrEmpty(unresolvedConnectionString))
-            {
-                string resolvedString = _configuration.GetConnectionStringOrSetting(unresolvedConnectionString);
-
-                if (string.IsNullOrEmpty(resolvedString))
-                {
-                    throw new InvalidOperationException($"Unable to resolve app setting for property '{nameof(CosmosDBTriggerAttribute)}.{propertyName}'. Make sure the app setting exists and has a valid value.");
-                }
-
-                return resolvedString;
-            }
-
-            // If that didn't exist, fall back to options.
-            return _options.ConnectionString;
+                $"The CosmosDBTrigger {leaseString}connection must be set either via a '{Constants.DefaultConnectionStringName}' configuration or via the {attributeProperty} property.");
         }
 
         private string ResolveAttributeValue(string attributeValue)
