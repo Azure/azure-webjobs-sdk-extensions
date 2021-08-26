@@ -74,6 +74,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
         internal ScheduleMonitor ScheduleMonitor { get; set; }
 
+        /// <summary>
+        /// When set, we have a startup invocation that needs to happen immediately.
+        /// </summary>
+        internal StartupInvocationContext StartupInvocation { get; set; }
+
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             ThrowIfDisposed();
@@ -112,23 +117,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 };
             }
 
-            if (isPastDue)
-            {
-                Logger.PastDue(_logger, _functionLogName);
-                await InvokeJobFunction(now, isPastDue: true, originalSchedule: ScheduleStatus.Next);
-            }
-            else if (_attribute.RunOnStartup)
-            {
-                // The job is configured to run immediately on startup
-                Logger.RunOnStartup(_logger, _functionLogName);
-                await InvokeJobFunction(now, runOnStartup: true);
-            }
-
             // log the next several occurrences to console for visibility            
             string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5);
             Logger.NextOccurrences(_logger, _functionLogName, _schedule, nextOccurrences);
 
-            StartTimer(DateTime.Now);
+            if (isPastDue)
+            {
+                // when we're past due, so we schedule an immediate invocation
+                StartupInvocation = new StartupInvocationContext
+                {
+                    IsPastDue = true,
+                    OriginalSchedule = ScheduleStatus.Next
+                };
+                StartTimer(StartupInvocation.Interval);
+            }
+            else if (_attribute.RunOnStartup)
+            {
+                // function is marked RunOnStartup, so we schedule an immediate invocation
+                StartupInvocation = new StartupInvocationContext
+                {
+                    RunOnStartup = true
+                };
+                StartTimer(StartupInvocation.Interval);
+            }
+            else
+            {
+                // start the regular schedule
+                StartTimer(DateTime.Now);
+            }
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
@@ -195,7 +211,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                     return;
                 }
 
-                await InvokeJobFunction(DateTime.Now, false);
+                // first check to see if we're dealing with an immediate startup invocation
+                if (StartupInvocation != null)
+                {
+                    var startupInvocation = StartupInvocation;
+                    StartupInvocation = null;
+
+                    if (startupInvocation.IsPastDue)
+                    {
+                        // invocation is past due
+                        Logger.PastDue(_logger, _functionLogName);
+                        await InvokeJobFunction(DateTime.Now, isPastDue: true, originalSchedule: startupInvocation.OriginalSchedule);
+                    }
+                    else if (startupInvocation.RunOnStartup)
+                    {
+                        // The job is configured to run immediately on startup
+                        Logger.RunOnStartup(_logger, _functionLogName);
+                        await InvokeJobFunction(DateTime.Now, runOnStartup: true);
+                    }
+                }
+                else
+                {
+                    // this is a normal scheduled invocation
+                    await InvokeJobFunction(DateTime.Now, false);
+                }
             }
             catch (Exception ex)
             {
@@ -371,6 +410,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             {
                 throw new ObjectDisposedException(null);
             }
+        }
+
+        /// <summary>
+        /// Provides context for an immediate startup time job invocation.
+        /// </summary>
+        /// <remarks>
+        /// We must avoid invoking the job function from the listener start method
+        /// because that can delay host startup and cause problems. Instead we invoke
+        /// the function in the background by scheduling an immediate invocation.
+        /// </remarks>
+        internal class StartupInvocationContext
+        {
+            // for immediate startup invocations we use the smallest non-zero interval
+            // possible (timer intervals must be non-zero)
+            public const int IntervalMS = 1;
+
+            public bool RunOnStartup { get; set; }
+
+            public bool IsPastDue { get; set; }
+
+            public DateTime OriginalSchedule { get; set; }
+
+            public TimeSpan Interval => TimeSpan.FromMilliseconds(IntervalMS);
         }
     }
 }
