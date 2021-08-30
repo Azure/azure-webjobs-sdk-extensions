@@ -56,7 +56,6 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Gets or sets the connection string for the service containing the lease container.
         /// </summary>
-        [ConnectionString]
         public string LeaseConnection { get; set; }
 
         /// <summary>
