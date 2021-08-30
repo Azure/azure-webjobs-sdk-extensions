@@ -310,7 +310,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             var factoryMock = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
             factoryMock
-                .Setup(f => f.CreateService(AttributeConnStr, It.IsAny<CosmosClientOptions>()))
+                .Setup(f => f.CreateService("MyConnectionString", It.IsAny<CosmosClientOptions>()))
                 .Returns(serviceMock.Object);
 
             var jobject = JObject.FromObject(new QueueData { DocumentId = "docid1", PartitionKey = "partkey1" });
@@ -319,7 +319,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             await RunTestAsync(nameof(CosmosDBEndToEndFunctions.TriggerObject), factoryMock.Object, jobject.ToString());
 
             // Assert
-            factoryMock.Verify(f => f.CreateService(AttributeConnStr, It.IsAny<CosmosClientOptions>()), Times.Once());
+            factoryMock.Verify(f => f.CreateService("MyConnectionString", It.IsAny<CosmosClientOptions>()), Times.Once());
             Assert.Equal("TriggerObject", _loggerProvider.GetAllUserLogMessages().Single().FormattedMessage);
         }
 
