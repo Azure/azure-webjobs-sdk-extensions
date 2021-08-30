@@ -67,7 +67,6 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Gets or sets the connection string for the service containing the container to monitor.
         /// </summary>
-        [ConnectionString]
         public string Connection { get; set; }
 
         /// <summary>
