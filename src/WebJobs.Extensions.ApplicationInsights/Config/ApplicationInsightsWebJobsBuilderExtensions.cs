@@ -54,10 +54,10 @@ namespace Microsoft.Extensions.Hosting
             builder.AddExtension<ApplicationInsightsExtensionConfigProvider>()
                 .ConfigureOptions<ApplicationInsightsLoggerOptions>((config, path, options) =>
                 {
-                    //options.SamplingSettings = new SamplingPercentageEstimatorSettings
-                    //{
-                    //    MaxTelemetryItemsPerSecond = 20
-                    //};
+                    options.SamplingSettings = new SamplingPercentageEstimatorSettings
+                    {
+                        MaxTelemetryItemsPerSecond = 20
+                    };
 
                     IConfigurationSection section = config.GetSection(path);
                     section.Bind(options);
@@ -68,7 +68,7 @@ namespace Microsoft.Extensions.Hosting
 
                     if (!samplingEnabled)
                     {
-                        //options.SamplingSettings = null;
+                        options.SamplingSettings = null;
                         return;
                     }
 
