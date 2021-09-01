@@ -4,7 +4,6 @@
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -55,7 +54,6 @@ namespace ExtensionsSample
                .ConfigureServices(s =>
                {
                    s.AddSingleton<ITypeLocator>(typeLocator);
-                   s.AddAzureClientsCore();
                })
                .UseConsoleLifetime();
 

@@ -4,6 +4,7 @@
 using System;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -30,11 +31,12 @@ namespace Microsoft.Extensions.Hosting
                 {
                     IConfigurationSection section = config.GetSection(path);
                     section.Bind(options);
-                });                
+                });
 
+            builder.Services.AddAzureClientsCore();
             builder.Services.AddSingleton<ICosmosDBServiceFactory, DefaultCosmosDBServiceFactory>();
             builder.Services.AddSingleton<ICosmosDBSerializerFactory, DefaultCosmosDBSerializerFactory>();
-
+            
             return builder;
         }
 
