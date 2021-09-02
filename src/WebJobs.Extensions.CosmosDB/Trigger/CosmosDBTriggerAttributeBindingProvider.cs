@@ -131,7 +131,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return TimeSpan.FromMilliseconds(attributeValue.Value);
         }
 
-        private static async Task CreateLeaseCollectionIfNotExistsAsync(CosmosClient cosmosClient, string databaseName, string collectionName, int? throughput)
+        private static async Task CreateLeaseCollectionIfNotExistsAsync(CosmosClient cosmosClient, string databaseName, string collectionName, int throughput)
         {
             try
             {
