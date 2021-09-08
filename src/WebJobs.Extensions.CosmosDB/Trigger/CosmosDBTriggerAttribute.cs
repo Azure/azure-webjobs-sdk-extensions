@@ -56,7 +56,6 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Gets or sets the connection string for the service containing the lease container.
         /// </summary>
-        [ConnectionString]
         public string LeaseConnection { get; set; }
 
         /// <summary>
@@ -78,7 +77,7 @@ namespace Microsoft.Azure.WebJobs
         /// Gets or sets the throughput to be used when creating the container if <see cref="CreateLeaseContainerIfNotExists"/> is true.
         /// container.
         /// </summary>
-        public int? LeasesContainerThroughput { get; set; }
+        public int LeasesContainerThroughput { get; set; }
 
         /// <summary>
         /// Gets or sets a prefix to be used within a Leases container for this Trigger. Useful when sharing the same Lease container among multiple Triggers.

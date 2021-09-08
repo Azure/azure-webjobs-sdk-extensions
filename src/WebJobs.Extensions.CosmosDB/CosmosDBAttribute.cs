@@ -87,7 +87,7 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Gets or sets the throughput to be used when creating the container if <see cref="CreateIfNotExists"/> is true.
         /// </summary>
-        public int? ContainerThroughput { get; set; }
+        public int ContainerThroughput { get; set; }
 
         /// <summary>
         /// Gets or sets a sql query expression for an input binding to execute on the container and produce results.

@@ -41,12 +41,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 context.ResolvedAttribute.PartitionKey, context.ResolvedAttribute.ContainerThroughput);
         }
 
-        internal static async Task CreateDatabaseAndCollectionIfNotExistAsync(CosmosClient service, string databaseName, string containerName, string partitionKey, int? throughput)
+        internal static async Task CreateDatabaseAndCollectionIfNotExistAsync(CosmosClient service, string databaseName, string containerName, string partitionKey, int throughput)
         {
             await service.CreateDatabaseIfNotExistsAsync(databaseName);
 
             int? desiredThroughput = null;
-            if (throughput.HasValue && throughput.Value > 0)
+            if (throughput > 0)
             {
                 desiredThroughput = throughput;
             }

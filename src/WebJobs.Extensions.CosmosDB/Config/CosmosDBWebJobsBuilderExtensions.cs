@@ -4,8 +4,10 @@
 using System;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.Hosting
 {
@@ -30,11 +32,12 @@ namespace Microsoft.Extensions.Hosting
                 {
                     IConfigurationSection section = config.GetSection(path);
                     section.Bind(options);
-                });                
+                });
 
-            builder.Services.AddSingleton<ICosmosDBServiceFactory, DefaultCosmosDBServiceFactory>();
-            builder.Services.AddSingleton<ICosmosDBSerializerFactory, DefaultCosmosDBSerializerFactory>();
-
+            builder.Services.AddAzureClientsCore();
+            builder.Services.TryAddSingleton<ICosmosDBServiceFactory, DefaultCosmosDBServiceFactory>();
+            builder.Services.TryAddSingleton<ICosmosDBSerializerFactory, DefaultCosmosDBSerializerFactory>();
+            
             return builder;
         }
 
