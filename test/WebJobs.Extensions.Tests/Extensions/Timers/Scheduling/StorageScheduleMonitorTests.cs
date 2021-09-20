@@ -2,10 +2,12 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.Storage.Blob;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Extensions.Configuration;
@@ -25,15 +27,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         {
             _scheduleMonitor = CreateScheduleMonitor(TestHostId);
 
-            Cleanup();
+            Cleanup().GetAwaiter().GetResult();
         }
 
         [Fact]
-        public void TimerStatusDirectory_ReturnsExpectedDirectory()
+        public void TimerStatusPath_ReturnsExpectedDirectory()
         {
-            CloudBlobDirectory directory = _scheduleMonitor.TimerStatusDirectory;
-            string expectedPath = string.Format("timers/{0}/", TestHostId);
-            Assert.Equal(expectedPath, directory.Prefix);
+            string path = _scheduleMonitor.TimerStatusPath;
+            string expectedPath = string.Format("timers/{0}", TestHostId);
+            Assert.Equal(expectedPath, path);
         }
 
         [Fact]
@@ -41,10 +43,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         {
             StorageScheduleMonitor localScheduleMonitor = CreateScheduleMonitor(null);
 
-            CloudBlobDirectory directory = null;
+            string path = null;
             var ex = Assert.Throws<InvalidOperationException>(() =>
             {
-                directory = localScheduleMonitor.TimerStatusDirectory;
+                path = localScheduleMonitor.TimerStatusPath;
             });
 
             Assert.Equal("Unable to determine host ID.", ex.Message);
@@ -74,6 +76,44 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         }
 
         [Fact]
+        public async Task UpdateStatusAsync_MultipleUpdates()
+        {
+            // no status, so should return null
+            ScheduleStatus status = await _scheduleMonitor.GetStatusAsync(TestTimerName);
+            Assert.Null(status);
+
+            // update the status
+            ScheduleStatus expected = new ScheduleStatus
+            {
+                Last = DateTime.Now.AddMinutes(-5),
+                Next = DateTime.Now.AddMinutes(5),
+                LastUpdated = DateTime.Now.AddMinutes(-5),
+            };
+            await _scheduleMonitor.UpdateStatusAsync(TestTimerName, expected);
+
+            // expect the status to be returned
+            status = await _scheduleMonitor.GetStatusAsync(TestTimerName);
+            Assert.Equal(expected.Last, status.Last);
+            Assert.Equal(expected.Next, status.Next);
+            Assert.Equal(expected.LastUpdated, status.LastUpdated);
+
+            // update the status again
+            ScheduleStatus expected2 = new ScheduleStatus
+            {
+                Last = DateTime.Now.AddMinutes(-10),
+                Next = DateTime.Now.AddMinutes(10),
+                LastUpdated = DateTime.Now.AddMinutes(-10),
+            };
+            await _scheduleMonitor.UpdateStatusAsync(TestTimerName, expected2);
+
+            // expect the status to be returned
+            status = await _scheduleMonitor.GetStatusAsync(TestTimerName);
+            Assert.Equal(expected2.Last, status.Last);
+            Assert.Equal(expected2.Next, status.Next);
+            Assert.Equal(expected2.LastUpdated, status.LastUpdated);
+        }
+
+        [Fact]
         public async Task UpdateStatusAsync_MultipleFunctions()
         {
             // update status for 3 functions
@@ -87,39 +127,36 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
                 await _scheduleMonitor.UpdateStatusAsync(TestTimerName + i.ToString(), expected);
             }
 
-            var segments = await _scheduleMonitor.TimerStatusDirectory.ListBlobsSegmentedAsync(
-                useFlatBlobListing: true,
-                blobListingDetails: BlobListingDetails.None,
-                maxResults: null,
-                currentToken: null,
-                options: null,
-                operationContext: null);
+            var blobList = new List<BlobHierarchyItem>();
+            var segmentResult = _scheduleMonitor.ContainerClient.GetBlobsByHierarchyAsync(prefix: _scheduleMonitor.TimerStatusPath);
+            var asyncEnumerator = segmentResult.GetAsyncEnumerator();
 
-            var statuses = segments.Results.Cast<CloudBlockBlob>().ToArray();
+            while (await asyncEnumerator.MoveNextAsync())
+            {
+                blobList.Add(asyncEnumerator.Current);
+            }
+
+            var statuses = blobList.Select(b => b.Blob.Name).ToArray();
             Assert.Equal(3, statuses.Length);
-            Assert.Equal("timers/testhostid/TestProgram.TestTimer0/status", statuses[0].Name);
-            Assert.Equal("timers/testhostid/TestProgram.TestTimer1/status", statuses[1].Name);
-            Assert.Equal("timers/testhostid/TestProgram.TestTimer2/status", statuses[2].Name);
+            Assert.Equal("timers/testhostid/TestProgram.TestTimer0/status", statuses[0]);
+            Assert.Equal("timers/testhostid/TestProgram.TestTimer1/status", statuses[1]);
+            Assert.Equal("timers/testhostid/TestProgram.TestTimer2/status", statuses[2]);
         }
 
-        private void Cleanup()
+        private async Task Cleanup()
         {
-            CloudBlobDirectory directory = _scheduleMonitor.TimerStatusDirectory;
-            foreach (CloudBlockBlob blob in directory.ListBlobsSegmentedAsync(
-                useFlatBlobListing: true,
-                blobListingDetails: BlobListingDetails.None,
-                maxResults: null,
-                currentToken: null,
-                options: null,
-                operationContext: null).Result.Results)
+            if (await _scheduleMonitor.ContainerClient.ExistsAsync())
             {
-                blob.DeleteAsync().Wait();
+                await foreach (var blobClient in _scheduleMonitor.ContainerClient.GetBlobsAsync(prefix: _scheduleMonitor.TimerStatusPath))
+                {
+                    await _scheduleMonitor.ContainerClient.DeleteBlobIfExistsAsync(blobClient.Name);
+                }
             }
         }
 
         public void Dispose()
         {
-            Cleanup();
+            Cleanup().GetAwaiter().GetResult();
         }
 
         private static StorageScheduleMonitor CreateScheduleMonitor(string hostId = null)
@@ -127,11 +164,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             var config = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
                 .Build();
-            var lockContainerManager = new DistributedLockManagerContainerProvider();
             ILoggerFactory loggerFactory = new LoggerFactory();
             loggerFactory.AddProvider(new TestLoggerProvider());
 
-            return new StorageScheduleMonitor(lockContainerManager, new TestIdProvider(hostId), config, loggerFactory);
+            var azureStorageProvider = new TestAzureStorageProvider(config);
+            return new StorageScheduleMonitor(new TestIdProvider(hostId), loggerFactory, azureStorageProvider);
         }
 
         private class TestIdProvider : Host.Executors.IHostIdProvider

@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\WebJobs.Extensions\WebJobs.Extensions.csproj" />
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.Timer.Storage\WebJobs.Extensions.Timer.Storage.csproj" />
   </ItemGroup>
 
   <ItemGroup>

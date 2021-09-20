@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Timer.Storage</AssemblyName>
+    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Timer.Storage</RootNamespace>
+    <PackageId>Microsoft.Azure.WebJobs.Extensions.Timer.Storage</PackageId>
+    <Description>This package contains storage-based implementations for Timers. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources.</Description>
+  </PropertyGroup>
+  <Import Project="..\..\build\common.props" />
+  <PropertyGroup>
+    <Version>$(TimerStorageVersion)</Version>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG;NETSTANDARD;NETSTANDARD2_0</DefineConstants>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.9.0" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Host.Storage" Version="5.0.0-beta.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WebJobs.Extensions\WebJobs.Extensions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="StyleCop.Analyzers" Version="1.1.0-beta009" />
+  </ItemGroup>
+
+</Project>

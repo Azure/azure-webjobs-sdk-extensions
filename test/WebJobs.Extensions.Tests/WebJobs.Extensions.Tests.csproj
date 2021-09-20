@@ -2,6 +2,7 @@
   <Import Project="..\..\build\common.props" />
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
     <IsPackable>false</IsPackable>
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Tests</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Tests</RootNamespace>
@@ -20,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\WebJobs.Extensions\WebJobs.Extensions.csproj" />
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.Timer.Storage\WebJobs.Extensions.Timer.Storage.csproj" />
     <ProjectReference Include="..\WebJobs.Extensions.Tests.Common\WebJobs.Extensions.Tests.Common.csproj" />
   </ItemGroup>
 

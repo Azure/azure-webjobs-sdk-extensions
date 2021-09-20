@@ -20,7 +20,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.27" />
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.30" />
     <PackageReference Include="SendGrid" Version="9.10.0" />
   </ItemGroup>
 
