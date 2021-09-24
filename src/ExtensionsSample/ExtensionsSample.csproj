@@ -31,7 +31,7 @@
     <ProjectReference Include="..\WebJobs.Extensions.CosmosDB\WebJobs.Extensions.CosmosDB.csproj" />
     <ProjectReference Include="..\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj" />
     <ProjectReference Include="..\WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.csproj" />
-    <ProjectReference Include="..\WebJobs.Extensions.Timer.Storage\WebJobs.Extensions.Timer.Storage.csproj" />
+    <ProjectReference Include="..\WebJobs.Extensions.Timers.Storage\WebJobs.Extensions.Timers.Storage.csproj" />
     <ProjectReference Include="..\WebJobs.Extensions.Twilio\WebJobs.Extensions.Twilio.csproj" />
     <ProjectReference Include="..\WebJobs.Extensions\WebJobs.Extensions.csproj" />
   </ItemGroup>

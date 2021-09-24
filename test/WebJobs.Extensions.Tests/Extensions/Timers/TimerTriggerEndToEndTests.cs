@@ -99,7 +99,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                     services.AddSingleton<IWebJobsExceptionHandler>(new TestExceptionHandler());
                     services.AddSingleton<INameResolver>(resolver);
                     services.AddSingleton<ITypeLocator>(locator);
-                    services.AddSingleton<IAzureStorageProvider, TestAzureStorageProvider>();
                 })
                 .ConfigureLogging(logging =>
                 {

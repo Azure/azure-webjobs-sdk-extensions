@@ -41,7 +41,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 .ConfigureServices(configuration =>
                 {
                     configuration.AddSingleton<INameResolver>(resolver);
-                    configuration.AddSingleton<IAzureStorageProvider, TestAzureStorageProvider>();
                 })
                 .ConfigureDefaultTestHost(builder =>
                 {

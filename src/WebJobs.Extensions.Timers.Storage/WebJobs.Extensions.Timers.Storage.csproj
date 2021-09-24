@@ -2,14 +2,14 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
-    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Timer.Storage</AssemblyName>
-    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Timer.Storage</RootNamespace>
-    <PackageId>Microsoft.Azure.WebJobs.Extensions.Timer.Storage</PackageId>
+    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Timers.Storage</AssemblyName>
+    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Timers.Storage</RootNamespace>
+    <PackageId>Microsoft.Azure.WebJobs.Extensions.Timers.Storage</PackageId>
     <Description>This package contains storage-based implementations for Timers. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources.</Description>
   </PropertyGroup>
   <Import Project="..\..\build\common.props" />
   <PropertyGroup>
-    <Version>$(TimerStorageVersion)</Version>
+    <Version>$(TimersStorageVersion)</Version>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>TRACE;DEBUG;NETSTANDARD;NETSTANDARD2_0</DefineConstants>

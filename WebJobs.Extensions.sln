@@ -45,7 +45,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.Twilio.T
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.MobileApps.Tests", "test\WebJobs.Extensions.MobileApps.Tests\WebJobs.Extensions.MobileApps.Tests.csproj", "{587D158D-D719-42EF-AE81-70E2E8142B46}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.Timer.Storage", "src\WebJobs.Extensions.Timer.Storage\WebJobs.Extensions.Timer.Storage.csproj", "{F2614016-394C-4A9E-8251-43BFD4B48A90}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.Timers.Storage", "src\WebJobs.Extensions.Timers.Storage\WebJobs.Extensions.Timers.Storage.csproj", "{F2614016-394C-4A9E-8251-43BFD4B48A90}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -6,11 +6,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -164,10 +166,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             var config = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
                 .Build();
+
+            IHost tempHost = new HostBuilder()
+                .ConfigureServices(services =>
+                {
+                    // Override configuration
+                    services.AddSingleton(config);
+                    services.AddAzureStorageCoreServices();
+                })
+                .ConfigureAppConfiguration(c => c.AddEnvironmentVariables())
+                .Build();
+
+            var azureStorageProvider = tempHost.Services.GetRequiredService<IAzureStorageProvider>();
             ILoggerFactory loggerFactory = new LoggerFactory();
             loggerFactory.AddProvider(new TestLoggerProvider());
 
-            var azureStorageProvider = new TestAzureStorageProvider(config);
             return new StorageScheduleMonitor(new TestIdProvider(hostId), loggerFactory, azureStorageProvider);
         }
 
