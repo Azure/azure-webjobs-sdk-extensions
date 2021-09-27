@@ -149,9 +149,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         {
             if (await _scheduleMonitor.ContainerClient.ExistsAsync())
             {
-                await foreach (var blobClient in _scheduleMonitor.ContainerClient.GetBlobsAsync(prefix: _scheduleMonitor.TimerStatusPath))
+                var asyncEnumerator = _scheduleMonitor.ContainerClient.GetBlobsAsync(prefix: _scheduleMonitor.TimerStatusPath).GetAsyncEnumerator();
+                while (await asyncEnumerator.MoveNextAsync())
                 {
-                    await _scheduleMonitor.ContainerClient.DeleteBlobIfExistsAsync(blobClient.Name);
+                    await _scheduleMonitor.ContainerClient.DeleteBlobIfExistsAsync(asyncEnumerator.Current.Name);
                 }
             }
         }
