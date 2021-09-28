@@ -76,7 +76,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             var rule2 = context.AddBindingRule<CosmosDBTriggerAttribute>();
             rule2.BindToTrigger(new CosmosDBTriggerAttributeBindingProviderGenerator(_nameResolver, _options, this, _loggerFactory));
 
-
             // gochaudh:
             // Currently, only when a Function in the app has a CosmosDB Trigger, will the CosmosDBTriggerBinding (and eventually the CosmosDBTriggerListener) be created.
             // When using the cache, we need a mechanism that tells us when there has been a change in any of the CosmosDB containers the app is interested in (not just via triggers,

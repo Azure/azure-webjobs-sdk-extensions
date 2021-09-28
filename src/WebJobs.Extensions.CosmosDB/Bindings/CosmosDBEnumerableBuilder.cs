@@ -39,6 +39,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 }
             }
 
+            // gochaudh:
+            // At this point, we have the query and the container name.
+            // We can check if the cache has a value associated with the result of that query, we can just pass an interface back
+            // of ICacheAwareReadObject with the appropriate information.
+            // From there on, azure-functions-host will know how to handle that.
+            // Without any caching (in the default case), the return result of the query is JSON object which azure-functions-host::ScriptInvocationContextExtensions.cs::ToRpcInvocationRequest
+            // knows how to handle. With the caching case, it will be similar to how blob is handled - the type would be JSON.
+            // In SharedMemoryManager.cs::IsSupported we will say that the particular JSON type (Newtonsoft.Json.Linq.JArray) is supported and in PutObjectAsync we will convert it serialized into bytes appropriately.
+            // Similarly in GetObjectAsync, if the worker sends JSON (in case of producing a CosmosDB output) we will add that to the types it supports (both in worker shared_memory_manager and SharedMemoryManager.cs)
             QueryRequestOptions queryRequestOptions = new QueryRequestOptions();
             if (!string.IsNullOrEmpty(attribute.PartitionKey))
             {
