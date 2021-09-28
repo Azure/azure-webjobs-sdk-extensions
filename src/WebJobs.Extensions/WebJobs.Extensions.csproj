@@ -8,7 +8,8 @@
   </PropertyGroup>
   <Import Project="..\..\build\common.props" />
   <PropertyGroup>
-    <Version>$(ExtensionsVersion)</Version>
+    <Version>4.0.5</Version>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>TRACE;DEBUG;NETSTANDARD;NETSTANDARD2_0</DefineConstants>

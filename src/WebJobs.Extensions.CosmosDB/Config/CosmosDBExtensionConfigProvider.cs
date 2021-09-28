@@ -75,6 +75,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             // Trigger
             var rule2 = context.AddBindingRule<CosmosDBTriggerAttribute>();
             rule2.BindToTrigger(new CosmosDBTriggerAttributeBindingProviderGenerator(_nameResolver, _options, this, _loggerFactory));
+
+
+            // gochaudh:
+            // Currently, only when a Function in the app has a CosmosDB Trigger, will the CosmosDBTriggerBinding (and eventually the CosmosDBTriggerListener) be created.
+            // When using the cache, we need a mechanism that tells us when there has been a change in any of the CosmosDB containers the app is interested in (not just via triggers,
+            // but also any containers it uses for input bindings - assuming they are not dynamic and all are known at start-time).
+            // This mechanism exists in the CosmosDBTriggerListener which uses it to detect any changes and trigger Functions accordingly. It uses the ChangeFeed mechanism.
+            // We need to start these listeners for all containers that the app is interested in regardless of the app having CosmosDB triggers or not.
+            // Any time we detect a change, we will remove all elements of that container from the FunctionDataCache.
+            // Right now, we do not have an API on IFunctionDataCache that can take a substring FunctionDataCacheKey and remove all matching entries; that needs to be implemented.
         }
 
         internal void ValidateConnection(CosmosDBAttribute attribute, Type paramType)

@@ -22,14 +22,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly CosmosDBOptions _options;
         private readonly ILogger _logger;
         private readonly CosmosDBExtensionConfigProvider _configProvider;
+        private readonly IFunctionDataCache _functionDataCache;
 
         public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, CosmosDBOptions options,
-            CosmosDBExtensionConfigProvider configProvider, ILoggerFactory loggerFactory)
+            CosmosDBExtensionConfigProvider configProvider, ILoggerFactory loggerFactory, IFunctionDataCache functionDataCache)
         {
             _nameResolver = nameResolver;
             _options = options;
             _configProvider = configProvider;
             _logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("CosmosDB"));
+            _functionDataCache = functionDataCache;
         }
 
         public async Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
@@ -113,7 +115,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 monitoredContainer,
                 leasesContainer, 
                 attribute,
-                _logger);
+                _logger,
+                _functionDataCache);
         }
 
         internal static TimeSpan ResolveTimeSpanFromMilliseconds(string nameOfProperty, TimeSpan baseTimeSpan, int? attributeValue)

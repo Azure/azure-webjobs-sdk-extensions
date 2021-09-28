@@ -2,8 +2,8 @@
   <PropertyGroup>
     <!-- Extensions can have independent versions and only increment when released -->
     <Version>3.0.0$(VersionSuffix)</Version>
-    <ExtensionsVersion>4.0.4$(VersionSuffix)</ExtensionsVersion> <!-- WebJobs.Extensions -->
-    <CosmosDBVersion>4.0.0$(VersionSuffix)</CosmosDBVersion>
+    <ExtensionsVersion>4.0.5$(VersionSuffix)</ExtensionsVersion> <!-- WebJobs.Extensions -->
+    <CosmosDBVersion>4.0.1$(VersionSuffix)</CosmosDBVersion>
     <HttpVersion>3.1.1$(VersionSuffix)</HttpVersion>
     <MobileAppsVersion>3.0.0$(VersionSuffix)</MobileAppsVersion>
     <SendGridVersion>3.0.2$(VersionSuffix)</SendGridVersion>
@@ -19,9 +19,9 @@
     <RepositoryUrl>https://github.com/Azure/azure-webjobs-sdk-extensions</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
-    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <!--<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageLicenseUrl>https://go.microsoft.com/fwlink/?linkid=2028464</PackageLicenseUrl>
-    <PackageIconUrl>https://raw.githubusercontent.com/Azure/azure-webjobs-sdk-extensions/dev/build/webjobs.png</PackageIconUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/Azure/azure-webjobs-sdk-extensions/dev/build/webjobs.png</PackageIconUrl>-->
     <PackageTags>Microsoft Azure WebJobs AzureFunctions</PackageTags>
     <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)..\src.ruleset</CodeAnalysisRuleSet>
     <UseSourceLink Condition="$(UseSourceLink) == '' And $(CI) != ''">true</UseSourceLink>

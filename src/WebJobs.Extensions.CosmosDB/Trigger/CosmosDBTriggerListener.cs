@@ -31,6 +31,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly string _processorName;
         private readonly string _functionId;
         private readonly ScaleMonitorDescriptor _scaleMonitorDescriptor;
+        private readonly IFunctionDataCache _functionDataCache;
         private ChangeFeedProcessor _host;
         private ChangeFeedProcessorBuilder _hostBuilder;
         private int _listenerStatus;
@@ -57,7 +58,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             Container monitoredContainer,
             Container leaseContainer,
             CosmosDBTriggerAttribute cosmosDBAttribute,
-            ILogger logger)
+            ILogger logger,
+            IFunctionDataCache functionDataCache)
         {
             this._logger = logger;
             this._executor = executor;
@@ -68,6 +70,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             this._leaseContainer = leaseContainer;
             this._cosmosDBAttribute = cosmosDBAttribute;
             this._scaleMonitorDescriptor = new ScaleMonitorDescriptor($"{_functionId}-CosmosDBTrigger-{_monitoredContainer.Database.Id}-{_monitoredContainer.Id}".ToLower());
+            this._functionDataCache = functionDataCache;
         }
 
         public ScaleMonitorDescriptor Descriptor => this._scaleMonitorDescriptor;
@@ -208,9 +211,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
         }
 
-        private Task ProcessChangesAsync(IReadOnlyCollection<T> docs, CancellationToken cancellationToken)
+        private Task RemoveContainerItemsFromCache()
         {
-            return this._executor.TryExecuteAsync(new TriggeredFunctionData() { TriggerValue = docs }, cancellationToken);
+            if (_functionDataCache == null || !_functionDataCache.IsEnabled)
+            {
+                return Task.CompletedTask;
+            }
+
+            // TODO IFunctionDataCache.RemoveMatching(FunctionDataCacheKey with monitoredContainer as substring)
+            return Task.CompletedTask;
+        }
+
+        private async Task<FunctionResult> ProcessChangesAsync(IReadOnlyCollection<T> docs, CancellationToken cancellationToken)
+        {
+            await RemoveContainerItemsFromCache();
+            FunctionResult result = await this._executor.TryExecuteAsync(new TriggeredFunctionData() { TriggerValue = docs }, cancellationToken);
+            return result;
         }
 
         public async Task<CosmosDBTriggerMetrics> GetMetricsAsync()

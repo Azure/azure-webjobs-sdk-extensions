@@ -65,7 +65,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
 
             var attribute = new CosmosDBTriggerAttribute(DatabaseName, ContainerName);
 
-            _listener = new CosmosDBTriggerListener<dynamic>(_mockExecutor.Object, _functionId, ProcessorName, _monitoredContainer.Object, _leasesContainer.Object, attribute, _loggerFactory.CreateLogger<CosmosDBTriggerListener<dynamic>>());
+            _listener = new CosmosDBTriggerListener<dynamic>(_mockExecutor.Object, _functionId, ProcessorName, _monitoredContainer.Object, _leasesContainer.Object, attribute, _loggerFactory.CreateLogger<CosmosDBTriggerListener<dynamic>>(), functionDataCache: null);
         }
 
         [Fact]
@@ -346,7 +346,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
            
             var mockExecutor = new Mock<ITriggeredFunctionExecutor>();
 
-            var listener = new MockListener<dynamic>(mockExecutor.Object, _monitoredContainer.Object, _leasesContainer.Object, attribute, NullLogger.Instance);
+            var listener = new MockListener<dynamic>(mockExecutor.Object, _monitoredContainer.Object, _leasesContainer.Object, attribute, NullLogger.Instance, functionDataCache: null);
 
             // Ensure that we can call StartAsync() multiple times to retry if there is an error.
             for (int i = 0; i < 3; i++)
@@ -367,8 +367,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 Container monitoredContainer,
                 Container leaseContainer,
                 CosmosDBTriggerAttribute cosmosDBAttribute,
-                ILogger logger)
-                : base(executor, Guid.NewGuid().ToString(), string.Empty, monitoredContainer, leaseContainer, cosmosDBAttribute, logger)
+                ILogger logger,
+                IFunctionDataCache functionDataCache)
+                : base(executor, Guid.NewGuid().ToString(), string.Empty, monitoredContainer, leaseContainer, cosmosDBAttribute, logger, functionDataCache)
             {
             }
 

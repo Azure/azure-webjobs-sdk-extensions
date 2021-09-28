@@ -24,6 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly Container _monitoredContainer;
         private readonly Container _leaseContainer;
         private readonly CosmosDBTriggerAttribute _cosmosDBAttribute;
+        private readonly IFunctionDataCache _functionDataCache;
 
         public CosmosDBTriggerBinding(
             ParameterInfo parameter, 
@@ -31,7 +32,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             Container monitoredContainer,
             Container leaseContainer,
             CosmosDBTriggerAttribute cosmosDBAttribute,
-            ILogger logger)
+            ILogger logger,
+            IFunctionDataCache functionDataCache)
         {
             _monitoredContainer = monitoredContainer;
             _leaseContainer = leaseContainer;
@@ -39,6 +41,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             _parameter = parameter;
             _processorName = processorName;
             _logger = logger;
+            _functionDataCache = functionDataCache;
         }
 
         /// <summary>
@@ -83,7 +86,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 this._monitoredContainer, 
                 this._leaseContainer, 
                 this._cosmosDBAttribute,
-                this._logger));
+                this._logger,
+                this._functionDataCache));
         }
 
         /// <summary>
