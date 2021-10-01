@@ -13,6 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions
     {
         public void Configure(IWebJobsBuilder builder)
         {
+            builder.AddTimers();
             builder.AddFiles();
             builder.AddWarmup();
         }

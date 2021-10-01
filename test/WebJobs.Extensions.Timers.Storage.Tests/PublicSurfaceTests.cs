@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests
@@ -11,35 +12,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
     public class PublicSurfaceTests
     {
         [Fact]
-        public void ExtensionsPublicSurface_LimitedToSpecificTypes()
+        public void TimersStoragePublicSurface_LimitedToSpecificTypes()
         {
-            var assembly = typeof(TimerTriggerAttribute).Assembly;
+            var assembly = typeof(StorageScheduleMonitor).Assembly;
 
             var expected = new[]
             {
-                "ConstantSchedule",
-                "CronSchedule",
-                "DailySchedule",
-                "FileAttribute",
-                "FileProcessor",
-                "FileProcessorFactoryContext",
-                "FilesOptions",
-                "FilesWebJobsBuilderExtensions",
-                "FileSystemScheduleMonitor",
-                "FileTriggerAttribute",
-                "IFileProcessorFactory",
-                "ScheduleMonitor",
-                "ScheduleStatus",
-                "TimerInfo",
-                "TimerWebJobsBuilderExtensions",
-                "TimerSchedule",
-                "TimersOptions",
-                "TimerTriggerAttribute",
-                "WeeklySchedule",
-                "ExtensionsWebJobsStartup",
-                "WarmupContext",
-                "WarmupTriggerAttribute",
-                "WarmupWebJobsBuilderExtensions"
+                "StorageScheduleMonitor",
+                "TimersStorageWebJobsBuilderExtensions",
             };
 
             AssertPublicTypes(expected, assembly);

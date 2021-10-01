@@ -16,7 +16,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
+namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Storage.Scheduling
 {
     [Trait("Category", "E2E")]
     public class StorageScheduleMonitorTests : IDisposable

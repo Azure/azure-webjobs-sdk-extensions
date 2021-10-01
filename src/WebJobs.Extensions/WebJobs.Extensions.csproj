@@ -21,7 +21,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.32-dev637683692850667066" />
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.32-dev637687016889828776" />
     <PackageReference Include="ncrontab.signed" Version="3.3.2" />
   </ItemGroup>
 

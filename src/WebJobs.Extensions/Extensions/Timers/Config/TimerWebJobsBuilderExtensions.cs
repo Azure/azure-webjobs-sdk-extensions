@@ -27,7 +27,7 @@ namespace Microsoft.Extensions.Hosting
 
             builder.AddExtension<TimersExtensionConfigProvider>()
                 .BindOptions<TimersOptions>();
-            builder.Services.AddSingleton<ScheduleMonitor, StorageScheduleMonitor>();
+            builder.Services.AddSingleton<ScheduleMonitor, FileSystemScheduleMonitor>();
 
             return builder;
         }

@@ -5,7 +5,7 @@
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Timers.Storage</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Timers.Storage</RootNamespace>
     <PackageId>Microsoft.Azure.WebJobs.Extensions.Timers.Storage</PackageId>
-    <Description>This package contains storage-based implementations for Timers. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources.</Description>
+    <Description>This package contains Azure Storage-based service implementations for Timers. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources.</Description>
   </PropertyGroup>
   <Import Project="..\..\build\common.props" />
   <PropertyGroup>
@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" Version="12.9.0" />
-    <PackageReference Include="Microsoft.Azure.WebJobs.Host.Storage" Version="5.0.0-beta.1-dev637683692850667066" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Host.Storage" Version="5.0.0-beta.1-dev637687016889828776" />
   </ItemGroup>
 
   <ItemGroup>

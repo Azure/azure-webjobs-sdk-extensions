@@ -17,9 +17,9 @@ using Newtonsoft.Json;
 namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
     /// <summary>
-    /// <see cref="ScheduleMonitor"/> that stores schedule information in blob storage.
+    /// <see cref="ScheduleMonitor"/> that stores schedule information in Azure Blob storage.
     /// </summary>
-    internal class StorageScheduleMonitor : ScheduleMonitor
+    public class StorageScheduleMonitor : ScheduleMonitor
     {
         private readonly IAzureStorageProvider _azureStorageProvider;
 
@@ -29,6 +29,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         private string _timerStatusPath;
         private BlobContainerClient _containerClient;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="StorageScheduleMonitor"/>.
+        /// </summary>
+        /// <param name="hostIdProvider"><see cref="IHostIdProvider"/> to retrieve the current Host ID.</param>
+        /// <param name="loggerFactory"><see cref="ILoggerFactory"/> for logging purposes.</param>
+        /// <param name="azureStorageProvider"><see cref="IAzureStorageProvider"/> to instantiate Blob-related clients for Timer operations.</param>
         public StorageScheduleMonitor(IHostIdProvider hostIdProvider, ILoggerFactory loggerFactory, IAzureStorageProvider azureStorageProvider)
         {
             _hostIdProvider = hostIdProvider ?? throw new ArgumentNullException(nameof(hostIdProvider));
