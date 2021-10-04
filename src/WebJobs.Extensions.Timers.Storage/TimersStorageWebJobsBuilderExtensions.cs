@@ -17,6 +17,10 @@ namespace Microsoft.Extensions.Hosting
         /// Adds the Timers Azure storage backed implementation to the provided <see cref="IWebJobsBuilder"/>.
         /// </summary>
         /// <param name="builder">The <see cref="IWebJobsBuilder"/> to configure.</param>
+        /// <remarks>
+        /// Note: Certain Azure services must be registered by the consumer to use the storage-backed implementation.
+        /// This is done in <see path="" cref="RuntimeStorageWebJobsBuilderExtensions.AddAzureStorageCoreServices(IWebJobsBuilder)"/>.
+        /// </remarks>
         public static IWebJobsBuilder AddTimersStorage(this IWebJobsBuilder builder)
         {
             if (builder == null)
@@ -25,7 +29,6 @@ namespace Microsoft.Extensions.Hosting
             }
 
             builder.Services.AddSingleton<ScheduleMonitor, StorageScheduleMonitor>();
-            builder.AddAzureStorageCoreServices();
 
             return builder;
         }
@@ -35,7 +38,10 @@ namespace Microsoft.Extensions.Hosting
         /// </summary>
         /// <param name="builder">The <see cref="IWebJobsBuilder"/> to configure.</param>
         /// <param name="configure">An <see cref="Action{TimersOptions}"/> to configure the provided <see cref="TimersOptions"/>.</param>
-        /// <remarks>Currently there are no configurable options on <see cref="TimersOptions"/> so this overload does not provide any utility.</remarks>
+        /// <remarks>Note: Certain Azure services must be registered by the consumer to use the storage-backed implementation.
+        /// This is done in <see path="" cref="RuntimeStorageWebJobsBuilderExtensions.AddAzureStorageCoreServices(IWebJobsBuilder)"/>.
+        /// Currently there are no configurable options on <see cref="TimersOptions"/> so this overload does not provide any utility.
+        /// </remarks>
         public static IWebJobsBuilder AddTimersStorage(this IWebJobsBuilder builder, Action<TimersOptions> configure)
         {
             if (builder == null)
@@ -50,6 +56,25 @@ namespace Microsoft.Extensions.Hosting
 
             builder.AddTimersStorage();
             builder.Services.Configure(configure);
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds the Timer extension along with Azure storage backed implementation to the provided <see cref="IWebJobsBuilder"/>.
+        /// </summary>
+        /// <param name="builder">The <see cref="IWebJobsBuilder"/> to configure.</param>
+        /// <remarks>Note: Certain Azure services must be registered by the consumer to use the storage-backed implementation.</remarks>
+        /// This is done in <see path="" cref="RuntimeStorageWebJobsBuilderExtensions.AddAzureStorageCoreServices(IWebJobsBuilder)"/>.
+        public static IWebJobsBuilder AddTimersWithStorage(this IWebJobsBuilder builder)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            builder.AddTimers();
+            builder.Services.AddSingleton<ScheduleMonitor, StorageScheduleMonitor>();
 
             return builder;
         }
