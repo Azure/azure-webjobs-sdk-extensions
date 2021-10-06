@@ -21,7 +21,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     /// </summary>
     public class StorageScheduleMonitor : ScheduleMonitor
     {
-        private readonly IAzureStorageProvider _azureStorageProvider;
+        private readonly IAzureBlobStorageProvider _azureStorageProvider;
 
         private readonly JsonSerializer _serializer;
         private readonly ILogger _logger;
@@ -34,8 +34,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// </summary>
         /// <param name="hostIdProvider"><see cref="IHostIdProvider"/> to retrieve the current Host ID.</param>
         /// <param name="loggerFactory"><see cref="ILoggerFactory"/> for logging purposes.</param>
-        /// <param name="azureStorageProvider"><see cref="IAzureStorageProvider"/> to instantiate Blob-related clients for Timer operations.</param>
-        public StorageScheduleMonitor(IHostIdProvider hostIdProvider, ILoggerFactory loggerFactory, IAzureStorageProvider azureStorageProvider)
+        /// <param name="azureStorageProvider"><see cref="IAzureBlobStorageProvider"/> to instantiate Blob-related clients for Timer operations.</param>
+        public StorageScheduleMonitor(IHostIdProvider hostIdProvider, ILoggerFactory loggerFactory, IAzureBlobStorageProvider azureStorageProvider)
         {
             _hostIdProvider = hostIdProvider ?? throw new ArgumentNullException(nameof(hostIdProvider));
             _logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Timer"));

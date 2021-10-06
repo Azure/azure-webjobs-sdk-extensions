@@ -178,7 +178,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Storage.Sch
                 .ConfigureAppConfiguration(c => c.AddEnvironmentVariables())
                 .Build();
 
-            var azureStorageProvider = tempHost.Services.GetRequiredService<IAzureStorageProvider>();
+            var azureStorageProvider = tempHost.Services.GetRequiredService<IAzureBlobStorageProvider>();
             ILoggerFactory loggerFactory = new LoggerFactory();
             loggerFactory.AddProvider(new TestLoggerProvider());
 
