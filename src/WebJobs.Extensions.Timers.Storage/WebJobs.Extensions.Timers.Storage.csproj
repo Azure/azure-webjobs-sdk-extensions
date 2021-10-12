@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" Version="12.9.0" />
-    <PackageReference Include="Microsoft.Azure.WebJobs.Host.Storage" Version="5.0.0-beta.1-dev637691468101117625" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Host.Storage" Version="5.0.0-beta.1-dev637696509934498632" />
   </ItemGroup>
 
   <ItemGroup>

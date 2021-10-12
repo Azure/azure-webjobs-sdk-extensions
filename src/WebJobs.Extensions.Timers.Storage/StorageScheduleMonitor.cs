@@ -78,7 +78,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             {
                 if (_containerClient == null)
                 {
-                    _containerClient = _azureStorageProvider.GetWebJobsBlobContainerClient();
+                    if (!_azureStorageProvider.TryCreateHostingBlobContainerClient(out _containerClient))
+                    {
+                        throw new InvalidOperationException($"Could not create BlobContainerClient for ScheduleMonitor");
+                    }
                 }
 
                 return _containerClient;
