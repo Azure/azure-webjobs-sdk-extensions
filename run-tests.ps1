@@ -29,12 +29,7 @@ function RunTest([string] $project, [string] $description,[bool] $skipBuild = $f
 
 
 $tests = @(
-  @{project ="WebJobs.Extensions.Tests"; description="Core extension Tests"},
-  @{project ="WebJobs.Extensions.Http.Tests"; description="HTTP extension tests"},
-  @{project ="WebJobs.Extensions.CosmosDB.Tests"; description="CosmosDB extension tests"},
-  @{project ="WebJobs.Extensions.MobileApps.Tests"; description="Mobile Apps extension tests"},
-  @{project ="WebJobs.Extensions.SendGrid.Tests"; description="SendGrid extension tests"},
-  @{project ="WebJobs.Extensions.Twilio.Tests"; description="Twilio extension tests"}
+  @{project ="WebJobs.Extensions.Tests"; description="Core extension Tests"}
 )
 
 $success = $true
