@@ -41,7 +41,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Storage.Sch
         }
 
         [Fact]
-        public void TimerStatusDirectory_HostIdNull_Throws()
+        public void TimerStatusPath_HostIdNull_Throws()
         {
             StorageScheduleMonitor localScheduleMonitor = CreateScheduleMonitor(null);
 

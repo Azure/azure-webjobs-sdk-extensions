@@ -16,6 +16,7 @@
     <PackageReference Include="Moq" Version="4.7.145" />
     <PackageReference Include="xunit" Version="2.3.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
+	<PackageReference Include="Microsoft.Azure.WebJobs.Host.Storage" Version="5.0.0-beta.1-dev637696509934498632" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,7 +25,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\WebJobs.Extensions.Http\WebJobs.Extensions.Http.csproj" />
-    <ProjectReference Include="..\..\src\WebJobs.Extensions.Timers.Storage\WebJobs.Extensions.Timers.Storage.csproj" />
     <ProjectReference Include="..\WebJobs.Extensions.Tests.Common\WebJobs.Extensions.Tests.Common.csproj" />
   </ItemGroup>
 

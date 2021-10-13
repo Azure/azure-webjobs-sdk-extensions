@@ -91,7 +91,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// <inheritdoc/>
         public override async Task<ScheduleStatus> GetStatusAsync(string timerName)
         {
-            BlobClient statusBlobClient = await GetStatusBlobReference(timerName, createContainerIfNotExists: false);
+            BlobClient statusBlobClient = await GetStatusBlobClient(timerName, createContainerIfNotExists: false);
 
             try
             {
@@ -132,7 +132,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
 
             try
             {
-                BlobClient statusBlobClient = await GetStatusBlobReference(timerName, createContainerIfNotExists: true);
+                BlobClient statusBlobClient = await GetStatusBlobClient(timerName, createContainerIfNotExists: true);
                 using (Stream stream = new MemoryStream(Encoding.UTF8.GetBytes(statusLine)))
                 {
                     await statusBlobClient.UploadAsync(stream, overwrite: true);
@@ -145,7 +145,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             }
         }
 
-        private async Task<BlobClient> GetStatusBlobReference(string timerName, bool createContainerIfNotExists = false)
+        private async Task<BlobClient> GetStatusBlobClient(string timerName, bool createContainerIfNotExists = false)
         {
             // Path to the status blob is:
             // timers/{hostId}/{timerName}/status
