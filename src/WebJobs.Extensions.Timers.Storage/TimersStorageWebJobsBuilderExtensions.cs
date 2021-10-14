@@ -70,7 +70,35 @@ namespace Microsoft.Extensions.Hosting
             }
 
             builder.AddTimers();
-            builder.Services.AddSingleton<ScheduleMonitor, StorageScheduleMonitor>();
+            builder.AddTimersStorage();
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds the Timer extension along with an Azure Storage backed implementation to the provided <see cref="IWebJobsBuilder"/>.
+        /// </summary>
+        /// <param name="builder">The <see cref="IWebJobsBuilder"/> to configure.</param>
+        /// <param name="configure">An <see cref="Action{TimersOptions}"/> to configure the provided <see cref="TimersOptions"/>.</param>
+        /// <remarks>
+        /// Currently there are no configurable options on <see cref="TimersOptions"/> so this overload does not provide any utility.
+        /// </remarks>
+        /// <returns>A reference to this instance after the operation has completed.</returns>
+        public static IWebJobsBuilder AddTimersWithStorage(this IWebJobsBuilder builder, Action<TimersOptions> configure)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            if (configure == null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+
+            builder.AddTimers();
+            builder.AddTimersStorage();
+            builder.Services.Configure(configure);
 
             return builder;
         }
