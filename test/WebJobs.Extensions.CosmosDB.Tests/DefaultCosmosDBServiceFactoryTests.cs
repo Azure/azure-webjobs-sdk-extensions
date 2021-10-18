@@ -39,6 +39,63 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         }
 
         [Fact]
+        public void UsesDefaultConnection_EvenIfConnectionStringSectionExists()
+        {
+            // Arrange
+            var myConfiguration = new Dictionary<string, string>
+            {
+                { Constants.DefaultConnectionStringName, "AccountEndpoint=https://defaultUri;AccountKey=c29tZV9rZXk=;" },
+                { "ConnectionStrings:SomeConnectionString", "NotAValidConnectionString" },
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(myConfiguration)
+                .Build();
+
+            var factory = new DefaultCosmosDBServiceFactory(configuration, Mock.Of<AzureComponentFactory>());
+            var options = new CosmosClientOptions()
+            {
+                ApplicationName = Guid.NewGuid().ToString()
+            };
+
+            // Act
+            var client = factory.CreateService(null, options);
+
+            // Assert
+            Assert.NotNull(client);
+            Assert.True(client.Endpoint.ToString().Contains("default"));
+            Assert.Equal(options.ApplicationName, client.ClientOptions.ApplicationName);
+        }
+
+        [Fact]
+        public void UsesDefaultConnection_FromConnectionStrings()
+        {
+            // Arrange
+            var myConfiguration = new Dictionary<string, string>
+            {
+                { $"ConnectionStrings:{Constants.DefaultConnectionStringName}", "AccountEndpoint=https://defaultUri;AccountKey=c29tZV9rZXk=;" },
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(myConfiguration)
+                .Build();
+
+            var factory = new DefaultCosmosDBServiceFactory(configuration, Mock.Of<AzureComponentFactory>());
+            var options = new CosmosClientOptions()
+            {
+                ApplicationName = Guid.NewGuid().ToString()
+            };
+
+            // Act
+            var client = factory.CreateService(null, options);
+
+            // Assert
+            Assert.NotNull(client);
+            Assert.True(client.Endpoint.ToString().Contains("default"));
+            Assert.Equal(options.ApplicationName, client.ClientOptions.ApplicationName);
+        }
+
+        [Fact]
         public void UsesConfig()
         {
             // Arrange
