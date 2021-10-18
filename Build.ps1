@@ -19,6 +19,7 @@ $projects =
     "WebJobs.Extensions.CosmosDB",
     "WebJobs.Extensions.Http",
     "WebJobs.Extensions.Twilio",
+    "WebJobs.Extensions.Timers.Storage"
     "WebJobs.Extensions.SendGrid"
 
 foreach ($project in $projects)
