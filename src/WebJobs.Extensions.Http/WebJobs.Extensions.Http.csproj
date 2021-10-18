@@ -11,8 +11,9 @@
     <Version>$(HttpVersion)</Version>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors />
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>NU5125</NoWarn>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <NoWarn>1701;1702;1591</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -30,7 +31,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Formatters.Json" Version="2.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.WebApiCompatShim" Version="2.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Routing" Version="2.1.0" />
-    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.31-dev637698288275877294" />
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.31" />
   </ItemGroup>
 
   <ItemGroup>

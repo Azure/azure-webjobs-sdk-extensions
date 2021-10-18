@@ -21,7 +21,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Mobile.Client" Version="4.0.2" />
-    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.31-dev637698288275877294" />
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.31" />
   </ItemGroup>
 
   <ItemGroup>

@@ -13,8 +13,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>TRACE;DEBUG;NETSTANDARD;NETSTANDARD2_0</DefineConstants>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors />
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>NU5125</NoWarn>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -23,7 +24,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" Version="12.9.0" />
-    <PackageReference Include="Microsoft.Azure.WebJobs.Host.Storage" Version="5.0.0-beta.1-dev637698288275877294" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Host.Storage" Version="5.0.0-beta.1" />
   </ItemGroup>
 
   <ItemGroup>

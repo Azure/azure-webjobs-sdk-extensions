@@ -12,8 +12,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>TRACE;DEBUG;NETSTANDARD;NETSTANDARD2_0</DefineConstants>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors />
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>NU5125</NoWarn>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -21,7 +22,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.31-dev637698288275877294" />
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.31" />
     <PackageReference Include="ncrontab.signed" Version="3.3.2" />
   </ItemGroup>
 
