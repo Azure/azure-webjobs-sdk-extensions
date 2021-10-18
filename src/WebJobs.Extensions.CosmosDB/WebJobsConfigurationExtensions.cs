@@ -39,7 +39,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         {
             if (configuration.GetSection("ConnectionStrings").Exists())
             {
-                return configuration.GetSection("ConnectionStrings").GetSection(connectionName);
+                IConfigurationSection onConnectionStrings = configuration.GetSection("ConnectionStrings").GetSection(connectionName);
+                if (onConnectionStrings.Exists())
+                {
+                    return onConnectionStrings;
+                }
             }
 
             return configuration.GetSection(connectionName);
