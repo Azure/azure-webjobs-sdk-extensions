@@ -70,7 +70,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             this._cosmosDBAttribute = cosmosDBAttribute;
             this._scaleMonitorDescriptor = new ScaleMonitorDescriptor($"{_functionId}-CosmosDBTrigger-{_monitoredContainer.Database.Id}-{_monitoredContainer.Id}".ToLower());
             this._healthMonitor = new CosmosDBTriggerHealthMonitor(logger);
-
         }
 
         public ScaleMonitorDescriptor Descriptor => this._scaleMonitorDescriptor;
@@ -154,9 +153,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (this._hostBuilder == null)
             {
                 this._hostBuilder = this._monitoredContainer.GetChangeFeedProcessorBuilder<T>(this._processorName, this.ProcessChangesAsync)
-                    .WithErrorNotification(this._healthMonitor.OnError)
-                    .WithLeaseAcquireNotification(this._healthMonitor.OnLeaseAcquire)
-                    .WithLeaseReleaseNotification(this._healthMonitor.OnLeaseRelease)
+                    .WithErrorNotification(this._healthMonitor.OnErrorAsync)
+                    .WithLeaseAcquireNotification(this._healthMonitor.OnLeaseAcquireAsync)
+                    .WithLeaseReleaseNotification(this._healthMonitor.OnLeaseReleaseAsync)
                     .WithInstanceName(this._hostName)
                     .WithLeaseContainer(this._leaseContainer);
 
