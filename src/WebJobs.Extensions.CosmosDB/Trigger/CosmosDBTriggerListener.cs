@@ -31,6 +31,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly string _processorName;
         private readonly string _functionId;
         private readonly ScaleMonitorDescriptor _scaleMonitorDescriptor;
+        private readonly CosmosDBTriggerHealthMonitor _healthMonitor;
         private ChangeFeedProcessor _host;
         private ChangeFeedProcessorBuilder _hostBuilder;
         private int _listenerStatus;
@@ -68,6 +69,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             this._leaseContainer = leaseContainer;
             this._cosmosDBAttribute = cosmosDBAttribute;
             this._scaleMonitorDescriptor = new ScaleMonitorDescriptor($"{_functionId}-CosmosDBTrigger-{_monitoredContainer.Database.Id}-{_monitoredContainer.Id}".ToLower());
+            this._healthMonitor = new CosmosDBTriggerHealthMonitor(logger);
+
         }
 
         public ScaleMonitorDescriptor Descriptor => this._scaleMonitorDescriptor;
@@ -151,6 +154,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (this._hostBuilder == null)
             {
                 this._hostBuilder = this._monitoredContainer.GetChangeFeedProcessorBuilder<T>(this._processorName, this.ProcessChangesAsync)
+                    .WithErrorNotification(this._healthMonitor.OnError)
+                    .WithLeaseAcquireNotification(this._healthMonitor.OnLeaseAcquire)
+                    .WithLeaseReleaseNotification(this._healthMonitor.OnLeaseRelease)
                     .WithInstanceName(this._hostName)
                     .WithLeaseContainer(this._leaseContainer);
 
@@ -208,8 +214,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
         }
 
-        private Task ProcessChangesAsync(IReadOnlyCollection<T> docs, CancellationToken cancellationToken)
+        private Task ProcessChangesAsync(ChangeFeedProcessorContext context, IReadOnlyCollection<T> docs, CancellationToken cancellationToken)
         {
+            this._healthMonitor.OnChangesDelivered(context);
             return this._executor.TryExecuteAsync(new TriggeredFunctionData() { TriggerValue = docs }, cancellationToken);
         }
 
