@@ -15,11 +15,7 @@ dotnet build -v q
 if (-not $?) { exit 1 }
 
 $projects =
-    "WebJobs.Extensions",
-    "WebJobs.Extensions.CosmosDB",
-    "WebJobs.Extensions.Http",
-    "WebJobs.Extensions.Twilio",
-    "WebJobs.Extensions.SendGrid"
+    "WebJobs.Extensions"
 
 foreach ($project in $projects)
 {
