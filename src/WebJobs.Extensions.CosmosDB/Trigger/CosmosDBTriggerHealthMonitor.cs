@@ -22,10 +22,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         {
             switch (exception)
             {
-                //case ChangeFeedProcessorUserException userException:
-                //    this.logger.LogWarning(userException.InnerException, "Lease {LeaseToken} encountered an unhandled user exception during processing.", leaseToken);
-                //    this.logger.LogDebug("Lease {LeaseToken} has error diagnostics {Diagnostics}", leaseToken, userException.ExceptionContext.Diagnostics);
-                //    break;
+                case ChangeFeedProcessorUserException userException:
+                    this.logger.LogWarning(userException.InnerException, "Lease {LeaseToken} encountered an unhandled user exception during processing.", leaseToken);
+                    this.logger.LogDebug("Lease {LeaseToken} has error diagnostics {Diagnostics}", leaseToken, userException.ChangeFeedProcessorContext.Diagnostics);
+                    break;
                 case CosmosException cosmosException when cosmosException.StatusCode == HttpStatusCode.RequestTimeout || cosmosException.StatusCode == HttpStatusCode.ServiceUnavailable:
                     this.logger.LogWarning(cosmosException, "Lease {LeaseToken} experiencing transient connectivity issues.", leaseToken);
                     break;

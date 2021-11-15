@@ -99,35 +99,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             Assert.True(loggedEvent.Message.Contains(leaseToken) && loggedEvent.Message.Contains(diagnosticsString));
         }
 
-        //[Theory]
-        //public async Task LogsOnUserException()
-        //{
-        //    MockedLogger mockedLogger = new MockedLogger();
-        //    CosmosDBTriggerHealthMonitor cosmosDBTriggerHealthMonitor = new CosmosDBTriggerHealthMonitor(mockedLogger);
-        //    string leaseToken = Guid.NewGuid().ToString();
-        //    string diagnosticsString = Guid.NewGuid().ToString();
-        //    Mock<CosmosDiagnostics> diagnostics = new Mock<CosmosDiagnostics>();
-        //    diagnostics.Setup(m => m.ToString()).Returns(diagnosticsString);
-        //    Exception exception = new Exception();
-        //    Mock<ChangeFeedProcessorContext> context = new Mock<ChangeFeedProcessorContext>();
-        //    context.Setup(m => m.LeaseToken).Returns(leaseToken);
-        //    context.Setup(m => m.Diagnostics).Returns(diagnostics.Object);
-        //    ChangeFeedProcessorUserException userException = new ChangeFeedProcessorUserException(exception, context.Object);
+        [Fact]
+        public async Task LogsOnUserException()
+        {
+            MockedLogger mockedLogger = new MockedLogger();
+            CosmosDBTriggerHealthMonitor cosmosDBTriggerHealthMonitor = new CosmosDBTriggerHealthMonitor(mockedLogger);
+            string leaseToken = Guid.NewGuid().ToString();
+            string diagnosticsString = Guid.NewGuid().ToString();
+            Mock<CosmosDiagnostics> diagnostics = new Mock<CosmosDiagnostics>();
+            diagnostics.Setup(m => m.ToString()).Returns(diagnosticsString);
+            Exception exception = new Exception();
+            Mock<ChangeFeedProcessorContext> context = new Mock<ChangeFeedProcessorContext>();
+            context.Setup(m => m.LeaseToken).Returns(leaseToken);
+            context.Setup(m => m.Diagnostics).Returns(diagnostics.Object);
+            ChangeFeedProcessorUserException userException = new ChangeFeedProcessorUserException(exception, context.Object);
 
-        //    await cosmosDBTriggerHealthMonitor.OnErrorAsync(leaseToken, userException);
+            await cosmosDBTriggerHealthMonitor.OnErrorAsync(leaseToken, userException);
 
-        //    Assert.Equal(2, mockedLogger.Events.Count);
+            Assert.Equal(2, mockedLogger.Events.Count);
 
-        //    LogEvent loggedEvent = mockedLogger.Events[0];
-        //    Assert.Equal(LogLevel.Warning, loggedEvent.LogLevel);
-        //    Assert.Equal(exception, loggedEvent.Exception);
-        //    Assert.True(loggedEvent.Message.Contains(leaseToken));
+            LogEvent loggedEvent = mockedLogger.Events[0];
+            Assert.Equal(LogLevel.Warning, loggedEvent.LogLevel);
+            Assert.Equal(exception, loggedEvent.Exception);
+            Assert.True(loggedEvent.Message.Contains(leaseToken));
 
-        //    loggedEvent = mockedLogger.Events[1];
-        //    Assert.Equal(LogLevel.Debug, loggedEvent.LogLevel);
-        //    Assert.Null(loggedEvent.Exception);
-        //    Assert.True(loggedEvent.Message.Contains(leaseToken) && loggedEvent.Message.Contains(diagnosticsString));
-        //}
+            loggedEvent = mockedLogger.Events[1];
+            Assert.Equal(LogLevel.Debug, loggedEvent.LogLevel);
+            Assert.Null(loggedEvent.Exception);
+            Assert.True(loggedEvent.Message.Contains(leaseToken) && loggedEvent.Message.Contains(diagnosticsString));
+        }
 
         [Fact]
         public async Task LogsOtherException()
