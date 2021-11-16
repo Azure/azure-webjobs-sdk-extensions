@@ -26,7 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             Assert.Single(mockedLogger.Events);
 
             LogEvent loggedEvent = mockedLogger.Events[0];
-            Assert.Equal(LogLevel.Information, loggedEvent.LogLevel);
+            Assert.Equal(LogLevel.Debug, loggedEvent.LogLevel);
             Assert.Null(loggedEvent.Exception);
             Assert.True(loggedEvent.Message.Contains(leaseToken));
         }
@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             Assert.Single(mockedLogger.Events);
 
             LogEvent loggedEvent = mockedLogger.Events[0];
-            Assert.Equal(LogLevel.Information, loggedEvent.LogLevel);
+            Assert.Equal(LogLevel.Debug, loggedEvent.LogLevel);
             Assert.Null(loggedEvent.Exception);
             Assert.True(loggedEvent.Message.Contains(leaseToken));
         }
