@@ -11,10 +11,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
     internal class CosmosDBTriggerHealthMonitor
     {
-        private static readonly EventId OnError = new EventId(1, "OnTriggerError");
-        private static readonly EventId OnAcquire = new EventId(2, "OnTriggerAcquire");
-        private static readonly EventId OnRelease = new EventId(3, "OnTriggerRelease");
-        private static readonly EventId OnDelivery = new EventId(4, "OnTriggerDelivery");
         private readonly ILogger logger;
 
         public CosmosDBTriggerHealthMonitor(ILogger logger)
@@ -27,20 +23,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             switch (exception)
             {
                 case ChangeFeedProcessorUserException userException:
-                    this.logger.LogWarning(OnError, userException.InnerException, "Lease {LeaseToken} encountered an unhandled user exception during processing.", leaseToken);
-                    this.logger.LogDebug(OnError, "Lease {LeaseToken} has error diagnostics {Diagnostics}", leaseToken, userException.ChangeFeedProcessorContext.Diagnostics);
+                    this.logger.LogWarning(Events.OnError, userException.InnerException, "Lease {LeaseToken} encountered an unhandled user exception during processing.", leaseToken);
+                    this.logger.LogDebug(Events.OnError, "Lease {LeaseToken} has error diagnostics {Diagnostics}", leaseToken, userException.ChangeFeedProcessorContext.Diagnostics);
                     break;
                 case CosmosException cosmosException when cosmosException.StatusCode == HttpStatusCode.RequestTimeout || cosmosException.StatusCode == HttpStatusCode.ServiceUnavailable:
-                    this.logger.LogWarning(OnError, cosmosException, "Lease {LeaseToken} experiencing transient connectivity issues.", leaseToken);
+                    this.logger.LogWarning(Events.OnError, cosmosException, "Lease {LeaseToken} experiencing transient connectivity issues.", leaseToken);
                     break;
                 default:
-                    this.logger.LogError(OnError, exception, "Lease {LeaseToken} experienced an error during processing.", leaseToken);
+                    this.logger.LogError(Events.OnError, exception, "Lease {LeaseToken} experienced an error during processing.", leaseToken);
                     break;
             }
 
             if (exception is CosmosException asCosmosException)
             {
-                this.logger.LogDebug(OnError, "Lease {LeaseToken} has error diagnostics {Diagnostics}", leaseToken, asCosmosException.Diagnostics);
+                this.logger.LogDebug(Events.OnError, "Lease {LeaseToken} has error diagnostics {Diagnostics}", leaseToken, asCosmosException.Diagnostics);
             }
 
             return Task.CompletedTask;
@@ -48,19 +44,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public Task OnLeaseAcquireAsync(string leaseToken)
         {
-            this.logger.LogDebug(OnAcquire, "Lease {LeaseToken} was acquired to start processing.", leaseToken);
+            this.logger.LogDebug(Events.OnAcquire, "Lease {LeaseToken} was acquired to start processing.", leaseToken);
             return Task.CompletedTask;
         }
 
         public Task OnLeaseReleaseAsync(string leaseToken)
         {
-            this.logger.LogDebug(OnRelease, "Lease {LeaseToken} was released.", leaseToken);
+            this.logger.LogDebug(Events.OnRelease, "Lease {LeaseToken} was released.", leaseToken);
             return Task.CompletedTask;
         }
 
         public void OnChangesDelivered(ChangeFeedProcessorContext context)
         {
-            this.logger.LogDebug(OnDelivery, "Events delivered to lease {LeaseToken} with diagnostics {Diagnostics}", context.LeaseToken, context.Diagnostics);
+            this.logger.LogDebug(Events.OnDelivery, "Events delivered to lease {LeaseToken} with diagnostics {Diagnostics}", context.LeaseToken, context.Diagnostics);
         }
     }
 }
