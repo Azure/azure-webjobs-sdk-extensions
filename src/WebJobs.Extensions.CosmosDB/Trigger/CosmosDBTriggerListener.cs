@@ -213,10 +213,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
         }
 
-        private Task ProcessChangesAsync(ChangeFeedProcessorContext context, IReadOnlyCollection<T> docs, CancellationToken cancellationToken)
+        private async Task ProcessChangesAsync(ChangeFeedProcessorContext context, IReadOnlyCollection<T> docs, CancellationToken cancellationToken)
         {
             this._healthMonitor.OnChangesDelivered(context);
-            return this._executor.TryExecuteAsync(new TriggeredFunctionData() { TriggerValue = docs }, cancellationToken);
+            FunctionResult result = await this._executor.TryExecuteAsync(new TriggeredFunctionData() { TriggerValue = docs }, cancellationToken);
+            if (!result.Succeeded
+                && result.Exception != null)
+            {
+                ChangeFeedProcessorUserException userException = new ChangeFeedProcessorUserException(result.Exception, context);
+                await this._healthMonitor.OnErrorAsync(context.LeaseToken, userException);
+            }
         }
 
         public async Task<CosmosDBTriggerMetrics> GetMetricsAsync()
