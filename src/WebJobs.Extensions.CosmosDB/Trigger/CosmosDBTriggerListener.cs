@@ -31,6 +31,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly string _processorName;
         private readonly string _functionId;
         private readonly ScaleMonitorDescriptor _scaleMonitorDescriptor;
+        private readonly CosmosDBTriggerHealthMonitor _healthMonitor;
         private ChangeFeedProcessor _host;
         private ChangeFeedProcessorBuilder _hostBuilder;
         private int _listenerStatus;
@@ -68,6 +69,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             this._leaseContainer = leaseContainer;
             this._cosmosDBAttribute = cosmosDBAttribute;
             this._scaleMonitorDescriptor = new ScaleMonitorDescriptor($"{_functionId}-CosmosDBTrigger-{_monitoredContainer.Database.Id}-{_monitoredContainer.Id}".ToLower());
+            this._healthMonitor = new CosmosDBTriggerHealthMonitor(logger);
         }
 
         public ScaleMonitorDescriptor Descriptor => this._scaleMonitorDescriptor;
@@ -132,7 +134,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
             catch (Exception ex)
             {
-                this._logger.LogWarning($"Stopping the observer failed, potentially it was never started. Exception: {ex.Message}.");
+                this._logger.LogWarning(Events.OnListenerStopError, "Stopping the observer failed, potentially it was never started. Exception: {Exception}.", ex);
             }
         }
 
@@ -151,6 +153,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (this._hostBuilder == null)
             {
                 this._hostBuilder = this._monitoredContainer.GetChangeFeedProcessorBuilder<T>(this._processorName, this.ProcessChangesAsync)
+                    .WithErrorNotification(this._healthMonitor.OnErrorAsync)
+                    .WithLeaseAcquireNotification(this._healthMonitor.OnLeaseAcquireAsync)
+                    .WithLeaseReleaseNotification(this._healthMonitor.OnLeaseReleaseAsync)
                     .WithInstanceName(this._hostName)
                     .WithLeaseContainer(this._leaseContainer);
 
@@ -208,9 +213,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
         }
 
-        private Task ProcessChangesAsync(IReadOnlyCollection<T> docs, CancellationToken cancellationToken)
+        private async Task ProcessChangesAsync(ChangeFeedProcessorContext context, IReadOnlyCollection<T> docs, CancellationToken cancellationToken)
         {
-            return this._executor.TryExecuteAsync(new TriggeredFunctionData() { TriggerValue = docs }, cancellationToken);
+            this._healthMonitor.OnChangesDelivered(context);
+            FunctionResult result = await this._executor.TryExecuteAsync(new TriggeredFunctionData() { TriggerValue = docs }, cancellationToken);
+            if (!result.Succeeded
+                && result.Exception != null)
+            {
+                ChangeFeedProcessorUserException userException = new ChangeFeedProcessorUserException(result.Exception, context);
+                await this._healthMonitor.OnErrorAsync(context.LeaseToken, userException);
+            }
         }
 
         public async Task<CosmosDBTriggerMetrics> GetMetricsAsync()
@@ -238,7 +250,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 if (!TryHandleCosmosException(e))
                 {
-                    _logger.LogWarning("Unable to handle {0}: {1}", e.GetType().ToString(), e.Message);
+                    _logger.LogWarning(Events.OnScaling, "Unable to handle {0}: {1}", e.GetType().ToString(), e.Message);
                     if (e is InvalidOperationException)
                     {
                         throw;
@@ -267,7 +279,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                     errormsg = e.ToString();
                 }
 
-                _logger.LogWarning(errormsg);
+                _logger.LogWarning(Events.OnScaling, errormsg);
             }
 
             return new CosmosDBTriggerMetrics
@@ -314,8 +326,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (partitionCount > 0 && partitionCount < workerCount)
             {
                 status.Vote = ScaleVote.ScaleIn;
-                _logger.LogInformation(string.Format($"WorkerCount ({workerCount}) > PartitionCount ({partitionCount})."));
-                _logger.LogInformation(string.Format($"Number of instances ({workerCount}) is too high relative to number " +
+                _logger.LogInformation(Events.OnScaling, string.Format($"WorkerCount ({workerCount}) > PartitionCount ({partitionCount})."));
+                _logger.LogInformation(Events.OnScaling, string.Format($"Number of instances ({workerCount}) is too high relative to number " +
                                                      $"of partitions for container ({this._monitoredContainer.Id}, {partitionCount})."));
                 return status;
             }
@@ -331,8 +343,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (latestRemainingWork > workerCount * 1000)
             {
                 status.Vote = ScaleVote.ScaleOut;
-                _logger.LogInformation(string.Format($"RemainingWork ({latestRemainingWork}) > WorkerCount ({workerCount}) * 1,000."));
-                _logger.LogInformation(string.Format($"Remaining work for container ({this._monitoredContainer.Id}, {latestRemainingWork}) " +
+                _logger.LogInformation(Events.OnScaling, string.Format($"RemainingWork ({latestRemainingWork}) > WorkerCount ({workerCount}) * 1,000."));
+                _logger.LogInformation(Events.OnScaling, string.Format($"Remaining work for container ({this._monitoredContainer.Id}, {latestRemainingWork}) " +
                                                      $"is too high relative to the number of instances ({workerCount})."));
                 return status;
             }
@@ -341,8 +353,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (documentsWaiting && partitionCount > 0 && partitionCount > workerCount)
             {
                 status.Vote = ScaleVote.ScaleOut;
-                _logger.LogInformation(string.Format($"CosmosDB container '{this._monitoredContainer.Id}' has documents waiting to be processed."));
-                _logger.LogInformation(string.Format($"There are {workerCount} instances relative to {partitionCount} partitions."));
+                _logger.LogInformation(Events.OnScaling, string.Format($"CosmosDB container '{this._monitoredContainer.Id}' has documents waiting to be processed."));
+                _logger.LogInformation(Events.OnScaling, string.Format($"There are {workerCount} instances relative to {partitionCount} partitions."));
                 return status;
             }
 
@@ -351,7 +363,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (isIdle)
             {
                 status.Vote = ScaleVote.ScaleIn;
-                _logger.LogInformation(string.Format($"'{this._monitoredContainer.Id}' is idle."));
+                _logger.LogInformation(Events.OnScaling, string.Format($"'{this._monitoredContainer.Id}' is idle."));
                 return status;
             }
 
@@ -365,7 +377,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (remainingWorkIncreasing)
             {
                 status.Vote = ScaleVote.ScaleOut;
-                _logger.LogInformation($"Remaining work is increasing for '{this._monitoredContainer.Id}'.");
+                _logger.LogInformation(Events.OnScaling, $"Remaining work is increasing for '{this._monitoredContainer.Id}'.");
                 return status;
             }
 
@@ -377,11 +389,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (remainingWorkDecreasing)
             {
                 status.Vote = ScaleVote.ScaleIn;
-                _logger.LogInformation($"Remaining work is decreasing for '{this._monitoredContainer.Id}'.");
+                _logger.LogInformation(Events.OnScaling, $"Remaining work is decreasing for '{this._monitoredContainer.Id}'.");
                 return status;
             }
 
-            _logger.LogInformation($"CosmosDB container '{this._monitoredContainer.Id}' is steady.");
+            _logger.LogInformation(Events.OnScaling, $"CosmosDB container '{this._monitoredContainer.Id}' is steady.");
 
             return status;
         }
