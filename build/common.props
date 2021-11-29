@@ -29,7 +29,7 @@
     <SignAssembly>true</SignAssembly>
     <DelaySign>true</DelaySign>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)PublicKey.snk</AssemblyOriginatorKeyFile>
-    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <GenerateDocumentation>true</GenerateDocumentation>
     <NoWarn>SA1629;SA1623;1591;1573;1591</NoWarn>
   </PropertyGroup>
 
