@@ -136,7 +136,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return TimeSpan.FromMilliseconds(attributeValue.Value);
         }
 
-        internal static string ResolveAttributeValue(INameResolver nameResolver, string attributeValue)
+        private static string ResolveAttributeValue(INameResolver nameResolver, string attributeValue)
         {
             return nameResolver.ResolveWholeString(attributeValue) ?? attributeValue;
         }
