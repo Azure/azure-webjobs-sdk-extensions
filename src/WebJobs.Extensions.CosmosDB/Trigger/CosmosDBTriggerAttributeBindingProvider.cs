@@ -101,6 +101,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
                 monitoredContainer = monitoredCosmosDBService.GetContainer(monitoredDatabaseName, monitoredCollectionName);
                 leasesContainer = leaseCosmosDBService.GetContainer(leasesDatabaseName, leasesCollectionName);
+
+                if (!string.IsNullOrEmpty(attribute.StartFromTime))
+                {
+                    attribute.StartFromTime = ResolveAttributeValue(attribute.StartFromTime);
+                }
             }
             catch (Exception ex)
             {

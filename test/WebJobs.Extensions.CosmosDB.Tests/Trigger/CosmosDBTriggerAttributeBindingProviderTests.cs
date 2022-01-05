@@ -74,6 +74,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             get { return ValidCosmosDBTriggerBindingsCreateLeaseContainer.GetParameters(); }
         }
 
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsWithStartTimeParameters
+        {
+            get { return ValidCosmosDBTriggerBindigsWithStartTime.GetParameters(); }
+        }
+
         [Theory]
         [MemberData(nameof(InvalidCosmosDBTriggerParameters))]
         public async Task InvalidParameters_Fail(ParameterInfo parameter)
@@ -415,6 +420,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             Assert.Equal(new Uri("https://fromSettings"), binding.LeaseContainer.Database.Client.Endpoint);
         }
 
+        [Theory]
+        [MemberData(nameof(ValidCosmosDBTriggerBindigsWithStartTimeParameters))]
+        public async Task ValidStartFromTime_Succeed(ParameterInfo parameter)
+        {
+            var nameResolver = new TestNameResolver();
+            nameResolver.Values["StartTimeValue"] = "2021-12-21T10:20:00Z";
+
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    // Verify we load from connection strings first
+                    { "CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;" },
+                })
+                .Build();
+
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(nameResolver, _options, CreateExtensionConfigProvider(_options, config), _loggerFactory);
+
+            CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+
+            Assert.Equal(typeof(IReadOnlyCollection<dynamic>), binding.TriggerValueType);
+            Assert.Equal(new Uri("https://fromSettings"), binding.MonitoredContainer.Database.Client.Endpoint);
+            Assert.Equal("2021-12-21T10:20:00Z", binding.CosmosDBAttribute.StartFromTime);
+        }
+
         private static ParameterInfo GetFirstParameter(Type type, string methodName)
         {
             var methodInfo = type.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
@@ -665,6 +694,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             public static IEnumerable<ParameterInfo[]> GetParameters()
             {
                 var type = typeof(ValidCosmosDBTriggerBindingsCreateLeaseContainer);
+
+                return new[]
+                {
+                    new[] { GetFirstParameter(type, "Func1") }
+                };
+            }
+        }
+
+        private static class ValidCosmosDBTriggerBindigsWithStartTime
+        {
+            public static void Func1([CosmosDBTrigger("ItemDB", "ItemCollection", Connection = "CosmosDBConnectionString", StartFromTime = "%StartTimeValue%")] IReadOnlyList<dynamic> docs)
+            {
+            }
+
+            public static IEnumerable<ParameterInfo[]> GetParameters()
+            {
+                var type = typeof(ValidCosmosDBTriggerBindigsWithStartTime);
 
                 return new[]
                 {
