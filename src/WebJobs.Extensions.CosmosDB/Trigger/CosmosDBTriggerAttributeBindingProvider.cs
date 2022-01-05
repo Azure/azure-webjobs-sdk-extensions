@@ -49,12 +49,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             Container monitoredContainer;
             Container leasesContainer;
-            string monitoredDatabaseName = ResolveAttributeValue(_nameResolver, attribute.DatabaseName);
-            string monitoredCollectionName = ResolveAttributeValue(_nameResolver, attribute.ContainerName);
-            string leasesDatabaseName = ResolveAttributeValue(_nameResolver, attribute.LeaseDatabaseName);
-            string leasesCollectionName = ResolveAttributeValue(_nameResolver, attribute.LeaseContainerName);
-            string processorName = ResolveAttributeValue(_nameResolver, attribute.LeaseContainerPrefix) ?? string.Empty;
-            string preferredLocations = ResolveAttributeValue(_nameResolver, attribute.PreferredLocations);
+            string monitoredDatabaseName = ResolveAttributeValue(attribute.DatabaseName);
+            string monitoredCollectionName = ResolveAttributeValue(attribute.ContainerName);
+            string leasesDatabaseName = ResolveAttributeValue(attribute.LeaseDatabaseName);
+            string leasesCollectionName = ResolveAttributeValue(attribute.LeaseContainerName);
+            string processorName = ResolveAttributeValue(attribute.LeaseContainerPrefix) ?? string.Empty;
+            string preferredLocations = ResolveAttributeValue(attribute.PreferredLocations);
 
             try
             {
@@ -104,7 +104,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
                 if (!string.IsNullOrEmpty(attribute.StartFromTime))
                 {
-                    attribute.StartFromTime = ResolveAttributeValue(_nameResolver, attribute.StartFromTime);
+                    attribute.StartFromTime = ResolveAttributeValue(attribute.StartFromTime);
                 }
             }
             catch (Exception ex)
@@ -134,11 +134,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
 
             return TimeSpan.FromMilliseconds(attributeValue.Value);
-        }
-
-        private static string ResolveAttributeValue(INameResolver nameResolver, string attributeValue)
-        {
-            return nameResolver.ResolveWholeString(attributeValue) ?? attributeValue;
         }
 
         private static async Task CreateLeaseCollectionIfNotExistsAsync(CosmosClient cosmosClient, string databaseName, string collectionName, int throughput)
@@ -196,6 +191,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             throw new InvalidOperationException(
                 $"The CosmosDBTrigger {leaseString}connection must be set either via a '{Constants.DefaultConnectionStringName}' configuration or via the {attributeProperty} property.");
+        }
+
+        private string ResolveAttributeValue(string attributeValue)
+        {
+            return _nameResolver.ResolveWholeString(attributeValue) ?? attributeValue;
         }
     }
 }
