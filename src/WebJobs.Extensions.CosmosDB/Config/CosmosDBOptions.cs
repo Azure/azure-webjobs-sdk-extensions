@@ -16,6 +16,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         /// <remarks>Default is Gateway mode.</remarks>
         public ConnectionMode? ConnectionMode { get; set; }
 
+        /// <summary>
+        /// Gets or sets a string to be included in the User Agent for all operations by Cosmos DB bindings and triggers.
+        /// </summary>
+        public string UserAgentSuffix { get; set; }
+
         public string Format()
         {
             StringWriter sw = new StringWriter();
@@ -25,6 +30,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
                 writer.WritePropertyName(nameof(this.ConnectionMode));
                 writer.WriteValue(this.ConnectionMode);
+
+                if (!string.IsNullOrEmpty(UserAgentSuffix))
+                {
+                    writer.WritePropertyName(nameof(this.UserAgentSuffix));
+                    writer.WriteValue(this.UserAgentSuffix);
+                }
 
                 writer.WriteEndObject();
             }
