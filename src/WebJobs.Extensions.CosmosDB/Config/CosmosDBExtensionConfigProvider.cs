@@ -105,7 +105,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         internal CosmosClient GetService(string connection, string preferredLocations = "", string userAgent = "")
         {
             string cacheKey = BuildCacheKey(connection, preferredLocations);
-            userAgent = string.IsNullOrEmpty(_options.UserAgentSuffix) ? userAgent : userAgent + _options.UserAgentSuffix;
+            if (!string.IsNullOrEmpty(_options.UserAgentSuffix))
+            {
+                userAgent += _options.UserAgentSuffix;
+            }
+            
             CosmosClientOptions cosmosClientOptions = CosmosDBUtility.BuildClientOptions(_options.ConnectionMode, _cosmosSerializerFactory.CreateSerializer(), preferredLocations, userAgent);
             return ClientCache.GetOrAdd(cacheKey, (c) => _cosmosDBServiceFactory.CreateService(connection, cosmosClientOptions));
         }
