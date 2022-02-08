@@ -22,6 +22,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
     public class CosmosDBHostBuilderExtensionsTests
     {
         [Fact]
+        public void ConfigurationBindsToDefaults()
+        {
+            IHost host = new HostBuilder()
+                 .ConfigureAppConfiguration(c =>
+                 {
+                     c.Sources.Clear();
+
+                     var source = new MemoryConfigurationSource
+                     {
+                         InitialData = new Dictionary<string, string>()
+                     };
+
+                     c.Add(source);
+                 })
+                 .ConfigureWebJobs(builder =>
+                 {
+                     builder.AddCosmosDB();
+                 })
+                .Build();
+
+            var options = host.Services.GetService<IOptions<CosmosDBOptions>>().Value;
+
+            Assert.Null(options.ConnectionMode);
+            Assert.Null(options.UserAgentSuffix);
+        }
+
+        [Fact]
         public void ConfigurationBindsToOptions()
         {
             IHost host = new HostBuilder()
@@ -33,7 +60,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                      {
                          InitialData = new Dictionary<string, string>
                         {
-                            { "AzureWebJobs:extensions:cosmosDB:ConnectionMode", "Direct" }
+                            { "AzureWebJobs:extensions:cosmosDB:ConnectionMode", "Direct" },
+                            { "AzureWebJobs:extensions:cosmosDB:UserAgentSuffix", "randomtext" }
                         }
                      };
 
@@ -48,6 +76,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             var options = host.Services.GetService<IOptions<CosmosDBOptions>>().Value;
 
             Assert.Equal(ConnectionMode.Direct, options.ConnectionMode);
+            Assert.Equal("randomtext", options.UserAgentSuffix);
         }
 
         [Fact]
@@ -61,13 +90,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 .ConfigureServices(s =>
                 {
                     // Verifies that you can modify the bound options
-                    s.Configure<CosmosDBOptions>(o => o.ConnectionMode = ConnectionMode.Direct);
+                    s.Configure<CosmosDBOptions>(o =>
+                    {
+                        o.ConnectionMode = ConnectionMode.Direct;
+                        o.UserAgentSuffix = "randomtext";
+                    });
                 })
                 .Build();
 
             var options = host.Services.GetService<IOptions<CosmosDBOptions>>().Value;
 
             Assert.Equal(ConnectionMode.Direct, options.ConnectionMode);
+            Assert.Equal("randomtext", options.UserAgentSuffix);
         }
 
         [Fact]
@@ -113,7 +147,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                     c.Sources.Clear();
                     c.AddInMemoryCollection(new Dictionary<string, string>
                     {
-                { Constants.DefaultConnectionStringName, "AccountEndpoint=https://defaultUri;AccountKey=c29tZV9rZXk=;" }
+                        { Constants.DefaultConnectionStringName, "AccountEndpoint=https://defaultUri;AccountKey=c29tZV9rZXk=;" }
                     });
                 })
                 .ConfigureServices(s =>
@@ -134,6 +168,61 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             CosmosDBExtensionConfigProvider cosmosDBExtensionConfigProvider = (CosmosDBExtensionConfigProvider)extensionConfig;
             CosmosClient dummyClient = cosmosDBExtensionConfigProvider.GetService(Constants.DefaultConnectionStringName);
             Assert.True(customFactory.CreateWasCalled);
+        }
+
+        [Fact]
+        public void ConfigurationGetService_WithUserAgentOverride()
+        {
+            IHost host = new HostBuilder()
+                 .ConfigureAppConfiguration(c =>
+                 {
+                     c.Sources.Clear();
+                     c.AddInMemoryCollection(new Dictionary<string, string>
+                     {
+                         { Constants.DefaultConnectionStringName, "AccountEndpoint=https://defaultUri;AccountKey=c29tZV9rZXk=;" },
+                         { "AzureWebJobs:extensions:cosmosDB:UserAgentSuffix", "randomtext" }
+                     });
+                 })
+                 .ConfigureWebJobs(builder =>
+                 {
+                     builder.AddCosmosDB();
+                 })
+                .Build();
+
+            var extensionConfig = host.Services.GetServices<IExtensionConfigProvider>().Single();
+            Assert.NotNull(extensionConfig);
+            Assert.IsType<CosmosDBExtensionConfigProvider>(extensionConfig);
+
+            CosmosDBExtensionConfigProvider cosmosDBExtensionConfigProvider = (CosmosDBExtensionConfigProvider)extensionConfig;
+            CosmosClient dummyClient = cosmosDBExtensionConfigProvider.GetService(Constants.DefaultConnectionStringName, userAgent: "knownSuffix");
+            Assert.Equal(dummyClient.ClientOptions.ApplicationName, "knownSuffix" + "randomtext");
+        }
+
+        [Fact]
+        public void ConfigurationGetService_WithoutUserAgentOverride()
+        {
+            IHost host = new HostBuilder()
+                 .ConfigureAppConfiguration(c =>
+                 {
+                     c.Sources.Clear();
+                     c.AddInMemoryCollection(new Dictionary<string, string>
+                     {
+                         { Constants.DefaultConnectionStringName, "AccountEndpoint=https://defaultUri;AccountKey=c29tZV9rZXk=;" }
+                     });
+                 })
+                 .ConfigureWebJobs(builder =>
+                 {
+                     builder.AddCosmosDB();
+                 })
+                .Build();
+
+            var extensionConfig = host.Services.GetServices<IExtensionConfigProvider>().Single();
+            Assert.NotNull(extensionConfig);
+            Assert.IsType<CosmosDBExtensionConfigProvider>(extensionConfig);
+
+            CosmosDBExtensionConfigProvider cosmosDBExtensionConfigProvider = (CosmosDBExtensionConfigProvider)extensionConfig;
+            CosmosClient dummyClient = cosmosDBExtensionConfigProvider.GetService(Constants.DefaultConnectionStringName, userAgent: "knownSuffix");
+            Assert.Equal(dummyClient.ClientOptions.ApplicationName, "knownSuffix");
         }
 
         private class CustomFactory : ICosmosDBSerializerFactory

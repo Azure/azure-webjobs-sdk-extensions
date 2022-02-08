@@ -212,6 +212,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             Assert.Equal(new Uri("https://fromEnvironment"), binding.MonitoredContainer.Database.Client.Endpoint);
             Assert.Equal(new Uri("https://fromEnvironment"), binding.LeaseContainer.Database.Client.Endpoint);
             Assert.Equal(ConnectionMode.Direct, binding.LeaseContainer.Database.Client.ClientOptions.ConnectionMode);
+            Assert.Equal(ConnectionMode.Direct, binding.MonitoredContainer.Database.Client.ClientOptions.ConnectionMode);
+            Assert.Equal("CosmosDBTriggerFunctions", binding.LeaseContainer.Database.Client.ClientOptions.ApplicationName);
+            Assert.Equal("CosmosDBTriggerFunctions", binding.MonitoredContainer.Database.Client.ClientOptions.ApplicationName);
+        }
+
+        [Theory]
+        [MemberData(nameof(ValidCosmosDBTriggerBindingsWithEnvironmentParameters))]
+        public async Task ValidParametersWithEnvironment_UserAgent_Succeed(ParameterInfo parameter)
+        {
+            var nameResolver = new TestNameResolver();
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    { "ConnectionStrings:CosmosDB", "AccountEndpoint=https://fromEnvironment;AccountKey=c29tZV9rZXk=;" },
+                    { "ConnectionStrings:CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;" }
+                })
+                .Build();
+
+            _options.UserAgentSuffix = "randomtext";
+
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(nameResolver, _options, CreateExtensionConfigProvider(_options, config), _loggerFactory);
+
+            CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+
+            Assert.Equal(typeof(IReadOnlyCollection<dynamic>), binding.TriggerValueType);
+            Assert.Equal(new Uri("https://fromEnvironment"), binding.MonitoredContainer.Database.Client.Endpoint);
+            Assert.Equal(new Uri("https://fromEnvironment"), binding.LeaseContainer.Database.Client.Endpoint);
+            Assert.Equal("CosmosDBTriggerFunctionsrandomtext", binding.LeaseContainer.Database.Client.ClientOptions.ApplicationName);
+            Assert.Equal("CosmosDBTriggerFunctionsrandomtext", binding.MonitoredContainer.Database.Client.ClientOptions.ApplicationName);
         }
 
         [Theory]
