@@ -346,7 +346,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
            
             var mockExecutor = new Mock<ITriggeredFunctionExecutor>();
 
-            var listener = new MockListener<dynamic>(mockExecutor.Object, _monitoredContainer.Object, _leasesContainer.Object, attribute, NullLogger.Instance);
+            var listener = new MockListener<dynamic>(mockExecutor.Object, _monitoredContainer.Object, _leasesContainer.Object, attribute, _loggerFactory.CreateLogger<CosmosDBTriggerListener<dynamic>>());
 
             // Ensure that we can call StartAsync() multiple times to retry if there is an error.
             for (int i = 0; i < 3; i++)
@@ -357,6 +357,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
 
             // This should succeed
             await listener.StartAsync(CancellationToken.None);
+
+            var logs = _loggerProvider.GetAllLogMessages().ToArray();
+            Assert.Equal(LogLevel.Error, logs[0].Level);
+            Assert.Equal(Events.OnListenerStartError, logs[0].EventId);
+            Assert.Equal(LogLevel.Error, logs[1].Level);
+            Assert.Equal(Events.OnListenerStartError, logs[1].EventId);
+            Assert.Equal(LogLevel.Error, logs[2].Level);
+            Assert.Equal(Events.OnListenerStartError, logs[2].EventId);
+            Assert.Equal(LogLevel.Debug, logs[3].Level);
+            Assert.Equal(Events.OnListenerStarted, logs[3].EventId);
         }
 
         private class MockListener<T> : CosmosDBTriggerListener<T>
