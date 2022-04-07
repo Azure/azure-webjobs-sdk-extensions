@@ -33,6 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
         private readonly Mock<FeedIterator<ChangeFeedProcessorState>> _estimatorIterator;
         private readonly CosmosDBTriggerListener<dynamic> _listener;
         private readonly string _functionId;
+        private readonly string _logDetails;
 
         public CosmosDBListenerTests()
         {
@@ -66,6 +67,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             var attribute = new CosmosDBTriggerAttribute(DatabaseName, ContainerName);
 
             _listener = new CosmosDBTriggerListener<dynamic>(_mockExecutor.Object, _functionId, ProcessorName, _monitoredContainer.Object, _leasesContainer.Object, attribute, _loggerFactory.CreateLogger<CosmosDBTriggerListener<dynamic>>());
+
+            _logDetails = $"prefix='{ProcessorName}', monitoredContainer='{ContainerName}', monitoredDatabase='{DatabaseName}', " +
+                $"leaseContainer='{ContainerName}', leaseDatabase='{DatabaseName}', functionId='{this._functionId}'";
         }
 
         [Fact]
@@ -342,11 +346,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
         [Fact]
         public async Task StartAsync_Retries()
         {
-            var attribute = new CosmosDBTriggerAttribute("test", "test") { LeaseContainerPrefix = Guid.NewGuid().ToString() };
+            var attribute = new CosmosDBTriggerAttribute("test", "test") { LeaseContainerPrefix = ProcessorName };
            
             var mockExecutor = new Mock<ITriggeredFunctionExecutor>();
 
-            var listener = new MockListener<dynamic>(mockExecutor.Object, _monitoredContainer.Object, _leasesContainer.Object, attribute, _loggerFactory.CreateLogger<CosmosDBTriggerListener<dynamic>>());
+            var listener = new MockListener<dynamic>(mockExecutor.Object, _functionId, ProcessorName, _monitoredContainer.Object, _leasesContainer.Object, attribute, _loggerFactory.CreateLogger<CosmosDBTriggerListener<dynamic>>());
 
             // Ensure that we can call StartAsync() multiple times to retry if there is an error.
             for (int i = 0; i < 3; i++)
@@ -361,12 +365,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             var logs = _loggerProvider.GetAllLogMessages().ToArray();
             Assert.Equal(LogLevel.Error, logs[0].Level);
             Assert.Equal(Events.OnListenerStartError, logs[0].EventId);
+            Assert.Contains(_logDetails, logs[0].FormattedMessage);
             Assert.Equal(LogLevel.Error, logs[1].Level);
             Assert.Equal(Events.OnListenerStartError, logs[1].EventId);
+            Assert.Contains(_logDetails, logs[1].FormattedMessage);
             Assert.Equal(LogLevel.Error, logs[2].Level);
             Assert.Equal(Events.OnListenerStartError, logs[2].EventId);
+            Assert.Contains(_logDetails, logs[2].FormattedMessage);
             Assert.Equal(LogLevel.Debug, logs[3].Level);
             Assert.Equal(Events.OnListenerStarted, logs[3].EventId);
+            Assert.Contains(_logDetails, logs[3].FormattedMessage);
         }
 
         private class MockListener<T> : CosmosDBTriggerListener<T>
@@ -374,11 +382,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             private int _retries = 0;
 
             public MockListener(ITriggeredFunctionExecutor executor,
+                string functionId,
+                string processorName,
                 Container monitoredContainer,
                 Container leaseContainer,
                 CosmosDBTriggerAttribute cosmosDBAttribute,
                 ILogger logger)
-                : base(executor, Guid.NewGuid().ToString(), string.Empty, monitoredContainer, leaseContainer, cosmosDBAttribute, logger)
+                : base(executor, functionId, processorName, monitoredContainer, leaseContainer, cosmosDBAttribute, logger)
             {
             }
 
