@@ -18,5 +18,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         public static readonly EventId OnDelivery = new EventId(4, "OnTriggerDelivery");
         public static readonly EventId OnListenerStopError = new EventId(5, "OnTriggerListenerStopError");
         public static readonly EventId OnScaling = new EventId(6, "OnScaling");
+        public static readonly EventId OnListenerStarted = new EventId(6, "OnListenerStarted");
+        public static readonly EventId OnListenerStartError = new EventId(7, "OnListenerStartError");
+        public static readonly EventId OnListenerStopped = new EventId(8, "OnListenerStopped");
     }
 }

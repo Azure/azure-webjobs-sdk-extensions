@@ -32,6 +32,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly string _functionId;
         private readonly ScaleMonitorDescriptor _scaleMonitorDescriptor;
         private readonly CosmosDBTriggerHealthMonitor _healthMonitor;
+        private readonly string _listenerLogDetails;
         private ChangeFeedProcessor _host;
         private ChangeFeedProcessorBuilder _hostBuilder;
         private int _listenerStatus;
@@ -70,6 +71,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             this._cosmosDBAttribute = cosmosDBAttribute;
             this._scaleMonitorDescriptor = new ScaleMonitorDescriptor($"{_functionId}-CosmosDBTrigger-{_monitoredContainer.Database.Id}-{_monitoredContainer.Id}".ToLower());
             this._healthMonitor = new CosmosDBTriggerHealthMonitor(logger);
+            this._listenerLogDetails = $"prefix='{this._processorName}', monitoredContainer='{this._monitoredContainer.Id}', monitoredDatabase='{this._monitoredContainer.Database.Id}', " +
+                $"leaseContainer='{this._leaseContainer.Id}', leaseDatabase='{this._leaseContainer.Database.Id}', functionId='{this._functionId}'";
         }
 
         public ScaleMonitorDescriptor Descriptor => this._scaleMonitorDescriptor;
@@ -103,11 +106,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 await this.StartProcessorAsync();
                 Interlocked.CompareExchange(ref this._listenerStatus, ListenerRegistered, ListenerRegistering);
+                this._logger.LogDebug(Events.OnListenerStarted, "Started the listener for {Details}.", this._listenerLogDetails);
             }
             catch (Exception ex)
             {
                 // Reset to NotRegistered
                 this._listenerStatus = ListenerNotRegistered;
+                this._logger.LogError(Events.OnListenerStartError, "Starting the listener for {Details} failed. Exception: {Exception}.", this._listenerLogDetails, ex);
 
                 // Throw a custom error if NotFound.
                 if (ex is CosmosException docEx && docEx.StatusCode == HttpStatusCode.NotFound)
@@ -130,11 +135,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 {
                     await this._host.StopAsync().ConfigureAwait(false);
                     this._listenerStatus = ListenerNotRegistered;
+                    this._logger.LogDebug(Events.OnListenerStopped, "Stopped the listener for {Details}.", this._listenerLogDetails);
                 }
             }
             catch (Exception ex)
             {
-                this._logger.LogWarning(Events.OnListenerStopError, "Stopping the observer failed, potentially it was never started. Exception: {Exception}.", ex);
+                this._logger.LogError(Events.OnListenerStopError, "Stopping the listener for {Details} failed. Exception: {Exception}.", this._listenerLogDetails, ex);
             }
         }
 
