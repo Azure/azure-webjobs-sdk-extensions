@@ -2,7 +2,7 @@
   <PropertyGroup>
     <!-- Extensions can have independent versions and only increment when released -->
     <Version>3.0.0$(VersionSuffix)</Version>
-    <ExtensionsVersion>4.0.4$(VersionSuffix)</ExtensionsVersion> <!-- WebJobs.Extensions -->
+    <ExtensionsVersion>4.0.5$(VersionSuffix)</ExtensionsVersion> <!-- WebJobs.Extensions -->
     <DebugType>embedded</DebugType>    
     <LatestCommit Condition="$(LatestCommit) == ''">$(CommitHash)</LatestCommit>
     <CommitHash Condition="$(CommitHash) == ''">N/A</CommitHash>
