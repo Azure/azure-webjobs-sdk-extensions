@@ -7,7 +7,7 @@
     <HttpVersion>3.2.0$(VersionSuffix)</HttpVersion>
     <MobileAppsVersion>3.0.0$(VersionSuffix)</MobileAppsVersion>
     <SendGridVersion>3.0.3$(VersionSuffix)</SendGridVersion>
-    <TwilioVersion>3.0.3$(VersionSuffix)</TwilioVersion>
+    <TwilioVersion>4.0.0$(VersionSuffix)</TwilioVersion>
     <TimersStorageVersion>1.0.0-beta.1$(VersionSuffix)</TimersStorageVersion>
     <DebugType>embedded</DebugType>    
     <LatestCommit Condition="$(LatestCommit) == ''">$(CommitHash)</LatestCommit>
