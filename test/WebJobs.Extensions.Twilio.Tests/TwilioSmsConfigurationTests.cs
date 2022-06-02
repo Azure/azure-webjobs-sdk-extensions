@@ -35,7 +35,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Twilio
                 { "from", "+14254570422" },
                 { "body", "Knock knock." },
                 { "forceDelivery", true },
-                { "maxRate", 123 },
                 { "validityPeriod", 123 },
                 { "provideFeedback", true },
                 { "maxPrice", 0.55 },
@@ -51,7 +50,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Twilio
             Assert.Equal(options["from"], result.From.ToString());
             Assert.Equal(options["body"], result.Body.ToString());
             Assert.Equal(options["forceDelivery"], result.ForceDelivery);
-            Assert.Equal(options["maxRate"], result.MaxRate);
             Assert.Equal(options["validityPeriod"], result.ValidityPeriod);
             Assert.Equal(options["provideFeedback"], result.ProvideFeedback);
             Assert.Equal(options["maxPrice"], result.MaxPrice);

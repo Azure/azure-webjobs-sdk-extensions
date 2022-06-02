@@ -83,10 +83,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
         {
             var options = new CreateMessageOptions(new PhoneNumber(GetValueOrDefault<string>(messageOptions, "to")))
             {
-                ProviderSid = GetValueOrDefault<string>(messageOptions, "providerSid"),
                 Body = GetValueOrDefault<string>(messageOptions, "body"),
                 ForceDelivery = GetValueOrDefault<bool?>(messageOptions, "forceDelivery"),
-                MaxRate = GetValueOrDefault<string>(messageOptions, "maxRate"),
                 ValidityPeriod = GetValueOrDefault<int?>(messageOptions, "validityPeriod"),
                 ProvideFeedback = GetValueOrDefault<bool?>(messageOptions, "provideFeedback"),
                 MaxPrice = GetValueOrDefault<decimal?>(messageOptions, "maxPrice"),
