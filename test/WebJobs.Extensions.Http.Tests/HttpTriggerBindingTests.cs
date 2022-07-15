@@ -260,7 +260,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         [Fact]
         public async Task BindAsync_Poco_FromQueryParameters_WithDifferentNaming()
         {
-            ParameterInfo parameterInfo = GetType().GetMethod("TestPocoFunction").GetParameters()[0];
+            ParameterInfo parameterInfo = GetType().GetMethod("TestPocoFunctionWithCustomName").GetParameters()[0];
             HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, true);
 
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions/myfunc?code=abc123&custom_value=Mathew%20Charles&Location=Seattle");
@@ -269,9 +269,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
-            Assert.Equal(5, triggerData.BindingData.Count);
-            Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
-            Assert.Equal("Seattle", triggerData.BindingData["Location"]);
+            Assert.Equal(6, triggerData.BindingData.Count);
+            Assert.Null(triggerData.BindingData[nameof(TestPocoWithDataMember.CustomValue)]);
+            Assert.Equal("Mathew Charles", triggerData.BindingData["custom_value"]);
+            Assert.Equal("Seattle", triggerData.BindingData[nameof(TestPocoWithDataMember.Location)]);
 
             TestPocoWithDataMember testPoco = (TestPocoWithDataMember)(await triggerData.ValueProvider.GetValueAsync());
             Assert.Equal("Mathew Charles", testPoco.CustomValue);
@@ -587,6 +588,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         }
 
         public void TestPocoFunction(TestPoco poco)
+        {
+        }
+
+        public void TestPocoFunctionWithCustomName(TestPocoWithDataMember poco)
         {
         }
 
