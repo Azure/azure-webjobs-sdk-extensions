@@ -53,7 +53,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             Name = GetDataMemberAttributeValue(property) ?? property.Name;
             ValueGetter = MakeFastPropertyGetter(property);
         }
-        
+
         // Delegate type for a by-ref property getter
         private delegate TValue ByRefFunc<TDeclaringType, TValue>(ref TDeclaringType arg);
 
@@ -507,11 +507,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         private static bool IsInterestingProperty(PropertyInfo property)
         {
             return property.GetIndexParameters().Length == 0 &&
-                property.GetMethod != null &&
-                property.GetMethod.IsPublic &&
-                !property.GetMethod.IsStatic;
+                   property.GetMethod != null &&
+                   property.GetMethod.IsPublic &&
+                   !property.GetMethod.IsStatic;
         }
-        
+
         private static string GetDataMemberAttributeValue(MemberInfo property)
         {
             return property.GetCustomAttribute<DataMemberAttribute>()?.Name;
