@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Http
 {
@@ -49,10 +50,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             }
 
             Property = property;
-            Name = property.Name;
+            Name = GetDataMemberAttributeValue(property) ?? property.Name;
             ValueGetter = MakeFastPropertyGetter(property);
         }
-
+        
         // Delegate type for a by-ref property getter
         private delegate TValue ByRefFunc<TDeclaringType, TValue>(ref TDeclaringType arg);
 
@@ -509,6 +510,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 property.GetMethod != null &&
                 property.GetMethod.IsPublic &&
                 !property.GetMethod.IsStatic;
+        }
+        
+        private static string GetDataMemberAttributeValue(MemberInfo property)
+        {
+            return property.GetCustomAttribute<DataMemberAttribute>()?.Name;
         }
     }
 }
