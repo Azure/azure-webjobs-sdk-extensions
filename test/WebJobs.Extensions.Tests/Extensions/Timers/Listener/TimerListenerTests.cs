@@ -127,11 +127,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             Assert.True(listener.Timer.Enabled);
 
             var logs = _logger.GetLogMessages();
-            var log = logs[0];
+            var log = logs[2];
             Assert.Equal(LogLevel.Error, log.Level);
             Assert.Equal("Error occurred during scheduled invocation for 'TimerFunctionShortName'.", log.FormattedMessage);
             Assert.Same(ex, log.Exception);
-            log = logs[1];
+            log = logs[3];
             Assert.Equal(LogLevel.Debug, log.Level);
             Assert.True(log.FormattedMessage.StartsWith("Timer for 'TimerFunctionShortName' started with interval"));
 
@@ -376,6 +376,38 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         }
 
         [Fact]
+        public async Task StopAsync_AllowsOutstandingInvocationToComplete()
+        {
+            bool invocationStarted = false;
+            bool invocationCompleted = false;
+            CreateTestListener("* * * * * *", useMonitor: false, functionAction: () =>
+            {
+                invocationStarted = true;
+                Task.Delay(3000).Wait();
+                invocationCompleted = true;
+            });
+
+            await _listener.StartAsync(CancellationToken.None);
+
+            await TestHelpers.Await(() => invocationStarted, pollingInterval: 500);
+
+            // after the function has started running, stop the listener
+            await _listener.StopAsync(CancellationToken.None);
+
+            // ensure the invocation was allowed to complete
+            Assert.True(invocationCompleted, "Outstanding invocation wasn't allowed to complete");
+
+            var logMessages = _logger.GetLogMessages().Select(p => p.FormattedMessage).ToArray();
+            Assert.StartsWith("The 'TimerFunctionShortName' timer is using the schedule 'Cron: '* * * * * *''", logMessages[0]);
+            Assert.StartsWith("The next 5 occurrences of the 'TimerFunctionShortName' schedule (Cron: '* * * * * *') will be", logMessages[1]);
+            Assert.StartsWith("Timer for 'TimerFunctionShortName' started", logMessages[2]);
+            Assert.StartsWith("Timer listener started (TimerFunctionShortName)", logMessages[3]);
+            Assert.StartsWith("Function invocation starting", logMessages[4]);
+            Assert.StartsWith("Function invocation complete", logMessages[5]);
+            Assert.StartsWith("Timer listener stopped (TimerFunctionShortName)", logMessages[6]);
+        }
+
+        [Fact]
         public async Task StoppedListener_DoesNotContinueRunning()
         {
             // There was a bug where we would re-create a disposed _timer after a call to StopAsync(). This only
@@ -519,7 +551,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 .OrderBy(t => t.Timestamp)
                 .ToArray();
 
-            Assert.Equal(3, verboseTraces.Length);
+            Assert.Equal(5, verboseTraces.Length);
             Assert.Contains("timer is using the schedule 'Cron: '0 * * * * *'' and the local time zone:", verboseTraces[0].FormattedMessage);
             Assert.Equal(expected, verboseTraces[1].FormattedMessage);
             Assert.Contains($"Timer for '{_functionShortName}' started with interval", verboseTraces[2].FormattedMessage);
@@ -541,8 +573,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _mockTriggerExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
                 .Callback<TriggeredFunctionData, CancellationToken>((mockFunctionData, mockToken) =>
                 {
+                    _logger.LogDebug("Function invocation starting");
                     _triggeredFunctionData = mockFunctionData;
                     functionAction?.Invoke();
+                    _logger.LogDebug("Function invocation complete");
                 })
                 .Returns(Task.FromResult(result));
             _logger = new TestLogger(null);
