@@ -23,6 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private readonly ITriggeredFunctionExecutor _executor;
         private readonly ILogger _logger;
         private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly SemaphoreSlim _invocationLock = new SemaphoreSlim(1, 1);
 
         // _functionLogName is the [FunctionName] value and used for logging,
         // while _timerLookupName is the fully-qualified method name and used for lookups
@@ -145,9 +146,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // start the regular schedule
                 StartTimer(DateTime.Now);
             }
+
+            _logger.LogDebug($"Timer listener started ({_functionLogName})");
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
             ThrowIfDisposed();
 
@@ -161,7 +164,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             _timer.Dispose();
             _timer = null;
 
-            return Task.FromResult<bool>(true);
+            // wait for any outstanding invocation to complete
+            await _invocationLock.WaitAsync();
+            _invocationLock.Release();
+
+            _logger.LogDebug($"Timer listener stopped ({_functionLogName})");
         }
 
         public void Cancel()
@@ -185,6 +192,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                     _timer.Dispose();
                     _timer = null;
                 }
+
+                _invocationLock.Dispose();
 
                 _disposed = true;
             }
@@ -258,70 +267,86 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         /// <param name="runOnStartup">True if the invocation is because the timer is configured to run on startup.</param>
         internal async Task InvokeJobFunction(DateTime invocationTime, bool isPastDue = false, bool runOnStartup = false, DateTime? originalSchedule = null)
         {
-            CancellationToken token = _cancellationTokenSource.Token;
-            ScheduleStatus timerInfoStatus = null;
-            if (ScheduleMonitor != null)
-            {
-                timerInfoStatus = ScheduleStatus;
-            }
-            TimerInfo timerInfo = new TimerInfo(_schedule, timerInfoStatus, isPastDue);
-
-            // Build up trigger details that will be logged if the timer is running at a different time 
-            // than originally scheduled.
-            IDictionary<string, string> details = new Dictionary<string, string>();
-            if (isPastDue)
-            {
-                details[UnscheduledInvocationReasonKey] = "IsPastDue";
-            }
-            else if (runOnStartup)
-            {
-                details[UnscheduledInvocationReasonKey] = "RunOnStartup";
-            }
-
-            if (originalSchedule.HasValue)
-            {
-                details[OriginalScheduleKey] = originalSchedule.Value.ToString("o");
-            }
-
-            TriggeredFunctionData input = new TriggeredFunctionData
-            {
-                TriggerValue = timerInfo,
-                TriggerDetails = details
-            };
-
             try
             {
-                await _executor.TryExecuteAsync(input, token);
-            }
-            catch
-            {
-                // We don't want any function errors to stop the execution
-                // schedule. Invocation errors are already logged.
-            }
+                await _invocationLock.WaitAsync();
 
-            // If the trigger fired before it was officially scheduled (likely under 1 second due to clock skew),
-            // adjust the invocation time forward for the purposes of calculating the next occurrence.
-            // Without this, it's possible to set the 'Next' value to the same time twice in a row, 
-            // which results in duplicate triggers if the site restarts.
-            DateTime adjustedInvocationTime = invocationTime;
-            if (!isPastDue && !runOnStartup && ScheduleStatus?.Next > invocationTime)
-            {
-                adjustedInvocationTime = ScheduleStatus.Next;
+                // if Cancel, Stop, or Dispose have been called, skip the invocation
+                // since we're stopping the listener
+                if (_cancellationTokenSource.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                CancellationToken token = _cancellationTokenSource.Token;
+                ScheduleStatus timerInfoStatus = null;
+                if (ScheduleMonitor != null)
+                {
+                    timerInfoStatus = ScheduleStatus;
+                }
+                TimerInfo timerInfo = new TimerInfo(_schedule, timerInfoStatus, isPastDue);
+
+                // Build up trigger details that will be logged if the timer is running at a different time 
+                // than originally scheduled.
+                IDictionary<string, string> details = new Dictionary<string, string>();
+                if (isPastDue)
+                {
+                    details[UnscheduledInvocationReasonKey] = "IsPastDue";
+                }
+                else if (runOnStartup)
+                {
+                    details[UnscheduledInvocationReasonKey] = "RunOnStartup";
+                }
+
+                if (originalSchedule.HasValue)
+                {
+                    details[OriginalScheduleKey] = originalSchedule.Value.ToString("o");
+                }
+
+                TriggeredFunctionData input = new TriggeredFunctionData
+                {
+                    TriggerValue = timerInfo,
+                    TriggerDetails = details
+                };
+
+                try
+                {
+                    await _executor.TryExecuteAsync(input, token);
+                }
+                catch
+                {
+                    // We don't want any function errors to stop the execution
+                    // schedule. Invocation errors are already logged.
+                }
+
+                // If the trigger fired before it was officially scheduled (likely under 1 second due to clock skew),
+                // adjust the invocation time forward for the purposes of calculating the next occurrence.
+                // Without this, it's possible to set the 'Next' value to the same time twice in a row, 
+                // which results in duplicate triggers if the site restarts.
+                DateTime adjustedInvocationTime = invocationTime;
+                if (!isPastDue && !runOnStartup && ScheduleStatus?.Next > invocationTime)
+                {
+                    adjustedInvocationTime = ScheduleStatus.Next;
+                }
+
+                // Create the Last value with the adjustedInvocationTime; otherwise, the listener will
+                // consider this a schedule change when the host next starts.
+                ScheduleStatus = new ScheduleStatus
+                {
+                    Last = adjustedInvocationTime,
+                    Next = _schedule.GetNextOccurrence(adjustedInvocationTime),
+                    LastUpdated = adjustedInvocationTime
+                };
+
+                if (ScheduleMonitor != null)
+                {
+                    await ScheduleMonitor.UpdateStatusAsync(_timerLookupName, ScheduleStatus);
+                    _logger.LogDebug($"Function '{_functionLogName}' updated status: Last='{ScheduleStatus.Last.ToString("o")}', Next='{ScheduleStatus.Next.ToString("o")}', LastUpdated='{ScheduleStatus.LastUpdated.ToString("o")}'");
+                }
             }
-
-            // Create the Last value with the adjustedInvocationTime; otherwise, the listener will
-            // consider this a schedule change when the host next starts.
-            ScheduleStatus = new ScheduleStatus
+            finally
             {
-                Last = adjustedInvocationTime,
-                Next = _schedule.GetNextOccurrence(adjustedInvocationTime),
-                LastUpdated = adjustedInvocationTime
-            };
-
-            if (ScheduleMonitor != null)
-            {
-                await ScheduleMonitor.UpdateStatusAsync(_timerLookupName, ScheduleStatus);
-                _logger.LogDebug($"Function '{_functionLogName}' updated status: Last='{ScheduleStatus.Last.ToString("o")}', Next='{ScheduleStatus.Next.ToString("o")}', LastUpdated='{ScheduleStatus.LastUpdated.ToString("o")}'");
+                _invocationLock.Release();
             }
         }
 
