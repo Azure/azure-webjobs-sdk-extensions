@@ -267,17 +267,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         /// <param name="runOnStartup">True if the invocation is because the timer is configured to run on startup.</param>
         internal async Task InvokeJobFunction(DateTime invocationTime, bool isPastDue = false, bool runOnStartup = false, DateTime? originalSchedule = null)
         {
-            await _invocationLock.WaitAsync();
-
-            // if Cancel, Stop, or Dispose have been called, skip the invocation
-            // since we're stopping the listener
-            if (_cancellationTokenSource.IsCancellationRequested)
-            {
-                return;
-            }
-
             try
             {
+                await _invocationLock.WaitAsync();
+
+                // if Cancel, Stop, or Dispose have been called, skip the invocation
+                // since we're stopping the listener
+                if (_cancellationTokenSource.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 CancellationToken token = _cancellationTokenSource.Token;
                 ScheduleStatus timerInfoStatus = null;
                 if (ScheduleMonitor != null)
