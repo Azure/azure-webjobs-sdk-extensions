@@ -4,22 +4,24 @@
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 {
     internal class TimerTriggerAttributeBindingProvider : ITriggerBindingProvider
     {
-        private readonly TimersConfiguration _config;
+        private readonly TimersOptions _options;
         private readonly INameResolver _nameResolver;
-        private readonly TraceWriter _trace;
+        private readonly ILogger _logger;
+        private readonly ScheduleMonitor _scheduleMonitor;
 
-        public TimerTriggerAttributeBindingProvider(TimersConfiguration config, INameResolver nameResolver, TraceWriter trace)
+        public TimerTriggerAttributeBindingProvider(TimersOptions options, INameResolver nameResolver, ILogger logger, ScheduleMonitor scheduleMonitor)
         {
-            _config = config;
+            _options = options;
             _nameResolver = nameResolver;
-            _trace = trace;
+            _logger = logger;
+            _scheduleMonitor = scheduleMonitor;
         }
 
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
@@ -36,15 +38,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
             {
                 return Task.FromResult<ITriggerBinding>(null);
             }
-      
+
             if (parameter.ParameterType != typeof(TimerInfo))
             {
                 throw new InvalidOperationException(string.Format("Can't bind TimerTriggerAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            TimerSchedule schedule = TimerSchedule.Create(timerTriggerAttribute, _nameResolver);
+            TimerSchedule schedule = TimerSchedule.Create(timerTriggerAttribute, _nameResolver, _logger);
 
-            return Task.FromResult<ITriggerBinding>(new TimerTriggerBinding(parameter, timerTriggerAttribute, schedule, _config, _trace));
+            return Task.FromResult<ITriggerBinding>(new TimerTriggerBinding(parameter, timerTriggerAttribute, schedule, _options, _logger, _scheduleMonitor));
         }
     }
 }

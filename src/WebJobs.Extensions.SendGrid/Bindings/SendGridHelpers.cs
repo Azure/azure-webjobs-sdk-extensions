@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using System.Net.Mail;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SendGrid.Helpers.Mail;
@@ -13,7 +14,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
 {
     internal class SendGridHelpers
     {
-        internal static bool TryParseAddress(string value, out Email email)
+        internal static EmailAddress Apply(EmailAddress current, string value)
+        {
+            EmailAddress mail;
+            if (TryParseAddress(value, out mail))
+            {
+                return mail;
+            }
+            return current;
+        }
+
+        internal static bool TryParseAddress(string value, out EmailAddress email)
         {
             email = null;
 
@@ -27,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
                 // MailAddress will auto-parse the name from a string like "testuser@test.com <Test User>"
                 MailAddress mailAddress = new MailAddress(value);
                 string displayName = string.IsNullOrEmpty(mailAddress.DisplayName) ? null : mailAddress.DisplayName;
-                email = new Email(mailAddress.Address, displayName);
+                email = new EmailAddress(mailAddress.Address, displayName);
                 return true;
             }
             catch (FormatException)
@@ -36,45 +47,41 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
             }
         }
 
-        internal static void DefaultMessageProperties(Mail mail, SendGridConfiguration config, SendGridAttribute attribute)
+        internal static void DefaultMessageProperties(SendGridMessage mail, SendGridOptions options, SendGridAttribute attribute)
         {
             // Apply message defaulting
             if (mail.From == null)
             {
                 if (!string.IsNullOrEmpty(attribute.From))
                 {
-                    Email from = null;
+                    EmailAddress from = null;
                     if (!TryParseAddress(attribute.From, out from))
                     {
                         throw new ArgumentException("Invalid 'From' address specified");
                     }
                     mail.From = from;
                 }
-                else if (config.FromAddress != null)
+                else if (options.FromAddress != null)
                 {
-                    mail.From = config.FromAddress;
+                    mail.From = options.FromAddress;
                 }
             }
 
-            if (mail.Personalization == null || mail.Personalization.Count == 0)
+            if (!IsToValid(mail))
             {
                 if (!string.IsNullOrEmpty(attribute.To))
                 {
-                    Email to = null;
+                    EmailAddress to = null;
                     if (!TryParseAddress(attribute.To, out to))
                     {
                         throw new ArgumentException("Invalid 'To' address specified");
                     }
 
-                    Personalization personalization = new Personalization();
-                    personalization.AddTo(to);
-                    mail.AddPersonalization(personalization);
+                    mail.AddTo(to);
                 }
-                else if (config.ToAddress != null)
+                else if (options.ToAddress != null)
                 {
-                    Personalization personalization = new Personalization();
-                    personalization.AddTo(config.ToAddress);
-                    mail.AddPersonalization(personalization);
+                    mail.AddTo(options.ToAddress);
                 }
             }
 
@@ -87,22 +94,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
             if ((mail.Contents == null || mail.Contents.Count == 0) &&
                 !string.IsNullOrEmpty(attribute.Text))
             {
-                mail.AddContent(new Content("text/plain", attribute.Text));
+                mail.AddContent("text/plain", attribute.Text);
             }
         }
 
-        internal static Mail CreateMessage(string input)
+        internal static SendGridMessage CreateMessage(string input)
         {
             JObject json = JObject.Parse(input);
             return CreateMessage(json);
         }
 
-        internal static Mail CreateMessage(JObject input)
+        internal static SendGridMessage CreateMessage(JObject input)
         {
-            return input.ToObject<Mail>();
+            return input.ToObject<SendGridMessage>();
         }
 
-        internal static string CreateString(Mail input)
+        internal static string CreateString(SendGridMessage input)
         {
             return CreateString(JObject.FromObject(input));
         }
@@ -112,36 +119,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
             return input.ToString(Formatting.None);
         }
 
-        internal static bool IsToValid(Mail item)
+        internal static bool IsToValid(SendGridMessage item)
         {
-            return item.Personalization != null &&
-                item.Personalization.Count > 0 &&
-                item.Personalization.All(p => p.Tos != null && !p.Tos.Any(t => string.IsNullOrEmpty(t.Address)));
+            return item.Personalizations != null &&
+                item.Personalizations.Count > 0 &&
+                item.Personalizations.All(p => p.Tos != null && !p.Tos.Any(t => string.IsNullOrEmpty(t.Email)));
         }
 
-        internal static SendGridConfiguration CreateConfiguration(JObject metadata)
+        internal static void ApplyConfiguration(IConfiguration config, SendGridOptions options)
         {
-            SendGridConfiguration sendGridConfig = new SendGridConfiguration();
-
-            JObject configSection = (JObject)metadata.GetValue("sendGrid", StringComparison.OrdinalIgnoreCase);
-            JToken value = null;
-            if (configSection != null)
+            if (config == null)
             {
-                Email mailAddress = null;
-                if (configSection.TryGetValue("from", StringComparison.OrdinalIgnoreCase, out value) &&
-                    TryParseAddress((string)value, out mailAddress))
-                {
-                    sendGridConfig.FromAddress = mailAddress;
-                }
-
-                if (configSection.TryGetValue("to", StringComparison.OrdinalIgnoreCase, out value) &&
-                    TryParseAddress((string)value, out mailAddress))
-                {
-                    sendGridConfig.ToAddress = mailAddress;
-                }
+                return;
             }
 
-            return sendGridConfig;
+            config.Bind(options);
+
+            string to = config.GetValue<string>("to");
+            string from = config.GetValue<string>("from");
+            options.ToAddress = SendGridHelpers.Apply(options.ToAddress, to);
+            options.FromAddress = SendGridHelpers.Apply(options.FromAddress, from);
         }
     }
 }

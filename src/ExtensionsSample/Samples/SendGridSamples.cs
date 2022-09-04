@@ -23,10 +23,10 @@ namespace ExtensionsSample
                 To = "{CustomerEmail}",
                 Subject = "Thanks for your order (#{OrderId})!",
                 Text = "{CustomerName}, we've received your order ({OrderId}) and have begun processing it!")]
-            out Mail message)
+            out SendGridMessage message)
         {
             // You can set additional message properties here
-            message = new Mail();
+            message = new SendGridMessage();
             message.AddHeader("MyHeader", "MyValue");
         }
 
@@ -36,15 +36,14 @@ namespace ExtensionsSample
         [Disable]
         public static void ProcessOrder_Imperative(
             [QueueTrigger(@"samples-orders")] Order order,
-            [SendGrid] out Mail message)
+            [SendGrid] out SendGridMessage message)
         {
-            message = new Mail();
-            message.Subject = $"Thanks for your order (#{order.OrderId})!";
-            message.AddContent(new Content("text/plain", $"{order.CustomerName}, we've received your order ({order.OrderId}) and have begun processing it!"));
-
-            Personalization personalization = new Personalization();
-            personalization.AddTo(new Email(order.CustomerEmail));
-            message.AddPersonalization(personalization);
+            message = new SendGridMessage
+            {
+                Subject = $"Thanks for your order (#{order.OrderId})!"
+            };
+            message.AddContent("text/plain", $"{order.CustomerName}, we've received your order ({order.OrderId}) and have begun processing it!");
+            message.AddTo(order.CustomerEmail);
         }
 
         /// <summary>
@@ -53,7 +52,7 @@ namespace ExtensionsSample
         [Disable]
         public static void ProcessOrder_JObject(
             [QueueTrigger(@"samples-orders")] Order order,
-            [SendGrid(ApiKey = "Test")] out JObject message)
+            [SendGrid] out JObject message)
         {
             message = JObject.Parse(GetEmailJson(order));
         }

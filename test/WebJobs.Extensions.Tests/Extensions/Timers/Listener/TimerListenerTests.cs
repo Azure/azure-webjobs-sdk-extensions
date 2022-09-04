@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,22 +10,25 @@ using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Listeners;
 using Microsoft.Azure.WebJobs.Host.Executors;
+using Microsoft.Extensions.Logging;
 using Moq;
+using NCrontab;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 {
     public class TimerListenerTests
     {
-        private string _testTimerName = "Program.TestTimerJob";
+        private readonly string _testTimerName = "Program.TestTimerJob";
+        private readonly string _functionShortName = "TimerFunctionShortName";
         private TimerListener _listener;
         private Mock<ScheduleMonitor> _mockScheduleMonitor;
-        private TimersConfiguration _config;
+        private TimersOptions _options;
         private TimerTriggerAttribute _attribute;
         private TimerSchedule _schedule;
         private Mock<ITriggeredFunctionExecutor> _mockTriggerExecutor;
         private TriggeredFunctionData _triggeredFunctionData;
-        private TestTraceWriter _traceWriter;
+        private TestLogger _logger;
 
         public TimerListenerTests()
         {
@@ -107,6 +110,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         }
 
         [Fact]
+        public async Task HandleTimerEvent_HandlesExceptions()
+        {
+            // force an exception to occur outside of the function invocation path
+            var ex = new Exception("Kaboom!");
+            _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName, It.IsAny<ScheduleStatus>())).ThrowsAsync(ex);
+
+            var listener = new TimerListener(_attribute, _schedule, _testTimerName, _options, _mockTriggerExecutor.Object, _logger, _mockScheduleMonitor.Object, _functionShortName);
+
+            Assert.Null(listener.Timer);
+
+            await listener.HandleTimerEvent();
+
+            // verify the timer was started
+            Assert.NotNull(listener.Timer);
+            Assert.True(listener.Timer.Enabled);
+
+            var logs = _logger.GetLogMessages();
+            var log = logs[2];
+            Assert.Equal(LogLevel.Error, log.Level);
+            Assert.Equal("Error occurred during scheduled invocation for 'TimerFunctionShortName'.", log.FormattedMessage);
+            Assert.Same(ex, log.Exception);
+            log = logs[3];
+            Assert.Equal(LogLevel.Debug, log.Level);
+            Assert.True(log.FormattedMessage.StartsWith("Timer for 'TimerFunctionShortName' started with interval"));
+
+            listener.Dispose();
+        }
+
+        [Fact]
         public async Task ClockSkew_IsNotCalculatedPastDue()
         {
             // First, invoke a function with clock skew. This will store the next status back in the 
@@ -140,7 +172,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         }
 
         [Fact]
-        public async Task StartAsync_SchedulePastDue_InvokesJobFunctionImmediately()
+        public async Task StartAsync_SchedulePastDue_SchedulesImmediateInvocation()
         {
             // Set this to true to ensure that the function is only executed once
             // In this case, because it is run on startup due to being behind schedule,
@@ -168,8 +200,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                     })
                 .Returns(Task.FromResult(true));
 
-            CancellationToken cancellationToken = new CancellationToken();
+            CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
+
+            var startupInvocation = _listener.StartupInvocation;
+            Assert.NotNull(startupInvocation);
+            Assert.False(startupInvocation.RunOnStartup);
+            Assert.Equal(TimerListener.StartupInvocationContext.IntervalMS, _listener.Timer.Interval);
+            Assert.True(startupInvocation.IsPastDue);
+            Assert.Equal(default(DateTime), startupInvocation.OriginalSchedule);
+
+            await Task.Delay(100);
 
             TimerInfo timerInfo = (TimerInfo)_triggeredFunctionData.TriggerValue;
             Assert.Same(status, timerInfo.ScheduleStatus);
@@ -177,11 +218,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
             _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Once());
 
+            // Make sure we've added the reason for the invocation into the Details
+            Assert.Equal(default(DateTime).ToString("o"), _triggeredFunctionData.TriggerDetails[TimerListener.OriginalScheduleKey]);
+            Assert.Equal("IsPastDue", _triggeredFunctionData.TriggerDetails[TimerListener.UnscheduledInvocationReasonKey]);
+
+            Assert.Null(_listener.StartupInvocation);
+
             _listener.Dispose();
         }
 
         [Fact]
-        public async Task StartAsync_ScheduleNotPastDue_DoesNotInvokeJobFunctionImmediately()
+        public async Task StartAsync_ScheduleNotPastDue_DoesNotScheduleImmediateInvocation()
         {
             var now = DateTime.Now;
             ScheduleStatus status = new ScheduleStatus
@@ -195,8 +242,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _mockScheduleMonitor.Setup(p => p.CheckPastDueAsync(_testTimerName, It.IsAny<DateTime>(), It.IsAny<TimerSchedule>(), status))
                 .ReturnsAsync(pastDueAmount);
 
-            CancellationToken cancellationToken = new CancellationToken();
+            CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
+
+            Assert.Null(_listener.StartupInvocation);
 
             _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Never());
 
@@ -204,15 +253,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         }
 
         [Fact]
-        public async Task StartAsync_RunOnStartup_InvokesJobFunctionImmediately()
+        public async Task StartAsync_RunOnStartup_SchedulesImmediateInvocation()
         {
             _listener.ScheduleMonitor = null;
             _attribute.RunOnStartup = true;
 
-            CancellationToken cancellationToken = new CancellationToken();
+            CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
 
+            var startupInvocation = _listener.StartupInvocation;
+            Assert.NotNull(startupInvocation);
+            Assert.True(startupInvocation.RunOnStartup);
+            Assert.Equal(TimerListener.StartupInvocationContext.IntervalMS, _listener.Timer.Interval);
+            Assert.False(startupInvocation.IsPastDue);
+            Assert.Equal(default(DateTime), startupInvocation.OriginalSchedule);
+
+            await Task.Delay(100);
+
             _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Once());
+
+            // Make sure we've added the reason for the invocation into the Details
+            Assert.False(_triggeredFunctionData.TriggerDetails.ContainsKey(TimerListener.OriginalScheduleKey));
+            Assert.Equal("RunOnStartup", _triggeredFunctionData.TriggerDetails[TimerListener.UnscheduledInvocationReasonKey]);
+
+            Assert.Null(_listener.StartupInvocation);
 
             _listener.Dispose();
         }
@@ -222,7 +286,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         {
             _listener.ScheduleMonitor = null;
 
-            CancellationToken cancellationToken = new CancellationToken();
+            CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
 
             _listener.Dispose();
@@ -235,7 +299,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             TimeSpan interval = TimerListener.MaxTimerInterval + TimerListener.MaxTimerInterval + TimeSpan.FromDays(4);
             CreateTestListener(interval.ToString(), useMonitor: false);
 
-            CancellationToken cancellationToken = new CancellationToken();
+            CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
             Assert.Equal(TimerListener.MaxTimerInterval.TotalMilliseconds, _listener.Timer.Interval);
 
@@ -305,7 +369,42 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
             await _listener.StartAsync(CancellationToken.None);
 
-            Assert.True(updateCalled);
+            await TestHelpers.Await(() =>
+            {
+                return updateCalled;
+            });
+        }
+
+        [Fact]
+        public async Task StopAsync_AllowsOutstandingInvocationToComplete()
+        {
+            bool invocationStarted = false;
+            bool invocationCompleted = false;
+            CreateTestListener("* * * * * *", useMonitor: false, functionAction: () =>
+            {
+                invocationStarted = true;
+                Task.Delay(3000).Wait();
+                invocationCompleted = true;
+            });
+
+            await _listener.StartAsync(CancellationToken.None);
+
+            await TestHelpers.Await(() => invocationStarted, pollingInterval: 500);
+
+            // after the function has started running, stop the listener
+            await _listener.StopAsync(CancellationToken.None);
+
+            // ensure the invocation was allowed to complete
+            Assert.True(invocationCompleted, "Outstanding invocation wasn't allowed to complete");
+
+            var logMessages = _logger.GetLogMessages().Select(p => p.FormattedMessage).ToArray();
+            Assert.StartsWith("The 'TimerFunctionShortName' timer is using the schedule 'Cron: '* * * * * *''", logMessages[0]);
+            Assert.StartsWith("The next 5 occurrences of the 'TimerFunctionShortName' schedule (Cron: '* * * * * *') will be", logMessages[1]);
+            Assert.StartsWith("Timer for 'TimerFunctionShortName' started", logMessages[2]);
+            Assert.StartsWith("Timer listener started (TimerFunctionShortName)", logMessages[3]);
+            Assert.StartsWith("Function invocation starting", logMessages[4]);
+            Assert.StartsWith("Function invocation complete", logMessages[5]);
+            Assert.StartsWith("Timer listener stopped (TimerFunctionShortName)", logMessages[6]);
         }
 
         [Fact]
@@ -332,7 +431,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await _listener.StartAsync(CancellationToken.None);
             await _listener.StopAsync(CancellationToken.None);
 
-            Assert.True(_traceWriter.Events.Single(m => m.Level == TraceLevel.Info).Message.StartsWith("The next 5 occurrences of the schedule will be:"));
+            LogMessage actualMessage = _logger.GetLogMessages().Single(m => m.Level == LogLevel.Information);
+            Assert.StartsWith($"The next 5 occurrences of the '{_functionShortName}' schedule ({_schedule}) will be:", actualMessage.FormattedMessage);
+
+            // make sure we're logging function name.
+            Assert.Equal(_functionShortName, actualMessage.State.Single(p => p.Key == "functionName").Value);
         }
 
         [Fact]
@@ -345,14 +448,89 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 LastUpdated = new DateTime(2016, 3, 3, 23, 59, 59)
             };
 
-            var expected = $"Function 'Program.TestTimerJob' initial status: Last='{status.Last.ToString("o")}', Next='{status.Next.ToString("o")}', LastUpdated='{status.LastUpdated.ToString("o")}'";
+            var expected = $"Function '{_functionShortName}' initial status: Last='{status.Last.ToString("o")}', Next='{status.Next.ToString("o")}', LastUpdated='{status.LastUpdated.ToString("o")}'";
             await RunInitialStatusTestAsync(status, expected);
         }
 
         [Fact]
         public async Task Listener_LogsInitialNullStatus_WhenUsingMonitor()
         {
-            await RunInitialStatusTestAsync(null, "Function 'Program.TestTimerJob' initial status: Last='', Next='', LastUpdated=''");
+            await RunInitialStatusTestAsync(null, $"Function '{_functionShortName}' initial status: Last='(null)', Next='(null)', LastUpdated='(null)'");
+        }
+
+        public static IEnumerable<object[]> TimerSchedulesAfterDST => new object[][]
+        {
+            new object[] { new CronSchedule(CrontabSchedule.Parse("0 0 18 * * 5", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(167) },
+            new object[] { new ConstantSchedule(TimeSpan.FromDays(7)), TimeSpan.FromDays(7) },
+        };
+
+        public static IEnumerable<object[]> TimerSchedulesWithinDST => new object[][]
+        {
+            new object[] { new CronSchedule(CrontabSchedule.Parse("0 59 * * * *", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(1) },
+            new object[] { new ConstantSchedule(TimeSpan.FromMinutes(5)), TimeSpan.FromMinutes(5) },
+        };
+
+        /// <summary>
+        /// Situation where the DST transition happens in the middle of the schedule, with the
+        /// next occurrence AFTER the DST transition.
+        /// </summary>
+        [Theory]
+        [MemberData(nameof(TimerSchedulesAfterDST))]
+        public void GetNextInterval_NextAfterDST_ReturnsExpectedValue(TimerSchedule schedule, TimeSpan expectedInterval)
+        {
+            // This only works with a DST-supported time zone, so throw a nice exception
+            if (!TimeZoneInfo.Local.SupportsDaylightSavingTime)
+            {
+                throw new InvalidOperationException("This test will only pass if the time zone supports DST.");
+            }
+
+            // Running on the Friday before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
+            // Note: this test uses Local time, so if you're running in a timezone where
+            // DST doesn't transition the test might not be valid.
+            // The input schedules will run after DST changes. For some (Cron), they will subtract
+            // an hour to account for the shift. For others (Constant), they will not.
+            var now = new DateTime(2018, 3, 9, 18, 0, 0, DateTimeKind.Local);
+
+            var next = schedule.GetNextOccurrence(now);
+            var interval = TimerListener.GetNextTimerInterval(next, now, schedule.AdjustForDST);
+
+            // One week is normally 168 hours, but it's 167 hours across DST
+            Assert.Equal(interval, expectedInterval);
+        }
+
+        /// <summary>
+        /// Situation where the next occurrence falls within the hour that will be skipped
+        /// as part of the DST transition (i.e. an invalid time).
+        /// </summary>
+        [Theory]
+        [MemberData(nameof(TimerSchedulesWithinDST))]
+        public void GetNextInterval_NextWithinDST_ReturnsExpectedValue(TimerSchedule schedule, TimeSpan expectedInterval)
+        {
+            // This only works with a DST-supported time zone, so throw a nice exception
+            if (!TimeZoneInfo.Local.SupportsDaylightSavingTime)
+            {
+                throw new InvalidOperationException("This test will only pass if the time zone supports DST.");
+            }
+
+            // Running at 1:59 AM, i.e. one minute before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
+            // Note: this test uses Local time, so if you're running in a timezone where
+            // DST doesn't transition the test might not be valid.
+            var now = new DateTime(2018, 3, 11, 1, 59, 0, DateTimeKind.Local);
+
+            var next = schedule.GetNextOccurrence(now);
+
+            var interval = TimerListener.GetNextTimerInterval(next, now, schedule.AdjustForDST);
+            Assert.Equal(expectedInterval, interval);
+        }
+
+        [Fact]
+        public void GetNextInterval_NegativeInterval_ReturnsOneTick()
+        {
+            var now = DateTime.Now;
+            var next = now.Subtract(TimeSpan.FromSeconds(1));
+
+            var interval = TimerListener.GetNextTimerInterval(next, now, true);
+            Assert.Equal(1, interval.Ticks);
         }
 
         public async Task RunInitialStatusTestAsync(ScheduleStatus initialStatus, string expected)
@@ -368,30 +546,41 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await _listener.StopAsync(CancellationToken.None);
             _listener.Dispose();
 
-            Assert.Equal(expected, _traceWriter.Events.Single(m => m.Level == TraceLevel.Verbose).Message);
+            LogMessage[] verboseTraces = _logger.GetLogMessages()
+                .Where(m => m.Level == LogLevel.Debug)
+                .OrderBy(t => t.Timestamp)
+                .ToArray();
+
+            Assert.Equal(5, verboseTraces.Length);
+            Assert.Contains("timer is using the schedule 'Cron: '0 * * * * *'' and the local time zone:", verboseTraces[0].FormattedMessage);
+            Assert.Equal(expected, verboseTraces[1].FormattedMessage);
+            Assert.Contains($"Timer for '{_functionShortName}' started with interval", verboseTraces[2].FormattedMessage);
         }
 
-        private void CreateTestListener(string expression, bool useMonitor = true, Action functionAction = null)
+        private void CreateTestListener(string expression, bool useMonitor = true, bool runOnStartup = false, Action functionAction = null)
         {
-            _attribute = new TimerTriggerAttribute(expression);
-            _schedule = TimerSchedule.Create(_attribute, new TestNameResolver());
+            _attribute = new TimerTriggerAttribute(expression)
+            {
+                RunOnStartup = runOnStartup
+            };
+
+            _schedule = TimerSchedule.Create(_attribute, new TestNameResolver(), _logger);
             _attribute.UseMonitor = useMonitor;
-            _config = new TimersConfiguration();
+            _options = new TimersOptions();
             _mockScheduleMonitor = new Mock<ScheduleMonitor>(MockBehavior.Strict);
-            _config.ScheduleMonitor = _mockScheduleMonitor.Object;
             _mockTriggerExecutor = new Mock<ITriggeredFunctionExecutor>(MockBehavior.Strict);
             FunctionResult result = new FunctionResult(true);
             _mockTriggerExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
                 .Callback<TriggeredFunctionData, CancellationToken>((mockFunctionData, mockToken) =>
                 {
+                    _logger.LogDebug("Function invocation starting");
                     _triggeredFunctionData = mockFunctionData;
                     functionAction?.Invoke();
+                    _logger.LogDebug("Function invocation complete");
                 })
                 .Returns(Task.FromResult(result));
-            JobHostConfiguration hostConfig = new JobHostConfiguration();
-            hostConfig.HostId = "testhostid";
-            _traceWriter = new TestTraceWriter();
-            _listener = new TimerListener(_attribute, _schedule, _testTimerName, _config, _mockTriggerExecutor.Object, _traceWriter);
+            _logger = new TestLogger(null);
+            _listener = new TimerListener(_attribute, _schedule, _testTimerName, _options, _mockTriggerExecutor.Object, _logger, _mockScheduleMonitor.Object, _functionShortName);
         }
     }
 }

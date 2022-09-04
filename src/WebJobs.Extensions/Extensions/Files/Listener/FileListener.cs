@@ -10,9 +10,10 @@ using System.Threading.Tasks.Dataflow;
 using System.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Files;
 using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Files.Listeners
 {
@@ -23,47 +24,33 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
         private readonly FileTriggerAttribute _attribute;
         private readonly ITriggeredFunctionExecutor _triggerExecutor;
         private readonly CancellationTokenSource _cancellationTokenSource;
-        private readonly FilesConfiguration _config;
+        private readonly IOptions<FilesOptions> _options;
         private readonly string _watchPath;
+        private readonly ILogger _logger;
+        private readonly IFileProcessorFactory _fileProcessorFactory;
         private ActionBlock<FileSystemEventArgs> _workQueue;
         private FileProcessor _processor;
         private System.Timers.Timer _cleanupTimer;
         private Random _rand = new Random();
         private FileSystemWatcher _watcher;
-        private TraceWriter _trace;
         private bool _disposed;
 
-        public FileListener(FilesConfiguration config, FileTriggerAttribute attribute, ITriggeredFunctionExecutor triggerExecutor, TraceWriter trace)
+        public FileListener(IOptions<FilesOptions> options, FileTriggerAttribute attribute, ITriggeredFunctionExecutor triggerExecutor, ILogger logger, IFileProcessorFactory fileProcessorFactory)
         {
-            if (config == null)
-            {
-                throw new ArgumentNullException("config");
-            }
-            if (attribute == null)
-            {
-                throw new ArgumentNullException("attribute");
-            }
-            if (triggerExecutor == null)
-            {
-                throw new ArgumentNullException("triggerExecutor");
-            }
-            if (trace == null)
-            {
-                throw new ArgumentNullException("trace");
-            }
+            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _attribute = attribute ?? throw new ArgumentNullException(nameof(attribute));
+            _triggerExecutor = triggerExecutor ?? throw new ArgumentNullException(nameof(triggerExecutor));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _fileProcessorFactory = fileProcessorFactory ?? throw new ArgumentNullException(nameof(fileProcessorFactory));
 
-            _config = config;
-            _attribute = attribute;
-            _triggerExecutor = triggerExecutor;
-            _trace = trace;
             _cancellationTokenSource = new CancellationTokenSource();
 
-            if (string.IsNullOrEmpty(_config.RootPath) || !Directory.Exists(_config.RootPath))
+            if (string.IsNullOrEmpty(_options.Value.RootPath) || !Directory.Exists(_options.Value.RootPath))
             {
-                throw new InvalidOperationException(string.Format("Path '{0}' is invalid. FilesConfiguration.RootPath must be set to a valid directory location.", _config.RootPath));
+                throw new InvalidOperationException(string.Format("Path '{0}' is invalid. FilesConfiguration.RootPath must be set to a valid directory location.", _options.Value.RootPath));
             }
 
-            _watchPath = Path.Combine(_config.RootPath, _attribute.GetRootPath());
+            _watchPath = Path.Combine(_options.Value.RootPath, _attribute.GetRootPath());
         }
 
         // for testing
@@ -86,8 +73,8 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
             CreateFileWatcher();
 
-            FileProcessorFactoryContext context = new FileProcessorFactoryContext(_config, _attribute, _triggerExecutor, _trace);
-            _processor = _config.ProcessorFactory.CreateFileProcessor(context);
+            FileProcessorFactoryContext context = new FileProcessorFactoryContext(_options.Value, _attribute, _triggerExecutor, _logger);
+            _processor = _fileProcessorFactory.CreateFileProcessor(context);
 
             ExecutionDataflowBlockOptions options = new ExecutionDataflowBlockOptions
             {
@@ -170,13 +157,6 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
         private void CreateFileWatcher()
         {
-            if (_attribute.ChangeTypes != WatcherChangeTypes.Created &&
-                _attribute.ChangeTypes != WatcherChangeTypes.Changed &&
-                _attribute.ChangeTypes != (WatcherChangeTypes.Created | WatcherChangeTypes.Changed))
-            {
-                throw new NotSupportedException("Only the 'Created' and 'Changed' change types are supported.");
-            }
-
             if ((_attribute.ChangeTypes & WatcherChangeTypes.Changed) != 0 && _attribute.AutoDelete)
             {
                 throw new NotSupportedException("Use of AutoDelete is not supported when using change type 'Changed'.");
@@ -194,16 +174,25 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
                 Filter = _attribute.Filter
             };
 
-            if ((_attribute.ChangeTypes & WatcherChangeTypes.Changed) != 0)
-            {
-                _watcher.Changed += new FileSystemEventHandler(FileChangeHandler);
-            }
-
             if ((_attribute.ChangeTypes & WatcherChangeTypes.Created) != 0)
             {
                 _watcher.Created += new FileSystemEventHandler(FileChangeHandler);
             }
 
+            if ((_attribute.ChangeTypes & WatcherChangeTypes.Changed) != 0)
+            {
+                _watcher.Changed += new FileSystemEventHandler(FileChangeHandler);
+            }
+
+            if ((_attribute.ChangeTypes & WatcherChangeTypes.Renamed) != 0)
+            {
+                _watcher.Renamed += new RenamedEventHandler(FileRenameHandler);
+            }
+
+            if ((_attribute.ChangeTypes & WatcherChangeTypes.Deleted) != 0)
+            {
+                _watcher.Deleted += new FileSystemEventHandler(FileChangeHandler);
+            }
             _watcher.EnableRaisingEvents = true;
         }
 
@@ -237,6 +226,22 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
             _workQueue.Post(e);
         }
 
+        /// <summary>
+        /// Queues an incoming File for processing if it was renamed and matches the filter.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void FileRenameHandler(object sender, RenamedEventArgs e)
+        {
+            if (_processor.IsStatusFile(e.Name))
+            {
+                // We never want to trigger on our own status files
+                return;
+            }
+
+            _workQueue.Post(e);
+        }
+
         private async Task ProcessWorkItem(FileSystemEventArgs e)
         {
             await _processor.ProcessFileAsync(e, _cancellationTokenSource.Token);
@@ -255,7 +260,7 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
             if (filesToProcess.Length > 0)
             {
-                _trace.Verbose(string.Format("Found {0} file(s) at path '{1}' for ready processing", filesToProcess.Length, _watchPath));
+                _logger.LogDebug($"Found {filesToProcess.Length} file(s) at path '{_watchPath}' for ready processing");
             }
 
             foreach (string fileToProcess in filesToProcess)

@@ -7,12 +7,14 @@ using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Bindings;
+using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
 using Microsoft.Azure.WebJobs.Files.Listeners;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
@@ -20,16 +22,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
     {
         private readonly ParameterInfo _parameter;
         private readonly FileTriggerAttribute _attribute;
-        private readonly FilesConfiguration _config;
+        private readonly IOptions<FilesOptions> _options;
         private readonly IReadOnlyDictionary<string, Type> _bindingContract;
         private readonly BindingDataProvider _bindingDataProvider;
-        private readonly TraceWriter _trace;
+        private readonly IFileProcessorFactory _fileProcessorFactory;
+        private readonly ILogger _logger;
 
-        public FileTriggerBinding(FilesConfiguration config, ParameterInfo parameter, TraceWriter trace)
+        public FileTriggerBinding(IOptions<FilesOptions> options, ParameterInfo parameter, ILogger logger, IFileProcessorFactory fileProcessorFactory)
         {
-            _config = config;
+            _options = options;
             _parameter = parameter;
-            _trace = trace;
+            _logger = logger;
+            _fileProcessorFactory = fileProcessorFactory;
             _attribute = parameter.GetCustomAttribute<FileTriggerAttribute>(inherit: false);
             _bindingDataProvider = BindingDataProvider.FromTemplate(_attribute.Path);
             _bindingContract = CreateBindingContract();
@@ -54,15 +58,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             if (fileEvent == null)
             {
                 string filePath = value as string;
-                if (!string.IsNullOrEmpty(filePath))
-                {
-                    // TODO: This only supports Created events. For Dashboard invocation, how can we
-                    // handle Change events?
-                    string directory = Path.GetDirectoryName(filePath);
-                    string fileName = Path.GetFileName(filePath);
-
-                    fileEvent = new FileSystemEventArgs(WatcherChangeTypes.Created, directory, fileName);
-                }
+                fileEvent = GetFileArgsFromString(filePath);
             }
 
             IValueBinder valueBinder = new FileValueBinder(_parameter, fileEvent);
@@ -71,19 +67,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, bindingData));
         }
 
+        internal static FileSystemEventArgs GetFileArgsFromString(string filePath)
+        {            
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                // TODO: This only supports Created events. For Dashboard invocation, how can we
+                // handle Change events?
+                string directory = Path.GetDirectoryName(filePath);
+                string fileName = Path.GetFileName(filePath);
+
+                return new FileSystemEventArgs(WatcherChangeTypes.Created, directory, fileName);
+            }
+
+            return null;
+        }
+
         public Task<IListener> CreateListenerAsync(ListenerFactoryContext context)
         {
             if (context == null)
             {
                 throw new ArgumentNullException("context");
             }
-            return Task.FromResult<IListener>(new FileListener(_config, _attribute, context.Executor, _trace));
+            return Task.FromResult<IListener>(new FileListener(_options, _attribute, context.Executor, _logger, _fileProcessorFactory));
         }
 
         public ParameterDescriptor ToParameterDescriptor()
         {
             // These path values are validated later during startup.
-            string triggerPath = Path.Combine(_config.RootPath ?? string.Empty, _attribute.Path ?? string.Empty);
+            string triggerPath = Path.Combine(_options.Value.RootPath ?? string.Empty, _attribute.Path ?? string.Empty);
 
             return new FileTriggerParameterDescriptor
             {
@@ -144,6 +155,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             return bindingData;
         }
 
+        private class FileTriggerParameterDescriptor : TriggerParameterDescriptor
+        {
+            public override string GetTriggerReason(IDictionary<string, string> arguments)
+            {
+                string fullPath = null;
+                if (arguments != null && arguments.TryGetValue(Name, out fullPath))
+                {
+                    return string.Format("File change detected for file '{0}'", fullPath);
+                }
+                return null;
+            }
+        }
+
         private class FileValueBinder : StreamValueBinder
         {
             private readonly ParameterInfo _parameter;
@@ -177,19 +201,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             public override string ToInvokeString()
             {
                 return _fileEvent.FullPath;
-            }
-        }
-
-        private class FileTriggerParameterDescriptor : TriggerParameterDescriptor
-        {
-            public override string GetTriggerReason(IDictionary<string, string> arguments)
-            {
-                string fullPath = null;
-                if (arguments != null && arguments.TryGetValue(Name, out fullPath))
-                {
-                    return string.Format("File change detected for file '{0}'", fullPath);
-                }
-                return null;
             }
         }
     }

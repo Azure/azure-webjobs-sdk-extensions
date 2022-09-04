@@ -12,26 +12,27 @@ using Microsoft.Azure.WebJobs.Extensions.Bindings;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings.Path;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
     internal class FileAttributeBindingProvider : IBindingProvider
     {
-        private readonly FilesConfiguration _config;
+        private readonly IOptions<FilesOptions> _options;
         private readonly INameResolver _nameResolver;
 
-        public FileAttributeBindingProvider(FilesConfiguration config, INameResolver nameResolver)
+        public FileAttributeBindingProvider(IOptions<FilesOptions> options, INameResolver nameResolver)
         {
-            if (config == null)
+            if (options == null)
             {
-                throw new ArgumentNullException("config");
+                throw new ArgumentNullException("options");
             }
             if (nameResolver == null)
             {
                 throw new ArgumentNullException("nameResolver");
             }
 
-            _config = config;
+            _options = options;
             _nameResolver = nameResolver;
         }
 
@@ -64,11 +65,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 .Union(new Type[] { typeof(FileStream), typeof(FileInfo) });
             if (!ValueBinder.MatchParameterType(context.Parameter, types))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, 
+                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture,
                     "Can't bind FileAttribute to type '{0}'.", parameter.ParameterType));
             }
 
-            return Task.FromResult<IBinding>(new FileBinding(_config, parameter, bindingTemplate));
+            return Task.FromResult<IBinding>(new FileBinding(_options, parameter, bindingTemplate));
         }
     }
 }

@@ -10,6 +10,7 @@ using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -17,6 +18,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Bindings
 {
     public class TimerTriggerBindingTests
     {
+        private readonly ILogger _logger;
+        private readonly TestLoggerProvider _loggerProvider;
+
+        public TimerTriggerBindingTests()
+        {
+            _loggerProvider = new TestLoggerProvider();
+            ILoggerFactory loggerFactory = new LoggerFactory();
+            loggerFactory.AddProvider(_loggerProvider);
+            _logger = _loggerProvider.CreateLogger("Test");
+        }
+
         [Fact]
         public async Task BindAsync_ReturnsExpectedTriggerData()
         {
@@ -30,15 +42,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Bindings
 
             TimerTriggerAttribute attribute = parameter.GetCustomAttribute<TimerTriggerAttribute>();
             INameResolver nameResolver = new TestNameResolver();
-            TimerSchedule schedule = TimerSchedule.Create(attribute, nameResolver);
-            TimersConfiguration config = new TimersConfiguration();
-            config.ScheduleMonitor = mockScheduleMonitor.Object;
-            TestTraceWriter trace = new TestTraceWriter();
-            TimerTriggerBinding binding = new TimerTriggerBinding(parameter, attribute, schedule, config, trace);
+            TimerSchedule schedule = TimerSchedule.Create(attribute, nameResolver, _logger);
+            TimersOptions options = new TimersOptions();
+
+            ILoggerFactory loggerFactory = new LoggerFactory();
+            loggerFactory.AddProvider(new TestLoggerProvider());
+
+            TimerTriggerBinding binding = new TimerTriggerBinding(parameter, attribute, schedule, options, loggerFactory.CreateLogger("Test"), mockScheduleMonitor.Object);
 
             // when we bind to a non-TimerInfo (e.g. in a Dashboard invocation) a new
             // TimerInfo is created, with the ScheduleStatus populated
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None, trace);
+            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
             ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
             TriggerData triggerData = (TriggerData)(await binding.BindAsync(string.Empty, context));
             TimerInfo timerInfo = (TimerInfo)(await triggerData.ValueProvider.GetValueAsync());

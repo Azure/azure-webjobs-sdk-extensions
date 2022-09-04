@@ -2,8 +2,11 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Globalization;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
+using NCrontab;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
@@ -17,21 +20,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
 
         public ScheduleMonitorTests()
         {
-            _hourlySchedule = new CronSchedule("0 0 * * * *");
-            _halfHourlySchedule = new CronSchedule("0 */30 * * * *");
-            _dailySchedule = new CronSchedule("0 0 0 * * *");
+            _hourlySchedule = new CronSchedule(CrontabSchedule.Parse("0 * * * *"));
+            _halfHourlySchedule = new CronSchedule(CrontabSchedule.Parse("*/30 * * * *"));
+            _dailySchedule = new CronSchedule(CrontabSchedule.Parse("0 0 * * *"));
         }
 
         [Fact]
         public async Task CheckPastDue_NullStatus()
         {
-            DateTime now = DateTime.Parse("1/1/2017 9:35");
+            DateTime now = new DateTime(2017, 1, 1, 9, 35, 0);
             MockScheduleMonitor monitor = new MockScheduleMonitor();
 
             TimeSpan pastDueAmount = await monitor.CheckPastDueAsync(_timerName, now, _dailySchedule, null);
             Assert.Equal(TimeSpan.Zero, pastDueAmount);
             Assert.Equal(default(DateTime), monitor.CurrentStatus.Last);
-            Assert.Equal(DateTime.Parse("1/2/2017 00:00"), monitor.CurrentStatus.Next);
+            Assert.Equal(new DateTime(2017, 1, 2), monitor.CurrentStatus.Next);
             Assert.Equal(now, monitor.CurrentStatus.LastUpdated);
         }
 
@@ -109,9 +112,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
 
             ScheduleStatus status = new ScheduleStatus
             {
-                Last = lastSet ? DateTime.Parse("1/1/2017 9:00") : default(DateTime),
-                Next = DateTime.Parse("1/1/2017 10:00"),
-                LastUpdated = lastUpdatedSet ? DateTime.Parse("1/1/2017 9:00") : default(DateTime)
+                Last = lastSet ? new DateTime(2017, 1, 1, 9, 0, 0) : default(DateTime),
+                Next = new DateTime(2017, 1, 1, 10, 0, 0),
+                LastUpdated = lastUpdatedSet ? new DateTime(2017, 1, 1, 9, 0, 0) : default(DateTime)
             };
 
             MockScheduleMonitor monitor = new MockScheduleMonitor();
@@ -121,18 +124,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
 
             Assert.Equal(TimeSpan.Zero, pastDueAmount);
 
-            DateTime expectedNext = DateTime.Parse("1/2/2017 0:00");
+            DateTime expectedNext = new DateTime(2017, 1, 2);
             Assert.Equal(default(DateTime), monitor.CurrentStatus.Last);
             Assert.Equal(expectedNext, monitor.CurrentStatus.Next);
 
             if (lastUpdatedSet || lastSet)
             {
-                Assert.Equal(DateTime.Parse("1/1/2017 9:00"), monitor.CurrentStatus.LastUpdated);
+                Assert.Equal(new DateTime(2017, 1, 1, 9, 0, 0), monitor.CurrentStatus.LastUpdated);
             }
             else
             {
                 // Legacy behavior -- before 'LastUpdated' was added.
-
                 Assert.Equal(now, monitor.CurrentStatus.LastUpdated);
             }
         }
@@ -144,13 +146,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         [InlineData(false, true)]
         private async Task CheckPastDue_ScheduleChange_Shorter(bool lastSet, bool lastUpdatedSet)
         {
-            DateTime now = DateTime.Parse("1/1/2017 9:35");
+            DateTime now = new DateTime(2017, 1, 1, 9, 35, 0);
 
             ScheduleStatus status = new ScheduleStatus
             {
-                Last = lastSet ? DateTime.Parse("1/1/2017 9:00") : default(DateTime),
-                Next = DateTime.Parse("1/1/2017 10:00"),
-                LastUpdated = lastUpdatedSet ? DateTime.Parse("1/1/2017 9:00") : default(DateTime)
+                Last = lastSet ? new DateTime(2017, 1, 1, 9, 0, 0) : default(DateTime),
+                Next = new DateTime(2017, 1, 1, 10, 0, 0),
+                LastUpdated = lastUpdatedSet ? new DateTime(2017, 1, 1, 9, 0, 0) : default(DateTime)
             };
 
             MockScheduleMonitor monitor = new MockScheduleMonitor();
@@ -164,7 +166,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
                 // Because the new time is in the past, we re-calculate it to be the next invocation from 'now'.
                 Assert.Equal(TimeSpan.Zero, pastDueAmount);
                 Assert.Equal(default(DateTime), monitor.CurrentStatus.Last);
-                Assert.Equal(DateTime.Parse("1/1/2017 10:00"), monitor.CurrentStatus.Next);
+                Assert.Equal(new DateTime(2017, 1, 1, 10, 0, 0), monitor.CurrentStatus.Next);
                 Assert.Equal(now, monitor.CurrentStatus.LastUpdated);
             }
             else

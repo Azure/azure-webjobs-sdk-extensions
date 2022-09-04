@@ -12,7 +12,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void GetNextOccurrence_NowEqualToNext_ReturnsCorrectValue()
         {
-            CronSchedule schedule = new CronSchedule("0 * * * * *");
+            CronSchedule.TryCreate("0 * * * * *", out CronSchedule schedule);
+                
+            var now = schedule.GetNextOccurrence(DateTime.Now);
+            var next = schedule.GetNextOccurrence(now);
+
+            Assert.True(next > now);
+        }
+
+        [Fact]
+        public void GetNextOccurrence_FivePartCronExpression_NowEqualToNext_ReturnsCorrectValue()
+        {
+            CronSchedule.TryCreate("* * * * *", out CronSchedule schedule);
 
             var now = schedule.GetNextOccurrence(DateTime.Now);
             var next = schedule.GetNextOccurrence(now);
@@ -24,7 +35,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         public void GetNextOccurrence_ThreeDaySchedule_MultipleScheduleIterations()
         {
             // 11:59AM on Mondays, Tuesdays, Wednesdays, Thursdays and Fridays
-            CronSchedule schedule = new CronSchedule("0 59 11 * * 1-5");
+            CronSchedule.TryCreate("0 59 11 * * 1-5", out CronSchedule schedule);
 
             DateTime now = new DateTime(2015, 5, 23, 9, 0, 0);
 
@@ -42,8 +53,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void ToString_ReturnsExpectedValue()
         {
-            CronSchedule schedule = new CronSchedule("0 59 11 * * 1-5");
+            var result = CronSchedule.TryCreate("0 59 11 * * 1-5", out CronSchedule schedule);
+
+            Assert.True(result);
             Assert.Equal("Cron: '0 59 11 * * 1-5'", schedule.ToString());
+        }
+
+        [Fact]
+        public void NullExpression_ReturnsFalseAndNullcronSchedule()
+        {
+            var result = CronSchedule.TryCreate(null, out CronSchedule schedule);
+
+            Assert.Null(schedule);
+            Assert.False(result);
         }
     }
 }

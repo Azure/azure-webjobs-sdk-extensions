@@ -1,10 +1,10 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using System;
 using Microsoft.Azure.WebJobs;
 using Newtonsoft.Json.Linq;
-using Twilio;
+using Twilio.Rest.Api.V2010.Account;
+using Twilio.Types;
 
 namespace ExtensionsSample.Samples
 {
@@ -15,19 +15,18 @@ namespace ExtensionsSample.Samples
     public static class TwilioSamples
     {
         /// <summary>
-        /// Demonstrates declaratively defining all SMS message properties with parameter binding
+        /// Demonstrates declaratively SMS message properties with parameter binding
         /// to message properties.
         /// </summary>
         public static void ProcessOrder_Declarative(
             [QueueTrigger(@"samples-orders")] Order order,
             [TwilioSms(
-                To = "{CustomerPhoneNumber}",
                 From = "{StorePhoneNumber}",
                 Body = "{CustomerName}, we've received your order ({OrderId}) and have begun processing it!")]
-            out SMSMessage message)
+            out CreateMessageOptions messageOptions)
         {
             // You can set additional message properties here
-            message = new SMSMessage();
+            messageOptions = new CreateMessageOptions(new PhoneNumber(order.CustomerPhoneNumber));
         }
 
         /// <summary>
@@ -36,18 +35,17 @@ namespace ExtensionsSample.Samples
         [Disable]
         public static void ProcessOrder_Imperative(
             [QueueTrigger(@"samples-orders")] Order order,
-            [TwilioSms] out SMSMessage message)
+            [TwilioSms] out CreateMessageOptions messageOptions)
         {
-            message = new SMSMessage()
+            messageOptions = new CreateMessageOptions(new PhoneNumber(order.StorePhoneNumber))
             {
-                From = order.StorePhoneNumber,
-                To = order.CustomerPhoneNumber,
+                From = new PhoneNumber(order.StorePhoneNumber),
                 Body = string.Format("{0}, we've received your order ({1}) and have begun processing it!", order.CustomerName, order.OrderId)
             };
         }
 
         /// <summary>
-        /// Demonstrates the JObject binding (the JObject will be converted into an SMSMessage)
+        /// Demonstrates the JObject binding (the JObject will be converted into an message)
         /// </summary>
         [Disable]
         public static void ProcessOrder_JObject(
@@ -63,28 +61,27 @@ namespace ExtensionsSample.Samples
         }
 
         /// <summary>
-        /// Demonstrates the IAsyncCollector binding. This works with JObject
-        /// or SMSMessage. Using IAsyncCollector is also a way to conditionally
+        /// Demonstrates the IAsyncCollector binding. This works with <see cref="JObject"/>
+        /// or <see cref="CreateMessageOptions"/>. Using IAsyncCollector is also a way to conditionally
         /// send messages from a function.
         /// </summary>
         [Disable]
         public static void ProcessOrder_MessageAsyncCollector(
             [QueueTrigger(@"samples-orders")] Order order,
-            [TwilioSms] IAsyncCollector<SMSMessage> messages)
+            [TwilioSms] IAsyncCollector<CreateMessageOptions> messages)
         {
-            var message = new SMSMessage()
+            var messageOptions = new CreateMessageOptions(new PhoneNumber(order.CustomerPhoneNumber))
             {
-                From = order.StorePhoneNumber,
-                To = order.CustomerPhoneNumber,
+                From = new PhoneNumber(order.StorePhoneNumber),
                 Body = string.Format("{0}, we've received your order ({1}) and have begun processing it!", order.CustomerName, order.OrderId)
             };
 
-            messages.AddAsync(message);
+            messages.AddAsync(messageOptions);
         }
 
         /// <summary>
-        /// Demonstrates the IAsyncCollector binding. This works with JObject
-        /// or SMSMessage. Using IAsyncCollector is also a way to conditionally
+        /// Demonstrates the IAsyncCollector binding. This works with <see cref="JObject"/>
+        /// or <see cref="CreateMessageOptions"/>. Using IAsyncCollector is also a way to conditionally
         /// send messages from a function.
         /// </summary>
         [Disable]

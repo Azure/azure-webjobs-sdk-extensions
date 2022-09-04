@@ -2,75 +2,69 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Twilio;
+using Twilio.Rest.Api.V2010.Account;
+using Twilio.Types;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Bindings
 {
-    internal class TwilioSmsMessageAsyncCollector : IAsyncCollector<SMSMessage>
+    internal class TwilioSmsMessageAsyncCollector : IAsyncCollector<CreateMessageOptions>
     {
         private readonly TwilioSmsContext _context;
-        private readonly Collection<SMSMessage> _messages = new Collection<SMSMessage>();
+        private readonly ConcurrentQueue<CreateMessageOptions> _messages = new ConcurrentQueue<CreateMessageOptions>();
 
         public TwilioSmsMessageAsyncCollector(TwilioSmsContext context)
         {
             _context = context;
         }
 
-        public Task AddAsync(SMSMessage item, CancellationToken cancellationToken = default(CancellationToken))
+        public Task AddAsync(CreateMessageOptions messageOptions, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (item == null)
-            {
-                throw new ArgumentNullException("item");
-            }
+            ApplyContextMessageSettings(messageOptions, _context);
 
-            ApplyContextMessageSettings(item, _context);
-
-            if (string.IsNullOrEmpty(item.To))
+            if (messageOptions.To == null)
             {
                 throw new InvalidOperationException("A 'To' number must be specified for the message.");
             }
 
-            if (string.IsNullOrEmpty(item.From))
+            if (messageOptions.From == null)
             {
                 throw new InvalidOperationException("A 'From' number must be specified for the message.");
             }
 
-            if (string.IsNullOrEmpty(item.Body))
+            if (messageOptions.Body == null)
             {
                 throw new InvalidOperationException("A 'Body' must be specified for the message.");
             }
 
-            _messages.Add(item);
+            _messages.Enqueue(messageOptions);
 
-            return Task.FromResult(0);
+            return Task.CompletedTask;
         }
 
-        internal static void ApplyContextMessageSettings(SMSMessage message, TwilioSmsContext context)
+        internal static void ApplyContextMessageSettings(CreateMessageOptions messageOptions, TwilioSmsContext context)
         {
-            message.From = Utility.FirstOrDefault(message.From, context.From);
-            message.To = Utility.FirstOrDefault(message.To, context.To);
-            message.Body = Utility.FirstOrDefault(message.Body, context.Body);
+            if (messageOptions.From == null)
+            {
+                messageOptions.From = new PhoneNumber(context.From);
+            }
+
+            if (messageOptions.Body == null)
+            {
+                messageOptions.Body = context.Body;
+            }
         }
 
         public async Task FlushAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            await Task.Run(() =>
+            while (_messages.TryDequeue(out CreateMessageOptions message))
             {
-                foreach (var message in _messages)
-                {
-                    Message response = _context.Client.SendMessage(message.From, message.To, message.Body);
-
-                    if (response.RestException != null)
-                    {
-                        WebExceptionStatus status = (WebExceptionStatus)int.Parse(response.RestException.Status);
-                        throw new WebException(response.RestException.Message, status);
-                    }
-                }
-            });
+                // this create will initiate the send operation
+                await MessageResource.CreateAsync(message, client: _context.Client);
+            }
         }
     }
 }

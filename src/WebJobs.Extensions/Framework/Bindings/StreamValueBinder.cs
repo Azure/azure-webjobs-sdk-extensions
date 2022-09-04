@@ -16,7 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
     /// <summary>
     /// Flexible binder that can handle automatic mappings from <see cref="Stream"/> to various other types.
     /// </summary>
-    public abstract class StreamValueBinder : ValueBinder
+    internal abstract class StreamValueBinder : ValueBinder
     {
         // collection of Types that this binder supports binding
         // input parameters to
@@ -39,10 +39,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
             typeof(string),
             typeof(byte[])
         };
+
         private readonly ParameterInfo _parameter;
 
         /// <summary>
-        /// Constructs a new instance
+        /// Constructs a new instance.
         /// </summary>
         /// <param name="parameter">The parameter being bound to.</param>
         /// <param name="bindStepOrder"></param>
@@ -120,11 +121,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
         }
 
         /// <inheritdoc/>
-        public override Task SetValueAsync(object value, CancellationToken cancellationToken)
+        public override async Task SetValueAsync(object value, CancellationToken cancellationToken)
         {
             if (value == null)
             {
-                return Task.FromResult(0);
+                return;
             }
 
             if (typeof(Stream).IsAssignableFrom(value.GetType()))
@@ -160,12 +161,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
                     // open the file using the declared file options, and write the bytes
                     using (Stream stream = GetStream())
                     {
-                        stream.Write(bytes, 0, bytes.Length);
+                        await stream.WriteAsync(bytes, 0, bytes.Length);
                     }
                 }
             }
-
-            return Task.FromResult(true);
         }
     }
 }

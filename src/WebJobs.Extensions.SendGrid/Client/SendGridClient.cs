@@ -2,29 +2,33 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using SendGrid;
-using SendGrid.CSharp.HTTP.Client;
+using SendGrid.Helpers.Mail;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Client
+namespace Client
 {
     internal class SendGridClient : ISendGridClient
     {
-        private SendGridAPIClient _sendGrid;
+        private SendGrid.SendGridClient _client;
 
         public SendGridClient(string apiKey)
         {
-            _sendGrid = new SendGridAPIClient(apiKey);
+            _client = new SendGrid.SendGridClient(apiKey);
         }
 
-        public async Task SendMessageAsync(string mailJson)
+        public async Task<Response> SendMessageAsync(SendGridMessage msg, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Response response = await _sendGrid.client.mail.send.post(requestBody: mailJson);
+            var response = await _client.SendEmailAsync(msg, cancellationToken);
+
             if ((int)response.StatusCode >= 300)
             {
                 string body = await response.Body.ReadAsStringAsync();
                 throw new InvalidOperationException(body);
             }
+
+            return response;
         }
     }
 }

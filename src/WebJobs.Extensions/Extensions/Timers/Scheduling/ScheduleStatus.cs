@@ -6,22 +6,22 @@ using System;
 namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
     /// <summary>
-    /// Represents a timer schedule status
+    /// Represents a timer schedule status.
     /// </summary>
     public class ScheduleStatus
     {
         /// <summary>
-        /// The last recorded schedule occurrence
+        /// Gets or sets the last recorded schedule occurrence.
         /// </summary>
         public DateTime Last { get; set; }
 
         /// <summary>
-        /// The expected next schedule occurrence
+        /// Gets or sets the expected next schedule occurrence.
         /// </summary>
         public DateTime Next { get; set; }
 
         /// <summary>
-        /// The last time this record was updated. This is used to re-calculate Next
+        /// Gets or sets the last time this record was updated. This is used to re-calculate Next
         /// with the current Schedule after a host restart.
         /// </summary>
         public DateTime LastUpdated { get; set; }

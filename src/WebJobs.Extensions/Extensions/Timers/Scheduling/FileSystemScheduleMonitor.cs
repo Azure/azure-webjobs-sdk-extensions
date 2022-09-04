@@ -81,6 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             {
                 return _statusFilePath;
             }
+
             set
             {
                 if (string.IsNullOrEmpty(value))

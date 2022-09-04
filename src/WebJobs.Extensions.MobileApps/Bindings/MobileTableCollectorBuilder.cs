@@ -5,16 +5,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.MobileApps.Bindings
 {
     internal class MobileTableCollectorBuilder<T> : IConverter<MobileTableAttribute, IAsyncCollector<T>>
     {
-        private MobileAppsConfiguration _config;
+        private MobileAppsExtensionConfigProvider _configProvider;
 
-        public MobileTableCollectorBuilder(MobileAppsConfiguration config)
+        public MobileTableCollectorBuilder(MobileAppsExtensionConfigProvider configProvider)
         {
-            _config = config;
+            _configProvider = configProvider;
         }
 
         public IAsyncCollector<T> Convert(MobileTableAttribute attribute)
         {
-            MobileTableContext context = _config.CreateContext(attribute);
+            MobileTableContext context = _configProvider.CreateContext(attribute);
             return new MobileTableAsyncCollector<T>(context);
         }
     }

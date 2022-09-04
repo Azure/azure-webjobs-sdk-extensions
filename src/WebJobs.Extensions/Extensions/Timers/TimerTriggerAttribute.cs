@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 
 namespace Microsoft.Azure.WebJobs
@@ -11,14 +12,16 @@ namespace Microsoft.Azure.WebJobs
     /// a timer schedule. The trigger parameter type must be <see cref="TimerInfo"/>.
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter)]
+    [Binding]
     public sealed class TimerTriggerAttribute : Attribute
     {
         /// <summary>
         /// Constructs a new instance based on the schedule expression passed in.
         /// </summary>
         /// <param name="scheduleExpression">A schedule expression. This can either be a 6 field crontab expression
-        /// <a href="http://en.wikipedia.org/wiki/Cron#CRON_expression"/> or a <see cref="TimeSpan"/>
-        /// string (e.g. "00:30:00").</param>
+        /// <a href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-timer#cron-expressions"/> or a <see cref="TimeSpan"/>
+        /// string (e.g. "00:30:00"). On Azure Functions, a TimeSpan string is only supported 
+        /// when running on an App Service Plan.</param>
         public TimerTriggerAttribute(string scheduleExpression)
         {
             ScheduleExpression = scheduleExpression;

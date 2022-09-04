@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.MobileApps;
 using Microsoft.WindowsAzure.MobileServices;
 using Newtonsoft.Json.Linq;
@@ -22,7 +23,8 @@ namespace Microsoft.Azure.WebJobs
     /// <item><description>out T[], where T is any Type with a public string Id property</description></item>
     /// </list>
     /// </remarks>
-    [AttributeUsage(AttributeTargets.Parameter)]
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
+    [Binding]
     public sealed class MobileTableAttribute : Attribute
     {
         /// <summary>
@@ -42,16 +44,16 @@ namespace Microsoft.Azure.WebJobs
 
         /// <summary>
         /// Optional. A string value indicating the app setting to use as the Azure Mobile App Uri, if different
-        /// than the one specified in the <see cref="MobileAppsConfiguration"/>.
+        /// than the one specified in the <see cref="MobileAppsOptions"/>.
         /// </summary>
         [AppSetting]
         public string MobileAppUriSetting { get; set; }
 
         /// <summary>
         /// Optional. A string value indicating the app setting to use as the Azure Mobile App Api Key, if different
-        /// than the one specified in the <see cref="MobileAppsConfiguration"/>.
+        /// than the one specified in the <see cref="MobileAppsOptions"/>.
         /// This value affects this parameter as follows:
-        /// - If it is null, the ApiKey value from <see cref="MobileAppsConfiguration"/> is used.
+        /// - If it is null, the ApiKey value from <see cref="MobileAppsOptions"/> is used.
         /// - If it is equal to string.Empty, no Api Key is used.
         /// - Otherwise, this value is used to indicate the app setting that contains the Azure Mobile App Api Key.
         /// </summary>

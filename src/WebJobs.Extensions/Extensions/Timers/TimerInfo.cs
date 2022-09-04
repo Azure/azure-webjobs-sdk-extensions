@@ -10,12 +10,14 @@ namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
     /// Provides access to timer schedule information for jobs triggered 
-    /// by <see cref="TimerTriggerAttribute"/>
+    /// by <see cref="TimerTriggerAttribute"/>.
     /// </summary>
     public class TimerInfo
     {
+        internal const string DateTimeFormat = "MM'/'dd'/'yyyy HH':'mm':'ssK";
+
         /// <summary>
-        /// Constructs a new instance
+        /// Constructs a new instance.
         /// </summary>
         /// <param name="schedule">The timer trigger schedule.</param>
         /// <param name="status">The current schedule status.</param>
@@ -33,14 +35,14 @@ namespace Microsoft.Azure.WebJobs
         public TimerSchedule Schedule { get; private set; }
 
         /// <summary>
-        /// Gets or sets the current schedule status for this timer.
+        /// Gets the current schedule status for this timer.
         /// If schedule monitoring is not enabled for this timer (see <see cref="TimerTriggerAttribute.UseMonitor"/>)
         /// this property will return null.
         /// </summary>
         public ScheduleStatus ScheduleStatus { get; private set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether this timer invocation
+        /// Gets a value indicating whether this timer invocation
         /// is due to a missed schedule occurrence.
         /// </summary>
         public bool IsPastDue { get; private set; }
@@ -64,12 +66,20 @@ namespace Microsoft.Azure.WebJobs
                 throw new ArgumentNullException("schedule");
             }
 
+            bool isUtc = TimeZoneInfo.Local.HasSameRules(TimeZoneInfo.Utc);
             IEnumerable<DateTime> nextOccurrences = schedule.GetNextOccurrences(count, now);
             StringBuilder builder = new StringBuilder();
-            builder.AppendLine(string.Format("The next {0} occurrences of the schedule will be:", count));
             foreach (DateTime occurrence in nextOccurrences)
             {
-                builder.AppendLine(occurrence.ToString());
+                if (isUtc)
+                {
+                    builder.AppendLine(occurrence.ToUniversalTime().ToString(DateTimeFormat));
+                }
+                else
+                {
+                    TimeSpan offset = TimeZoneInfo.Local.GetUtcOffset(occurrence);
+                    builder.AppendLine($"{occurrence.ToString(DateTimeFormat)} ({occurrence.ToUniversalTime().ToString(DateTimeFormat)})");
+                }
             }
 
             return builder.ToString();

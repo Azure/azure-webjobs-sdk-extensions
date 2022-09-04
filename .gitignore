@@ -7,8 +7,9 @@ csx
 *.suo
 *.cscfg
 *.Cache
-
+/.vs
 /packages
 /TestResults
+/buildoutput
 
 /tools/NuGet.exe

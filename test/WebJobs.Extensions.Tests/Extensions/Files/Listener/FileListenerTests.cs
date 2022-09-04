@@ -13,6 +13,7 @@ using Microsoft.Azure.WebJobs.Extensions.Files.Listener;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Files.Listeners;
 using Microsoft.Azure.WebJobs.Host.Executors;
+using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
 using Xunit;
@@ -36,13 +37,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
         [Fact]
         public void Constructor_ThrowsOnInvalidRootPath()
         {
-            FilesConfiguration config = new FilesConfiguration();
+            var options = new FilesOptions();
             FileTriggerAttribute attrib = new FileTriggerAttribute("test", "*.dat");
             Mock<ITriggeredFunctionExecutor> mockExecutor = new Mock<ITriggeredFunctionExecutor>();
 
             var ex = Assert.Throws<InvalidOperationException>(() =>
             {
-                new FileListener(config, attrib, mockExecutor.Object, new TestTraceWriter());
+                new FileListener(new OptionsWrapper<FilesOptions>(options), attrib, mockExecutor.Object, new TestLogger("Test"), new DefaultFileProcessorFactory());
             });
 
             Assert.Equal("Path '' is invalid. FilesConfiguration.RootPath must be set to a valid directory location.", ex.Message);
@@ -67,7 +68,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
                     })
                 .ReturnsAsync(result);
 
-            FilesConfiguration config = new FilesConfiguration()
+            var options = new FilesOptions()
             {
                 RootPath = rootPath
             };
@@ -80,7 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             List<FileListener> listeners = new List<FileListener>();
             for (int i = 0; i < concurrentListenerCount; i++)
             {
-                FileListener listener = new FileListener(config, attribute, mockExecutor.Object, new TestTraceWriter());
+                FileListener listener = new FileListener(new OptionsWrapper<FilesOptions>(options), attribute, mockExecutor.Object, new TestLogger("Test"), new DefaultFileProcessorFactory());
                 listeners.Add(listener);
                 listenerStartupTasks.Add(listener.StartAsync(cancellationToken));
             }
@@ -174,7 +175,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
 
             // Now clean up all processed files
             processor.CleanupProcessedFiles();
-            Assert.Equal(0, Directory.GetFiles(testFileDir).Length);
+            Assert.Empty(Directory.GetFiles(testFileDir));
 
             foreach (FileListener listener in listeners)
             {
@@ -194,13 +195,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             FunctionResult result = new FunctionResult(true);
             mockExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>())).ReturnsAsync(result);
 
-            FilesConfiguration config = new FilesConfiguration()
+            var options = new FilesOptions()
             {
                 RootPath = rootPath
             };
             FileTriggerAttribute attribute = new FileTriggerAttribute(attributeSubPath, changeTypes: WatcherChangeTypes.Created, filter: "*.*", autoDelete: true);
 
-            FileListener listener = new FileListener(config, attribute, mockExecutor.Object, new TestTraceWriter());
+            FileListener listener = new FileListener(new OptionsWrapper<FilesOptions>(options), attribute, mockExecutor.Object, new TestLogger("Test"), new DefaultFileProcessorFactory());
             await listener.StartAsync(CancellationToken.None);
 
             // create a few files with different extensions

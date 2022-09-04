@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Azure.WebJobs.Description;
 
 namespace Microsoft.Azure.WebJobs
 {
@@ -9,12 +10,13 @@ namespace Microsoft.Azure.WebJobs
     /// Attribute used to bind a parameter to a SendGridMessage that will automatically be
     /// sent when the function completes.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Parameter)]
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
+    [Binding]
     public sealed class SendGridAttribute : Attribute
     {
         /// <summary>
-        /// Optional. A string value indicating the app setting to use as the SendGrid API key, 
-        /// if different than the one specified in the <see cref="Extensions.SendGrid.SendGridConfiguration"/>.
+        /// Gets or sets an optional string value indicating the app setting to use as the SendGrid API key, 
+        /// if different than the one specified in the <see cref="SendGrid.SendGridClientOptions"/>.
         /// </summary>
         [AppSetting]
         public string ApiKey { get; set; }

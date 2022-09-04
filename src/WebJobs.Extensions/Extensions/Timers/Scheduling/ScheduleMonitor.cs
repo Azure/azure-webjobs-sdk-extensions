@@ -40,7 +40,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// </remarks>
         /// <param name="timerName">The name of the timer to check.</param>
         /// <param name="now">The time to check.</param>
-        /// <param name="schedule">The <see cref="TimerSchedule"/></param>
+        /// <param name="schedule">The <see cref="TimerSchedule"/>.</param>
         /// <param name="lastStatus">The last recorded status, or null if the status has never been recorded.</param>
         /// <returns>A non-zero <see cref="TimeSpan"/> if the schedule is past due, otherwise <see cref="TimeSpan.Zero"/>.</returns>
         public virtual async Task<TimeSpan> CheckPastDueAsync(string timerName, DateTime now, TimerSchedule schedule, ScheduleStatus lastStatus)

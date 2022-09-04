@@ -9,19 +9,20 @@ using Microsoft.Azure.WebJobs.Extensions.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 using Microsoft.Azure.WebJobs.Host.Protocols;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
 {
     internal class FileBinding : IBinding
     {
-        private readonly FilesConfiguration _config;
+        private readonly IOptions<FilesOptions> _options;
         private readonly ParameterInfo _parameter;
         private readonly BindingTemplate _bindingTemplate;
         private readonly FileAttribute _attribute;
 
-        public FileBinding(FilesConfiguration config, ParameterInfo parameter, BindingTemplate bindingTemplate)
+        public FileBinding(IOptions<FilesOptions> options, ParameterInfo parameter, BindingTemplate bindingTemplate)
         {
-            _config = config;
+            _options = options;
             _parameter = parameter;
             _bindingTemplate = bindingTemplate;
             _attribute = _parameter.GetCustomAttribute<FileAttribute>(inherit: false);
@@ -40,7 +41,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             }
 
             string boundFileName = _bindingTemplate.Bind(context.BindingData);
-            string filePath = Path.Combine(_config.RootPath, boundFileName);
+            string filePath = Path.Combine(_options.Value.RootPath, boundFileName);
             FileInfo fileInfo = new FileInfo(filePath);
 
             return BindAsync(fileInfo, context.ValueContext);
@@ -71,7 +72,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 {
                     Prompt = "Enter a file path",
                     Description = string.Format("{0} file {1}", _attribute.Access.ToString(), _attribute.Path),
-                    DefaultValue = Path.Combine(_config.RootPath, _attribute.Path)
+                    DefaultValue = Path.Combine(_options.Value.RootPath, _attribute.Path)
                 }
             };
         }

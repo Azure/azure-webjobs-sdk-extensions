@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using Microsoft.Azure.WebJobs.Description;
 
 namespace Microsoft.Azure.WebJobs
 {
@@ -24,7 +25,8 @@ namespace Microsoft.Azure.WebJobs
     /// <item><description>A user-defined type (serialized as JSON)</description></item>
     /// </list>
     /// </remarks>
-    [AttributeUsage(AttributeTargets.Parameter)]
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
+    [Binding]
     public sealed class FileAttribute : Attribute
     {
         /// <summary>
@@ -78,6 +80,7 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// Gets the file path.
         /// </summary>
+        [AutoResolve]
         public string Path { get; private set; }
 
         /// <summary>

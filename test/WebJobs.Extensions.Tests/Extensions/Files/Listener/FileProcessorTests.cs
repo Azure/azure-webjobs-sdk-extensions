@@ -25,7 +25,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
         private readonly string rootPath;
 
         private FileProcessor processor;
-        private FilesConfiguration config;
+        private FilesOptions options;
         private Mock<ITriggeredFunctionExecutor> mockExecutor;
         private JsonSerializer _serializer;
 
@@ -36,7 +36,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
             Directory.CreateDirectory(combinedTestFilePath);
             DeleteTestFiles(combinedTestFilePath);
 
-            config = new FilesConfiguration()
+            options = new FilesOptions()
             {
                 RootPath = rootPath
             };
@@ -317,7 +317,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files.Listener
         private FileProcessor CreateTestProcessor(FileTriggerAttribute attribute)
         {
             mockExecutor = new Mock<ITriggeredFunctionExecutor>(MockBehavior.Strict);
-            FileProcessorFactoryContext context = new FileProcessorFactoryContext(config, attribute, mockExecutor.Object, new TestTraceWriter());
+            FileProcessorFactoryContext context = new FileProcessorFactoryContext(options, attribute, mockExecutor.Object, new TestLogger("Test"));
 
             return new FileProcessor(context);
         }

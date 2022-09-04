@@ -2,30 +2,40 @@
 ===
 |Branch|Status|
 |---|---|
-|master|[![Build status](https://ci.appveyor.com/api/projects/status/5mqrok4j3l89cnvx/branch/master?svg=true)](https://ci.appveyor.com/project/appsvc/azure-webjobs-sdk-extensions/branch/master)|
+|main|[![Build status](https://ci.appveyor.com/api/projects/status/5mqrok4j3l89cnvx/branch/main?svg=true)](https://ci.appveyor.com/project/appsvc/azure-webjobs-sdk-extensions/branch/main)|
+|dev|[![Build status](https://ci.appveyor.com/api/projects/status/5mqrok4j3l89cnvx/branch/dev?svg=true)](https://ci.appveyor.com/project/appsvc/azure-webjobs-sdk-extensions/branch/dev)|
 
 
-This repo contains binding extensions for the **Azure WebJobs SDK**. See the [Azure WebJobs SDK repo](https://github.com/Azure/azure-webjobs-sdk) for more information. The binding extensions in this repo are available as the **Microsoft.Azure.WebJobs.Extensions** [nuget package](http://www.nuget.org/packages/Microsoft.Azure.WebJobs.Extensions). **Note**: some of the extensions in this repo (like SendGrid, WebHooks, etc.) live in their own separate nuget packages following a standard naming scheme (e.g. Microsoft.Azure.WebJobs.Extensions.SendGrid). Also note that some of the features discussed here or in the wiki may still be in **pre-release**. To access those features you may need to pull the very latest pre-release packages from our "nightlies" package feed ([instructions here](https://github.com/Azure/azure-webjobs-sdk/wiki/%22Nightly%22-Builds)).
+This repo contains binding extensions for the **Azure WebJobs SDK**. See the [Azure WebJobs SDK repo](https://github.com/Azure/azure-webjobs-sdk) for more information. The binding extensions in this repo are available as the **Microsoft.Azure.WebJobs.Extensions** [nuget package](http://www.nuget.org/packages/Microsoft.Azure.WebJobs.Extensions). **Note**: some of the extensions in this repo (like SendGrid, etc.) live in their own separate nuget packages following a standard naming scheme (e.g. Microsoft.Azure.WebJobs.Extensions.SendGrid). Also note that some of the features discussed here or in the wiki may still be in **pre-release**. To access those features you may need to pull the very latest pre-release packages from our "nightlies" package feed ([instructions here](https://github.com/Azure/azure-webjobs-sdk/wiki/%22Nightly%22-Builds)).
 
-The [wiki](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki) contains information on how to **author your own binding extensions**. See the [Binding Extensions Overview](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Binding-Extensions-Overview) for more details. A [sample project](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Program.cs) is also provided that demonstrates the bindings in action.
+The [wiki](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki) contains information on how to **author your own binding extensions**. See the [Binding Extensions Overview](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Binding-Extensions-Overview) for more details. A [sample project](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/main/src/ExtensionsSample/Program.cs) is also provided that demonstrates the bindings in action.
 
-Extensions all follow the same "using" pattern for registration - after referencing the package the extension lives in, you call the corresponding "using" method to register the extension. These "using" methods are extension methods on `JobHostConfiguration` and often take optional configuration objects to customize the behavior of the extension. For example, the `config.UseSendGrid(...)` call below registers the SendGrid extension using the specified configuration options.
+Extensions all follow the same "add" pattern for registration - after referencing the package the extension lives in, you call the corresponding "add" method to register the extension. These "add" methods are extension methods that often take optional configuration objects to customize the behavior of the extension. For example, the `b.AddAzureStorage()` call below registers the Azure Storage extension.
 
 ```csharp
-JobHostConfiguration config = new JobHostConfiguration();
-config.Tracing.ConsoleLevel = TraceLevel.Verbose;
-
-config.UseFiles();
-config.UseTimers();
-config.UseSendGrid(new SendGridConfiguration()
+var builder = new HostBuilder();
+builder.ConfigureWebJobs(b =>
 {
-    FromAddress = new MailAddress("orders@webjobssamples.com", "Order Processor")
+    b.AddAzureStorageCoreServices();
+    b.AddAzureStorage();
 });
-config.UseWebHooks();
+builder.ConfigureLogging((context, b) =>
+{
+    b.AddConsole();
+});
 
-JobHost host = new JobHost(config);
-host.RunAndBlock();
+var host = builder.Build();
+using (host)
+{
+    await host.RunAsync();
+}
 ```
+
+## Other Extension Repositories
+Not all extensions for webjobs live here. Over time we expect them to move towards having their own ship cycle and repository. You can find other Azure owned extensions using [this github query](https://github.com/Azure?utf8=✓&q=functions%20extension). Right now there are:
+- https://github.com/Azure/azure-functions-durable-extension
+- https://github.com/Azure/azure-functions-eventgrid-extension
+- https://github.com/Azure/azure-functions-iothub-extension
 
 ## Extensions
 
@@ -66,7 +76,7 @@ The TimerTrigger also handles multi-instance scale out automatically - only a si
 
 The first example above uses a [cron expression](http://en.wikipedia.org/wiki/Cron#CRON_expression) to declare the schedule. Using these **6 fields** `{second} {minute} {hour} {day} {month} {day of the week}` you can express arbitrarily complex schedules very concisely. **Note**: the 6 field format including seconds is less common, so in the various cron expression docs you find online you'll have to adjust for the extra field.
 
-To register the Timer extensions, call `config.UseTimers()` in your startup code. For more information, see the [TimerTrigger wiki page](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/TimerTrigger), and also the [Timer samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/TimerSamples.cs).
+To register the Timer extensions, call `config.UseTimers()` in your startup code. For more information, see the [TimerTrigger wiki page](https://github.com/Azure/azure-webjobs-sdk-extensions/wiki/TimerTrigger), and also the [Timer samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/main/src/ExtensionsSample/Samples/TimerSamples.cs).
 
 ### FileTrigger / File
 
@@ -85,7 +95,7 @@ public static void ImportFile(
 }
 ```
 
-To register the File extensions, call `config.UseFiles()` in your startup code. For more information, see the [File samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/FileSamples.cs).
+To register the File extensions, call `config.UseFiles()` in your startup code. For more information, see the [File samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/main/src/ExtensionsSample/Samples/FileSamples.cs).
 
 ### SendGrid
 
@@ -118,56 +128,11 @@ public static void Purge(
 
 The above messages are fully declarative, but you can also set the message properties in your job function code (e.g. add message attachments, etc.). 
 
-To register the SendGrid extensions, call `config.UseSendGrid()` in your startup code. For more information on the SendGrid binding, see the [SendGrid samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/SendGridSamples.cs).
-
-### ErrorTrigger
-
-An **error trigger** that allows you to annotate functions to be automatically called by the runtime when errors occur. This allows you to set up email/text/etc. notifications to alert you when things are going wrong with your jobs.  Here's an example function that will be called whenever 10 errors occur within a 30 minute sliding window (throttled at a maximum of 1 notification per hour):
-
-```csharp
-public static void ErrorMonitor(
-    [ErrorTrigger("0:30:00", 10, Throttle = "1:00:00")] TraceFilter filter, 
-    TextWriter log)
-{
-    // send Text notification using IFTTT
-    string body = string.Format("{{ \"value1\": \"{0}\" }}", filter.Message);
-    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, WebNotificationUri)
-    {
-        Content = new StringContent(body, Encoding.UTF8, "application/json")
-    };
-    HttpClient.SendAsync(request);
-
-    // log last 5 detailed errors to the Dashboard
-    log.WriteLine(filter.GetDetailedMessage(5));
-}
-```
-
-You can choose to send a alert text message to yourself, or a detailed email message, etc. The ErrorTrigger extension is part of the **Core extensions** can be registered on your JobHostConfiguration by calling `config.UseCore()`. In addition to setting up one or more **global error handlers** like the above, you can also specify **function specific error handlers** that will only handle erros for one function. This is done by naming convention based on an "ErrorHandler" suffix. For example, if your error function is named "**Import**ErrorHandler" and there is a function named "Import" in the same class, that error function will be scoped to errors for that function only:
-
-```csharp
-public static void Import(
-    [FileTrigger(@"import\{name}")] Stream file,
-    [Blob(@"processed/{name}")] CloudBlockBlob output)
-{
-    output.UploadFromStream(file);
-}
-
-public static void ImportErrorHandler(
-    [ErrorTrigger("1:00:00", 5)] TraceFilter filter,
-    TextWriter log)
-{
-    // Here you could send an error notification, etc.
-
-    // log last 5 detailed errors to the Dashboard
-    log.WriteLine(filter.GetDetailedMessage(3));
-}
-```
-
-To register the Error extensions, call `config.UseCore()` in your startup code. For more information see the [Error Monitoring](http://github.com/Azure/azure-webjobs-sdk-extensions/wiki/Error-Monitoring) wiki page, as well as the the [Error Monitoring Sample](http://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/ErrorMonitoringSamples.cs).
+To register the SendGrid extensions, call `config.UseSendGrid()` in your startup code. For more information on the SendGrid binding, see the [SendGrid samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/main/src/ExtensionsSample/Samples/SendGridSamples.cs).
 
 ### Core Extensions
 
-There are a set of triggers/bindings that can be registered by calling `config.UseCore()`. The Core extensions contain a set of general purpose bindings. For example, the **ErrorTrigger** binding discussed in its own section above is part of the Core extension. There is also a binding for `ExecutionContext` which allows you to access invocation specific system information in your function. Here's an example showing how to access the function **Invocation ID** for the function:
+There are a set of triggers/bindings that can be registered by calling `config.UseCore()`. The Core extensions contain a set of general purpose bindings. For example, there is a binding for `ExecutionContext` which allows you to access invocation specific system information in your function. Here's an example showing how to access the function **Invocation ID** for the function:
 
 ```csharp
 public static void ProcessOrder(
@@ -181,56 +146,6 @@ public static void ProcessOrder(
 
 The invocation ID is used in the Dashboard logs, so having access to this programatically allows you to correlate an invocation to those logs. This might be useful if you're also logging to your own external system. To register the Core extensions, call `config.Core()` in your startup code.
 
-### Azure Mobile Apps
-
-A binding that allows you to easily create, read, and update records from an [Azure Mobile App](https://azure.microsoft.com/en-us/services/app-service/mobile/). This extension lives in **Microsoft.Azure.WebJobs.Extensions.MobileApps** nuget package. To configure the binding, add the Mobile App's URI (like `https://{yourapp}.azurewebsites.net`) as an app setting or environment variable using the setting name `AzureWebJobsMobileAppUri`. 
-
-By default, the binding will only be able to interact with Mobile App tables that are configured to be Anonymous. However, you can configure an Api Key on the Mobile App by following the Api Key sample for the [Node SDK](https://github.com/Azure/azure-mobile-apps-node/tree/master/samples/api-key) and the guide for the [.NET SDK](https://github.com/Azure/azure-mobile-apps-net-server/wiki/Implementing-Application-Key). Once your Api Key is properly configured for your Mobile App, you can configure your binding to use it by setting an app setting or environment variable with the name `AzureWebJobsMobileAppApiKey`.
-
-In this scenario, a record is created in the `Item` table each time a message appears in the queue. This specific sample uses an anonymous type for the record, but it could also have used `JObject` or any other type with a `public string Id` property.
-
-```csharp
-public static void MobileTableOutputSample(
-    [QueueTrigger("sample")] QueueData trigger,
-    [MobileTable(TableName = "Item")] out object item)
-{    
-    item = new { Text = "some sample text" };
-}
-```
-
-The following sample performs a lookup based on the data in the queue trigger. The `RecordId` property value of the `QueueData` object is used to query the `Item` table of the Mobile App. If the record exists, it is provided in the `item` parameter. If not, the `item` parameter will be `null`. Inside the method, the `item` object is changed. This change is automatically sent back to the Mobile App when the method exits. This scenario uses the `Item` type, but it could also have used `JObject` or any type with a `public string Id` property.
-
-```csharp
-public static void MobileTableInputSample(
-    [QueueTrigger("sample")] QueueData trigger,
-    [MobileTable(TableName = "Item", Id = "{RecordId}")] Item item)
-{    
-    // item will be null if the record is not found
-    if (item != null)
-    {
-        // Perform some processing...    
-        item.IsProcessed = true;
-    }
-}
-```
-
-If you need more control over the interaction with your Mobile App, you can also use parameters of type `IMobileServiceTable`, `IMobileServiceTable<T>`, `IMobileServiceTableQuery<T>`, or even `IMobileServiceClient`. For example, the method below can be used to execute a more complex query against the `Item` table. Note that if you are using a type other than `object` or `JObject`, the `TableName` is not required as the underlying Mobile App Client SDK will determine the table name based on the type. However, if you need to use a table name that does not match your type, you can specify that name as the `TableName` and it will override the type name.
-
-```csharp
-public static void MobileTableSample(
-    [QueueTrigger("sample")] QueueData trigger,
-    [MobileTable] IMobileServiceTable<Item> itemTable)
-{    
-    IEnumerable<Item> processedItems = await itemTable.CreateQuery()
-        .Where(i => i.IsProcessed && i.ProcessedAt < DateTime.Now.AddMinutes(-5))
-        .ToListAsync();
-
-    foreach (Item i in processedItems)
-    {
-        await table.DeleteAsync(i);
-    }
-}
-```
 ### DocumentDB
 
 Use an [Azure DocumentDB](https://azure.microsoft.com/en-us/services/documentdb/) binding to easily create, read, and update JSON documents from a WebJob. This extension lives in **Microsoft.Azure.WebJobs.Extensions.DocumentDB** nuget package. To configure the binding, add the DocumentDB connection string as an app setting or environment variable using the setting name `AzureWebJobsDocumentDBConnectionString`.
@@ -358,7 +273,7 @@ public static void Purge(
 
 The above messages are fully declarative, but you can also set the message properties in your job function code (e.g. From number, To number, Body, etc.). 
 
-To register the Twilio SMS extensions, call `config.UseTwilioSms()` in your startup code. For more information on the Twilio binding, see the [Twilio samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/master/src/ExtensionsSample/Samples/TwilioSamples.cs).
+To register the Twilio SMS extensions, call `config.UseTwilioSms()` in your startup code. For more information on the Twilio binding, see the [Twilio samples](https://github.com/Azure/azure-webjobs-sdk-extensions/blob/main/src/ExtensionsSample/Samples/TwilioSamples.cs).
 
 ## License
 

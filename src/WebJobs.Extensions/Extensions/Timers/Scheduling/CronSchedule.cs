@@ -16,22 +16,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         private readonly CrontabSchedule _cronSchedule;
 
         /// <summary>
-        /// Constructs a new instance based on the specified crontab expression
+        /// Constructs a new instance based on the specified crontab schedule.
         /// </summary>
-        /// <param name="cronTabExpression">The crontab expression defining the schedule</param>
-        public CronSchedule(string cronTabExpression)
-        {
-            CrontabSchedule.ParseOptions options = new CrontabSchedule.ParseOptions()
-            {
-                IncludingSeconds = true
-            };
-            _cronSchedule = CrontabSchedule.Parse(cronTabExpression, options);
-        }
-
-        /// <summary>
-        /// Constructs a new instance based on the specified crontab schedule
-        /// </summary>
-        /// <param name="schedule">The crontab schedule to use</param>
+        /// <param name="schedule">The crontab schedule to use.</param>
         public CronSchedule(CrontabSchedule schedule)
         {
             _cronSchedule = schedule;
@@ -44,6 +31,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 return _cronSchedule;
             }
         }
+
+        /// <inheritdoc/>
+        public override bool AdjustForDST => true;
 
         /// <inheritdoc/>
         public override DateTime GetNextOccurrence(DateTime now)
@@ -60,17 +50,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         internal static bool TryCreate(string cronExpression, out CronSchedule cronSchedule)
         {
             cronSchedule = null;
-            CrontabSchedule.ParseOptions options = new CrontabSchedule.ParseOptions()
+
+            if (cronExpression != null)
             {
-                IncludingSeconds = true
-            };
-            CrontabSchedule crontabSchedule = CrontabSchedule.TryParse(cronExpression, options);
-            if (crontabSchedule != null)
-            {
-                cronSchedule = new CronSchedule(crontabSchedule);
-                return true;
+                var options = CreateParseOptions(cronExpression);
+
+                CrontabSchedule crontabSchedule = CrontabSchedule.TryParse(cronExpression, options);
+                if (crontabSchedule != null)
+                {
+                    cronSchedule = new CronSchedule(crontabSchedule);
+                    return true;
+                }
             }
             return false;
+        }
+
+        private static CrontabSchedule.ParseOptions CreateParseOptions(string cronExpression)
+        {
+            var options = new CrontabSchedule.ParseOptions()
+            {
+                IncludingSeconds = HasSeconds(cronExpression)
+            };
+
+            return options;
+        }
+
+        private static bool HasSeconds(string cronExpression)
+        {
+            return cronExpression.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length != 5;
         }
     }
 }

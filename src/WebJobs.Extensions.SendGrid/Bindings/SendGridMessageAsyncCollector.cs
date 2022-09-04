@@ -2,58 +2,58 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs.Extensions.Client;
+using Client;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 using SendGrid.Helpers.Mail;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Bindings
 {
-    internal class SendGridMailAsyncCollector : IAsyncCollector<Mail>
+    internal class SendGridMessageAsyncCollector : IAsyncCollector<SendGridMessage>
     {
-        private readonly SendGridConfiguration _config;
+        private readonly SendGridOptions _options;
         private readonly SendGridAttribute _attribute;
-        private readonly Collection<Mail> _messages = new Collection<Mail>();
+        private readonly ConcurrentQueue<SendGridMessage> _messages = new ConcurrentQueue<SendGridMessage>();
         private readonly ISendGridClient _sendGrid;
 
-        public SendGridMailAsyncCollector(SendGridConfiguration config, SendGridAttribute attribute, ISendGridClient sendGrid)
+        public SendGridMessageAsyncCollector(SendGridOptions options, SendGridAttribute attribute, ISendGridClient sendGrid)
         {
-            _config = config;
+            _options = options;
             _attribute = attribute;
             _sendGrid = sendGrid;
         }
 
-        public Task AddAsync(Mail item, CancellationToken cancellationToken = default(CancellationToken))
+        public Task AddAsync(SendGridMessage item, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (item == null)
             {
                 throw new ArgumentNullException("item");
             }
 
-            SendGridHelpers.DefaultMessageProperties(item, _config, _attribute);
+            SendGridHelpers.DefaultMessageProperties(item, _options, _attribute);
 
             if (!SendGridHelpers.IsToValid(item))
             {
                 throw new InvalidOperationException("A 'To' address must be specified for the message.");
             }
-            if (item.From == null || string.IsNullOrEmpty(item.From.Address))
+            if (item.From == null || string.IsNullOrEmpty(item.From.Email))
             {
                 throw new InvalidOperationException("A 'From' address must be specified for the message.");
             }
 
-            _messages.Add(item);
+            _messages.Enqueue(item);
 
-            return Task.FromResult(0);
+            return Task.CompletedTask;
         }
 
         public async Task FlushAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            foreach (var message in _messages)
+            while (_messages.TryDequeue(out SendGridMessage message))
             {
-                await _sendGrid.SendMessageAsync(message.Get());
+                await _sendGrid.SendMessageAsync(message);
             }
         }        
     }
