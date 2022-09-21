@@ -29,8 +29,8 @@
     <SignAssembly>true</SignAssembly>
     <DelaySign>true</DelaySign>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)PublicKey.snk</AssemblyOriginatorKeyFile>
-    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
-    <NoWarn>SA1629;SA1623;1591;1573;1591</NoWarn>
+    <!-- <DocumentationFile>$(OutputPath)/$(AssemblyName).xml</DocumentationFile> -->
+    <NoWarn>SA1629;SA1623;1591;1573;1591;SA1633</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(UseSourceLink)' == 'true'">

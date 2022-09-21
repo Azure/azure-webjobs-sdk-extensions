@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
@@ -10,6 +11,7 @@ using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Protocols;
 using Microsoft.Azure.WebJobs.Host.Triggers;
+using Microsoft.Azure.WebJobs.Script.Abstractions.Description.Binding;
 using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
@@ -26,7 +28,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly CosmosDBTriggerAttribute _cosmosDBAttribute;
 
         public CosmosDBTriggerBinding(
-            ParameterInfo parameter, 
+            ParameterInfo parameter,
             string processorName,
             Container monitoredContainer,
             Container leaseContainer,
@@ -64,6 +66,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
         {
+            if (_parameter.ParameterType == typeof(ParameterBindingData) && value is IList<ParameterBindingData>)
+            {
+                var bindingData = new ParameterBindingData();
+                bindingData.Properties.Add(Constants.ConnectionName, _cosmosDBAttribute.Connection);
+                bindingData.Properties.Add(Constants.DatabaseName, _cosmosDBAttribute.DatabaseName);
+                bindingData.Properties.Add(Constants.ContainerName, _cosmosDBAttribute.ContainerName);
+                value = bindingData;
+            }
+
             IValueProvider valueBinder = new CosmosDBTriggerValueBinder(_parameter, value);
             return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, _emptyBindingData));
         }
