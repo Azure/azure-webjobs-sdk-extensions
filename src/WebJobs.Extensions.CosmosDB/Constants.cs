@@ -8,9 +8,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
     public static class Constants
     {
         public const string DefaultConnectionStringName = "CosmosDB";
-        public const string ConnectionName = "connection_name";
-        public const string DatabaseName = "database_name";
-        public const string ContainerName = "container_name";
+        public const string ConnectionName = "Connection";
+        public const string DatabaseName = "DatabaseName";
+        public const string ContainerName = "ContainerName";
     }
 
     internal static class Events

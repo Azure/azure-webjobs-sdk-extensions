@@ -1,7 +1,7 @@
 ﻿param (
   [string]$packageSuffix = "0",
-  [bool]$isLocal = $false,
-  [string]$outputDirectory = "..\..\buildoutput"
+  [bool]$isLocal = $true,
+  [string]$outputDirectory = "../../buildoutput"
 )
 
 if ($isLocal){
@@ -16,28 +16,28 @@ if (-not $?) { exit 1 }
 
 $projects =
     "WebJobs.Extensions",
-    "WebJobs.Extensions.CosmosDB",
-    "WebJobs.Extensions.Http",
-    "WebJobs.Extensions.Twilio",
-    "WebJobs.Extensions.Timers.Storage"
-    "WebJobs.Extensions.SendGrid"
+    "WebJobs.Extensions.CosmosDB"
+    # "WebJobs.Extensions.Http",
+    # "WebJobs.Extensions.Twilio",
+    # "WebJobs.Extensions.Timers.Storage"
+    # "WebJobs.Extensions.SendGrid"
 
 foreach ($project in $projects)
 {
   $cmd = "pack", "src\$project\$project.csproj", "-o", $outputDirectory, "--no-build"
-  
+
   if ($packageSuffix -ne "0")
   {
     $cmd += "--version-suffix", "-$packageSuffix"
   }
-  
+
   & dotnet $cmd
 }
 
 ### Sign package if build is not a PR
-$shouldPackage = -not $env:APPVEYOR_PULL_REQUEST_NUMBER -or $env:APPVEYOR_PULL_REQUEST_TITLE.Contains("[pack]")
+# $shouldPackage = -not $env:APPVEYOR_PULL_REQUEST_NUMBER -or $env:APPVEYOR_PULL_REQUEST_TITLE.Contains("[pack]")
 
-if ($shouldPackage) {
-  & ".\tools\RunSigningJob.ps1" 
-  if (-not $?) { exit 1 }
-}
+# if ($shouldPackage) {
+#   & ".\tools\RunSigningJob.ps1"
+#   if (-not $?) { exit 1 }
+# }

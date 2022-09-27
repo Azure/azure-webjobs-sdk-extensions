@@ -66,14 +66,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
         {
-            if (_parameter.ParameterType == typeof(ParameterBindingData) && value is IList<ParameterBindingData>)
-            {
-                var bindingData = new ParameterBindingData();
-                bindingData.Properties.Add(Constants.ConnectionName, _cosmosDBAttribute.Connection);
-                bindingData.Properties.Add(Constants.DatabaseName, _cosmosDBAttribute.DatabaseName);
-                bindingData.Properties.Add(Constants.ContainerName, _cosmosDBAttribute.ContainerName);
-                value = bindingData;
-            }
+            // if (_parameter.ParameterType == typeof(ParameterBindingData) && value is IList<ParameterBindingData>)
+            // {
+            //     var bindingData = new ParameterBindingData();
+            //     bindingData.Properties.Add(Constants.ConnectionName, _cosmosDBAttribute.Connection);
+            //     bindingData.Properties.Add(Constants.DatabaseName, _cosmosDBAttribute.DatabaseName);
+            //     bindingData.Properties.Add(Constants.ContainerName, _cosmosDBAttribute.ContainerName);
+            //     value = bindingData;
+            // }
 
             IValueProvider valueBinder = new CosmosDBTriggerValueBinder(_parameter, value);
             return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, _emptyBindingData));
@@ -91,8 +91,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 context.Executor,
                 context.Descriptor.Id,
                 this._processorName,
-                this._monitoredContainer, 
-                this._leaseContainer, 
+                this._monitoredContainer,
+                this._leaseContainer,
                 this._cosmosDBAttribute,
                 this._logger));
         }

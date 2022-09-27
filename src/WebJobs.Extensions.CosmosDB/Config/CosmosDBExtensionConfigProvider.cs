@@ -97,7 +97,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             var attributeProperties = cosmosAttribute.GetType().GetProperties();
 
             return CreateParameterBindingData(cosmosAttribute, attributeProperties, connectionName);
-            // return CreateParameterBindingData(connectionName, attribute.DatabaseName, attribute.ContainerName);
         }
 
         internal ParameterBindingData ConvertToBindingData(CosmosDBTriggerAttribute cosmosAttribute)
@@ -106,16 +105,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             var attributeProperties = cosmosAttribute.GetType().GetProperties();
 
             return CreateParameterBindingData(cosmosAttribute, attributeProperties, connectionName);
-            // return CreateParameterBindingData(connectionName, attribute.DatabaseName, attribute.ContainerName);
-        }
-
-        private ParameterBindingData CreateParameterBindingData(string connectionName, string databaseName, string containerName)
-        {
-            var bindingData = new ParameterBindingData();
-            bindingData.Properties.Add(Constants.ConnectionName, connectionName);
-            bindingData.Properties.Add(Constants.DatabaseName, databaseName);
-            bindingData.Properties.Add(Constants.ContainerName, containerName);
-            return bindingData;
         }
 
         private ParameterBindingData CreateParameterBindingData(Attribute cosmosAttribute, PropertyInfo[] properties, string connectionName)
@@ -124,10 +113,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             foreach (var attribute in properties)
             {
-                bindingData.Properties.Add(attribute.Name, attribute.GetValue(cosmosAttribute).ToString());
+                bindingData.Properties.Add(attribute.Name, attribute.GetValue(cosmosAttribute)?.ToString());
             }
 
-            bindingData.Properties.Add("Connection", connectionName);
+            if (bindingData.Properties.ContainsKey("Connection"))
+            {
+                bindingData.Properties["Connection"] = connectionName;
+            }
+            else
+            {
+                bindingData.Properties.Add("Connection", connectionName);
+            }
 
             return bindingData;
         }
