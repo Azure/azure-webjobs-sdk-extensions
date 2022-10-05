@@ -223,7 +223,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             [FixedDelayRetry(5, "00:00:01")]
             public static void Trigger(
-                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true)] IReadOnlyList<Item> documents,
+                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "retry")] IReadOnlyList<Item> documents,
                 ILogger log)
             {
                 foreach (var document in documents)
