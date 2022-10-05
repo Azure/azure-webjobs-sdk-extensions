@@ -8,7 +8,7 @@
   </PropertyGroup>
   <Import Project="..\..\build\common.props" />
   <PropertyGroup>
-    <Version>$(CosmosDBVersion)-rc</Version>
+    <Version>$(CosmosDBVersion)</Version>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
