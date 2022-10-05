@@ -223,7 +223,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         {
             this._healthMonitor.OnChangesDelivered(context);
             FunctionResult result = await this._executor.TryExecuteAsync(new TriggeredFunctionData() { TriggerValue = docs }, cancellationToken);
-            if (!result.Succeeded
+            if (result != null // TryExecuteAsync when using RetryPolicies can return null
+                && !result.Succeeded
                 && result.Exception != null)
             {
                 ChangeFeedProcessorUserException userException = new ChangeFeedProcessorUserException(result.Exception, context);

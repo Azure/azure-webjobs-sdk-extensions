@@ -59,8 +59,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
                 await TestHelpers.Await(() =>
                 {
-                    return _loggerProvider.GetAllLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")) == 4
-                        && _loggerProvider.GetAllLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with string called!")) == 4;
+                    var logMessages = _loggerProvider.GetAllLogMessages();
+                    return logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")) == 4
+                        && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with string called!")) == 4
+                        && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with retry called!")) == 8
+                        && logMessages.Count(p => p.Exception != null && p.Exception.InnerException.Message.Contains("Test exception") && !p.Category.StartsWith("Host.Results")) > 0;
                 });
 
                 // Make sure the Options were logged. Just check a few values.
@@ -69,38 +72,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                     .FormattedMessage;
                 JObject loggedOptions = JObject.Parse(optionsMessage.Substring(optionsMessage.IndexOf(Environment.NewLine)));
                 Assert.Null(loggedOptions["ConnectionMode"].Value<string>());
-            }
-        }
-
-        [Fact]
-        public async Task CosmosDBEndToEnd_WithRetry()
-        {
-            using (var host = await StartHostAsync(typeof(EndToEndTestClass_Retry)))
-            {
-                var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>());
-
-                // Call the outputs function directly, which will write out 3 documents 
-                // using with the 'input' property set to the value we provide.
-                var input = Guid.NewGuid().ToString();
-                var parameter = new Dictionary<string, object>();
-                parameter["input"] = input;
-
-                await host.GetJobHost().CallAsync(nameof(EndToEndTestClass_Retry.Outputs), parameter);
-
-                await TestHelpers.Await(() =>
-                {
-                    var logMessages = _loggerProvider.GetAllLogMessages();
-                    foreach (LogMessage logMsg in logMessages)
-                    {
-                        if (logMsg.Exception != null)
-                        {
-                            Console.WriteLine(logMsg.Exception.InnerException.Message);
-                        }
-                    }
-                    
-                    return logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")) == 6
-                        && logMessages.Count(p => p.Exception != null && p.Exception.InnerException.Message.Contains("Test exception") && !p.Category.StartsWith("Host.Results")) == 1;
-                });
             }
         }
 
@@ -161,6 +132,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
         private static class EndToEndTestClass
         {
+            private static bool shouldThrow = true;
+            
             [NoAutomaticTrigger]
             public static async Task Outputs(
                 string input,
@@ -203,32 +176,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                     log.LogInformation("Trigger with string called!");
                 }
             }
-        }
-
-        private static class EndToEndTestClass_Retry
-        {
-            private static bool shouldThrow = true;
-            
-            [NoAutomaticTrigger]
-            public static async Task Outputs(
-                string input,
-                [CosmosDB(DatabaseName, CollectionName, CreateIfNotExists = true)] IAsyncCollector<object> collector,
-                ILogger log)
-            {
-                for (int i = 0; i < 3; i++)
-                {
-                    await collector.AddAsync(new { input = input, id = Guid.NewGuid().ToString() });
-                }
-            }
 
             [FixedDelayRetry(5, "00:00:01")]
-            public static void Trigger(
-                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true)] IReadOnlyList<Item> documents,
+            public static void TriggerWithRetry(
+                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "retry")] IReadOnlyList<Item> documents,
                 ILogger log)
             {
                 foreach (var document in documents)
                 {
-                    log.LogInformation($"Trigger called!");
+                    log.LogInformation($"Trigger with retry called!");
                 }
 
                 if (shouldThrow)
