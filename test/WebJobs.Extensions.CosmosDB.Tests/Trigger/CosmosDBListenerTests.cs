@@ -76,7 +76,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
         [Fact]
         public void ScaleMonitorDescriptor_ReturnsExpectedValue()
         {
-            Assert.Equal($"{_functionId}-cosmosdbtrigger-{DatabaseName}-{ContainerName}".ToLower(), _listener.Descriptor.Id);
+            Assert.Equal($"{_functionId}-cosmosdbtrigger-{DatabaseName}-{ContainerName}".ToLower(), _listener.GetMonitor().Descriptor.Id);
         }
 
         [Fact]
@@ -96,7 +96,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 .Setup(m => m.ReadNextAsync(It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult(response.Object));
 
-            var metrics = (CosmosDBTriggerMetrics)await _listener.GetMonitor().GetMetricsAsync();
+            var metrics = await ((CosmosDBScaleMonitor)_listener.GetMonitor()).GetMetricsAsync();
 
             Assert.Equal(0, metrics.PartitionCount);
             Assert.Equal(0, metrics.RemainingWork);
@@ -117,7 +117,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                     new ChangeFeedProcessorState("d", 5, string.Empty)
                 }.GetEnumerator());
 
-            metrics = (CosmosDBTriggerMetrics)await _listener.GetMonitor().GetMetricsAsync();
+            metrics = await ((CosmosDBScaleMonitor)_listener.GetMonitor()).GetMetricsAsync();
 
             Assert.Equal(4, metrics.PartitionCount);
             Assert.Equal(20, metrics.RemainingWork);
@@ -139,7 +139,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 }.GetEnumerator());
 
             // verify non-generic interface works as expected
-            metrics = (CosmosDBTriggerMetrics)(await ((IScaleMonitor)_listener).GetMetricsAsync());
+            metrics = (CosmosDBTriggerMetrics)await _listener.GetMonitor().GetMetricsAsync();
             Assert.Equal(4, metrics.PartitionCount);
             Assert.Equal(20, metrics.RemainingWork);
             Assert.NotEqual(default(DateTime), metrics.Timestamp);
@@ -192,11 +192,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 WorkerCount = 1
             };
 
-            var status = _listener.GetMonitor().GetScaleStatus(context);
+            var status = ((CosmosDBScaleMonitor)_listener.GetMonitor()).GetScaleStatus(context);
             Assert.Equal(ScaleVote.None, status.Vote);
 
             // verify the non-generic implementation works properly
-            status = ((CosmosDBScaleMonitor)_listener.GetMonitor()).GetScaleStatus(context);
+            status = _listener.GetMonitor().GetScaleStatus(context);
             Assert.Equal(ScaleVote.None, status.Vote);
         }
 
@@ -218,7 +218,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 new CosmosDBTriggerMetrics { RemainingWork = 2900, PartitionCount = 1, Timestamp = timestamp.AddSeconds(15) },
             };
 
-            var status = _listener.GetMonitor().GetScaleStatus(context);
+            var status = ((CosmosDBScaleMonitor)_listener.GetMonitor()).GetScaleStatus(context);
             Assert.Equal(ScaleVote.ScaleIn, status.Vote);
 
             var logs = _loggerProvider.GetAllLogMessages().ToArray();
@@ -248,7 +248,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 new CosmosDBTriggerMetrics { RemainingWork = 2900, PartitionCount = 0, Timestamp = timestamp.AddSeconds(15) },
             };
 
-            var status = _listener.GetMonitor().GetScaleStatus(context);
+            var status = ((CosmosDBScaleMonitor)_listener.GetMonitor()).GetScaleStatus(context);
             Assert.Equal(ScaleVote.ScaleOut, status.Vote);
 
             var logs = _loggerProvider.GetAllLogMessages().ToArray();
@@ -278,7 +278,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 new CosmosDBTriggerMetrics { RemainingWork = 10, PartitionCount = 2, Timestamp = timestamp.AddSeconds(15) },
             };
 
-            var status = _listener.GetMonitor().GetScaleStatus(context);
+            var status = ((CosmosDBScaleMonitor)_listener.GetMonitor()).GetScaleStatus(context);
             Assert.Equal(ScaleVote.ScaleOut, status.Vote);
 
             var logs = _loggerProvider.GetAllLogMessages().ToArray();
@@ -308,7 +308,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 new CosmosDBTriggerMetrics { RemainingWork = 150, PartitionCount = 0, Timestamp = timestamp.AddSeconds(15) },
             };
 
-            var status = _listener.GetMonitor().GetScaleStatus(context);
+            var status = ((CosmosDBScaleMonitor)_listener.GetMonitor()).GetScaleStatus(context);
             Assert.Equal(ScaleVote.ScaleOut, status.Vote);
 
             var logs = _loggerProvider.GetAllLogMessages().ToArray();
@@ -335,7 +335,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 new CosmosDBTriggerMetrics { RemainingWork = 10, PartitionCount = 0, Timestamp = timestamp.AddSeconds(15) },
             };
 
-            var status = _listener.GetMonitor().GetScaleStatus(context);
+            var status = ((CosmosDBScaleMonitor)_listener.GetMonitor()).GetScaleStatus(context);
             Assert.Equal(ScaleVote.ScaleIn, status.Vote);
 
             var logs = _loggerProvider.GetAllLogMessages().ToArray();

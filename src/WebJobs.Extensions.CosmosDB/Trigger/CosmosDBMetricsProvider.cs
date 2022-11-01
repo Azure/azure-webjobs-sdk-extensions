@@ -33,9 +33,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
             { "The specified document collection is invalid", string.Empty }
         };
 
-        public CosmosDBMetricsProvider(ILoggerFactory loggerFactory, Container monitoredContainer, Container leaseContainer, string processorName)
+        public CosmosDBMetricsProvider(ILogger logger, Container monitoredContainer, Container leaseContainer, string processorName)
         {
-            _logger = loggerFactory.CreateLogger<CosmosDBMetricsProvider>();
+            _logger = logger;
             _monitoredContainer = monitoredContainer;
             _leaseContainer = leaseContainer;
             _processorName = processorName;

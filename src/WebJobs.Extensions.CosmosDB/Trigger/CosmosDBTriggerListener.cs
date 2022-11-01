@@ -60,7 +60,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 $"leaseContainer='{this._leaseContainer.Id}', leaseDatabase='{this._leaseContainer.Database.Id}', functionId='{this._functionId}'";
 
             // TODO: logger factory creation
-            this._cosmosDBScaleMonitor = new CosmosDBScaleMonitor(_functionId, new LoggerFactory(), _monitoredContainer, _leaseContainer, _processorName);
+            this._cosmosDBScaleMonitor = new CosmosDBScaleMonitor(_functionId, logger, _monitoredContainer, _leaseContainer, _processorName);
         }
 
         public ScaleMonitorDescriptor Descriptor => this._scaleMonitorDescriptor;

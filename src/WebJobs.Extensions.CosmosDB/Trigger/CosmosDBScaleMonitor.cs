@@ -20,20 +20,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
         private readonly ScaleMonitorDescriptor _scaleMonitorDescriptor;
         private readonly CosmosDBMetricsProvider _cosmosDBMetricsProvider;
 
-        public CosmosDBScaleMonitor(string functionId, ILoggerFactory loggerFactory, Container monitoredContainer, Container leaseContainer, string processorName)
+        public CosmosDBScaleMonitor(string functionId, ILogger logger, Container monitoredContainer, Container leaseContainer, string processorName)
         {
-            _logger = loggerFactory.CreateLogger<CosmosDBScaleMonitor>();
+            _logger = logger;
             _functionId = functionId;
             _monitoredContainer = monitoredContainer;
             _scaleMonitorDescriptor = new ScaleMonitorDescriptor($"{_functionId}-CosmosDBTrigger-{_monitoredContainer.Database.Id}-{_monitoredContainer.Id}".ToLower());
-            _cosmosDBMetricsProvider = new CosmosDBMetricsProvider(loggerFactory, monitoredContainer, leaseContainer, processorName);
+            _cosmosDBMetricsProvider = new CosmosDBMetricsProvider(logger, monitoredContainer, leaseContainer, processorName);
         }
 
         public ScaleMonitorDescriptor Descriptor => _scaleMonitorDescriptor;
 
         public ScaleStatus GetScaleStatus(ScaleStatusContext<CosmosDBTriggerMetrics> context)
         {
-            return GetScaleStatusCore(context.WorkerCount, context.Metrics?.Cast<CosmosDBTriggerMetrics>().ToArray());
+            return GetScaleStatusCore(context.WorkerCount, context.Metrics?.ToArray());
         }
 
         async Task<ScaleMetrics> IScaleMonitor.GetMetricsAsync()
@@ -48,6 +48,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
 
         public ScaleStatus GetScaleStatus(ScaleStatusContext context)
         {
+            context.Metrics?.Cast<CosmosDBTriggerMetrics>().ToArray();
+
             return GetScaleStatusCore(context.WorkerCount, context.Metrics?.Cast<CosmosDBTriggerMetrics>().ToArray());
         }
 
