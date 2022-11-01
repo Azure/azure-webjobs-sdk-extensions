@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Scale;
@@ -95,7 +96,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 .Setup(m => m.ReadNextAsync(It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult(response.Object));
 
-            var metrics = await _listener.GetMetricsAsync();
+            var metrics = (CosmosDBTriggerMetrics)await _listener.GetMonitor().GetMetricsAsync();
 
             Assert.Equal(0, metrics.PartitionCount);
             Assert.Equal(0, metrics.RemainingWork);
@@ -116,7 +117,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                     new ChangeFeedProcessorState("d", 5, string.Empty)
                 }.GetEnumerator());
 
-            metrics = await _listener.GetMetricsAsync();
+            metrics = (CosmosDBTriggerMetrics)await _listener.GetMonitor().GetMetricsAsync();
 
             Assert.Equal(4, metrics.PartitionCount);
             Assert.Equal(20, metrics.RemainingWork);
@@ -157,7 +158,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 .ThrowsAsync(new InvalidOperationException("Unknown"))
                 .ThrowsAsync(new HttpRequestException("Uh oh", new System.Net.WebException("Uh oh again", WebExceptionStatus.NameResolutionFailure)));
 
-            var metrics = await _listener.GetMetricsAsync();
+            var metrics = (CosmosDBTriggerMetrics)await _listener.GetMonitor().GetMetricsAsync();
 
             Assert.Equal(0, metrics.PartitionCount);
             Assert.Equal(0, metrics.RemainingWork);
@@ -167,13 +168,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             Assert.Equal("Please check that the CosmosDB container and leases container exist and are listed correctly in Functions config files.", warning.FormattedMessage);
             _loggerProvider.ClearAllLogMessages();
 
-            await Assert.ThrowsAsync<InvalidOperationException>(async () => await _listener.GetMetricsAsync());
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => await _listener.GetMonitor().GetMetricsAsync());
 
             warning = _loggerProvider.GetAllLogMessages().Single(p => p.Level == Microsoft.Extensions.Logging.LogLevel.Warning);
             Assert.Equal("Unable to handle System.InvalidOperationException: Unknown", warning.FormattedMessage);
             _loggerProvider.ClearAllLogMessages();
 
-            metrics = await _listener.GetMetricsAsync();
+            metrics = (CosmosDBTriggerMetrics)await _listener.GetMonitor().GetMetricsAsync();
 
             Assert.Equal(0, metrics.PartitionCount);
             Assert.Equal(0, metrics.RemainingWork);
@@ -191,11 +192,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 WorkerCount = 1
             };
 
-            var status = _listener.GetScaleStatus(context);
+            var status = _listener.GetMonitor().GetScaleStatus(context);
             Assert.Equal(ScaleVote.None, status.Vote);
 
             // verify the non-generic implementation works properly
-            status = ((IScaleMonitor)_listener).GetScaleStatus(context);
+            status = ((CosmosDBScaleMonitor)_listener.GetMonitor()).GetScaleStatus(context);
             Assert.Equal(ScaleVote.None, status.Vote);
         }
 
@@ -217,7 +218,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 new CosmosDBTriggerMetrics { RemainingWork = 2900, PartitionCount = 1, Timestamp = timestamp.AddSeconds(15) },
             };
 
-            var status = _listener.GetScaleStatus(context);
+            var status = _listener.GetMonitor().GetScaleStatus(context);
             Assert.Equal(ScaleVote.ScaleIn, status.Vote);
 
             var logs = _loggerProvider.GetAllLogMessages().ToArray();
@@ -247,7 +248,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 new CosmosDBTriggerMetrics { RemainingWork = 2900, PartitionCount = 0, Timestamp = timestamp.AddSeconds(15) },
             };
 
-            var status = _listener.GetScaleStatus(context);
+            var status = _listener.GetMonitor().GetScaleStatus(context);
             Assert.Equal(ScaleVote.ScaleOut, status.Vote);
 
             var logs = _loggerProvider.GetAllLogMessages().ToArray();
@@ -277,7 +278,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 new CosmosDBTriggerMetrics { RemainingWork = 10, PartitionCount = 2, Timestamp = timestamp.AddSeconds(15) },
             };
 
-            var status = _listener.GetScaleStatus(context);
+            var status = _listener.GetMonitor().GetScaleStatus(context);
             Assert.Equal(ScaleVote.ScaleOut, status.Vote);
 
             var logs = _loggerProvider.GetAllLogMessages().ToArray();
@@ -307,7 +308,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 new CosmosDBTriggerMetrics { RemainingWork = 150, PartitionCount = 0, Timestamp = timestamp.AddSeconds(15) },
             };
 
-            var status = _listener.GetScaleStatus(context);
+            var status = _listener.GetMonitor().GetScaleStatus(context);
             Assert.Equal(ScaleVote.ScaleOut, status.Vote);
 
             var logs = _loggerProvider.GetAllLogMessages().ToArray();
@@ -334,7 +335,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 new CosmosDBTriggerMetrics { RemainingWork = 10, PartitionCount = 0, Timestamp = timestamp.AddSeconds(15) },
             };
 
-            var status = _listener.GetScaleStatus(context);
+            var status = _listener.GetMonitor().GetScaleStatus(context);
             Assert.Equal(ScaleVote.ScaleIn, status.Vote);
 
             var logs = _loggerProvider.GetAllLogMessages().ToArray();
