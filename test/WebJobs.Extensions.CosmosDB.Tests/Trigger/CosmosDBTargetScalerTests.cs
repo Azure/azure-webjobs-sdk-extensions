@@ -1,4 +1,9 @@
-﻿using Microsoft.Azure.Cosmos;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host.Scale;
@@ -75,6 +80,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             TargetScalerResult result = _targetScaler.GetScaleResultInternal(targetScalerContext, remainingWork, partitionCount);
 
             Assert.Equal(expectedTargetWorkerCount, result.TargetWorkerCount);
+        }
+
+        [Fact]
+        public async Task GetScaleResultAsync()
+        {
+            TargetScalerContext targetScalerContext = new TargetScalerContext { };
+
+            _estimatorIterator
+                            .SetupSequence(m => m.HasMoreResults)
+                            .Returns(true)
+                            .Returns(false);
+
+            Mock<FeedResponse<ChangeFeedProcessorState>> response = new Mock<FeedResponse<ChangeFeedProcessorState>>();
+            response
+                .Setup(m => m.GetEnumerator())
+                .Returns(new List<ChangeFeedProcessorState>()
+                {
+                    new ChangeFeedProcessorState("a", 100, string.Empty),
+                    new ChangeFeedProcessorState("b", 100, string.Empty),
+                    new ChangeFeedProcessorState("c", 50, string.Empty),
+                    new ChangeFeedProcessorState("d", 100, string.Empty)
+                }.GetEnumerator());
+
+            _estimatorIterator
+                .Setup(m => m.ReadNextAsync(It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(response.Object));
+
+            TargetScalerResult result = await _targetScaler.GetScaleResultAsync(targetScalerContext);
+            Assert.Equal(4, result.TargetWorkerCount);
         }
     }
 }

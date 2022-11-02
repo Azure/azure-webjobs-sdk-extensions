@@ -59,7 +59,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             this._listenerLogDetails = $"prefix='{this._processorName}', monitoredContainer='{this._monitoredContainer.Id}', monitoredDatabase='{this._monitoredContainer.Database.Id}', " +
                 $"leaseContainer='{this._leaseContainer.Id}', leaseDatabase='{this._leaseContainer.Database.Id}', functionId='{this._functionId}'";
 
-            // TODO: logger factory creation
             this._cosmosDBScaleMonitor = new CosmosDBScaleMonitor(_functionId, logger, _monitoredContainer, _leaseContainer, _processorName);
         }
 
