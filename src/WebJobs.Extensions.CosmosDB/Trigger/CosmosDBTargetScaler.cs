@@ -60,7 +60,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
 
             if (concurrency <= 0)
             {
-                throw new ArgumentOutOfRangeException("Concurrency value for target based scale must be greater than 0");
+                _logger.LogWarning($"Concurrency value for target based scale must be greater than 0. Using default value of {DefaultMaxItemsPerInvocation} as concurrency value.");
+                concurrency = DefaultMaxItemsPerInvocation;
             }
 
             int targetWorkerCount = (int)Math.Ceiling(remainingWork / (decimal)concurrency);
