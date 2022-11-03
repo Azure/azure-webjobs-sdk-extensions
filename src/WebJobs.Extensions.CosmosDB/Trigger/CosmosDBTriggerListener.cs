@@ -15,7 +15,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
-    internal class CosmosDBTriggerListener<T> : IListener, IScaleMonitorProvider
+    internal class CosmosDBTriggerListener<T> : IListener, IScaleMonitorProvider, ITargetScalerProvider
     {
         private const int ListenerNotRegistered = 0;
         private const int ListenerRegistering = 1;
@@ -33,6 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly CosmosDBTriggerHealthMonitor _healthMonitor;
         private readonly string _listenerLogDetails;
         private readonly IScaleMonitor<CosmosDBTriggerMetrics> _cosmosDBScaleMonitor;
+        private readonly ITargetScaler _cosmosDBTargetScaler;
         private ChangeFeedProcessor _host;
         private ChangeFeedProcessorBuilder _hostBuilder;
         private int _listenerStatus;
@@ -60,6 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 $"leaseContainer='{this._leaseContainer.Id}', leaseDatabase='{this._leaseContainer.Database.Id}', functionId='{this._functionId}'";
 
             this._cosmosDBScaleMonitor = new CosmosDBScaleMonitor(_functionId, logger, _monitoredContainer, _leaseContainer, _processorName);
+            this._cosmosDBTargetScaler = new CosmosDBTargetScaler(_functionId, _cosmosDBAttribute, _monitoredContainer, _leaseContainer, _processorName, _logger);
         }
 
         public ScaleMonitorDescriptor Descriptor => this._scaleMonitorDescriptor;
@@ -222,6 +224,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         public IScaleMonitor GetMonitor()
         {
             return _cosmosDBScaleMonitor;
+        }
+
+        public ITargetScaler GetTargetScaler()
+        {
+            return _cosmosDBTargetScaler;
         }
     }
 }
