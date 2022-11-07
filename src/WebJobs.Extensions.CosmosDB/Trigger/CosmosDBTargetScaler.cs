@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
 {
-    public class CosmosDBTargetScaler : ITargetScaler
+    internal class CosmosDBTargetScaler : ITargetScaler
     {
         public const int DefaultMaxItemsPerInvocation = 100;
         private readonly string _functionId;
