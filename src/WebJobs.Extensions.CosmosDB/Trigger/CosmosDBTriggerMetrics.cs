@@ -5,7 +5,7 @@ using Microsoft.Azure.WebJobs.Host.Scale;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
-    public class CosmosDBTriggerMetrics : ScaleMetrics
+    internal class CosmosDBTriggerMetrics : ScaleMetrics
     {
         public int PartitionCount { get; set; }
 

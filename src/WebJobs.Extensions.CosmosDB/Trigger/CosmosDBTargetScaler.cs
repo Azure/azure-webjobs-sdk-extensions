@@ -19,7 +19,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
         private readonly CosmosDBTriggerAttribute _cosmosDBTriggerAttribute;
         private readonly Container _monitoredContainer;
 
-        public CosmosDBTargetScaler(string functionId, CosmosDBTriggerAttribute cosmosDBTriggerAttribute, Container monitoredContainer, Container leaseContainer, string processorName, ILogger logger)
+        internal CosmosDBTargetScaler(string functionId, CosmosDBTriggerAttribute cosmosDBTriggerAttribute, Container monitoredContainer, Container leaseContainer, string processorName, ILogger logger)
         {
             _functionId = functionId;
             _targetScalerDescriptor = new TargetScalerDescriptor(functionId);
