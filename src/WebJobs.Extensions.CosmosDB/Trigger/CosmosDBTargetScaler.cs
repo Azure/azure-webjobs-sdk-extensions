@@ -59,7 +59,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
 
             int targetWorkerCount = (int)Math.Ceiling(remainingWork / (decimal)concurrency);
 
-            string targetScaleMessage = $"'Target worker count for function '{_functionId}' is '{targetWorkerCount}' (MonitoredContainerId='{_monitoredContainer.Id}', MonitoredContainerDatabaseId='{_monitoredContainer.Database.Id}', RemainingWork ='{remainingWork}', Concurrency='{concurrency}').";
+            string targetScaleMessage = $"Target worker count for function '{_functionId}' is '{targetWorkerCount}' (MonitoredContainerId='{_monitoredContainer.Id}', MonitoredContainerDatabaseId='{_monitoredContainer.Database.Id}', RemainingWork ='{remainingWork}', Concurrency='{concurrency}').";
 
             if (partitionCount > 0 && targetWorkerCount > partitionCount)
             {
