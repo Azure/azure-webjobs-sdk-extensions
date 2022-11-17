@@ -11,10 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
-using Microsoft.Azure.WebJobs.Host.Executors;
-using Microsoft.Azure.WebJobs.Host.Scale;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
