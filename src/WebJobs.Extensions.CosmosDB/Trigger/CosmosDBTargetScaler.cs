@@ -44,15 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
 
             if (!context.InstanceConcurrency.HasValue)
             {
-concurrency = _cosmosDBTriggerAttribute.MaxItemsPerInvocation > 0 ? _cosmosDBTriggerAttribute.MaxItemsPerInvocation : DefaultMaxItemsPerInvocation;
-
-                {
-                    concurrency = _cosmosDBTriggerAttribute.MaxItemsPerInvocation;
-                }
-                else
-                {
-                    concurrency = DefaultMaxItemsPerInvocation;
-                }
+                concurrency = _cosmosDBTriggerAttribute.MaxItemsPerInvocation > 0 ? _cosmosDBTriggerAttribute.MaxItemsPerInvocation : DefaultMaxItemsPerInvocation;
             }
             else
             {
