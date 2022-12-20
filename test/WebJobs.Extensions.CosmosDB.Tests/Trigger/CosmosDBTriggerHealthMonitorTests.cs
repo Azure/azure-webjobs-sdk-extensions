@@ -100,6 +100,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         }
 
         [Fact]
+        public async Task LogsLeaseLostConnectivity()
+        {
+            MockedLogger mockedLogger = new MockedLogger();
+            CosmosDBTriggerHealthMonitor cosmosDBTriggerHealthMonitor = new CosmosDBTriggerHealthMonitor(mockedLogger);
+            string leaseToken = Guid.NewGuid().ToString();
+            string diagnosticsString = Guid.NewGuid().ToString();
+            Mock<CosmosDiagnostics> diagnostics = new Mock<CosmosDiagnostics>();
+            diagnostics.Setup(m => m.ToString()).Returns(diagnosticsString);
+            MockedException cosmosException = new MockedException(httpStatusCode.PreconditionFailed, diagnostics.Object);
+
+            await cosmosDBTriggerHealthMonitor.OnErrorAsync(leaseToken, cosmosException);
+
+            Assert.Equal(1, mockedLogger.Events.Count);
+
+            LogEvent loggedEvent = mockedLogger.Events[0];
+            Assert.Equal(LogLevel.Information, loggedEvent.LogLevel);
+            Assert.Equal(cosmosException, loggedEvent.Exception);
+            Assert.True(loggedEvent.Message.Contains(leaseToken));
+
+            loggedEvent = mockedLogger.Events[1];
+            Assert.Equal(LogLevel.Debug, loggedEvent.LogLevel);
+            Assert.Null(loggedEvent.Exception);
+            Assert.True(loggedEvent.Message.Contains(leaseToken) && loggedEvent.Message.Contains(diagnosticsString));
+        }
+
+        [Fact]
         public async Task LogsOnUserException()
         {
             MockedLogger mockedLogger = new MockedLogger();
