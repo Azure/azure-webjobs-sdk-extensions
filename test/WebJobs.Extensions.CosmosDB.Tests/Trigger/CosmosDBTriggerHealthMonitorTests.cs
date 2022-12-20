@@ -108,7 +108,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             string diagnosticsString = Guid.NewGuid().ToString();
             Mock<CosmosDiagnostics> diagnostics = new Mock<CosmosDiagnostics>();
             diagnostics.Setup(m => m.ToString()).Returns(diagnosticsString);
-            MockedException cosmosException = new MockedException(httpStatusCode.PreconditionFailed, diagnostics.Object);
+            MockedException cosmosException = new MockedException(HttpStatusCode.PreconditionFailed, diagnostics.Object);
 
             await cosmosDBTriggerHealthMonitor.OnErrorAsync(leaseToken, cosmosException);
 
