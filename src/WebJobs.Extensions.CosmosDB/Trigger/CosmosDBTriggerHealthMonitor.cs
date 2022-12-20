@@ -29,6 +29,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 case CosmosException cosmosException when cosmosException.StatusCode == HttpStatusCode.RequestTimeout || cosmosException.StatusCode == HttpStatusCode.ServiceUnavailable:
                     this.logger.LogWarning(Events.OnError, cosmosException, "Lease {LeaseToken} experiencing transient connectivity issues.", leaseToken);
                     break;
+                case CosmosException cosmosException when cosmosException.StatusCode == HttpStatusCode.PreconditionFailed:
+                    this.logger.LogInformation(Events.OnError, cosmosException, "Lease {LeaseToken} was lost. This is expected during scaling and briefly during initialization as the leases are rebalanced across instances.", leaseToken);
+                    break;
                 default:
                     this.logger.LogError(Events.OnError, exception, "Lease {LeaseToken} experienced an error during processing.", leaseToken);
                     break;
