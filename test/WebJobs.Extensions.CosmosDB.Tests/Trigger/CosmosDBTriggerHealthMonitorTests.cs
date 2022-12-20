@@ -100,7 +100,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         }
 
         [Fact]
-        public async Task LogsLeaseLostConnectivity()
+        public async Task LogsLeaseLost412()
         {
             MockedLogger mockedLogger = new MockedLogger();
             CosmosDBTriggerHealthMonitor cosmosDBTriggerHealthMonitor = new CosmosDBTriggerHealthMonitor(mockedLogger);
