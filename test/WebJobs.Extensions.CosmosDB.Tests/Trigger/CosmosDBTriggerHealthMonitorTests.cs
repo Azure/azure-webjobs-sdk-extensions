@@ -112,7 +112,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             await cosmosDBTriggerHealthMonitor.OnErrorAsync(leaseToken, cosmosException);
 
-            Assert.Equal(1, mockedLogger.Events.Count);
+            Assert.Equal(2, mockedLogger.Events.Count);
 
             LogEvent loggedEvent = mockedLogger.Events[0];
             Assert.Equal(LogLevel.Information, loggedEvent.LogLevel);
