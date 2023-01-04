@@ -59,8 +59,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
                 await TestHelpers.Await(() =>
                 {
-                    return _loggerProvider.GetAllLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")) == 4
-                        && _loggerProvider.GetAllLogMessages().Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with string called!")) == 4;
+                    var logMessages = _loggerProvider.GetAllLogMessages();
+                    return logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")) == 4
+                        && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with string called!")) == 4
+                        && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with retry called!")) == 8
+                        && logMessages.Count(p => p.Exception != null && p.Exception.InnerException.Message.Contains("Test exception") && !p.Category.StartsWith("Host.Results")) > 0;
                 });
 
                 // Make sure the Options were logged. Just check a few values.
@@ -129,6 +132,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
         private static class EndToEndTestClass
         {
+            private static bool shouldThrow = true;
+            
             [NoAutomaticTrigger]
             public static async Task Outputs(
                 string input,
@@ -169,6 +174,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 foreach (var document in JArray.Parse(documents))
                 {
                     log.LogInformation("Trigger with string called!");
+                }
+            }
+
+            [FixedDelayRetry(5, "00:00:01")]
+            public static void TriggerWithRetry(
+                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "retry")] IReadOnlyList<Item> documents,
+                ILogger log)
+            {
+                foreach (var document in documents)
+                {
+                    log.LogInformation($"Trigger with retry called!");
+                }
+
+                if (shouldThrow)
+                {
+                    shouldThrow = false;
+                    throw new Exception("Test exception");
                 }
             }
         }
