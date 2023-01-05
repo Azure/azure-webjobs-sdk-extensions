@@ -22,7 +22,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
         internal const string AzureWebJobsTwilioAccountAuthTokenName = "AzureWebJobsTwilioAuthToken";
 
         private readonly IOptions<TwilioSmsOptions> _options;
-        private readonly ConcurrentDictionary<Tuple<string, string>, TwilioRestClient> _twilioClientCache = new ConcurrentDictionary<Tuple<string, string>, TwilioRestClient>();
+
+        private readonly ConcurrentDictionary<Tuple<string, string>, TwilioRestClient> _twilioClientCache =
+            new ConcurrentDictionary<Tuple<string, string>, TwilioRestClient>();
 
         public TwilioExtensionConfigProvider(IOptions<TwilioSmsOptions> options)
         {
@@ -66,7 +68,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
             string accountSid = Utility.FirstOrDefault(attribute.AccountSidSetting, _options.Value.AccountSid);
             string authToken = Utility.FirstOrDefault(attribute.AuthTokenSetting, _options.Value.AuthToken);
 
-            TwilioRestClient client = _twilioClientCache.GetOrAdd(new Tuple<string, string>(accountSid, authToken), t => new TwilioRestClient(t.Item1, t.Item2));
+            TwilioRestClient client = _twilioClientCache.GetOrAdd(new Tuple<string, string>(accountSid, authToken),
+                t => new TwilioRestClient(t.Item1, t.Item2));
 
             var context = new TwilioSmsContext
             {
@@ -90,7 +93,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
                 MaxPrice = GetValueOrDefault<decimal?>(messageOptions, "maxPrice"),
                 ApplicationSid = GetValueOrDefault<string>(messageOptions, "applicationSid"),
                 MessagingServiceSid = GetValueOrDefault<string>(messageOptions, "messagingServiceSid"),
-                PathAccountSid = GetValueOrDefault<string>(messageOptions, "pathAccountSid")
+                PathAccountSid = GetValueOrDefault<string>(messageOptions, "pathAccountSid"),
+                Attempt = GetValueOrDefault<int?>(messageOptions, "attempt"),
+                SmartEncoded = GetValueOrDefault<bool?>(messageOptions, "smartEncoded"),
+                ShortenUrls = GetValueOrDefault<bool?>(messageOptions, "shortenUrls"),
+                SendAt = GetValueOrDefault<DateTime?>(messageOptions, "sendAt"),
+                SendAsMms = GetValueOrDefault<bool?>(messageOptions, "sendAsMms"),
+                ContentSid = GetValueOrDefault<string>(messageOptions, "contentSid"),
+                ContentVariables = GetValueOrDefault<string>(messageOptions, "contentVariables")
             };
 
             string value = GetValueOrDefault<string>(messageOptions, "from");
@@ -113,7 +123,38 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
                 {
                     uris.Add(new Uri((string)url));
                 }
+
                 options.MediaUrl = uris;
+            }
+
+            var contentRetention = GetValueOrDefault<string>(messageOptions, "ContentRetention");
+            if (!string.IsNullOrEmpty(contentRetention))
+            {
+                options.ContentRetention = contentRetention;
+            }
+
+            var addressRetention = GetValueOrDefault<string>(messageOptions, "addressRetention");
+            if (!string.IsNullOrEmpty(addressRetention))
+            {
+                options.AddressRetention = addressRetention;
+            }
+
+            var persistentActions = GetValueOrDefault<JArray>(messageOptions, "persistentAction");
+            if (persistentActions != null)
+            {
+                var actions = new List<string>();
+                foreach (var action in persistentActions)
+                {
+                    actions.Add((string)action);
+                }
+
+                options.PersistentAction = actions;
+            }
+
+            var scheduleType = GetValueOrDefault<string>(messageOptions, "scheduleType");
+            if (!string.IsNullOrEmpty(scheduleType))
+            {
+                options.ScheduleType = scheduleType;
             }
 
             return options;
@@ -129,9 +170,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Twilio
             return default(TValue);
         }
 
-        private static string ThrowMissingSettingException(string settingDisplayName, string settingName, string configPropertyName)
+        private static string ThrowMissingSettingException(string settingDisplayName, string settingName,
+            string configPropertyName)
         {
-            string message = string.Format("The Twilio {0} must be set either via a '{1}' app setting, via a '{1}' environment variable, or directly in code via TwilioSmsConfiguration.{2}.",
+            string message = string.Format(
+                "The Twilio {0} must be set either via a '{1}' app setting, via a '{1}' environment variable, or directly in code via TwilioSmsConfiguration.{2}.",
                 settingDisplayName, settingName, configPropertyName);
 
             throw new InvalidOperationException(message);
