@@ -1,19 +1,39 @@
-$shouldPackage = -not $env:APPVEYOR_PULL_REQUEST_NUMBER -or $env:APPVEYOR_PULL_REQUEST_TITLE.Contains("[pack]")
-$directoryPath = Split-Path $MyInvocation.MyCommand.Path -Parent
+param (
+  [string]$buildNumber,
+  [string]$artifactDirectory,
+  [bool]$skipAssemblySigning = $false
+)
 
-if ($shouldPackage) {
-  Compress-Archive $directoryPath\..\buildoutput\* $directoryPath\..\buildoutput\tosign.zip
-
-  if ($env:SkipAssemblySigning -eq "true") {
-    "Assembly signing disabled. Skipping signing process."
-    exit 0;
-  }
-
-  $ctx = New-AzureStorageContext $env:FILES_ACCOUNT_NAME $env:FILES_ACCOUNT_KEY
-  Set-AzureStorageBlobContent "$directoryPath/../buildoutput/tosign.zip" "azure-webjobs-extensions" -Blob "$env:APPVEYOR_BUILD_VERSION.zip" -Context $ctx
-
-  $queue = Get-AzureStorageQueue "signing-jobs" -Context $ctx
-
-  $messageBody = "SignNupkgs;azure-webjobs-extensions;$env:APPVEYOR_BUILD_VERSION.zip"
-  $queue.CloudQueue.AddMessage($messageBody)
+if ($null -eq $buildNumber) {
+  throw 'Parameter $buildNumber cannot be null or empty. Exiting script.'
 }
+
+if (-not (Test-Path $artifactDirectory)) {
+  throw "Artifact directory '$artifactDirectory' not found. Exiting script."
+}
+
+$toSignPattern = Join-Path -Path $artifactDirectory -ChildPath "*"
+$toSignZipPath = Join-Path -Path $artifactDirectory -ChildPath "tosign.zip"
+
+Write-Host "Searching for files with path matching pattern: $toSignPattern"
+$items = Get-ChildItem -Path $toSignPattern -Recurse
+Write-Host $items
+Write-Host "$($items.Count) items found."
+
+Compress-Archive -Path $toSignPattern -DestinationPath $toSignZipPath
+Write-Host "Signing payload created at: $toSignZipPath"
+
+if ($skipAssemblySigning) {
+  "Assembly signing disabled. Skipping signing process."
+  exit 0;
+}
+
+Write-Host "Uploading signing job '$buildNumber.zip' to storage."
+# This will fail if the artifacts already exist.
+$ctx = New-AzureStorageContext -StorageAccountName $env:FILES_ACCOUNT_NAME -StorageAccountKey $env:FILES_ACCOUNT_KEY
+Set-AzureStorageBlobContent -File $toSignZipPath -Container "azure-webjobs-extensions" -Blob "$buildNumber.zip" -Context $ctx
+
+$queue = Get-AzureStorageQueue -Name "signing-jobs" -Context $ctx
+
+$messageBody = "SignNupkgs;azure-webjobs-extensions;$buildNumber.zip"
+$queue.CloudQueue.AddMessage($messageBody)

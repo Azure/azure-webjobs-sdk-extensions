@@ -1,39 +1,60 @@
-$shouldPackage = -not $env:APPVEYOR_PULL_REQUEST_NUMBER -or $env:APPVEYOR_PULL_REQUEST_TITLE.Contains("[pack]")
-$directoryPath = Split-Path $MyInvocation.MyCommand.Path -Parent
+param (
+  [string]$buildNumber,
+  [string]$artifactDirectory,
+  [bool]$skipAssemblySigning = $false
+)
 
-if ($shouldPackage -and $env:SkipAssemblySigning -ne "true") {
-  $timeout = new-timespan -Minutes 15
-  $sw = [diagnostics.stopwatch]::StartNew();
-  $polling = $true;
-  $ctx = New-AzureStorageContext $env:FILES_ACCOUNT_NAME $env:FILES_ACCOUNT_KEY
-  $blob = $null;
-  while ($sw.elapsed -lt $timeout -and $polling) {
-    $blob = Get-AzureStorageBlob "$env:APPVEYOR_BUILD_VERSION.zip" "azure-webjobs-extensions-signed" -Context $ctx -ErrorAction Ignore
-    if (-not $blob) {
-      "${sw.elapsed} elapsed, polling..."
-    }
-    else {
-      "Jenkins artifacts found"
-      $polling = $false;
-    }
-    Start-Sleep -Seconds 5
-  }
-
-  if ($polling) {
-    "No jenkins artifacts found, investigate job at https://funkins-master.redmond.corp.microsoft.com/job/Build_signing/"
-    exit(1);
-  }
-
-  Remove-Item "$directoryPath/../buildoutput" -Recurse -Force
-
-  Mkdir "$directoryPath/../buildoutput"
-
-  Get-AzureStorageBlobContent "$env:APPVEYOR_BUILD_VERSION.zip" "azure-webjobs-extensions-signed" -Destination "$directoryPath/../buildoutput/signed.zip" -Context $ctx
-
-  Expand-Archive "$directoryPath/../buildoutput/signed.zip" "$directoryPath/../buildoutput/signed"
-
-  Get-ChildItem "$directoryPath/../buildoutput/signed" | % {
-    Push-AppveyorArtifact $_.FullName
-  }
-  if (-not $?) { exit 1 }
+if ($null -eq $buildNumber) {
+  throw 'Parameter $buildNumber cannot be null or empty. Exiting script.'
 }
+
+if (-not (Test-Path $artifactDirectory)) {
+  throw "Artifact directory '$artifactDirectory' not found. Exiting script."
+}
+
+$timeout = New-Timespan -Minutes 15
+Write-Host "Set polling timeout to:" $timeout.ToString();
+
+$sw = [System.Diagnostics.Stopwatch]::StartNew();
+$polling = $true;
+
+Write-Host "Connecting to storage account."
+$ctx = New-AzureStorageContext -StorageAccountName $env:FILES_ACCOUNT_NAME -StorageAccountKey $env:FILES_ACCOUNT_KEY
+$blob = $null;
+while ($sw.elapsed -lt $timeout -and $polling) {
+  Write-Host "Retrieving Jenkins artifacts.."
+  $blob = Get-AzureStorageBlob -Blob "$buildNumber.zip" -Container "azure-webjobs-extensions-signed" -Context $ctx -ErrorAction Ignore
+  if (-not $blob) {
+    Write-Host "Jenkins artifacts not found. ${sw.elapsed} elapsed. Polling..."
+  }
+  else {
+    Write-Host "Jenkins artifacts found."
+    $polling = $false;
+  }
+  Start-Sleep -Seconds 5
+}
+
+$sw.Stop();
+
+if ($polling) {
+  "No jenkins artifacts found after ${sw.Elapsed}. Investigate job at https://funkins-master.redmond.corp.microsoft.com/job/Build_signing/"
+  exit(1);
+}
+
+Write-Host "Removing directory $artifactDirectory"
+Remove-Item -Path $artifactDirectory -Recurse -Force
+
+Write-Host "Recreating directory $artifactDirectory"
+New-Item -ItemType "directory" -Path $artifactDirectory
+$signedZipPath = Join-Path -Path $artifactDirectory -ChildPath "signed.zip"
+
+Write-Host "Downloading signed file zip $buildNumber.zip to $signedZipPath"
+Get-AzureStorageBlobContent -Blob "$buildNumber.zip" -Container "azure-webjobs-extensions-signed" -Destination $signedZipPath -Context $ctx
+
+Write-Host "Unzipping signed files to $artifactDirectory"
+Expand-Archive -LiteralPath $signedZipPath -DestinationPath $artifactDirectory
+
+Write-Host "Removing signed file zip ${Split-Path -Path $signedZipPath -Leaf}."
+Remove-Item -Path $signedZipPath
+
+if (-not $?) { exit 1 }

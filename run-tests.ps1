@@ -1,13 +1,26 @@
-function RunTest([string] $project, [string] $description,[bool] $skipBuild = $false, $filter = $null) {
-    Write-Host "Running test: $description" -ForegroundColor DarkCyan
+param(
+    [string[]]$tests = @()
+)
+
+function RunTest([string]$project, [bool]$skipBuild = $false, [string]$filter = $null) {
+    Write-Host "Running test: $project" -ForegroundColor DarkCyan
     Write-Host "-----------------------------------------------------------------------------" -ForegroundColor DarkCyan
     Write-Host
 
-    $cmdargs = "test", ".\test\$project\", "-v", "q"
-    
-    if ($filter) {
-       $cmdargs += "--filter", "$filter"
+    $cmdargs = "test", ".\test\$project\$project.csproj", "-v", "m", "--logger", "trx;LogFileName=TEST.xml"
+
+    if ($null -ne $env:Configuration)
+    {
+        Write-Host "Adding: --configuration $config"
+        $cmdargs += "--configuration", "$config"
     }
+
+    if ($filter) {
+        Write-Host "Adding: --filter $filter"
+        $cmdargs += "--filter", "$filter"
+    }
+
+    Write-Host "Final command: 'dotnet $cmdargs'"
 
 # We'll always rebuild for now.
 #    if ($skipBuild){
@@ -27,15 +40,10 @@ function RunTest([string] $project, [string] $description,[bool] $skipBuild = $f
     return $r
 }
 
-
-$tests = @(
-  @{project ="WebJobs.Extensions.Tests"; description="Core extension Tests"},
-  @{project ="WebJobs.Extensions.Http.Tests"; description="HTTP extension tests"},
-  @{project ="WebJobs.Extensions.CosmosDB.Tests"; description="CosmosDB extension tests"},
-  @{project ="WebJobs.Extensions.MobileApps.Tests"; description="Mobile Apps extension tests"},
-  @{project ="WebJobs.Extensions.SendGrid.Tests"; description="SendGrid extension tests"},
-  @{project ="WebJobs.Extensions.Twilio.Tests"; description="Twilio extension tests"}
-)
+if ((-not $tests) -or ($tests.Count -lt 1))
+{
+    throw "No test projects specified to run. Exiting script."
+}
 
 $success = $true
 $testRunSucceeded = $true
@@ -46,9 +54,12 @@ Write-Host "Current TimeZone: '$originalTZ'"
 Set-TimeZone -Name "Pacific Standard Time"
 $currentTZ = Get-TimeZone
 Write-Host "Changing TimeZone for Timer tests. Now '$currentTZ'"
+Write-Host "Environment setting Configuration is '$env:Configuration'."
+
+dotnet --version
 
 foreach ($test in $tests){
-    $testRunSucceeded = RunTest $test.project $test.description $testRunSucceeded $test.filter
+    $testRunSucceeded = RunTest $test $testRunSucceeded
     $success = $testRunSucceeded -and $success
 }
 

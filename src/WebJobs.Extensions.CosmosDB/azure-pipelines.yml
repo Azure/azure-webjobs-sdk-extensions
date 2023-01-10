@@ -1,0 +1,40 @@
+parameters: # user-configurable parameters
+  - name: skip_assembly_signing
+    displayName: Skip Assembly Signing
+    type: boolean
+    default: false
+
+pr:
+  branches:
+    include:
+    - main
+    - dev
+  paths:
+    exclude: # don't trigger builds for file changes matching these paths
+    - src/WebJobs.Extensions.Http/*
+    - src/WebJobs.Extensions.MobileApps/*
+    - src/WebJobs.Extensions.SendGrid/*
+    - src/WebJobs.Extensions.Timers.Storage/*
+    - src/WebJobs.Extensions.Twilio/*
+
+trigger:
+  branches:
+    include:
+    - main
+    - dev
+  paths:
+    exclude: # don't trigger builds for file changes matching these paths
+    - test/WebJobs.Extensions.Http.Tests/*
+    - test/WebJobs.Extensions.MobileApps.Tests/*
+    - test/WebJobs.Extensions.SendGrid.Tests/*
+    - test/WebJobs.Extensions.Timers.Storage.Tests/*
+    - test/WebJobs.Extensions.Twilio.Tests/*
+
+extends:
+  template: ../../build/pipelines/templates/ci.yml
+  parameters: # template parameters
+    skip_assembly_signing: ${{ parameters.skip_assembly_signing }}
+    target_projects:
+      - WebJobs.Extensions.CosmosDB
+    target_tests:
+      - WebJobs.Extensions.CosmosDB.Tests

@@ -25,6 +25,6 @@
     <PackageReference Include="Microsoft.Extensions.Azure" Version="1.1.0" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Update="StyleCop.Analyzers" Version="1.1.0-beta009" />
+    <PackageReference Update="StyleCop.Analyzers" Version="1.1.118" />
   </ItemGroup>
 </Project>
