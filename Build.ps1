@@ -1,26 +1,27 @@
 ﻿param (
+  [string[]]$projects = @(),
+  [string]$buildNumber,
   [string]$packageSuffix = "0",
   [bool]$isLocal = $false,
-  [string]$outputDirectory = "..\..\buildoutput"
+  [bool]$signPackages = $false,
+  [string]$outputDirectory = (Join-Path -Path $PSScriptRoot -ChildPath "buildoutput"),
+  [bool]$skipAssemblySigning = $false
 )
+
+if ($null -eq $buildNumber) {
+  throw 'Parameter $buildNumber cannot be null or empty. Exiting script.'
+}
 
 if ($isLocal){
   $packageSuffix = "dev" + [datetime]::UtcNow.Ticks.ToString()
   Write-Host "Local build - setting package suffixes to $packageSuffix" -ForegroundColor Yellow
 }
+
 dotnet --version
 
-dotnet build -v q
+dotnet build -v m
 
 if (-not $?) { exit 1 }
-
-$projects =
-    "WebJobs.Extensions",
-    "WebJobs.Extensions.CosmosDB",
-    "WebJobs.Extensions.Http",
-    "WebJobs.Extensions.Twilio",
-    "WebJobs.Extensions.Timers.Storage"
-    "WebJobs.Extensions.SendGrid"
 
 foreach ($project in $projects)
 {
@@ -31,13 +32,10 @@ foreach ($project in $projects)
     $cmd += "--version-suffix", "-$packageSuffix"
   }
   
-  & dotnet $cmd
+  & { dotnet $cmd }
 }
 
-### Sign package if build is not a PR
-$shouldPackage = -not $env:APPVEYOR_PULL_REQUEST_NUMBER -or $env:APPVEYOR_PULL_REQUEST_TITLE.Contains("[pack]")
-
-if ($shouldPackage) {
-  & ".\tools\RunSigningJob.ps1" 
+if ($signPackages) {
+  & { .\tools\RunSigningJob.ps1 -artifactDirectory $outputDirectory -buildNumber $buildNumber -skipAssemblySigning $skipAssemblySigning }
   if (-not $?) { exit 1 }
 }

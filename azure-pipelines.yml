@@ -1,17 +1,41 @@
-# ASP.NET Core
-# Build and test ASP.NET Core projects targeting .NET Core.
-# Add steps that run tests, create a NuGet package, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+parameters: # user-configurable parameters
+  - name: skip_assembly_signing
+    displayName: Skip Assembly Signing
+    type: boolean
+    default: false
+
+pr:
+  branches:
+    include:
+    - main
+    - dev
+  paths:
+    exclude: # don't trigger builds for file changes matching these paths
+    - src/WebJobs.Extensions.CosmosDB/*
 
 trigger:
-- dev
+  branches:
+    include:
+    - main
+    - dev
+  paths:
+    exclude: # don't trigger builds for file changes matching these paths
+    - test/WebJobs.Extensions.CosmosDB.Tests/*
 
-pool:
-  vmImage: 'windows-latest'
-
-variables:
-  buildConfiguration: 'Release'
-
-steps:
-- script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'dotnet build $(buildConfiguration)'
+extends: 
+  template: build/pipelines/templates/ci.yml
+  parameters: # template parameters
+    skip_assembly_signing: ${{ parameters.skip_assembly_signing }}
+    target_projects:
+      - WebJobs.Extensions
+      - WebJobs.Extensions.Http
+      - WebJobs.Extensions.SendGrid
+      - WebJobs.Extensions.Timers.Storage
+      - WebJobs.Extensions.Twilio
+      # WebJobs.Extensions.CosmosDB is run by a separate pipeline defined in its src/ folder
+    target_tests:
+      - WebJobs.Extensions.Tests
+      - WebJobs.Extensions.Http.Tests
+      - WebJobs.Extensions.MobileApps.Tests
+      - WebJobs.Extensions.SendGrid.Tests
+      - WebJobs.Extensions.Twilio.Tests

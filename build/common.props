@@ -21,8 +21,8 @@
     <RepositoryType>git</RepositoryType>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
-    <PackageLicenseUrl>https://go.microsoft.com/fwlink/?linkid=2028464</PackageLicenseUrl>
-    <PackageIconUrl>https://raw.githubusercontent.com/Azure/azure-webjobs-sdk-extensions/dev/build/webjobs.png</PackageIconUrl>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageIcon>webjobs.png</PackageIcon>
     <PackageTags>Microsoft Azure WebJobs AzureFunctions</PackageTags>
     <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)..\src.ruleset</CodeAnalysisRuleSet>
     <UseSourceLink Condition="$(UseSourceLink) == '' And $(CI) != ''">true</UseSourceLink>
@@ -54,9 +54,14 @@
     <!-- Write out the source file for this project to point at raw.githubusercontent.com -->
     <WriteLinesToFile File="$(BaseIntermediateOutputPath)source_link.json" Overwrite="true" Lines='{"documents": { "$(SourceLinkRoot)\\*" : "$(RemoteUri.Replace(".git", "").Replace("github.com", "raw.githubusercontent.com"))/$(LatestCommit)/*" }}' />
   </Target>
-  
+
   <ItemGroup>
-    <AdditionalFiles Include="$(SolutionDir)\stylecop.json" Link="stylecop.json" />
+    <None Include="$(MSBuildThisFileDirectory)..\build\webjobs.png" Pack="true" PackagePath="\"/>
+	<None Include="$(MSBuildThisFileDirectory)..\LICENSE.txt" Pack="true" PackagePath=""/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)..\stylecop.json" Link="stylecop.json" />
   </ItemGroup>
 
   <ItemGroup>
