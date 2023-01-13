@@ -9,6 +9,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
 {
+    /// <summary>
+    /// Target Scaler for a CosmosDB function.
+    /// </summary>
     public class CosmosDBTargetScaler : ITargetScaler
     {
         public const int DefaultMaxItemsPerInvocation = 100;
@@ -19,7 +22,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
         private readonly CosmosDBTriggerAttribute _cosmosDBTriggerAttribute;
         private readonly Container _monitoredContainer;
 
-        internal CosmosDBTargetScaler(string functionId, CosmosDBTriggerAttribute cosmosDBTriggerAttribute, Container monitoredContainer, Container leaseContainer, string processorName, ILogger logger)
+        /// <summary>
+        /// Instantiates a target based scaler. 
+        /// </summary>
+        /// <param name="functionId">FunctionId of the monitored function.</param>
+        /// <param name="cosmosDBTriggerAttribute">Trigger attribute used for target based scaling.</param>
+        /// <param name="monitoredContainer">Monitored container for CosmosDB function.</param>
+        /// <param name="leaseContainer">Lease container for CosmosDB function.</param>
+        /// <param name="processorName">Processor name used for function.</param>
+        /// <param name="logger">Used for logging.</param>
+        public CosmosDBTargetScaler(string functionId, CosmosDBTriggerAttribute cosmosDBTriggerAttribute, Container monitoredContainer, Container leaseContainer, string processorName, ILogger logger)
         {
             _functionId = functionId;
             _targetScalerDescriptor = new TargetScalerDescriptor(functionId);
