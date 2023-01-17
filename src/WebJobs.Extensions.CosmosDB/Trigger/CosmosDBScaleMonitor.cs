@@ -12,6 +12,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
 {
+    /// <summary>
+    /// Scale Monitor class for a CosmosDB function.
+    /// </summary>
     public class CosmosDBScaleMonitor : IScaleMonitor<CosmosDBTriggerMetrics>
     {
         private readonly ILogger _logger;
@@ -20,6 +23,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
         private readonly ScaleMonitorDescriptor _scaleMonitorDescriptor;
         private readonly CosmosDBMetricsProvider _cosmosDBMetricsProvider;
 
+        /// <summary>
+        /// Instantiates a scale monitor for CosmosDB function.
+        /// </summary>
+        /// <param name="functionId">FunctionId of the monitored function.</param>
+        /// <param name="logger">Used for logging.</param>
+        /// <param name="monitoredContainer">Monitored container for CosmosDB function.</param>
+        /// <param name="leaseContainer">Lease container for CosmosDB function.</param>
+        /// <param name="processorName">Processor name used for function.</param>
         public CosmosDBScaleMonitor(string functionId, ILogger logger, Container monitoredContainer, Container leaseContainer, string processorName)
         {
             _logger = logger;
