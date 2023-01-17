@@ -12,10 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
 {
-    /// <summary>
-    /// Scale Monitor class for a CosmosDB function.
-    /// </summary>
-    public class CosmosDBScaleMonitor : IScaleMonitor<CosmosDBTriggerMetrics>
+    internal class CosmosDBScaleMonitor : IScaleMonitor<CosmosDBTriggerMetrics>
     {
         private readonly ILogger _logger;
         private readonly string _functionId;
