@@ -28,7 +28,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
         /// <param name="monitoredContainer">Monitored container for CosmosDB function.</param>
         /// <param name="leaseContainer">Lease container for CosmosDB function.</param>
         /// <param name="processorName">Processor name used for function.</param>
-        public CosmosDBScaleMonitor(string functionId, ILogger logger, Container monitoredContainer, Container leaseContainer, string processorName)
+        public CosmosDBScaleMonitor(string functionId, Container monitoredContainer, Container leaseContainer, string processorName, ILogger logger)
         {
             _logger = logger;
             _functionId = functionId;
