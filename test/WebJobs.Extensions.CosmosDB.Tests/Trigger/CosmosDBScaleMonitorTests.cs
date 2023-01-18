@@ -69,7 +69,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
 
             _logDetails = $"prefix='{ProcessorName}', monitoredContainer='{ContainerName}', monitoredDatabase='{DatabaseName}', " +
                 $"leaseContainer='{ContainerName}', leaseDatabase='{DatabaseName}', functionId='{this._functionId}'";
-            _scaleMonitor = new CosmosDBScaleMonitor(_functionId, _loggerFactory.CreateLogger<CosmosDBScaleMonitorTests>(), _monitoredContainer.Object, _leasesContainer.Object, ProcessorName);
+            _scaleMonitor = new CosmosDBScaleMonitor(_functionId, _monitoredContainer.Object, _leasesContainer.Object, ProcessorName, _loggerFactory.CreateLogger<CosmosDBScaleMonitorTests>());
         }
 
         [Fact]
