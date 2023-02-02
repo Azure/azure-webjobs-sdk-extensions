@@ -27,7 +27,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
             { "Entity with the specified id does not exist in the system.", string.Empty },
             { "Subscription owning the database account is disabled.", string.Empty },
             { "Request rate is large", string.Empty },
-            { "PartitionKey value must be supplied for this operation.", "We do not support lease containers with partitions at this time. Please create a new lease collection without partitions." },
             { "The remote name could not be resolved:", string.Empty },
             { "Owner resource does not exist", string.Empty },
             { "The specified document collection is invalid", string.Empty }
