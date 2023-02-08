@@ -77,7 +77,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             ArgumentException expectedException =
                 Assert.Throws<ArgumentException>(() => localMonitor.StatusFilePath = invalidPath);
             Assert.Equal("value", expectedException.ParamName);
-            Assert.Equal("The specified path does not exist.\r\nParameter name: value", expectedException.Message);
+            Assert.Equal("The specified path does not exist. (Parameter 'value')", expectedException.Message);
         }
 
         [Fact]
