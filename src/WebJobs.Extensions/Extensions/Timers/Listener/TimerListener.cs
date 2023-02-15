@@ -114,7 +114,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 ScheduleStatus = new ScheduleStatus
                 {
                     Last = default(DateTime).ToLocalTime(),
-                    Next = _schedule.GetNextOccurrence(now),
+                    Next = _schedule.GetNextOccurrence(now)
                 };
             }
 
