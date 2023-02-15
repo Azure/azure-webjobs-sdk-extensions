@@ -110,14 +110,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             if (ScheduleStatus == null)
             {
-                var defaultDateTime = new DateTime(1, 1, 1, 0, 0, 0, DateTimeKind.Local);
-
                 // no schedule status has been stored yet, so initialize
                 ScheduleStatus = new ScheduleStatus
                 {
-                    Last = defaultDateTime,
+                    Last = default(DateTime).ToLocalTime(),
                     Next = _schedule.GetNextOccurrence(now),
-                    LastUpdated = defaultDateTime
                 };
             }
 

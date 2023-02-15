@@ -55,7 +55,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 DateTime nextOccurrence = schedule.GetNextOccurrence(now);
                 lastStatus = new ScheduleStatus
                 {
-                    Last = default(DateTime),
+                    Last = default(DateTime).ToLocalTime(),
                     Next = nextOccurrence,
                     LastUpdated = now
                 };
