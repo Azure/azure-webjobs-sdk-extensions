@@ -11,6 +11,7 @@ pr:
     - dev
   paths:
     exclude: # don't trigger builds for file changes matching these paths
+    - src/WebJobs.Extensions/Extensions/*
     - src/WebJobs.Extensions.Http/*
     - src/WebJobs.Extensions.MobileApps/*
     - src/WebJobs.Extensions.SendGrid/*
@@ -22,8 +23,12 @@ trigger:
     include:
     - main
     - dev
+  tags:
+    include:
+      - cosmos-v*    
   paths:
     exclude: # don't trigger builds for file changes matching these paths
+    - test/WebJobs.Extensions.Test/Extensions/*
     - test/WebJobs.Extensions.Http.Tests/*
     - test/WebJobs.Extensions.MobileApps.Tests/*
     - test/WebJobs.Extensions.SendGrid.Tests/*

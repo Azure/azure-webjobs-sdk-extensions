@@ -18,6 +18,9 @@ trigger:
     include:
     - main
     - dev
+  tags:
+    exclude:
+      - cosmos-v*
   paths:
     exclude: # don't trigger builds for file changes matching these paths
     - test/WebJobs.Extensions.CosmosDB.Tests/*
