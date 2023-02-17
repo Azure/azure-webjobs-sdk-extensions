@@ -11,8 +11,8 @@ function RunTest([string]$project, [bool]$skipBuild = $false, [string]$filter = 
 
     if ($null -ne $env:Configuration)
     {
-        Write-Host "Adding: --configuration $config"
-        $cmdargs += "--configuration", "$config"
+        Write-Host "Adding: --configuration $env:Configuration"
+        $cmdargs += "--configuration", "$env:Configuration"
     }
 
     if ($filter) {

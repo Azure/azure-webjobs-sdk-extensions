@@ -3,14 +3,14 @@ variables:
 - group: 'WebJobs SDK Extensions Testing'
 - group: 'Funkins Signing'
 - name: buildNumber
-  value: $[ counter('constant', 11000) ]
+  value: $[ format('{0:yyyyMMddHHmmssfff}', pipeline.startTime) ]
 - name: buildOutputDirectory
   value: '$(System.DefaultWorkingDirectory)\buildoutput'
 - name: IncludeBuildNumberInVersion
   value: ${{ 0 }}
 - name: isPr
-  value: $[ eq('$(Build.Reason)', 'PullRequest') ]
+  value: $[ eq(variables['Build.Reason'], 'PullRequest') ]
 - name: hasTag
-  value: $[ startsWith('$(Build.SourceBranch)', 'refs/tag/') ]
+  value: $[ startsWith(variables['Build.SourceBranch'], 'refs/tags') ]
 - name: DOTNET_SKIP_FIRST_TIME_EXPERIENCE
   value: ${{ true }}

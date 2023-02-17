@@ -59,7 +59,7 @@ jobs:
         $config = "Release"
         Write-Host "Git tag found. Setting Configuration to '$config'"
         $env:Configuration = $config
-        echo "##vso[task.setvariable variable=Configuration]$config" # let downstream tasks read this variable
+        Write-Host "##vso[task.setvariable variable=Configuration]$config" # let downstream tasks read this variable
       }
 
       $projectsArray = "$(targetProjects)" -split ";"
