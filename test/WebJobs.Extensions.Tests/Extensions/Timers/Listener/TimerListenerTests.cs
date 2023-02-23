@@ -298,9 +298,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
 
-            Assert.Same(_listener.ScheduleStatus.Last.Kind, DateTimeKind.Local);
-            Assert.Same(_listener.ScheduleStatus.Next.Kind, DateTimeKind.Local);
-            Assert.Same(_listener.ScheduleStatus.LastUpdated.Kind, DateTimeKind.Local);
+            Assert.Equal(_listener.ScheduleStatus.Last.Kind, DateTimeKind.Local);
+            Assert.Equal(_listener.ScheduleStatus.Next.Kind, DateTimeKind.Local);
+            Assert.Equal(_listener.ScheduleStatus.LastUpdated.Kind, DateTimeKind.Local);
 
             _listener.Dispose();
         }
