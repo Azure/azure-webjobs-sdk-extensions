@@ -293,6 +293,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         }
 
         [Fact]
+        public async Task StartAsync_ScheduleStatus_DateKindIsLocal()
+        {
+            CancellationToken cancellationToken = CancellationToken.None;
+            await _listener.StartAsync(cancellationToken);
+
+            Assert.Same(_listener.ScheduleStatus.Last.Kind, DateTimeKind.Local);
+            Assert.Same(_listener.ScheduleStatus.Next.Kind, DateTimeKind.Local);
+            Assert.Same(_listener.ScheduleStatus.LastUpdated.Kind, DateTimeKind.Local);
+
+            _listener.Dispose();
+        }
+
+        [Fact]
         public async Task StartAsync_ExtendedScheduleInterval_TimerContinuesUntilTotalIntervalComplete()
         {
             // create a timer with an extended interval that exceeds the max

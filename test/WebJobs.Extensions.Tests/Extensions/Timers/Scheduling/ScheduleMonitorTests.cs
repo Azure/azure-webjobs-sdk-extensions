@@ -34,6 +34,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             TimeSpan pastDueAmount = await monitor.CheckPastDueAsync(_timerName, now, _dailySchedule, null);
             Assert.Equal(TimeSpan.Zero, pastDueAmount);
             Assert.Equal(default(DateTime), monitor.CurrentStatus.Last);
+            Assert.Equal(DateTimeKind.Local, monitor.CurrentStatus.Last.Kind);
             Assert.Equal(new DateTime(2017, 1, 2), monitor.CurrentStatus.Next);
             Assert.Equal(now, monitor.CurrentStatus.LastUpdated);
         }
@@ -56,7 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
 
             MockScheduleMonitor monitor = new MockScheduleMonitor();
 
-            // Check the schedule (simulating a host start without any schedule change). We should not 
+            // Check the schedule (simulating a host start without any schedule change). We should not
             // update the status.
             TimeSpan pastDueAmount = await monitor.CheckPastDueAsync(_timerName, now, _hourlySchedule, status);
             Assert.Equal(TimeSpan.Zero, pastDueAmount);
@@ -91,11 +92,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             }
             else
             {
-                // Legacy behavior -- 'LastUpdated' fixed this. The schedule didn't change and we're past due, 
+                // Legacy behavior -- 'LastUpdated' fixed this. The schedule didn't change and we're past due,
                 //      but we miss it because there is no 'Last' value, which we require to calculate the 'Next'
                 //      value. It also shouldn't register as a schedule change.
                 Assert.Equal(TimeSpan.Zero, pastDueAmount);
                 Assert.Equal(default(DateTime), monitor.CurrentStatus.Last);
+                Assert.Equal(DateTimeKind.Local, monitor.CurrentStatus.Last.Kind);
                 Assert.Equal(DateTime.Parse("1/1/2017 11:00"), monitor.CurrentStatus.Next);
                 Assert.Equal(now, monitor.CurrentStatus.LastUpdated);
             }
@@ -126,6 +128,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
 
             DateTime expectedNext = new DateTime(2017, 1, 2);
             Assert.Equal(default(DateTime), monitor.CurrentStatus.Last);
+            Assert.Equal(DateTimeKind.Local, monitor.CurrentStatus.Last.Kind);
             Assert.Equal(expectedNext, monitor.CurrentStatus.Next);
 
             if (lastUpdatedSet || lastSet)
@@ -157,7 +160,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
 
             MockScheduleMonitor monitor = new MockScheduleMonitor();
 
-            // Change to half-hour schedule (status is hourly). 
+            // Change to half-hour schedule (status is hourly).
             // The 'Next' time calculated by this could be in the past -- so it will be seen as past due
             TimeSpan pastDueAmount = await monitor.CheckPastDueAsync(_timerName, now, _halfHourlySchedule, status);
 
@@ -166,6 +169,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
                 // Because the new time is in the past, we re-calculate it to be the next invocation from 'now'.
                 Assert.Equal(TimeSpan.Zero, pastDueAmount);
                 Assert.Equal(default(DateTime), monitor.CurrentStatus.Last);
+                Assert.Equal(DateTimeKind.Local, monitor.CurrentStatus.Last.Kind);
                 Assert.Equal(new DateTime(2017, 1, 1, 10, 0, 0), monitor.CurrentStatus.Next);
                 Assert.Equal(now, monitor.CurrentStatus.LastUpdated);
             }
