@@ -295,6 +295,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public async Task StartAsync_ScheduleStatus_DateKindIsLocal()
         {
+            _listener.ScheduleMonitor = null;
+
             CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
 
