@@ -113,12 +113,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // no schedule status has been stored yet, so initialize
                 ScheduleStatus = new ScheduleStatus
                 {
-                    Last = default(DateTime),
-                    Next = _schedule.GetNextOccurrence(now)
+                    Last = default(DateTime).ToLocalTime(),
+                    Next = _schedule.GetNextOccurrence(now),
+                    LastUpdated = default(DateTime).ToLocalTime()
                 };
             }
 
-            // log the next several occurrences to console for visibility            
+            // log the next several occurrences to console for visibility
             string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5);
             Logger.NextOccurrences(_logger, _functionLogName, _schedule, nextOccurrences);
 

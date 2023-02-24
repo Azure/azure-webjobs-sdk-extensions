@@ -14,6 +14,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     /// </summary>
     public abstract class ScheduleMonitor
     {
+        private static DateTime defaultDateTime = default(DateTime).ToLocalTime();
+
         /// <summary>
         /// Gets the last recorded schedule status for the specified timer.
         /// If the timer has not ran yet, null will be returned.
@@ -55,7 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 DateTime nextOccurrence = schedule.GetNextOccurrence(now);
                 lastStatus = new ScheduleStatus
                 {
-                    Last = default(DateTime),
+                    Last = defaultDateTime,
                     Next = nextOccurrence,
                     LastUpdated = now
                 };
@@ -69,14 +71,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 // Track the time that was used to create 'expectedNextOccurrence'.
                 DateTime lastUpdated;
 
-                if (lastStatus.Last != default(DateTime))
+                if (lastStatus.Last != defaultDateTime)
                 {
                     // If we have a 'Last' value, we know that we used this to calculate 'Next'
-                    // in a previous invocation. 
+                    // in a previous invocation.
                     expectedNextOccurrence = schedule.GetNextOccurrence(lastStatus.Last);
                     lastUpdated = lastStatus.Last;
                 }
-                else if (lastStatus.LastUpdated != default(DateTime))
+                else if (lastStatus.LastUpdated != defaultDateTime)
                 {
                     // If the trigger has never fired, we won't have 'Last', but we will have
                     // 'LastUpdated', which tells us the last time that we used to calculate 'Next'.
@@ -85,7 +87,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 }
                 else
                 {
-                    // If we do not have 'LastUpdated' or 'Last', we don't have enough information to 
+                    // If we do not have 'LastUpdated' or 'Last', we don't have enough information to
                     // properly calculate 'Next', so we'll calculate it from the current time.
                     expectedNextOccurrence = schedule.GetNextOccurrence(now);
                     lastUpdated = now;
@@ -104,7 +106,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                         lastUpdated = now;
                     }
 
-                    lastStatus.Last = default(DateTime);
+                    lastStatus.Last = defaultDateTime;
                     lastStatus.Next = expectedNextOccurrence;
                     lastStatus.LastUpdated = lastUpdated;
                     await UpdateStatusAsync(timerName, lastStatus);
