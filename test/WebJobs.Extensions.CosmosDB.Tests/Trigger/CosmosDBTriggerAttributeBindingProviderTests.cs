@@ -499,7 +499,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             }
 
             public static void Func2([CosmosDBTrigger("aDatabase", "aCollection", LeaseConnection = "LeaseConnectionString", LeaseContainerPrefix = "%dynamicLeasePrefix%")] IReadOnlyList<dynamic> docs)
-            { 
+            {
             }
 
             public static IEnumerable<ParameterInfo[]> GetParameters()
