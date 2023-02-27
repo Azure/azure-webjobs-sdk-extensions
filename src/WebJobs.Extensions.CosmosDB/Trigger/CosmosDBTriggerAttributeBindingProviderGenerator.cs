@@ -43,7 +43,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             Type documentType = CosmosDBTriggerAttributeBindingProviderGenerator.GetParameterType(context.Parameter);
 
-            if (typeof(JArray).IsAssignableFrom(documentType))
+            if (typeof(JArray).IsAssignableFrom(documentType)
+                || typeof(JObject[]).IsAssignableFrom(documentType))
             {
                 documentType = typeof(JObject); // When binding to JArray, use JObject as contract.
             }
