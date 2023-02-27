@@ -603,6 +603,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             {
             }
 
+            public static void Func4([CosmosDBTrigger("%aDatabase%", "%aCollection%", Connection = "CosmosDBConnectionString")] JObject[] docs)
+            {
+            }
+
             public static IEnumerable<ParameterInfo[]> GetParameters()
             {
                 var type = typeof(ValidCosmosDBTriggerBindingsWithAppSettings);
@@ -611,7 +615,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 {
                     new[] { GetFirstParameter(type, "Func1") },
                     new[] { GetFirstParameter(type, "Func2") },
-                    new[] { GetFirstParameter(type, "Func3") }
+                    new[] { GetFirstParameter(type, "Func3") },
+                    new[] { GetFirstParameter(type, "Func4") }
                 };
             }
         }
@@ -648,6 +653,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             {
             }
 
+            public static void Func4([CosmosDBTrigger("aDatabase", "aCollection")] JObject[] docs)
+            {
+            }
+
             public static void Func3([CosmosDBTrigger("aDatabase", "aCollection", LeaseDatabaseName = "aDatabase", LeaseContainerName = "aLeaseCollection")] IReadOnlyList<dynamic> docs)
             {
             }
@@ -660,7 +669,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 {
                     new[] { GetFirstParameter(type, "Func1") },
                     new[] { GetFirstParameter(type, "Func2") },
-                    new[] { GetFirstParameter(type, "Func3") }
+                    new[] { GetFirstParameter(type, "Func3") },
+                    new[] { GetFirstParameter(type, "Func4") }
                 };
             }
         }
@@ -672,6 +682,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             }
 
             public static void Func2([CosmosDBTrigger("%aDatabase%-test", "%aCollection%-test")] JArray docs)
+            {
+            }
+
+            public static void Func4([CosmosDBTrigger("%aDatabase%-test", "%aCollection%-test")] JObject[] docs)
             {
             }
 
@@ -687,7 +701,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 {
                     new[] { GetFirstParameter(type, "Func1") },
                     new[] { GetFirstParameter(type, "Func2") },
-                    new[] { GetFirstParameter(type, "Func3") }
+                    new[] { GetFirstParameter(type, "Func3") },
+                    new[] { GetFirstParameter(type, "Func4") }
                 };
             }
         }
