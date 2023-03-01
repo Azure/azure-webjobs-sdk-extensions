@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -96,6 +97,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             private readonly bool _isUserTypeBinding;
             private readonly Dictionary<string, Type> _bindingDataContract;
             private readonly IOptions<HttpOptions> _options;
+
+            // To avoid a string message allocation per request, we can cache the relativelty little variation we have
+            private readonly ConcurrentDictionary<Tuple<string, string, PathString, string, int?>, string> _invokeStringCache = new ConcurrentDictionary<Tuple<string, string, PathString, string, int?>, string>();
 
             public HttpTriggerBinding(HttpTriggerAttribute attribute, ParameterInfo parameter, bool isUserTypeBinding, IOptions<HttpOptions> options = null)
             {
@@ -214,23 +218,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
                 return aggregateBindingData;
             }
 
-            public static string ToInvokeString(HttpRequest request)
+            public string ToInvokeString(HttpRequest request)
             {
-                // For display in the Dashboard, we want to be sure we don't log
-                // any sensitive portions of the URI (e.g. query params, headers, etc.)
-                var builder = new UriBuilder
+                // This would be cleaner with ValueTuple, but that can break some older .NET Full Framework consumers
+                // In fun binding redirect ways - are we safe to use it here?
+                return _invokeStringCache.GetOrAdd(Tuple.Create(request.Method, request.Host.Host, request.Path, request.Scheme, request.Host.Port), (key) =>
                 {
-                    Host = request.Host.Host,
-                    Path = request.Path,
-                    Scheme = request.Scheme
-                };
+                    // For display in the Dashboard, we want to be sure we don't log
+                    // any sensitive portions of the URI (e.g. query params, headers, etc.)
+                    var builder = new UriBuilder
+                    {
+                        Host = key.Item2,   // request.Host.Host,
+                        Path = key.Item3,   // request.Path,
+                        Scheme = key.Item4, // request.Scheme
+                    };
 
-                if (request.Host.Port.HasValue)
-                {
-                    builder.Port = request.Host.Port.Value;
-                }
+                    // request.Host.Port
+                    if (key.Item5.HasValue)
+                    {
+                        builder.Port = key.Item5.Value;
+                    }
 
-                return $"Method: {request.Method}, Uri: {builder.Uri.GetLeftPart(UriPartial.Path)}";
+                    // request.Method
+                    return $"Method: {key.Item1}, Uri: {builder.Uri.GetLeftPart(UriPartial.Path)}";
+                });
             }
 
             public Task<IListener> CreateListenerAsync(ListenerFactoryContext context)
