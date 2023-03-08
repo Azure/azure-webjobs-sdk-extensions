@@ -4,8 +4,8 @@
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Triggers;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 
@@ -50,6 +50,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
 
             if (typeof(string).IsAssignableFrom(documentType))
+            {
+                documentType = typeof(JObject);
+            }
+
+            if (typeof(ParameterBindingData).IsAssignableFrom(documentType))
             {
                 documentType = typeof(JObject);
             }

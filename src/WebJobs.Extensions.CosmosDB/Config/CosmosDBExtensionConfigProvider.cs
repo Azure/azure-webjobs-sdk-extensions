@@ -4,13 +4,13 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
@@ -20,7 +20,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
     /// <summary>
     /// Defines the configuration options for the CosmosDB binding.
     /// </summary>
-    [Extension("CosmosDB")]
+    [Extension(Constants.WebJobsCosmosExtensionName)]
     internal class CosmosDBExtensionConfigProvider : IExtensionConfigProvider
     {
         private readonly ICosmosDBServiceFactory _cosmosDBServiceFactory;
@@ -30,10 +30,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly ILoggerFactory _loggerFactory;
 
         public CosmosDBExtensionConfigProvider(
-            IOptions<CosmosDBOptions> options, 
-            ICosmosDBServiceFactory cosmosDBServiceFactory, 
+            IOptions<CosmosDBOptions> options,
+            ICosmosDBServiceFactory cosmosDBServiceFactory,
             ICosmosDBSerializerFactory cosmosSerializerFactory,
-            INameResolver nameResolver, 
+            INameResolver nameResolver,
             ILoggerFactory loggerFactory)
         {
             _cosmosDBServiceFactory = cosmosDBServiceFactory;
@@ -53,12 +53,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 throw new ArgumentNullException("context");
             }
 
-            // Apply ValidateConnection to all on this rule. 
+            // Apply ValidateConnection to all on this rule.
             var rule = context.AddBindingRule<CosmosDBAttribute>();
             rule.AddValidator(ValidateConnection);
             rule.BindToCollector<DocumentOpenType>(typeof(CosmosDBCollectorBuilder<>), this);
 
             rule.BindToInput<CosmosClient>(new CosmosDBClientBuilder(this));
+            rule.BindToInput<ParameterBindingData>((attr) => CreateParameterBindingData(attr));
 
             // Enumerable inputs
             rule.WhenIsNull(nameof(CosmosDBAttribute.Id))
@@ -87,6 +88,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
         }
 
+        internal ParameterBindingData CreateParameterBindingData(CosmosDBAttribute cosmosAttribute)
+        {
+            var cosmosDetails = new CosmosParameterBindingDataContent(cosmosAttribute);
+            var cosmosDetailsBinaryData = new BinaryData(cosmosDetails);
+            var parameterBindingData = new ParameterBindingData("1.0", Constants.WebJobsCosmosExtensionName, cosmosDetailsBinaryData, "application/json");
+
+            return parameterBindingData;
+        }
+
         internal Task<IValueBinder> BindForItemAsync(CosmosDBAttribute attribute, Type type)
         {
             if (string.IsNullOrEmpty(attribute.Id))
@@ -109,7 +119,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 userAgent += _options.UserAgentSuffix;
             }
-            
+
             CosmosClientOptions cosmosClientOptions = CosmosDBUtility.BuildClientOptions(_options.ConnectionMode, _cosmosSerializerFactory.CreateSerializer(), preferredLocations, userAgent);
             return ClientCache.GetOrAdd(cacheKey, (c) => _cosmosDBServiceFactory.CreateService(connection, cosmosClientOptions));
         }
@@ -117,7 +127,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         internal CosmosDBContext CreateContext(CosmosDBAttribute attribute)
         {
             CosmosClient service = GetService(
-                connection: attribute.Connection ?? Constants.DefaultConnectionStringName, 
+                connection: attribute.Connection ?? Constants.DefaultConnectionStringName,
                 preferredLocations: attribute.PreferredLocations);
 
             return new CosmosDBContext
@@ -157,6 +167,41 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
                 return base.IsMatch(type, context);
             }
+        }
+
+        // Cannot use `new BinaryData(cosmosAttribute)` because this "may only be called on a Type for
+        // which Type.IsGenericParameter is true"; therefore we use our own reference type.
+        // Has the same properties as CosmosDBAttribute
+        private class CosmosParameterBindingDataContent
+        {
+            public CosmosParameterBindingDataContent()
+            {
+            }
+
+            public CosmosParameterBindingDataContent(CosmosDBAttribute attribute)
+            {
+                DatabaseName = attribute.DatabaseName;
+                ContainerName = attribute.ContainerName;
+                CreateIfNotExists = attribute.CreateIfNotExists;
+                Connection = attribute.Connection;
+                Id = attribute.Id;
+                PartitionKey = attribute.PartitionKey;
+                ContainerThroughput = attribute.ContainerThroughput;
+                SqlQuery = attribute.SqlQuery;
+                SqlQueryParameters = attribute.SqlQueryParameters is null ?  default : attribute.SqlQueryParameters.ToDictionary(x => x.Item1, x => x.Item2);
+                PreferredLocations = attribute.PreferredLocations;
+            }
+
+            public string DatabaseName { get; set; }
+            public string ContainerName { get; set; }
+            public bool CreateIfNotExists { get; set; }
+            public string Connection { get; set; }
+            public string Id { get; set; }
+            public string PartitionKey { get; set; }
+            public int ContainerThroughput { get; set; }
+            public string SqlQuery { get; set; }
+            public IDictionary<string, object> SqlQueryParameters { get; set; }
+            public string PreferredLocations { get; set; }
         }
     }
 }
