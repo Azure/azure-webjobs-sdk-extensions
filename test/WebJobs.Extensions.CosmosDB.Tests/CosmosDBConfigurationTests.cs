@@ -65,6 +65,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             Assert.True(context.Service.Endpoint.ToString().Contains("default"));
         }
 
+        [Fact]
+        public void CreateParameterBindingData_CreatesValidParameterBindingDataObject()
+        {
+            var config = InitializeExtensionConfigProvider();
+
+            var sqlQueryParameters = new List<(string, object)>();
+            sqlQueryParameters.Add(("id", "1"));
+            var attribute = new CosmosDBAttribute("testDb", "testContainer") { Connection = "testConnection", Id = "id", SqlQueryParameters =  sqlQueryParameters};
+            var data = @"{""DatabaseName"":""testDb"",""ContainerName"":""testContainer"",""CreateIfNotExists"":false,""Connection"":""testConnection"",""Id"":""id"",""PartitionKey"":null,""ContainerThroughput"":0,""SqlQuery"":null,""SqlQueryParameters"":{""id"":""1""},""PreferredLocations"":null}";
+            var expectedBinaryData = new BinaryData(data).ToString();
+
+            // Act
+            var pbdObj = config.CreateParameterBindingData(attribute);
+
+            // Assert
+            Assert.Equal("CosmosDB", pbdObj.Source);
+            Assert.Equal("1.0", pbdObj.Version);
+            Assert.Equal(expectedBinaryData, pbdObj.Content.ToString());
+            Assert.Equal("application/json", pbdObj.ContentType);
+        }
+
         [Theory]
         [InlineData(typeof(IEnumerable<string>), true)]
         [InlineData(typeof(IEnumerable<Item>), true)]
