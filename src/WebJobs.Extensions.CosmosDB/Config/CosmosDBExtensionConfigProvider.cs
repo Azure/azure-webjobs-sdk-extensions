@@ -174,10 +174,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         // Has the same properties as CosmosDBAttribute
         private class CosmosParameterBindingDataContent
         {
-            public CosmosParameterBindingDataContent()
-            {
-            }
-
             public CosmosParameterBindingDataContent(CosmosDBAttribute attribute)
             {
                 DatabaseName = attribute.DatabaseName;
