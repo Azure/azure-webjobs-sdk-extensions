@@ -78,6 +78,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Twilio
             Assert.Equal(options["sendAsMms"], result.SendAsMms);
             Assert.Equal(options["contentSid"], result.ContentSid);
             Assert.Equal(options["contentVariables"], result.ContentVariables);
+            Assert.Equal(options["contentRetention"], result.ContentRetention.ToString());
             Assert.Equal(options["addressRetention"], result.AddressRetention.ToString());
             Assert.Equal(options["persistentAction"][0], result.PersistentAction[0]);
             Assert.Equal(options["persistentAction"][1], result.PersistentAction[1]);
