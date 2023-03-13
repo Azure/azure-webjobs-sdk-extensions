@@ -13,3 +13,4 @@ csx
 /buildoutput
 
 /tools/NuGet.exe
+.idea

@@ -22,7 +22,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.32" />
-    <PackageReference Include="Twilio" Version="5.6.3" />
+    <PackageReference Include="Twilio" Version="6.2.5" />
   </ItemGroup>
 
   <ItemGroup>
