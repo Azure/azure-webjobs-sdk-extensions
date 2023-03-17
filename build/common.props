@@ -2,13 +2,13 @@
   <PropertyGroup>
     <!-- Extensions can have independent versions and only increment when released -->
     <Version>3.0.0$(VersionSuffix)</Version>
-    <ExtensionsVersion>5.0.0-beta.2$(VersionSuffix)</ExtensionsVersion> <!-- WebJobs.Extensions -->
+    <ExtensionsVersion>5.0.0$(VersionSuffix)</ExtensionsVersion> <!-- WebJobs.Extensions -->
     <CosmosDBVersion>4.2.0$(VersionSuffix)</CosmosDBVersion>
     <HttpVersion>3.2.0$(VersionSuffix)</HttpVersion>
     <MobileAppsVersion>3.0.0$(VersionSuffix)</MobileAppsVersion>
     <SendGridVersion>3.0.3$(VersionSuffix)</SendGridVersion>
     <TwilioVersion>4.0.0$(VersionSuffix)</TwilioVersion>
-    <TimersStorageVersion>1.0.0-beta.1$(VersionSuffix)</TimersStorageVersion>
+    <TimersStorageVersion>1.0.0$(VersionSuffix)</TimersStorageVersion>
     <DebugType>embedded</DebugType>    
     <LatestCommit Condition="$(LatestCommit) == ''">$(CommitHash)</LatestCommit>
     <CommitHash Condition="$(CommitHash) == ''">N/A</CommitHash>
