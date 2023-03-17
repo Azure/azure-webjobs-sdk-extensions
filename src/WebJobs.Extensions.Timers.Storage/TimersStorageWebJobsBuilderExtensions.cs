@@ -16,6 +16,12 @@ namespace Microsoft.Extensions.Hosting
         /// <summary>
         /// Adds Azure Storage based implementations for Timers services to the provided <see cref="IWebJobsBuilder"/>.
         /// </summary>
+        /// <remarks>
+        /// The following services are registered with the <see cref="IWebJobsBuilder"/>:
+        /// <list type="bullet">
+        ///     <item><description>An Azure Storage based implementation of a <see cref="ScheduleMonitor"/>.</description></item>
+        /// </list>
+        /// </remarks>
         /// <param name="builder">The <see cref="IWebJobsBuilder"/> to configure.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         public static IWebJobsBuilder AddTimersStorage(this IWebJobsBuilder builder)
@@ -33,11 +39,16 @@ namespace Microsoft.Extensions.Hosting
         /// <summary>
         /// Adds Azure Storage based implementations for Timers services to the provided <see cref="IWebJobsBuilder"/>.
         /// </summary>
-        /// <param name="builder">The <see cref="IWebJobsBuilder"/> to configure.</param>
-        /// <param name="configure">An <see cref="Action{TimersOptions}"/> to configure the provided <see cref="TimersOptions"/>.</param>
         /// <remarks>
         /// Currently there are no configurable options on <see cref="TimersOptions"/> so this overload does not provide any utility.
+        /// 
+        /// The following services are registered with the <see cref="IWebJobsBuilder"/>:
+        /// <list type="bullet">
+        ///     <item><description>An Azure Storage based implementation of a <see cref="ScheduleMonitor"/>.</description></item>
+        /// </list>
         /// </remarks>
+        /// <param name="builder">The <see cref="IWebJobsBuilder"/> to configure.</param>
+        /// <param name="configure">An <see cref="Action{TimersOptions}"/> to configure the provided <see cref="TimersOptions"/>.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         public static IWebJobsBuilder AddTimersStorage(this IWebJobsBuilder builder, Action<TimersOptions> configure)
         {
@@ -51,52 +62,6 @@ namespace Microsoft.Extensions.Hosting
                 throw new ArgumentNullException(nameof(configure));
             }
 
-            builder.AddTimersStorage();
-            builder.Services.Configure(configure);
-
-            return builder;
-        }
-
-        /// <summary>
-        /// Adds the Timer extension along with an Azure Storage backed implementation to the provided <see cref="IWebJobsBuilder"/>.
-        /// </summary>
-        /// <param name="builder">The <see cref="IWebJobsBuilder"/> to configure.</param>
-        /// <returns>A reference to this instance after the operation has completed.</returns>
-        public static IWebJobsBuilder AddTimersWithStorage(this IWebJobsBuilder builder)
-        {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
-
-            builder.AddTimers();
-            builder.AddTimersStorage();
-
-            return builder;
-        }
-
-        /// <summary>
-        /// Adds the Timer extension along with an Azure Storage backed implementation to the provided <see cref="IWebJobsBuilder"/>.
-        /// </summary>
-        /// <param name="builder">The <see cref="IWebJobsBuilder"/> to configure.</param>
-        /// <param name="configure">An <see cref="Action{TimersOptions}"/> to configure the provided <see cref="TimersOptions"/>.</param>
-        /// <remarks>
-        /// Currently there are no configurable options on <see cref="TimersOptions"/> so this overload does not provide any utility.
-        /// </remarks>
-        /// <returns>A reference to this instance after the operation has completed.</returns>
-        public static IWebJobsBuilder AddTimersWithStorage(this IWebJobsBuilder builder, Action<TimersOptions> configure)
-        {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
-
-            if (configure == null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
-
-            builder.AddTimers();
             builder.AddTimersStorage();
             builder.Services.Configure(configure);
 
