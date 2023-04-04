@@ -16,17 +16,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
         private readonly TargetScalerDescriptor _targetScalerDescriptor;
         private readonly CosmosDBMetricsProvider _cosmosDBMetricsProvider;
         private readonly ILogger _logger;
-        private readonly CosmosDBTriggerAttribute _cosmosDBTriggerAttribute;
+        private readonly int _maxItemsPerInvocation;
         private readonly Container _monitoredContainer;
 
-        public CosmosDBTargetScaler(string functionId, CosmosDBTriggerAttribute cosmosDBTriggerAttribute, Container monitoredContainer, Container leaseContainer, string processorName, ILogger logger)
+        public CosmosDBTargetScaler(string functionId, int maxItemsPerInvocation, Container monitoredContainer, Container leaseContainer, string processorName, ILogger logger)
         {
             _functionId = functionId;
             _targetScalerDescriptor = new TargetScalerDescriptor(functionId);
             _monitoredContainer = monitoredContainer;
             _cosmosDBMetricsProvider = new CosmosDBMetricsProvider(logger, _monitoredContainer, leaseContainer, processorName);
             _logger = logger;
-            _cosmosDBTriggerAttribute = cosmosDBTriggerAttribute;
+            _maxItemsPerInvocation = maxItemsPerInvocation;
         }
 
         public TargetScalerDescriptor TargetScalerDescriptor => _targetScalerDescriptor;
@@ -44,7 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
 
             if (!context.InstanceConcurrency.HasValue)
             {
-                concurrency = _cosmosDBTriggerAttribute.MaxItemsPerInvocation > 0 ? _cosmosDBTriggerAttribute.MaxItemsPerInvocation : DefaultMaxItemsPerInvocation;
+                concurrency = _maxItemsPerInvocation > 0 ? _maxItemsPerInvocation : DefaultMaxItemsPerInvocation;
             }
             else
             {

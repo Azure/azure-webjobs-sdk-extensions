@@ -1,5 +1,6 @@
-﻿using System;
-using System.Collections;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -60,7 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 .Returns(estimator.Object);
 
             _attribute = new CosmosDBTriggerAttribute(DatabaseName, ContainerName);
-            _targetScaler = new CosmosDBTargetScaler(_functionId, _attribute, _monitoredContainer.Object, _leasesContainer.Object, ProcessorName, _loggerFactory.CreateLogger<CosmosDBTriggerListener<dynamic>>());
+            _targetScaler = new CosmosDBTargetScaler(_functionId, _attribute.MaxItemsPerInvocation, _monitoredContainer.Object, _leasesContainer.Object, ProcessorName, _loggerFactory.CreateLogger<CosmosDBTriggerListener<dynamic>>());
         }
 
         [Theory]

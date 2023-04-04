@@ -61,7 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 $"leaseContainer='{this._leaseContainer.Id}', leaseDatabase='{this._leaseContainer.Database.Id}', functionId='{this._functionId}'";
 
             this._cosmosDBScaleMonitor = new CosmosDBScaleMonitor(_functionId, logger, _monitoredContainer, _leaseContainer, _processorName);
-            this._cosmosDBTargetScaler = new CosmosDBTargetScaler(_functionId, _cosmosDBAttribute, _monitoredContainer, _leaseContainer, _processorName, _logger);
+            this._cosmosDBTargetScaler = new CosmosDBTargetScaler(_functionId, _cosmosDBAttribute.MaxItemsPerInvocation, _monitoredContainer, _leaseContainer, _processorName, _logger);
         }
 
         public ScaleMonitorDescriptor Descriptor => this._scaleMonitorDescriptor;
