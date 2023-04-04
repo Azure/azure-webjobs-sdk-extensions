@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.37" />
-	<PackageReference Include="Microsoft.Azure.WebJobs.Host.Storage" Version="5.0.0" />	  
+    <PackageReference Include="Microsoft.Azure.WebJobs.Host.Storage" Version="5.0.0" />	  
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="4.0.3" />	  
     <PackageReference Include="Microsoft.Azure.WebJobs.Host.TestCommon" Version="3.0.30" />	  
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
