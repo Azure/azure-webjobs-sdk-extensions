@@ -38,7 +38,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
             ICosmosDBServiceFactory serviceFactory = serviceProvider.GetService<ICosmosDBServiceFactory>();
             CosmosClient cosmosClient = serviceFactory.CreateService(cosmosDbMetadata.Connection, options.Value);
             var monitoredContainer = cosmosClient.GetContainer(cosmosDbMetadata.DatabaseName, cosmosDbMetadata.ContainerName);
-            var leaseContainer = cosmosClient.GetContainer(cosmosDbMetadata.DatabaseName, string.IsNullOrEmpty(cosmosDbMetadata.LeaseContainerName) ? CosmosDBTriggerConstants.DefaultLeaseCollectionName : cosmosDbMetadata.LeaseContainerName);
+            var leaseContainer = cosmosClient.GetContainer(string.IsNullOrEmpty(cosmosDbMetadata.LeaseDatabaseName) ? cosmosDbMetadata.DatabaseName : cosmosDbMetadata.LeaseDatabaseName, string.IsNullOrEmpty(cosmosDbMetadata.LeaseContainerName) ? CosmosDBTriggerConstants.DefaultLeaseCollectionName : cosmosDbMetadata.LeaseContainerName);
             _scaleMonitor = new CosmosDBScaleMonitor(triggerMetadata.FunctionName, loggerFactory.CreateLogger<CosmosDBScaleMonitor>(), monitoredContainer, leaseContainer, cosmosDbMetadata.LeaseContainerPrefix);
             _targetScaler = new CosmosDBTargetScaler(triggerMetadata.FunctionName, cosmosDbMetadata.MaxItemsPerInvocation, monitoredContainer, leaseContainer, cosmosDbMetadata.LeaseContainerPrefix, loggerFactory.CreateLogger<CosmosDBTargetScaler>());
         }
@@ -70,6 +70,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
             [JsonProperty]
             public string LeaseContainerPrefix { get; set; }
 
+            [JsonProperty]            
+            public string LeaseDatabaseName { get; set; }
+
             [JsonProperty]
             public int MaxItemsPerInvocation { get; set; }
 
@@ -81,6 +84,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
                     ContainerName = resolver.ResolveWholeString(ContainerName);
                     LeaseContainerName = resolver.ResolveWholeString(LeaseContainerName);
                     LeaseContainerPrefix = resolver.ResolveWholeString(LeaseContainerPrefix) ?? string.Empty;
+                    LeaseDatabaseName = resolver.ResolveWholeString(LeaseDatabaseName);
                 }
             }
         }
