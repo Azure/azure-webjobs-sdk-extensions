@@ -12,7 +12,7 @@
     <PackageReference Include="Microsoft.Azure.WebJobs.Host.Storage" Version="5.0.0" />	  
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="4.0.3" />	  
     <PackageReference Include="Microsoft.Azure.WebJobs.Host.TestCommon" Version="3.0.30" />	  
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
     <PackageReference Include="Moq" Version="4.7.145" />
     <PackageReference Include="xunit" Version="2.3.1" />
