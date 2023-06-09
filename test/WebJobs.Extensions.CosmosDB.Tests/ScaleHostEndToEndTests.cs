@@ -178,7 +178,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 }
 
                 return scaledOut;
-            }, pollingInterval: 10000);
+            }, pollingInterval: 2000, timeout: 180000, throwWhenDebugging: true);
         }
     }
 }
