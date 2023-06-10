@@ -4,6 +4,8 @@
 using System;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
+using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger;
+using Microsoft.Azure.WebJobs.Host.Scale;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -60,6 +62,32 @@ namespace Microsoft.Extensions.Hosting
 
             builder.AddCosmosDB();
             builder.Services.Configure(configure);
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds the Storage Queues extension to the provided <see cref="IWebJobsBuilder"/>.
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <param name="triggerMetadata">Trigger metadata.</param>
+        /// <returns></returns>
+        public static IWebJobsBuilder AddCosmosDbScaleForTrigger(this IWebJobsBuilder builder, TriggerMetadata triggerMetadata)
+        {
+            IServiceProvider serviceProvider = null;
+            Lazy<CosmosDbScalerProvider> scalerProvider = new Lazy<CosmosDbScalerProvider>(() => new CosmosDbScalerProvider(serviceProvider, triggerMetadata));
+
+            builder.Services.AddSingleton<IScaleMonitorProvider>(resolvedServiceProvider =>
+            {
+                serviceProvider = serviceProvider ?? resolvedServiceProvider;
+                return scalerProvider.Value;
+            });
+
+            builder.Services.AddSingleton<ITargetScalerProvider>(resolvedServiceProvider =>
+            {
+                serviceProvider = serviceProvider ?? resolvedServiceProvider;
+                return scalerProvider.Value;
+            });
 
             return builder;
         }

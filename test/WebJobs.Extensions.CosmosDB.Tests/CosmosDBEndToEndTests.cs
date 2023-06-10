@@ -32,7 +32,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         {
             using (var host = await StartHostAsync(typeof(EndToEndTestClass)))
             {
-                var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>());
+                var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName);
 
                 // Call the outputs function directly, which will write out 3 documents 
                 // using with the 'input' property set to the value we provide.
@@ -75,15 +75,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
         }
 
-        private async Task<CosmosClient> InitializeDocumentClientAsync(IConfiguration configuration)
+        public static async Task<CosmosClient> InitializeDocumentClientAsync(IConfiguration configuration, string databaseName, string collectionName)
         {
             var client = new CosmosClient(configuration.GetConnectionStringOrSetting(Constants.DefaultConnectionStringName).Value);
 
-            Database database = await client.CreateDatabaseIfNotExistsAsync(DatabaseName);
+            Database database = await client.CreateDatabaseIfNotExistsAsync(databaseName);
 
             try
             {
-                await database.GetContainer(CollectionName).ReadContainerAsync();
+                await database.GetContainer(collectionName).ReadContainerAsync();
             }
             catch (CosmosException cosmosException) when (cosmosException.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
