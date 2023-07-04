@@ -219,6 +219,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 ChangeFeedProcessorUserException userException = new ChangeFeedProcessorUserException(result.Exception, context);
                 await this._healthMonitor.OnErrorAsync(context.LeaseToken, userException);
             }
+            // Prevent the change feed lease from being checkpointed if cancellation was requested
+            cancellationToken.ThrowIfCancellationRequested();
         }
 
         public IScaleMonitor GetMonitor()
