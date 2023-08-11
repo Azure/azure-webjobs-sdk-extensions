@@ -46,7 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         {
             if (_isString)
             {
-                return Task.FromResult<object>(JArray.FromObject(_value).ToString(Newtonsoft.Json.Formatting.None));
+                return Task.FromResult<object>(JArray.Parse(_value as string).ToString(Newtonsoft.Json.Formatting.None));
             }
 
             if (_isJArray)
