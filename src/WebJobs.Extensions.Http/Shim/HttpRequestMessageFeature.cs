@@ -11,7 +11,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Http.Shim
 {
-    public class HttpRequestMessageFeature : IHttpRequestMessageFeature
+    internal sealed class HttpRequestMessageFeature : IHttpRequestMessageFeature
     {
         private readonly HttpContext _httpContext;
 

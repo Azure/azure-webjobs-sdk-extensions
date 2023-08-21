@@ -7,7 +7,7 @@ using System.Net.Http;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Http.Shim
 {
-    public interface IHttpRequestMessageFeature
+    internal interface IHttpRequestMessageFeature
     {
         HttpRequestMessage HttpRequestMessage { get; set; }
     }
