@@ -2,14 +2,10 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Net.Http.Formatting;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.WebApiCompatShim;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.Hosting
 {
@@ -34,18 +30,6 @@ namespace Microsoft.Extensions.Hosting
 
             builder.Services.AddSingleton<IBindingProvider, HttpDirectRequestBindingProvider>();
             builder.Services.AddSingleton<IBindingProvider, ClaimsPrincipalBindingProvider>();
-
-            // Compatibility shim configuration and services
-            builder.Services.TryAddSingleton<IContentNegotiator, DefaultContentNegotiator>();
-            builder.Services.Configure<MvcOptions>(o =>
-            {
-                o.OutputFormatters.Insert(0, new HttpResponseMessageOutputFormatter());
-            });
-
-            builder.Services.Configure<WebApiCompatShimOptions>(o =>
-            {
-                o.Formatters.AddRange(new MediaTypeFormatterCollection());
-            });
 
             return builder;
         }
