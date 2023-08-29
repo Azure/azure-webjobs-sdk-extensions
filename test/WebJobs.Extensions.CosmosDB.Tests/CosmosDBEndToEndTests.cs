@@ -87,7 +87,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
             catch (CosmosException cosmosException) when (cosmosException.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                await database.CreateContainerAsync(CollectionName, "/id");
+                await database.CreateContainerAsync(collectionName, "/id");
             }
 
             return client;
@@ -151,6 +151,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 [QueueTrigger("NotUsed")] QueueItem item,
                 [CosmosDB(DatabaseName, CollectionName, Id = "{DocumentId}")] JObject document,
                 [CosmosDB(DatabaseName, CollectionName, SqlQuery = "SELECT * FROM c where c.input = {Input}")] IEnumerable<Item> documents,
+                //[CosmosDB(DatabaseName, CollectionName, SqlQuery = "SELECT * FROM c where c.id = {DocumentId}")] IEnumerable<Item> documents1,
                 ILogger log)
             {
                 Assert.NotNull(document);
