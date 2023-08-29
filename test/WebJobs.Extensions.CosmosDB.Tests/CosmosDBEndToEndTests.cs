@@ -151,7 +151,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 [QueueTrigger("NotUsed")] QueueItem item,
                 [CosmosDB(DatabaseName, CollectionName, Id = "{DocumentId}")] JObject document,
                 [CosmosDB(DatabaseName, CollectionName, SqlQuery = "SELECT * FROM c where c.input = {Input}")] IEnumerable<Item> documents,
-                //[CosmosDB(DatabaseName, CollectionName, SqlQuery = "SELECT * FROM c where c.id = {DocumentId}")] IEnumerable<Item> documents1,
                 ILogger log)
             {
                 Assert.NotNull(document);
