@@ -117,7 +117,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
             catch (CosmosException cosmosException) when (cosmosException.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                await database.CreateContainerAsync(CollectionName, "/id");
+                await database.CreateContainerAsync(collectionName, "/id");
             }
 
             return client;
