@@ -41,7 +41,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 context.ResolvedAttribute.PartitionKey, context.ResolvedAttribute.ContainerThroughput);
         }
 
-        internal static async Task CreateDatabaseAndCollectionIfNotExistAsync(CosmosClient service, string databaseName, string containerName, string partitionKey, int throughput)
+        internal static async Task CreateDatabaseAndCollectionIfNotExistAsync(CosmosClient service, string databaseName, string containerName, string partitionKey, int throughput, bool setTTL = false)
         {
             await service.CreateDatabaseIfNotExistsAsync(databaseName);
 
@@ -59,7 +59,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
             catch (CosmosException cosmosException) when (cosmosException.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                await database.CreateContainerAsync(containerName, partitionKey, desiredThroughput);
+                ContainerProperties containerProperties = new ContainerProperties(containerName, partitionKey);
+                if (setTTL)
+                {
+                    // Enabling TTL on the container without any defined time. TTL is set on the individual items.
+                    containerProperties.DefaultTimeToLive = -1;
+                }
+
+                await database.CreateContainerAsync(containerProperties, desiredThroughput);
             }
         }
 
