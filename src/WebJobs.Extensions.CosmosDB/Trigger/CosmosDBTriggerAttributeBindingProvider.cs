@@ -140,13 +140,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         {
             try
             {
-                await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(cosmosClient, databaseName, collectionName, LeaseCollectionRequiredPartitionKey, throughput);
+                await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(cosmosClient, databaseName, collectionName, LeaseCollectionRequiredPartitionKey, throughput, setTTL: true);
             }
             catch (CosmosException cosmosException) 
                 when (cosmosException.StatusCode == System.Net.HttpStatusCode.BadRequest
                     && cosmosException.Message.Contains("invalid for Gremlin API"))
             {
-                await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(cosmosClient, databaseName, collectionName, LeaseCollectionRequiredPartitionKeyFromGremlin, throughput);
+                await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(cosmosClient, databaseName, collectionName, LeaseCollectionRequiredPartitionKeyFromGremlin, throughput, setTTL: true);
             }
         }
 
