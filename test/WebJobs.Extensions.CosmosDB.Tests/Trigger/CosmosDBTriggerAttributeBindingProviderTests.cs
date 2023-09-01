@@ -347,7 +347,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 .ThrowsAsync(new CosmosException("not found", System.Net.HttpStatusCode.NotFound, 0, Guid.NewGuid().ToString(), 0));
 
             mockDatabase
-                .Setup(m => m.CreateContainerAsync(It.IsAny<string>(), It.Is<string>(pk => pk == "/id"), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()))
+                .Setup(m => m.CreateContainerAsync(It.Is<ContainerProperties>(cp => cp.PartitionKeyPath == "/id" && cp.DefaultTimeToLive == -1), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Mock.Of<ContainerResponse>());
 
             var factoryMock = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
@@ -362,7 +362,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             CosmosDBTriggerAttribute cosmosDBTriggerAttribute = parameter.GetCustomAttribute<CosmosDBTriggerAttribute>(inherit: false);
 
             mockDatabase
-                .Verify(m => m.CreateContainerAsync(It.IsAny<string>(), It.Is<string>(pk => pk == "/id"), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+                .Verify(m => m.CreateContainerAsync(It.Is<ContainerProperties>(cp => cp.PartitionKeyPath == "/id" && cp.DefaultTimeToLive == -1), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Theory]
@@ -401,11 +401,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 .ThrowsAsync(new CosmosException("not found", System.Net.HttpStatusCode.NotFound, 0, Guid.NewGuid().ToString(), 0));
 
             mockDatabase
-                .Setup(m => m.CreateContainerAsync(It.IsAny<string>(), It.Is<string>(pk => pk == "/id"), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()))
+                .Setup(m => m.CreateContainerAsync(It.Is<ContainerProperties>(cp => cp.PartitionKeyPath == "/id"), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new CosmosException("invalid for Gremlin API", System.Net.HttpStatusCode.BadRequest, 0, Guid.NewGuid().ToString(), 0));
 
             mockDatabase
-                .Setup(m => m.CreateContainerAsync(It.IsAny<string>(), It.Is<string>(pk => pk == "/partitionKey"), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()))
+                .Setup(m => m.CreateContainerAsync(It.Is<ContainerProperties>(cp => cp.PartitionKeyPath == "/partitionKey"), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Mock.Of<ContainerResponse>());
 
             var factoryMock = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
@@ -420,10 +420,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             CosmosDBTriggerAttribute cosmosDBTriggerAttribute = parameter.GetCustomAttribute<CosmosDBTriggerAttribute>(inherit: false);
 
             mockDatabase
-                .Verify(m => m.CreateContainerAsync(It.IsAny<string>(), It.Is<string>(pk => pk == "/id"), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+                .Verify(m => m.CreateContainerAsync(It.Is<ContainerProperties>(cp => cp.PartitionKeyPath == "/id"), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()), Times.Once);
 
             mockDatabase
-                .Verify(m => m.CreateContainerAsync(It.IsAny<string>(), It.Is<string>(pk => pk == "/partitionKey"), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+                .Verify(m => m.CreateContainerAsync(It.Is<ContainerProperties>(cp => cp.PartitionKeyPath == "/id"), It.IsAny<int?>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Theory]

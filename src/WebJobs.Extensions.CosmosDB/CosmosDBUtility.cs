@@ -59,7 +59,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
             catch (CosmosException cosmosException) when (cosmosException.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                ContainerProperties containerProperties = new ContainerProperties(containerName, partitionKey);
+                ContainerProperties containerProperties = new ContainerProperties()
+                {
+                    Id = containerName
+                };
+
+                if (!string.IsNullOrEmpty(partitionKey))
+                {
+                    containerProperties.PartitionKeyPath = partitionKey;
+                }
+
                 if (setTTL)
                 {
                     // Enabling TTL on the container without any defined time. TTL is set on the individual items.
