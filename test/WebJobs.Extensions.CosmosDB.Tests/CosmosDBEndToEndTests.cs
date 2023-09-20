@@ -26,7 +26,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
     {
         private const string DatabaseName = "E2EDb";
         private const string CollectionName = "E2ECollection";
-        private const string LeaseCollectionName = "leases";
         private readonly TestLoggerProvider _loggerProvider = new TestLoggerProvider();
 
         [Fact]
@@ -74,18 +73,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                     .FormattedMessage;
                 JObject loggedOptions = JObject.Parse(optionsMessage.Substring(optionsMessage.IndexOf(Environment.NewLine)));
                 Assert.Null(loggedOptions["ConnectionMode"].Value<string>());
-
-                // Clean-up leases
-                Container leaseContainer = client.GetContainer(DatabaseName, LeaseCollectionName);
-                using FeedIterator<JObject> leaseIterator = leaseContainer.GetItemQueryIterator<JObject>();
-                while (leaseIterator.HasMoreResults)
-                {
-                    FeedResponse<JObject> leaseIteratorResponse = await leaseIterator.ReadNextAsync();
-                    foreach (JObject lease in leaseIteratorResponse)
-                    {
-                        await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), new PartitionKey(lease.Value<string>("id")));
-                    }
-                }
             }
         }
 
@@ -107,8 +94,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             // Start the host again and wait for the logs to show the cancelled item was reprocessed
             using (var host = await StartHostAsync(typeof(EndToEndCancellationTestClass)))
             {
-                var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName);
-
                 await TestHelpers.Await(() =>
                 {
                     var logMessages = _loggerProvider.GetAllLogMessages();
@@ -117,18 +102,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                         && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Saw the first document again!")) == 1
                         && logMessages.Count(p => p.Exception is TaskCanceledException) > 0;
                 });
-
-                // Clean-up leases
-                Container leaseContainer = client.GetContainer(DatabaseName, LeaseCollectionName);
-                using FeedIterator<JObject> leaseIterator = leaseContainer.GetItemQueryIterator<JObject>();
-                while (leaseIterator.HasMoreResults)
-                {
-                    FeedResponse<JObject> leaseIteratorResponse = await leaseIterator.ReadNextAsync();
-                    foreach (JObject lease in leaseIteratorResponse)
-                    {
-                        await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), new PartitionKey(lease.Value<string>("id")));
-                    }
-                }
             }
         }
 
