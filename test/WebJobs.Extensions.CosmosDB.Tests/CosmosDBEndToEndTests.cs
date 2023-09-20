@@ -69,6 +69,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                     int count4 = logMessages.Count(p => p.Exception != null && p.Exception.InnerException.Message.Contains("Test exception") && !p.Category.StartsWith("Host.Results"));
                     Debug.WriteLine($"count1 {count1}, count2, {count2}, count3 {count3}, count4 {count4}");
                     Trace.WriteLine($"count1 {count1}, count2, {count2}, count3 {count3}, count4 {count4}");
+                    Console.WriteLine($"count1 {count1}, count2, {count2}, count3 {count3}, count4 {count4}");
                     return logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")) == 4
                         && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with string called!")) == 4
                         && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with retry called!")) == 8
@@ -196,7 +197,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
 
             public static void Trigger(
-                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true)]IReadOnlyList<Item> documents,
+                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "test1")]IReadOnlyList<Item> documents,
                 ILogger log)
             {
                 foreach (var document in documents)
@@ -206,7 +207,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
 
             public static void TriggerWithString(
-                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "withstring")] string documents,
+                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "test2")] string documents,
                 ILogger log)
             {
                 foreach (var document in JArray.Parse(documents))
@@ -217,7 +218,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             [FixedDelayRetry(5, "00:00:01")]
             public static void TriggerWithRetry(
-                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "retry")] IReadOnlyList<Item> documents,
+                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "test3")] IReadOnlyList<Item> documents,
                 ILogger log)
             {
                 foreach (var document in documents)
