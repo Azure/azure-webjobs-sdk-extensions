@@ -232,7 +232,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             }
 
             // Prevent the change feed lease from being checkpointed if cancellation was requested when not in Drain mode
-            _functionExecutionCancellationTokenSource.Token.ThrowIfCancellationRequested();
+            this._functionExecutionCancellationTokenSource.Token.ThrowIfCancellationRequested();
         }
 
         public IScaleMonitor GetMonitor()
