@@ -4,6 +4,7 @@
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -18,14 +19,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly INameResolver _nameResolver;
         private readonly CosmosDBOptions _options;
         private readonly ILoggerFactory _loggerFactory;
+        private readonly IDrainModeManager _drainModeManager;
         private readonly CosmosDBExtensionConfigProvider _configProvider;
 
-        public CosmosDBTriggerAttributeBindingProviderGenerator(INameResolver nameResolver, CosmosDBOptions options,
-            CosmosDBExtensionConfigProvider configProvider, ILoggerFactory loggerFactory)
+        public CosmosDBTriggerAttributeBindingProviderGenerator(INameResolver nameResolver,
+            CosmosDBOptions options,
+            CosmosDBExtensionConfigProvider configProvider,
+            IDrainModeManager drainModeManager,
+            ILoggerFactory loggerFactory)
         {
             _nameResolver = nameResolver;
             _options = options;
             _configProvider = configProvider;
+            _drainModeManager = drainModeManager;
             _loggerFactory = loggerFactory;
         }
 
@@ -57,11 +63,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             Type genericBindingType = baseType.MakeGenericType(documentType);
 
-            Type[] typeArgs = { typeof(INameResolver), typeof(CosmosDBOptions), typeof(CosmosDBExtensionConfigProvider), typeof(ILoggerFactory) };
+            Type[] typeArgs = { typeof(INameResolver), typeof(CosmosDBOptions), typeof(CosmosDBExtensionConfigProvider), typeof(IDrainModeManager), typeof(ILoggerFactory) };
 
             ConstructorInfo constructor = genericBindingType.GetConstructor(typeArgs);
 
-            object[] constructorParameterValues = { _nameResolver, _options, _configProvider, _loggerFactory };
+            object[] constructorParameterValues = { _nameResolver, _options, _configProvider, _drainModeManager, _loggerFactory };
 
             object cosmosDBTriggerAttributeBindingProvider = constructor.Invoke(constructorParameterValues);
 
