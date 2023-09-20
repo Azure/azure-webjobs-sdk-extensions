@@ -22,7 +22,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         public const string DatabaseName = "ItemDB";
         public const string ContainerName = "ItemCollection";
 
-        public static Mock<Container> SetupCollectionMock(Mock<CosmosClient> mockService, Mock<Database> mockDatabase, string partitionKeyPath = null, int throughput = 0)
+        public static Mock<Container> SetupCollectionMock(Mock<CosmosClient> mockService, Mock<Database> mockDatabase, string partitionKeyPath, int throughput = 0, bool setTTL = false)
         {
             var mockContainer = new Mock<Container>(MockBehavior.Strict);
 
@@ -46,8 +46,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             if (throughput == 0)
             {
                 mockDatabase
-                    .Setup(m => m.CreateContainerAsync(It.Is<string>(i => i == ContainerName),
-                        It.Is<string>(p => p == partitionKeyPath),
+                    .Setup(m => m.CreateContainerAsync(It.Is<ContainerProperties>(cp => cp.Id == ContainerName && cp.PartitionKeyPath == partitionKeyPath && (!setTTL || cp.DefaultTimeToLive == -1)),
                         It.Is<int?>(t => t == null),
                         It.IsAny<RequestOptions>(),
                         It.IsAny<CancellationToken>()))
@@ -56,8 +55,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             else
             {
                 mockDatabase
-                    .Setup(m => m.CreateContainerAsync(It.Is<string>(i => i == ContainerName),
-                        It.Is<string>(p => p == partitionKeyPath),
+                    .Setup(m => m.CreateContainerAsync(It.Is<ContainerProperties>(cp => cp.Id == ContainerName && cp.PartitionKeyPath == partitionKeyPath && (!setTTL || cp.DefaultTimeToLive == -1)),
                         It.Is<int?>(t => t == throughput),
                         It.IsAny<RequestOptions>(),
                         It.IsAny<CancellationToken>()))

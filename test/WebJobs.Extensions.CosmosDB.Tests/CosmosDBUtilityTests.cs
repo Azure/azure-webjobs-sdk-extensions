@@ -21,7 +21,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             // Arrange
             var mockService = new Mock<CosmosClient>(MockBehavior.Strict);
             var context = CosmosDBTestUtility.CreateContext(mockService.Object, throughput: 0);
-            CosmosDBTestUtility.SetupCollectionMock(mockService, CosmosDBTestUtility.SetupDatabaseMock(mockService));
+            CosmosDBTestUtility.SetupCollectionMock(mockService, CosmosDBTestUtility.SetupDatabaseMock(mockService), "/id");
+
+            // Act
+            await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(context);
+
+            // Assert
+            mockService.VerifyAll();
+        }
+
+        [Fact]
+        public async Task CreateIfNotExists_SetsThroughput()
+        {
+            // Arrange
+            int throughput = 1000;
+            var mockService = new Mock<CosmosClient>(MockBehavior.Strict);
+            var context = CosmosDBTestUtility.CreateContext(mockService.Object, throughput: throughput);
+            CosmosDBTestUtility.SetupCollectionMock(mockService, CosmosDBTestUtility.SetupDatabaseMock(mockService), "/id", throughput: throughput);
 
             // Act
             await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(context);
@@ -47,12 +63,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         }
 
         [Fact]
+        public async Task CreateIfNotExists_SetsTTL_IfSpecified()
+        {
+            // Arrange
+            string partitionKeyPath = "partitionKey";
+            var mockService = new Mock<CosmosClient>(MockBehavior.Strict);
+            
+            CosmosDBTestUtility.SetupCollectionMock(mockService, CosmosDBTestUtility.SetupDatabaseMock(mockService), partitionKeyPath, setTTL: true);
+
+            // Act
+            await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(mockService.Object, CosmosDBTestUtility.DatabaseName, CosmosDBTestUtility.ContainerName, partitionKeyPath, throughput: 0, setTTL: true);
+
+            // Assert
+            mockService.VerifyAll();
+        }
+
+        [Fact]
         public async Task CreateIfNotExist_Succeeds()
         {
             // Arrange
             var mockService = new Mock<CosmosClient>(MockBehavior.Strict);
             CosmosDBContext context = CosmosDBTestUtility.CreateContext(mockService.Object);
-            CosmosDBTestUtility.SetupCollectionMock(mockService, CosmosDBTestUtility.SetupDatabaseMock(mockService));
+            CosmosDBTestUtility.SetupCollectionMock(mockService, CosmosDBTestUtility.SetupDatabaseMock(mockService), null);
 
             // Act
             await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(context);
