@@ -15,7 +15,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
@@ -62,14 +61,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
                 await TestHelpers.Await(() =>
                 {
-                    var logMessages = _loggerProvider.GetAllLogMessages();
-                    int count1 = logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!"));
-                    int count2 = logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with string called!"));
-                    int count3 = logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with retry called!"));
-                    int count4 = logMessages.Count(p => p.Exception != null && p.Exception.InnerException.Message.Contains("Test exception") && !p.Category.StartsWith("Host.Results"));
-                    Debug.WriteLine($"count1 {count1}, count2, {count2}, count3 {count3}, count4 {count4}");
-                    Trace.WriteLine($"count1 {count1}, count2, {count2}, count3 {count3}, count4 {count4}");
-                    Console.WriteLine($"count1 {count1}, count2, {count2}, count3 {count3}, count4 {count4}");
                     return logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")) == 4
                         && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with string called!")) == 4
                         && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with retry called!")) == 8
@@ -197,7 +188,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
 
             public static void Trigger(
-                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "test1")]IReadOnlyList<Item> documents,
+                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "ciTrigger")]IReadOnlyList<Item> documents,
                 ILogger log)
             {
                 foreach (var document in documents)
@@ -207,7 +198,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
 
             public static void TriggerWithString(
-                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "test2")] string documents,
+                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "ciTriggerWithString")] string documents,
                 ILogger log)
             {
                 foreach (var document in JArray.Parse(documents))
@@ -218,7 +209,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             [FixedDelayRetry(5, "00:00:01")]
             public static void TriggerWithRetry(
-                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "test3")] IReadOnlyList<Item> documents,
+                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "ciTriggerWithRetry")] IReadOnlyList<Item> documents,
                 ILogger log)
             {
                 foreach (var document in documents)
@@ -243,7 +234,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                     DatabaseName,
                     CollectionName,
                     CreateLeaseContainerIfNotExists = true,
-                    LeaseContainerPrefix = "cancellation",
+                    LeaseContainerPrefix = "ciTriggerWithCancellation",
                     LeaseExpirationInterval = 20 * 1000,
                     LeaseRenewInterval = 5 * 1000,
                     FeedPollDelay = 500,
