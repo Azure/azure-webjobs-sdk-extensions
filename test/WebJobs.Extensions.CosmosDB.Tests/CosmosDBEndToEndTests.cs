@@ -214,6 +214,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 [CosmosDB(DatabaseName, CollectionName, CreateIfNotExists = true)] IAsyncCollector<object> collector,
                 ILogger log)
             {
+                Console.WriteLine("outputs");
                 for (int i = 0; i < 3; i++)
                 {
                     await collector.AddAsync(new { input = input, id = Guid.NewGuid().ToString() });
@@ -237,6 +238,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             {
                 foreach (var document in documents)
                 {
+                    Console.WriteLine("first" + document.Id);
                     log.LogInformation("Trigger called!");
                 }
             }
@@ -258,6 +260,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             {
                 foreach (var document in documents)
                 {
+                    Console.WriteLine("retry" + document.Id);
                     log.LogInformation($"Trigger with retry called!");
                 }
 
