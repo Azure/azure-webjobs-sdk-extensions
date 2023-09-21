@@ -33,6 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         [Fact]
         public async Task CosmosDBEndToEnd()
         {
+            _loggerProvider.ClearAllLogMessages();
             using (var host = await StartHostAsync(typeof(EndToEndTestClass)))
             {
                 var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName);
@@ -100,6 +101,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         [Fact]
         public async Task CosmosDBEndToEndCancellation()
         {
+            _loggerProvider.ClearAllLogMessages();
             using (var host = await StartHostAsync(typeof(EndToEndCancellationTestClass)))
             {
                 var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName);
