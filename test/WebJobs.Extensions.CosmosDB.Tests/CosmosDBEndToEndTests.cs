@@ -63,6 +63,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 await TestHelpers.Await(() =>
                 {
                     var logMessages = _loggerProvider.GetAllLogMessages();
+                    int count1 = logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!"));
+                    int count2 = logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with string called!"));
+                    int count3 = logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with retry called!"));
+                    int count4 = logMessages.Count(p => p.Exception != null && p.Exception.InnerException.Message.Contains("Test exception") && !p.Category.StartsWith("Host.Results"));
+                    Console.WriteLine($"count1 {count1}, count2, {count2}, count3 {count3}, count4 {count4}");
                     return logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")) == 4
                         && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with string called!")) == 4
                         && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with retry called!")) == 8
@@ -87,6 +92,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                         await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), new PartitionKey(lease.Value<string>("id")));
                     }
                 }
+
+                await host.StopAsync();
             }
         }
 
@@ -130,6 +137,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                         await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), new PartitionKey(lease.Value<string>("id")));
                     }
                 }
+
+                await host.StopAsync();
             }
         }
 
