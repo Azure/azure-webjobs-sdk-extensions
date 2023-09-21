@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -29,7 +30,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         {
             // Arrange
             var options = new CosmosDBOptions();
-            var config = new CosmosDBExtensionConfigProvider(new OptionsWrapper<CosmosDBOptions>(options), new DefaultCosmosDBServiceFactory(_baseConfig, Mock.Of<AzureComponentFactory>()), new DefaultCosmosDBSerializerFactory(), new TestNameResolver(), NullLoggerFactory.Instance);
+            var config = new CosmosDBExtensionConfigProvider(new OptionsWrapper<CosmosDBOptions>(options), new DefaultCosmosDBServiceFactory(_baseConfig, Mock.Of<AzureComponentFactory>()), new DefaultCosmosDBSerializerFactory(), new TestNameResolver(), Mock.Of<IDrainModeManager>(), NullLoggerFactory.Instance);
             var attribute = new CosmosDBAttribute { Id = "abcdef" };
 
             // Act
@@ -104,7 +105,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             var options = new CosmosDBOptions();
             var factory = new DefaultCosmosDBServiceFactory(_baseConfig, Mock.Of<AzureComponentFactory>());
             var nameResolver = new TestNameResolver();
-            var configProvider = new CosmosDBExtensionConfigProvider(new OptionsWrapper<CosmosDBOptions>(options), factory, new DefaultCosmosDBSerializerFactory(), nameResolver, NullLoggerFactory.Instance);
+            var configProvider = new CosmosDBExtensionConfigProvider(new OptionsWrapper<CosmosDBOptions>(options), factory, new DefaultCosmosDBSerializerFactory(), nameResolver, Mock.Of<IDrainModeManager>(), NullLoggerFactory.Instance);
 
             var context = TestHelpers.CreateExtensionConfigContext(nameResolver);
 

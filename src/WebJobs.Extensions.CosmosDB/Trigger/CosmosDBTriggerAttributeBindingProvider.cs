@@ -22,13 +22,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly CosmosDBOptions _options;
         private readonly ILogger _logger;
         private readonly CosmosDBExtensionConfigProvider _configProvider;
+        private readonly IDrainModeManager _drainModeManager;
 
-        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, CosmosDBOptions options,
-            CosmosDBExtensionConfigProvider configProvider, ILoggerFactory loggerFactory)
+        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver,
+            CosmosDBOptions options,
+            CosmosDBExtensionConfigProvider configProvider,
+            IDrainModeManager drainModeManager,
+            ILoggerFactory loggerFactory)
         {
             _nameResolver = nameResolver;
             _options = options;
             _configProvider = configProvider;
+            _drainModeManager = drainModeManager;
             _logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("CosmosDB"));
         }
 
@@ -118,6 +123,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 monitoredContainer,
                 leasesContainer, 
                 attribute,
+                _drainModeManager,
                 _logger);
         }
 

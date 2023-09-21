@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Scale;
@@ -34,6 +35,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly string _listenerLogDetails;
         private readonly IScaleMonitor<CosmosDBTriggerMetrics> _cosmosDBScaleMonitor;
         private readonly ITargetScaler _cosmosDBTargetScaler;
+        private readonly CancellationTokenSource _functionExecutionCancellationTokenSource;
+        private readonly IDrainModeManager _drainModeManager;
         private ChangeFeedProcessor _host;
         private ChangeFeedProcessorBuilder _hostBuilder;
         private int _listenerStatus;
@@ -45,10 +48,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             Container monitoredContainer,
             Container leaseContainer,
             CosmosDBTriggerAttribute cosmosDBAttribute,
+            IDrainModeManager drainModeManager,
             ILogger logger)
         {
             this._logger = logger;
             this._executor = executor;
+            this._drainModeManager = drainModeManager;
+            this._functionExecutionCancellationTokenSource = new CancellationTokenSource();
             this._processorName = processorName;
             this._hostName = Guid.NewGuid().ToString();
             this._functionId = functionId;
@@ -73,7 +79,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public void Dispose()
         {
-            //Nothing to dispose
+            _functionExecutionCancellationTokenSource.Cancel();
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -118,6 +124,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
+            if (!this._drainModeManager.IsDrainModeEnabled)
+            {
+                this._functionExecutionCancellationTokenSource.Cancel();
+            }
+
             try
             {
                 if (this._host != null)
@@ -211,7 +222,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private async Task ProcessChangesAsync(ChangeFeedProcessorContext context, IReadOnlyCollection<T> docs, CancellationToken cancellationToken)
         {
             this._healthMonitor.OnChangesDelivered(context);
-            FunctionResult result = await this._executor.TryExecuteAsync(new TriggeredFunctionData() { TriggerValue = docs }, cancellationToken);
+            FunctionResult result = await this._executor.TryExecuteAsync(new TriggeredFunctionData() { TriggerValue = docs }, this._functionExecutionCancellationTokenSource.Token);
             if (result != null // TryExecuteAsync when using RetryPolicies can return null
                 && !result.Succeeded
                 && result.Exception != null)
@@ -220,8 +231,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 await this._healthMonitor.OnErrorAsync(context.LeaseToken, userException);
             }
 
-            // Prevent the change feed lease from being checkpointed if cancellation was requested
-            cancellationToken.ThrowIfCancellationRequested();
+            // Prevent the change feed lease from being checkpointed if cancellation was requested when not in Drain mode
+            this._functionExecutionCancellationTokenSource.Token.ThrowIfCancellationRequested();
         }
 
         public IScaleMonitor GetMonitor()

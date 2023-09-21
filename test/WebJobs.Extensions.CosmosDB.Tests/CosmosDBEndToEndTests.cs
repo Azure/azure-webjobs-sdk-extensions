@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,6 +27,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
     {
         private const string DatabaseName = "E2EDb";
         private const string CollectionName = "E2ECollection";
+        private const string LeaseCollectionName = "leases";
         private readonly TestLoggerProvider _loggerProvider = new TestLoggerProvider();
 
         [Fact]
@@ -73,6 +75,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                     .FormattedMessage;
                 JObject loggedOptions = JObject.Parse(optionsMessage.Substring(optionsMessage.IndexOf(Environment.NewLine)));
                 Assert.Null(loggedOptions["ConnectionMode"].Value<string>());
+
+                // Clean-up leases
+                Container leaseContainer = client.GetContainer(DatabaseName, LeaseCollectionName);
+                using FeedIterator<JObject> leaseIterator = leaseContainer.GetItemQueryIterator<JObject>();
+                while (leaseIterator.HasMoreResults)
+                {
+                    FeedResponse<JObject> leaseIteratorResponse = await leaseIterator.ReadNextAsync();
+                    foreach (JObject lease in leaseIteratorResponse)
+                    {
+                        await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), new PartitionKey(lease.Value<string>("id")));
+                    }
+                }
             }
         }
 
@@ -94,6 +108,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             // Start the host again and wait for the logs to show the cancelled item was reprocessed
             using (var host = await StartHostAsync(typeof(EndToEndCancellationTestClass)))
             {
+                var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName);
+
                 await TestHelpers.Await(() =>
                 {
                     var logMessages = _loggerProvider.GetAllLogMessages();
@@ -102,6 +118,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                         && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Saw the first document again!")) == 1
                         && logMessages.Count(p => p.Exception is TaskCanceledException) > 0;
                 });
+
+                // Clean-up leases
+                Container leaseContainer = client.GetContainer(DatabaseName, LeaseCollectionName);
+                using FeedIterator<JObject> leaseIterator = leaseContainer.GetItemQueryIterator<JObject>();
+                while (leaseIterator.HasMoreResults)
+                {
+                    FeedResponse<JObject> leaseIteratorResponse = await leaseIterator.ReadNextAsync();
+                    foreach (JObject lease in leaseIteratorResponse)
+                    {
+                        await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), new PartitionKey(lease.Value<string>("id")));
+                    }
+                }
             }
         }
 
@@ -188,7 +216,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
 
             public static void Trigger(
-                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true)]IReadOnlyList<Item> documents,
+                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "ciTrigger")]IReadOnlyList<Item> documents,
                 ILogger log)
             {
                 foreach (var document in documents)
@@ -198,7 +226,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
 
             public static void TriggerWithString(
-                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "withstring")] string documents,
+                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "ciTriggerWithString")] string documents,
                 ILogger log)
             {
                 foreach (var document in JArray.Parse(documents))
@@ -209,7 +237,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             [FixedDelayRetry(5, "00:00:01")]
             public static void TriggerWithRetry(
-                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "retry")] IReadOnlyList<Item> documents,
+                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "ciTriggerWithRetry")] IReadOnlyList<Item> documents,
                 ILogger log)
             {
                 foreach (var document in documents)
@@ -234,7 +262,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                     DatabaseName,
                     CollectionName,
                     CreateLeaseContainerIfNotExists = true,
-                    LeaseContainerPrefix = "cancellation",
+                    LeaseContainerPrefix = "ciTriggerWithCancellation",
                     LeaseExpirationInterval = 20 * 1000,
                     LeaseRenewInterval = 5 * 1000,
                     FeedPollDelay = 500,

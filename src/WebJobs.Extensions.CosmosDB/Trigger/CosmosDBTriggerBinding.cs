@@ -26,6 +26,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly Container _monitoredContainer;
         private readonly Container _leaseContainer;
         private readonly CosmosDBTriggerAttribute _cosmosDBAttribute;
+        private readonly IDrainModeManager _drainModeManager;
 
         public CosmosDBTriggerBinding(
             ParameterInfo parameter, 
@@ -33,6 +34,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             Container monitoredContainer,
             Container leaseContainer,
             CosmosDBTriggerAttribute cosmosDBAttribute,
+            IDrainModeManager drainModeManager,
             ILogger logger)
         {
             _monitoredContainer = monitoredContainer;
@@ -40,6 +42,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             _cosmosDBAttribute = cosmosDBAttribute;
             _parameter = parameter;
             _processorName = processorName;
+            _drainModeManager = drainModeManager;
             _logger = logger;
         }
 
@@ -85,6 +88,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 this._monitoredContainer, 
                 this._leaseContainer, 
                 this._cosmosDBAttribute,
+                this._drainModeManager,
                 this._logger));
         }
 
