@@ -33,6 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         [Fact]
         public async Task CosmosDBEndToEnd()
         {
+            Console.WriteLine("start");
             _loggerProvider.ClearAllLogMessages();
             using (var host = await StartHostAsync(typeof(EndToEndTestClass)))
             {
@@ -96,11 +97,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
                 await host.StopAsync();
             }
+            Console.WriteLine("end");
         }
 
-        //[Fact]
+        [Fact]
         public async Task CosmosDBEndToEndCancellation()
         {
+            Console.WriteLine("Cancellationstart");
             _loggerProvider.ClearAllLogMessages();
             using (var host = await StartHostAsync(typeof(EndToEndCancellationTestClass)))
             {
@@ -142,6 +145,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
                 await host.StopAsync();
             }
+
+            Console.WriteLine("Cancellationend");
         }
 
         public static async Task<CosmosClient> InitializeDocumentClientAsync(IConfiguration configuration, string databaseName, string collectionName)
