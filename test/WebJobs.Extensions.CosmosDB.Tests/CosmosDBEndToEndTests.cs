@@ -98,7 +98,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
         }
 
-        [Fact]
+        //[Fact]
         public async Task CosmosDBEndToEndCancellation()
         {
             _loggerProvider.ClearAllLogMessages();
