@@ -99,7 +99,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                         foreach (JObject lease in leaseIteratorResponse)
                         {
                             Console.WriteLine($"Deleting lease {lease.Value<string>("id")}");
-                            await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), new PartitionKey(lease.Value<string>("id")));
+                            ResponseMessage delete = await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), new PartitionKey(lease.Value<string>("id")));
+                            Console.WriteLine(delete.StatusCode);
+                            if (delete.StatusCode == System.Net.HttpStatusCode.NotFound)
+                            {
+                                await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), PartitionKey.None);
+                            }
                         }
                     }
 
@@ -118,8 +123,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             {
                 var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName);
 
+                string idToCreate = Guid.NewGuid().ToString();
+                Console.WriteLine($"Creating {idToCreate}");
+
                 // Insert an item to ensure the function is triggered
-                var response = await client.GetContainer(DatabaseName, CollectionName).UpsertItemAsync<Item>(new Item() { Id = Guid.NewGuid().ToString() });
+                var response = await client.GetContainer(DatabaseName, CollectionName).UpsertItemAsync<Item>(new Item() { Id = idToCreate });
 
                 // Trigger cancellation by stopping the host after the function has been triggered
                 await TestHelpers.Await(() => _loggerProvider.GetAllLogMessages().Any(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")));
@@ -153,7 +161,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                         foreach (JObject lease in leaseIteratorResponse)
                         {
                             Console.WriteLine($"Deleting lease {lease.Value<string>("id")}");
-                            await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), new PartitionKey(lease.Value<string>("id")));
+                            ResponseMessage delete = await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), new PartitionKey(lease.Value<string>("id")));
+                            Console.WriteLine(delete.StatusCode);
+                            if (delete.StatusCode == System.Net.HttpStatusCode.NotFound)
+                            {
+                                await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), PartitionKey.None);
+                            }
                         }
                     }
 
