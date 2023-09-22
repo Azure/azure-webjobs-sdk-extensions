@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.ComponentModel;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger;
@@ -72,6 +73,7 @@ namespace Microsoft.Extensions.Hosting
         /// <param name="builder"></param>
         /// <param name="triggerMetadata">Trigger metadata.</param>
         /// <returns></returns>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public static IWebJobsBuilder AddCosmosDbScaleForTrigger(this IWebJobsBuilder builder, TriggerMetadata triggerMetadata)
         {
             IServiceProvider serviceProvider = null;
