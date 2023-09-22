@@ -33,7 +33,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         [Fact]
         public async Task CosmosDBEndToEnd()
         {
-            Console.WriteLine("start");
             _loggerProvider.ClearAllLogMessages();
             using (var host = await StartHostAsync(typeof(EndToEndTestClass)))
             {
@@ -49,11 +48,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
                     await host.GetJobHost().CallAsync(nameof(EndToEndTestClass.Outputs), parameter);
 
-                    string idToCreate = Guid.NewGuid().ToString();
-                    Console.WriteLine($"Creating {idToCreate}");
-
                     // Also insert a new Document so we can query on it.
-                    var response = await client.GetContainer(DatabaseName, CollectionName).UpsertItemAsync<Item>(new Item() { Id = idToCreate });
+                    var response = await client.GetContainer(DatabaseName, CollectionName).UpsertItemAsync<Item>(new Item() { Id = Guid.NewGuid().ToString() });
 
                     // Now craft a queue message to send to the Inputs, which will pull these documents.
                     var queueInput = new QueueItem
@@ -70,11 +66,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                     await TestHelpers.Await(() =>
                     {
                         var logMessages = _loggerProvider.GetAllLogMessages();
-                        int count1 = logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!"));
-                        int count2 = logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with string called!"));
-                        int count3 = logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with retry called!"));
-                        int count4 = logMessages.Count(p => p.Exception != null && p.Exception.InnerException.Message.Contains("Test exception") && !p.Category.StartsWith("Host.Results"));
-                        Console.WriteLine($"count1 {count1}, count2, {count2}, count3 {count3}, count4 {count4}");
                         return logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")) == 4
                             && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with string called!")) == 4
                             && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with retry called!")) == 8
@@ -91,43 +82,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 finally
                 {
                     // Clean-up leases
-                    Container leaseContainer = client.GetContainer(DatabaseName, LeaseCollectionName);
-                    using FeedIterator<JObject> leaseIterator = leaseContainer.GetItemQueryIterator<JObject>();
-                    while (leaseIterator.HasMoreResults)
-                    {
-                        FeedResponse<JObject> leaseIteratorResponse = await leaseIterator.ReadNextAsync();
-                        foreach (JObject lease in leaseIteratorResponse)
-                        {
-                            Console.WriteLine($"Deleting lease {lease.Value<string>("id")}");
-                            ResponseMessage delete = await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), new PartitionKey(lease.Value<string>("id")));
-                            Console.WriteLine(delete.StatusCode);
-                            if (delete.StatusCode == System.Net.HttpStatusCode.NotFound)
-                            {
-                                await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), PartitionKey.None);
-                            }
-                        }
-                    }
+                    await CleanUpLeaseContainer(client);
 
                     await host.StopAsync();
                 }
             }
-            Console.WriteLine("end");
         }
 
         [Fact]
         public async Task CosmosDBEndToEndCancellation()
         {
-            Console.WriteLine("Cancellationstart");
             _loggerProvider.ClearAllLogMessages();
             using (var host = await StartHostAsync(typeof(EndToEndCancellationTestClass)))
             {
                 var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName);
 
-                string idToCreate = Guid.NewGuid().ToString();
-                Console.WriteLine($"Creating {idToCreate}");
-
                 // Insert an item to ensure the function is triggered
-                var response = await client.GetContainer(DatabaseName, CollectionName).UpsertItemAsync<Item>(new Item() { Id = idToCreate });
+                var response = await client.GetContainer(DatabaseName, CollectionName).UpsertItemAsync<Item>(new Item() { Id = Guid.NewGuid().ToString() });
 
                 // Trigger cancellation by stopping the host after the function has been triggered
                 await TestHelpers.Await(() => _loggerProvider.GetAllLogMessages().Any(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")));
@@ -153,28 +124,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 finally
                 {
                     // Clean-up leases
-                    Container leaseContainer = client.GetContainer(DatabaseName, LeaseCollectionName);
-                    using FeedIterator<JObject> leaseIterator = leaseContainer.GetItemQueryIterator<JObject>();
-                    while (leaseIterator.HasMoreResults)
-                    {
-                        FeedResponse<JObject> leaseIteratorResponse = await leaseIterator.ReadNextAsync();
-                        foreach (JObject lease in leaseIteratorResponse)
-                        {
-                            Console.WriteLine($"Deleting lease {lease.Value<string>("id")}");
-                            ResponseMessage delete = await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), new PartitionKey(lease.Value<string>("id")));
-                            Console.WriteLine(delete.StatusCode);
-                            if (delete.StatusCode == System.Net.HttpStatusCode.NotFound)
-                            {
-                                await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), PartitionKey.None);
-                            }
-                        }
-                    }
+                    await CleanUpLeaseContainer(client);
 
                     await host.StopAsync();
                 }
             }
-
-            Console.WriteLine("Cancellationend");
         }
 
         public static async Task<CosmosClient> InitializeDocumentClientAsync(IConfiguration configuration, string databaseName, string collectionName)
@@ -193,6 +147,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
 
             return client;
+        }
+
+        public static async Task CleanUpLeaseContainer(CosmosClient client)
+        {
+            Container leaseContainer = client.GetContainer(DatabaseName, LeaseCollectionName);
+            using FeedIterator<JObject> leaseIterator = leaseContainer.GetItemQueryIterator<JObject>();
+            while (leaseIterator.HasMoreResults)
+            {
+                FeedResponse<JObject> leaseIteratorResponse = await leaseIterator.ReadNextAsync();
+                foreach (JObject lease in leaseIteratorResponse)
+                {
+                    ResponseMessage delete = await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), new PartitionKey(lease.Value<string>("id")));
+                    if (delete.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        // Support old non-partitioned lease container in CI
+                        await leaseContainer.DeleteItemStreamAsync(lease.Value<string>("id"), PartitionKey.None);
+                    }
+                }
+            }
         }
 
         private async Task<IHost> StartHostAsync(Type testType)
@@ -242,7 +215,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 [CosmosDB(DatabaseName, CollectionName, CreateIfNotExists = true)] IAsyncCollector<object> collector,
                 ILogger log)
             {
-                Console.WriteLine("outputs");
                 for (int i = 0; i < 3; i++)
                 {
                     await collector.AddAsync(new { input = input, id = Guid.NewGuid().ToString() });
@@ -266,7 +238,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             {
                 foreach (var document in documents)
                 {
-                    Console.WriteLine("first" + document.Id);
                     log.LogInformation("Trigger called!");
                 }
             }
@@ -288,7 +259,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             {
                 foreach (var document in documents)
                 {
-                    Console.WriteLine("retry" + document.Id);
                     log.LogInformation($"Trigger with retry called!");
                 }
 
