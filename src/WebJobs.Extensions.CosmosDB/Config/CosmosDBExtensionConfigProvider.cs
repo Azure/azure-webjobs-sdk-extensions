@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Extensions.Logging;
@@ -27,6 +28,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly ICosmosDBSerializerFactory _cosmosSerializerFactory;
         private readonly INameResolver _nameResolver;
         private readonly CosmosDBOptions _options;
+        private readonly IDrainModeManager _drainModeManager;
         private readonly ILoggerFactory _loggerFactory;
 
         public CosmosDBExtensionConfigProvider(
@@ -34,12 +36,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             ICosmosDBServiceFactory cosmosDBServiceFactory,
             ICosmosDBSerializerFactory cosmosSerializerFactory,
             INameResolver nameResolver,
+            IDrainModeManager drainModeManager,
             ILoggerFactory loggerFactory)
         {
             _cosmosDBServiceFactory = cosmosDBServiceFactory;
             _cosmosSerializerFactory = cosmosSerializerFactory;
             _nameResolver = nameResolver;
             _options = options.Value;
+            _drainModeManager = drainModeManager;
             _loggerFactory = loggerFactory;
         }
 
@@ -75,7 +79,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             // Trigger
             var rule2 = context.AddBindingRule<CosmosDBTriggerAttribute>();
-            rule2.BindToTrigger(new CosmosDBTriggerAttributeBindingProviderGenerator(_nameResolver, _options, this, _loggerFactory));
+            rule2.BindToTrigger(new CosmosDBTriggerAttributeBindingProviderGenerator(_nameResolver, _options, this, _drainModeManager, _loggerFactory));
         }
 
         internal void ValidateConnection(CosmosDBAttribute attribute, Type paramType)

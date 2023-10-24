@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Scale;
 using Microsoft.Extensions.Logging;
@@ -67,7 +68,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
 
             var attribute = new CosmosDBTriggerAttribute(DatabaseName, ContainerName);
 
-            _listener = new CosmosDBTriggerListener<dynamic>(_mockExecutor.Object, _functionId, ProcessorName, _monitoredContainer.Object, _leasesContainer.Object, attribute, _loggerFactory.CreateLogger<CosmosDBTriggerListener<dynamic>>());
+            _listener = new CosmosDBTriggerListener<dynamic>(_mockExecutor.Object, _functionId, ProcessorName, _monitoredContainer.Object, _leasesContainer.Object, attribute, Mock.Of<IDrainModeManager>(), _loggerFactory.CreateLogger<CosmosDBTriggerListener<dynamic>>());
 
             _logDetails = $"prefix='{ProcessorName}', monitoredContainer='{ContainerName}', monitoredDatabase='{DatabaseName}', " +
                 $"leaseContainer='{ContainerName}', leaseDatabase='{DatabaseName}', functionId='{this._functionId}'";
@@ -80,7 +81,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
            
             var mockExecutor = new Mock<ITriggeredFunctionExecutor>();
 
-            var listener = new MockListener<dynamic>(mockExecutor.Object, _functionId, ProcessorName, _monitoredContainer.Object, _leasesContainer.Object, attribute, _loggerFactory.CreateLogger<CosmosDBTriggerListener<dynamic>>());
+            var listener = new MockListener<dynamic>(mockExecutor.Object, _functionId, ProcessorName, _monitoredContainer.Object, _leasesContainer.Object, attribute, Mock.Of<IDrainModeManager>(), _loggerFactory.CreateLogger<CosmosDBTriggerListener<dynamic>>());
 
             // Ensure that we can call StartAsync() multiple times to retry if there is an error.
             for (int i = 0; i < 3; i++)
@@ -117,8 +118,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 Container monitoredContainer,
                 Container leaseContainer,
                 CosmosDBTriggerAttribute cosmosDBAttribute,
+                IDrainModeManager drainModeManager,
                 ILogger logger)
-                : base(executor, functionId, processorName, monitoredContainer, leaseContainer, cosmosDBAttribute, logger)
+                : base(executor, functionId, processorName, monitoredContainer, leaseContainer, cosmosDBAttribute, drainModeManager, logger)
             {
             }
 
