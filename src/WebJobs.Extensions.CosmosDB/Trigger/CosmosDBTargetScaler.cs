@@ -61,7 +61,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
 
             try
             {
-                targetWorkerCount = (int)Math.Ceiling(remainingWork / (decimal)concurrency);
+                checked
+                {
+                    targetWorkerCount = (int)Math.Ceiling(remainingWork / (decimal)concurrency);
+                }
             }
             catch (OverflowException)
             {
