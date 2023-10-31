@@ -71,6 +71,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
         [InlineData(null, 0, 3, 0)]
         [InlineData(50, 200, 0, 4)]
         [InlineData(-50, 200, 0, 2)]
+        [InlineData(1, 2147483650, 1, 1)]
+        [InlineData(1, 2147483650, 2147483647, 2147483647)]
+        [InlineData(2, 2147483650, 1073741825, 1073741825)]
         public void GetScaleResultInternal(int? concurrency, long remainingWork, int partitionCount, int expectedTargetWorkerCount)
         {
             TargetScalerContext targetScalerContext = new TargetScalerContext
