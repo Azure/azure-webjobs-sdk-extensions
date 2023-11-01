@@ -60,28 +60,18 @@ jobs:
         Write-Host "Git tag found. Setting Configuration to '$config'"
         $env:Configuration = $config
         Write-Host "##vso[task.setvariable variable=Configuration]$config" # let downstream tasks read this variable
-      }
+      }      
 
-      $projectsArray = "$(targetProjects)" -split ";"
-
-      Write-Host "Building projects:"
-      Write-Host $projectsArray -separator "`n"
-
-      .\Build.ps1 -projects $projectsArray -buildNumber "$(buildNumber)" -packageSuffix "$packageSuffix" -outputDirectory "$(buildOutputDirectory)" -pack $False
-    displayName: "Build source"
-    env:
-      CommitHash: $(Build.SourceVersion)
-
-  - pwsh: |
       $testsArray = "$(targetTests)" -split ";"
 
       Write-Host "Running tests:"
       Write-Host $testsArray -separator "`n"
 
+      # building tests will automatically build the main project as well
       .\run-tests.ps1 -tests $testsArray
-    displayName: "Run tests"
-    ## requires env:Configuration be set to report test results
+    displayName: "Build and test"    
     env:
+      CommitHash: $(Build.SourceVersion)
       AzureWebJobsStorage: $(Storage)
       AzureWebJobsDashboard: $(Storage)
       AzureWebJobsCosmosDBConnectionString: $(CosmosDB)

@@ -36,7 +36,7 @@ foreach ($project in $projects)
   {
     $cmd = "build", "src\$project\$project.csproj", "-v", "m"
   }  
-  Write-Host CommitHash: $env:CommitHash
+
   Write-Host dotnet $cmd
   & { dotnet $cmd }
 }
