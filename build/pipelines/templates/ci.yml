@@ -92,7 +92,7 @@ jobs:
 
   - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@2
     displayName: 'ESRP CodeSigning - Authenticode'
-    condition: eq(dependencies.InitializePipeline.outputs['Initialize.SignPackages'], true)
+    condition: eq(variables.signPackages, true)
     inputs:
       ConnectedServiceName: 'ESRP Service'
       FolderPath: 'buildoutput'
