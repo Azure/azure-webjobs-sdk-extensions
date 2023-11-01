@@ -69,6 +69,8 @@ jobs:
 
       .\Build.ps1 -projects $projectsArray -buildNumber "$(buildNumber)" -packageSuffix "$packageSuffix" -outputDirectory "$(buildOutputDirectory)" -pack $False
     displayName: "Build source"
+    env:
+      CommitHash: $(Build.SourceVersion)
 
   - pwsh: |
       $testsArray = "$(targetTests)" -split ";"
@@ -148,6 +150,32 @@ jobs:
 
       .\Build.ps1 -projects $projectsArray -buildNumber "$(buildNumber)" -packageSuffix "$packageSuffix" -outputDirectory "$(buildOutputDirectory)" -pack $True
     displayName: "Pack build"
+
+  - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@2
+    displayName: 'ESRP CodeSigning: Nupkg'
+    condition: eq(variables.signPackages, true)
+    inputs:
+      ConnectedServiceName: 'ESRP Service'
+      FolderPath: 'buildoutput'
+      Pattern: 'Microsoft.Azure.WebJobs.Extensions*.nupkg'
+      signConfigType: inlineSignParams
+      inlineOperation: |
+        [
+            {
+              "KeyCode": "CP-401405",
+              "OperationCode": "NuGetSign",
+              "Parameters": {},
+              "ToolName": "sign",
+              "ToolVersion": "1.0"
+            },
+            {
+              "KeyCode": "CP-401405",
+              "OperationCode": "NuGetVerify",
+              "Parameters": {},
+              "ToolName": "sign",
+              "ToolVersion": "1.0"
+            }
+        ]
 
   - task: ManifestGeneratorTask@0
     displayName: "SBOM Generation"
