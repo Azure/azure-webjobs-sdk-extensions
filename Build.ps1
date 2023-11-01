@@ -3,9 +3,8 @@
   [string]$buildNumber,
   [string]$packageSuffix = "0",
   [bool]$isLocal = $false,
-  [bool]$signPackages = $false,
   [string]$outputDirectory = (Join-Path -Path $PSScriptRoot -ChildPath "buildoutput"),
-  [bool]$skipAssemblySigning = $false
+  [bool]$pack = $false
 )
 
 if ($null -eq $buildNumber) {
@@ -19,23 +18,25 @@ if ($isLocal){
 
 dotnet --version
 
-dotnet build -v m
-
 if (-not $?) { exit 1 }
 
 foreach ($project in $projects)
-{
-  $cmd = "pack", "src\$project\$project.csproj", "-o", $outputDirectory, "--no-build"
-  
-  if ($packageSuffix -ne "0")
+{ 
+  # This assumes we've already built the package
+  if ($pack)
   {
-    $cmd += "--version-suffix", "-$packageSuffix"
-  }
-  
-  & { dotnet $cmd }
-}
+    $cmd = "pack", "src\$project\$project.csproj", "-o", $outputDirectory, "--no-build"
 
-if ($signPackages) {
-  & { .\tools\RunSigningJob.ps1 -artifactDirectory $outputDirectory -buildNumber $buildNumber -skipAssemblySigning $skipAssemblySigning }
-  if (-not $?) { exit 1 }
+    if ($packageSuffix -ne "0")
+    {
+      $cmd += "--version-suffix", "-$packageSuffix"
+    }
+  } 
+  else 
+  {
+    $cmd = "build", "src\$project\$project.csproj", "-v", "m"
+  }  
+  
+  Write-Host dotnet $cmd
+  & { dotnet $cmd }
 }

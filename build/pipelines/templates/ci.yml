@@ -67,13 +67,8 @@ jobs:
       Write-Host "Building projects:"
       Write-Host $projectsArray -separator "`n"
 
-      .\Build.ps1 -projects $projectsArray -buildNumber "$(buildNumber)" -packageSuffix "$packageSuffix" -outputDirectory "$(buildOutputDirectory)"
+      .\Build.ps1 -projects $projectsArray -buildNumber "$(buildNumber)" -packageSuffix "$packageSuffix" -outputDirectory "$(buildOutputDirectory)" -pack $False
     displayName: "Build source"
-    env:
-      CommitHash: $(Build.SourceVersion)
-      FILES_ACCOUNT_NAME: $(FilesAccountName)
-      FILES_ACCOUNT_KEY: $(FilesAccountKey)
-    ## This task also optionally signs the packages
 
   - pwsh: |
       $testsArray = "$(targetTests)" -split ";"
@@ -90,12 +85,22 @@ jobs:
       AzureWebJobsCosmosDBConnectionString: $(CosmosDB)
       ConnectionStrings:CosmosDB: $(CosmosDB)
 
+  - task: PublishTestResults@2
+    displayName: "Publish XUnit test results"
+    inputs:
+      testResultsFormat: 'VSTest'
+      testResultsFiles: '**/TEST.xml'
+      mergeTestResults: true
+      buildConfiguration: $(Configuration)
+      testRunTitle: 'XUnit Tests'
+    condition: always()
+
   - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@2
     displayName: 'ESRP CodeSigning - Authenticode'
     condition: eq(variables.signPackages, true)
     inputs:
       ConnectedServiceName: 'ESRP Service'
-      FolderPath: 'buildoutput'
+      FolderPath: 'src'
       Pattern: Microsoft.Azure.WebJobs.Extensions*.dll
       signConfigType: inlineSignParams
       inlineOperation: |
@@ -122,31 +127,27 @@ jobs:
           }
         ]
 
-  - task: PublishTestResults@2
-    displayName: "Publish XUnit test results"
-    inputs:
-      testResultsFormat: 'VSTest'
-      testResultsFiles: '**/TEST.xml'
-      mergeTestResults: true
-      buildConfiguration: $(Configuration)
-      testRunTitle: 'XUnit Tests'
-    condition: always()
-
   - pwsh: |
-      if ($$(signPackages))
-      {
-        Write-Host "Package signing enabled for this build. Retrieving signed files."
+      $packageSuffix = 0
+      if (-not $$(hasTag)) {
+        $packageSuffix = $(buildNumber)
+        Write-Host "No git tag found. Setting package suffix to '$packageSuffix'"
+      }
 
-        .\tools\PollSigningResults.ps1 -buildNumber "$(buildNumber)" -artifactDirectory "$(buildOutputDirectory)" -skipAssemblySigning $${{ parameters.skip_assembly_signing }}
+      if ($$(hasTag)) {
+        $config = "Release"
+        Write-Host "Git tag found. Setting Configuration to '$config'"
+        $env:Configuration = $config
+        Write-Host "##vso[task.setvariable variable=Configuration]$config" # let downstream tasks read this variable
       }
-      else
-      {
-        Write-Host "Package signing conditions not met for this build."
-      }
-    displayName: "Poll signing results"
-    env: 
-      FILES_ACCOUNT_NAME: $(FilesAccountName)
-      FILES_ACCOUNT_KEY: $(FilesAccountKey)
+
+      $projectsArray = "$(targetProjects)" -split ";"
+
+      Write-Host "Building projects:"
+      Write-Host $projectsArray -separator "`n"
+
+      .\Build.ps1 -projects $projectsArray -buildNumber "$(buildNumber)" -packageSuffix "$packageSuffix" -outputDirectory "$(buildOutputDirectory)" -pack $True
+    displayName: "Pack build"
 
   - task: ManifestGeneratorTask@0
     displayName: "SBOM Generation"
