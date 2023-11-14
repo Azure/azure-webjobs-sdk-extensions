@@ -57,7 +57,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
                 concurrency = DefaultMaxItemsPerInvocation;
             }
 
-            int targetWorkerCount = (int)Math.Ceiling(remainingWork / (decimal)concurrency);
+            int targetWorkerCount;
+
+            try
+            {
+                checked
+                {
+                    targetWorkerCount = (int)Math.Ceiling(remainingWork / (decimal)concurrency);
+                }
+            }
+            catch (OverflowException)
+            {
+                targetWorkerCount = int.MaxValue;
+            }
 
             string targetScaleMessage = $"Target worker count for function '{_functionId}' is '{targetWorkerCount}' (MonitoredContainerId='{_monitoredContainer.Id}', MonitoredContainerDatabaseId='{_monitoredContainer.Database.Id}', RemainingWork ='{remainingWork}', Concurrency='{concurrency}').";
 

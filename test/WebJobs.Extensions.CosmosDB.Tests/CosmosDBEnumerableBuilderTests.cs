@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.CosmosDB.Models;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -221,7 +222,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             var options = new OptionsWrapper<CosmosDBOptions>(new CosmosDBOptions
             {
             });
-            var configProvider = new CosmosDBExtensionConfigProvider(options, mockServiceFactory.Object, new DefaultCosmosDBSerializerFactory(), new TestNameResolver(), NullLoggerFactory.Instance);
+            var configProvider = new CosmosDBExtensionConfigProvider(options, mockServiceFactory.Object, new DefaultCosmosDBSerializerFactory(), new TestNameResolver(), Mock.Of<IDrainModeManager>(), NullLoggerFactory.Instance);
 
             return new CosmosDBEnumerableBuilder<T>(configProvider);
         }

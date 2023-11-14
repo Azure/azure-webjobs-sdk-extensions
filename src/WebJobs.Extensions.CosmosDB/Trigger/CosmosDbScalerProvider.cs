@@ -6,6 +6,7 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Scale;
 using Microsoft.Extensions.Azure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -31,11 +32,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
                 azureComponentFactory = serviceProvider.GetService<AzureComponentFactory>();
             }
 
+            IConfiguration config = serviceProvider.GetService<IConfiguration>();
             ILoggerFactory loggerFactory = serviceProvider.GetService<ILoggerFactory>();
             CosmosDbMetadata cosmosDbMetadata = JsonConvert.DeserializeObject<CosmosDbMetadata>(triggerMetadata.Metadata.ToString());
             cosmosDbMetadata.ResolveProperties(serviceProvider.GetService<INameResolver>());
             IOptions<CosmosClientOptions> options = serviceProvider.GetService<IOptions<CosmosClientOptions>>();
-            ICosmosDBServiceFactory serviceFactory = serviceProvider.GetService<ICosmosDBServiceFactory>();
+            ICosmosDBServiceFactory serviceFactory = new DefaultCosmosDBServiceFactory(config, azureComponentFactory);
             CosmosClient cosmosClient = serviceFactory.CreateService(cosmosDbMetadata.Connection, options.Value);
             var monitoredContainer = cosmosClient.GetContainer(cosmosDbMetadata.DatabaseName, cosmosDbMetadata.ContainerName);
             var leaseContainer = cosmosClient.GetContainer(string.IsNullOrEmpty(cosmosDbMetadata.LeaseDatabaseName) ? cosmosDbMetadata.DatabaseName : cosmosDbMetadata.LeaseDatabaseName, string.IsNullOrEmpty(cosmosDbMetadata.LeaseContainerName) ? CosmosDBTriggerConstants.DefaultLeaseCollectionName : cosmosDbMetadata.LeaseContainerName);

@@ -22,13 +22,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly CosmosDBOptions _options;
         private readonly ILogger _logger;
         private readonly CosmosDBExtensionConfigProvider _configProvider;
+        private readonly IDrainModeManager _drainModeManager;
 
-        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver, CosmosDBOptions options,
-            CosmosDBExtensionConfigProvider configProvider, ILoggerFactory loggerFactory)
+        public CosmosDBTriggerAttributeBindingProvider(INameResolver nameResolver,
+            CosmosDBOptions options,
+            CosmosDBExtensionConfigProvider configProvider,
+            IDrainModeManager drainModeManager,
+            ILoggerFactory loggerFactory)
         {
             _nameResolver = nameResolver;
             _options = options;
             _configProvider = configProvider;
+            _drainModeManager = drainModeManager;
             _logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("CosmosDB"));
         }
 
@@ -118,6 +123,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 monitoredContainer,
                 leasesContainer, 
                 attribute,
+                _drainModeManager,
                 _logger);
         }
 
@@ -140,13 +146,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         {
             try
             {
-                await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(cosmosClient, databaseName, collectionName, LeaseCollectionRequiredPartitionKey, throughput);
+                await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(cosmosClient, databaseName, collectionName, LeaseCollectionRequiredPartitionKey, throughput, setTTL: true);
             }
             catch (CosmosException cosmosException) 
                 when (cosmosException.StatusCode == System.Net.HttpStatusCode.BadRequest
                     && cosmosException.Message.Contains("invalid for Gremlin API"))
             {
-                await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(cosmosClient, databaseName, collectionName, LeaseCollectionRequiredPartitionKeyFromGremlin, throughput);
+                await CosmosDBUtility.CreateDatabaseAndCollectionIfNotExistAsync(cosmosClient, databaseName, collectionName, LeaseCollectionRequiredPartitionKeyFromGremlin, throughput, setTTL: true);
             }
         }
 

@@ -8,6 +8,7 @@ using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
 using Castle.Core.Configuration;
@@ -34,7 +35,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
     {
         private const string FunctionName = "Function1";
         private const string DatabaseName = "E2EDb";
-        private const string CollectionName = "E2ECollection";
+        private const string CollectionName = "E2EScaleCollection";
         private const string Connection = "CosmosDbConnection";
         private readonly TestLoggerProvider _loggerProvider = new TestLoggerProvider();
 
@@ -132,6 +133,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                     PartitionKey pk = new PartitionKey(item.Id);
                     await container.UpsertItemAsync<Item>(item, pk);
                 }
+
+                await StartProcessor(client);
             }
 
             IHost scaleHost = hostBuilder.Build();
@@ -179,6 +182,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
                 return scaledOut;
             }, pollingInterval: 2000, timeout: 180000, throwWhenDebugging: true);
+        }
+
+        private async Task StartProcessor(CosmosClient cosmosClient)
+        {
+            var leaseContainer = cosmosClient.GetContainer(DatabaseName, "leases");
+            var monitoredContainer = cosmosClient.GetContainer(DatabaseName, CollectionName);
+
+            var builder = monitoredContainer.GetChangeFeedProcessorBuilder<Item>(string.Empty, HandleChangesAsync)
+                .WithInstanceName("MyInstance")
+                .WithLeaseContainer(leaseContainer)
+                .WithStartTime(DateTime.UtcNow)
+                .WithPollInterval(TimeSpan.FromSeconds(10));
+
+            var processor = builder.Build();
+            await processor.StartAsync();
+        }
+
+        private static async Task HandleChangesAsync(
+            ChangeFeedProcessorContext context,
+            IReadOnlyCollection<Item> changes,
+            CancellationToken cancellationToken)
+        {
         }
     }
 }
