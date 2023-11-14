@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net6.0;net8.0</TargetFrameworks>
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Http</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Http</RootNamespace>
     <PackageId>Microsoft.Azure.WebJobs.Extensions.Http</PackageId>
@@ -33,12 +33,12 @@
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.37" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0' or '$(TargetFramework)' == 'net8.0'">
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.9" />
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.37" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0' or '$(TargetFramework)' == 'net8.0'">
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
