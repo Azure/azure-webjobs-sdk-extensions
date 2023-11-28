@@ -105,6 +105,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         }
 
         [Fact]
+        public async Task GetValueAsync_String_DoesNotThrow_WhenResponseIsNotFound()
+        {
+            // Arrange
+            IValueBinder binder = CreateBinder<string>(out Mock<CosmosClient> mockService);
+
+            var mockContainer = new Mock<Container>(MockBehavior.Strict);
+
+            mockService
+                .Setup(m => m.GetContainer(It.Is<string>(d => d == DatabaseName), It.Is<string>(c => c == CollectionName)))
+                .Returns(mockContainer.Object);
+
+            mockContainer
+                .Setup(m => m.ReadItemAsync<JObject>(It.Is<string>(i => i == Id), It.IsAny<PartitionKey>(), It.IsAny<ItemRequestOptions>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(CosmosDBTestUtility.CreateDocumentClientException(HttpStatusCode.NotFound));
+
+            // Act
+            var value = await binder.GetValueAsync();
+
+            // Assert
+            Assert.Null(value);
+            mockService.VerifyAll();
+        }
+
+        [Fact]
         public async Task GetValueAsync_Throws_WhenErrorResponse()
         {
             // Arrange
