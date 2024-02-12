@@ -3,9 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.Routing.Template;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Http
@@ -13,7 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
     public class WebJobsRouteBuilder
     {
         private readonly IWebJobsRouteHandler _handler;
-        private readonly List<IRouter> _routes = new List<IRouter>();
+        private readonly List<Route> _routes = new List<Route>();
         private readonly IInlineConstraintResolver _constraintResolver;
         private readonly string _routePrefix;
 
@@ -75,6 +75,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         {
             var routes = new RouteCollection();
 
+            var routePrecedence = Comparer<Route>.Create(RouteComparison);
+            _routes.Sort(routePrecedence);
+
             foreach (var route in _routes)
             {
                 routes.Add(route);
@@ -88,6 +91,59 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
             return string.IsNullOrEmpty(routePrefix)
                 ? routeTemplate
                 : routePrefix + '/' + routeTemplate;
+        }
+
+        // intelligently order routes by order of specificity:
+        // - prefer static segments over parameterized segments
+        // - prefer more specific (longer) routes over less specific (shorter) routes
+        private static int RouteComparison(Route x, Route y)
+        {
+            var xTemplate = x.ParsedTemplate;
+            var yTemplate = y.ParsedTemplate;
+
+            for (var i = 0; i < xTemplate.Segments.Count; i++)
+            {
+                if (yTemplate.Segments.Count <= i)
+                {
+                    return -1;
+                }
+
+                var xSegment = xTemplate.Segments[i].Parts[0];
+                var ySegment = yTemplate.Segments[i].Parts[0];
+                if (!xSegment.IsParameter && ySegment.IsParameter)
+                {
+                    return -1;
+                }
+                if (xSegment.IsParameter && !ySegment.IsParameter)
+                {
+                    return 1;
+                }
+
+                if (xSegment.IsParameter)
+                {
+                    if (xSegment.InlineConstraints.Count() > ySegment.InlineConstraints.Count())
+                    {
+                        return -1;
+                    }
+                    else if (xSegment.InlineConstraints.Count() < ySegment.InlineConstraints.Count())
+                    {
+                        return 1;
+                    }
+                }
+                else
+                {
+                    var comparison = string.Compare(xSegment.Text, ySegment.Text, StringComparison.OrdinalIgnoreCase);
+                    if (comparison != 0)
+                    {
+                        return comparison;
+                    }
+                }
+            }
+            if (yTemplate.Segments.Count > xTemplate.Segments.Count)
+            {
+                return 1;
+            }
+            return 0;
         }
     }
 }
