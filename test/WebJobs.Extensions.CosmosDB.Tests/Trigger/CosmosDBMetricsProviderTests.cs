@@ -163,5 +163,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             warning = _loggerProvider.GetAllLogMessages().Single(p => p.Level == Microsoft.Extensions.Logging.LogLevel.Warning);
             Assert.Equal("CosmosDBTrigger Exception message: Uh oh again.", warning.FormattedMessage);
         }
+
+        [Fact]
+        public async Task GetMetrics_HandleSplit()
+        {
+            _estimatorIterator
+                .SetupSequence(m => m.HasMoreResults)
+                .Returns(true)
+                .Returns(false);
+
+            _estimatorIterator
+                .Setup(m => m.ReadNextAsync(It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new CosmosException("Partition is gone", HttpStatusCode.Gone, 1002, string.Empty, 0));
+
+            var metrics = await _cosmosDbMetricsProvider.GetMetricsAsync();
+
+            Assert.Equal(1, metrics.PartitionCount);
+            Assert.Equal(1, metrics.RemainingWork);
+            Assert.NotEqual(default(DateTime), metrics.Timestamp);
+        }
     }
 }

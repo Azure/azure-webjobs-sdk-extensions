@@ -61,6 +61,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
                 partitionCount = partitionWorkList.Count;
                 remainingWork = partitionWorkList.Sum(item => item.EstimatedLag);
             }
+            catch (CosmosException cosmosException) when (cosmosException.StatusCode == HttpStatusCode.Gone)
+            {
+                // Temporary handling of split issue described in https://github.com/Azure/azure-cosmos-dotnet-v3/issues/4285
+                // This happens if the main instance is not running, potentially using Consumption Plan
+                // In this case, we return a positive value to make the Scale Controller consider spinning at least a single instance
+                partitionCount = 1;
+                remainingWork = 1;
+            }
             catch (Exception e) when (e is CosmosException || e is InvalidOperationException)
             {
                 if (!TryHandleCosmosException(e))
