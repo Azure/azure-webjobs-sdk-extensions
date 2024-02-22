@@ -18,12 +18,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
         private readonly SendGridAttribute _attribute;
         private readonly ConcurrentQueue<SendGridMessage> _messages = new ConcurrentQueue<SendGridMessage>();
         private readonly ISendGridClient _sendGrid;
+        private readonly ISendGridResponseHandler _responseHandler;
 
-        public SendGridMessageAsyncCollector(SendGridOptions options, SendGridAttribute attribute, ISendGridClient sendGrid)
+        public SendGridMessageAsyncCollector(SendGridOptions options, SendGridAttribute attribute, ISendGridClient sendGrid, ISendGridResponseHandler responseHandler)
         {
             _options = options;
             _attribute = attribute;
             _sendGrid = sendGrid;
+            _responseHandler = responseHandler;
         }
 
         public Task AddAsync(SendGridMessage item, CancellationToken cancellationToken = default(CancellationToken))
@@ -53,7 +55,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Bindings
         {
             while (_messages.TryDequeue(out SendGridMessage message))
             {
-                await _sendGrid.SendMessageAsync(message);
+                var response = await _sendGrid.SendMessageAsync(message, cancellationToken);
+
+                await _responseHandler.HandleAsync(response, cancellationToken);
             }
         }        
     }
