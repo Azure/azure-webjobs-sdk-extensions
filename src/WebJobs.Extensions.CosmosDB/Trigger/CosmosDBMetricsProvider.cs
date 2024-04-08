@@ -17,9 +17,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
         private readonly Container _monitoredContainer;
         private readonly Container _leaseContainer;
         private readonly string _processorName;
+        private readonly int _maxAssignWorkerOnNotFoundCount = 5;
         private int _assignWorkerOnNotFoundCount = 0;
-        private int _maxAssignWorkerOnNotFoundCount = 5;
-
 
         private static readonly Dictionary<string, string> KnownDocumentClientErrors = new Dictionary<string, string>()
         {
@@ -64,11 +63,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
                 partitionCount = partitionWorkList.Count;
                 if (partitionCount == 0)
                 {
-                    // When `partitionCount` is 0, the lease exists, but there have not been any Cosmos DB trigger executions.
-                    // We vote to scale out to keep an assigned worker and wait for the first execution to generate the first checkpoint.                {
                     partitionCount = 1;
                     remainingWork = 1;
-                    _logger.LogWarning(Events.OnScaling, "Partition count is 0, scale out to 1 and wait for the first execution.");
+                    _logger.LogWarning(Events.OnScaling, "PartitionCount is 0, the lease container exists but it has not been initialized, scale out to 1 and wait for the first execution.");
                 }
                 else
                 {
@@ -90,10 +87,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
                 // We vote to scale out, assign a worker to create the lease container.
                 // However, it could also signal an issue with the monitoring container configuration.
                 // As a result, we make a limited number of attempts to create the lease container.
-                _logger.LogWarning(Events.OnScaling, "Trying to create lease for ", e.GetType().ToString(), e.Message);
-                partitionCount = 1;
-                remainingWork = 1;
                 _assignWorkerOnNotFoundCount++;
+                _logger.LogWarning(Events.OnScaling, $"Possible non-exiting lease container detected. Trying to create the lease container attemt '{_assignWorkerOnNotFoundCount}'",
+                    cosmosException.GetType().ToString(), cosmosException.Message);
+                partitionCount = 1;
+                remainingWork = 1;                
             }
             catch (Exception e) when (e is CosmosException || e is InvalidOperationException)
             {
