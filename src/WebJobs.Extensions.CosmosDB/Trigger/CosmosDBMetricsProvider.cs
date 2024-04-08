@@ -17,6 +17,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
         private readonly Container _monitoredContainer;
         private readonly Container _leaseContainer;
         private readonly string _processorName;
+        private int _assignWorkerOnNotFoundCount = 0;
+        private int _maxAssignWorkerOnNotFoundCount = 5;
+
 
         private static readonly Dictionary<string, string> KnownDocumentClientErrors = new Dictionary<string, string>()
         {
@@ -59,7 +62,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
                 }
 
                 partitionCount = partitionWorkList.Count;
-                remainingWork = partitionWorkList.Sum(item => item.EstimatedLag);
+                if (partitionCount == 0)
+                {
+                    // When partitionCount is 0, the lease exists but there have not been any cosmos db trigger executions.
+                    // Vote to scale out to keep 1 assigned worker and wait for first execution to generate the first checkpoint.
+                    partitionCount = 1;
+                    remainingWork = 1;
+                }
+                else
+                {
+                    remainingWork = partitionWorkList.Sum(item => item.EstimatedLag);
+                }
             }
             catch (CosmosException cosmosException) when (cosmosException.StatusCode == HttpStatusCode.Gone)
             {
@@ -68,6 +81,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
                 // In this case, we return a positive value to make the Scale Controller consider spinning at least a single instance
                 partitionCount = 1;
                 remainingWork = 1;
+            }
+            catch (CosmosException cosmosException) when (cosmosException.StatusCode == HttpStatusCode.NotFound 
+                && _assignWorkerOnNotFoundCount < _maxAssignWorkerOnNotFoundCount)
+            {
+                // A "Not found" exception can indicate that the lease container does not exist.
+                // Vote to scale out assign a worker and create lease container.
+                // It can also indicate an issue with the database or container configuration.
+                // Therefore, we attempt to create the lease container a limited number of times.
+                partitionCount = 1;
+                remainingWork = 1;
+                _assignWorkerOnNotFoundCount++;
             }
             catch (Exception e) when (e is CosmosException || e is InvalidOperationException)
             {
