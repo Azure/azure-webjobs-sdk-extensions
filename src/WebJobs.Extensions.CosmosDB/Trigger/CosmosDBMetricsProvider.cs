@@ -88,10 +88,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
                 // However, it could also signal an issue with the monitoring container configuration.
                 // As a result, we make a limited number of attempts to create the lease container.
                 _assignWorkerOnNotFoundCount++;
-                _logger.LogWarning(Events.OnScaling, $"Possible non-exiting lease container detected. Trying to create the lease container attemt '{_assignWorkerOnNotFoundCount}'",
+                _logger.LogWarning(Events.OnScaling, $"Possible non-exiting lease container detected. Trying to create the lease container, attempt '{_assignWorkerOnNotFoundCount}'",
                     cosmosException.GetType().ToString(), cosmosException.Message);
                 partitionCount = 1;
-                remainingWork = 1;                
+                remainingWork = 1;
             }
             catch (Exception e) when (e is CosmosException || e is InvalidOperationException)
             {
