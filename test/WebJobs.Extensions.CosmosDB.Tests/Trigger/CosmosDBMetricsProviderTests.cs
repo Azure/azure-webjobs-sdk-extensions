@@ -78,8 +78,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
 
             var metrics = await _cosmosDbMetricsProvider.GetMetricsAsync();
 
-            Assert.Equal(0, metrics.PartitionCount);
-            Assert.Equal(0, metrics.RemainingWork);
+            Assert.Equal(1, metrics.PartitionCount);
+            Assert.Equal(1, metrics.RemainingWork);
             Assert.NotEqual(default(DateTime), metrics.Timestamp);
 
             _estimatorIterator
@@ -140,12 +140,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
 
             var metrics = (CosmosDBTriggerMetrics)await _cosmosDbMetricsProvider.GetMetricsAsync();
 
-            Assert.Equal(0, metrics.PartitionCount);
-            Assert.Equal(0, metrics.RemainingWork);
+            Assert.Equal(1, metrics.PartitionCount);
+            Assert.Equal(1, metrics.RemainingWork);
             Assert.NotEqual(default(DateTime), metrics.Timestamp);
 
             var warning = _loggerProvider.GetAllLogMessages().Single(p => p.Level == Microsoft.Extensions.Logging.LogLevel.Warning);
-            Assert.Equal("Please check that the CosmosDB container and leases container exist and are listed correctly in Functions config files.", warning.FormattedMessage);
+            Assert.StartsWith("Possible non-exiting lease container detected. Trying to create the lease container, attempt", warning.FormattedMessage);
             _loggerProvider.ClearAllLogMessages();
 
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await _cosmosDbMetricsProvider.GetMetricsAsync());
