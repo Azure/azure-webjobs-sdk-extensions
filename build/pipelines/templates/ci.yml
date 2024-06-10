@@ -62,7 +62,7 @@ jobs:
       Write-Host $testsArray -separator "`n"
 
       # building tests will automatically build the main project as well
-      .\run-tests.ps1 -tests $testsArray -Configuration $(Configuration)
+      .\run-tests.ps1 -tests $testsArray -Configuration "$(Configuration)"
     displayName: "Build and test"    
     env:
       CommitHash: $(Build.SourceVersion)
@@ -146,7 +146,7 @@ jobs:
       Write-Host "Building projects:"
       Write-Host $projectsArray -separator "`n"
 
-      .\Build.ps1 -projects $projectsArray -buildNumber "$(buildNumber)" -packageSuffix "$packageSuffix" -outputDirectory "$(buildOutputDirectory)" -pack $True -Configuration $(Configuration)
+      .\Build.ps1 -projects $projectsArray -buildNumber "$(buildNumber)" -packageSuffix "$packageSuffix" -outputDirectory "$(buildOutputDirectory)" -pack $True -Configuration "$(Configuration)"
     displayName: "Pack build"
 
   - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@2
