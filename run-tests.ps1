@@ -1,25 +1,14 @@
 param(
     [string[]]$tests = @(),
-    [string]$Configuration
+    [string]$Configuration = "Release"
 )
-
-if (-not $Configuration) {
-    Write-Host "Configuration not specified, defaulting to 'Release'" -ForegroundColor Yellow
-    $Configuration = "Release"
-}
 
 function RunTest([string]$project, [bool]$skipBuild = $false, [string]$filter = $null) {
     Write-Host "Running test: $project" -ForegroundColor DarkCyan
     Write-Host "-----------------------------------------------------------------------------" -ForegroundColor DarkCyan
     Write-Host
 
-    $cmdargs = "test", ".\test\$project\$project.csproj", "-v", "m", "--logger", "trx;LogFileName=TEST.xml"
-
-    if ($Configuration)
-    {
-        Write-Host "Adding: --configuration $Configuration"
-        $cmdargs += "--configuration", "$Configuration"
-    }
+    $cmdargs = "test", ".\test\$project\$project.csproj", "-v", "m", "--logger", "trx;LogFileName=TEST.xml", "-c", $Configuration
 
     if ($filter) {
         Write-Host "Adding: --filter $filter"
@@ -60,7 +49,7 @@ Write-Host "Current TimeZone: '$originalTZ'"
 Set-TimeZone -Name "Pacific Standard Time"
 $currentTZ = Get-TimeZone
 Write-Host "Changing TimeZone for Timer tests. Now '$currentTZ'"
-Write-Host "Environment setting Configuration is '$env:Configuration'."
+Write-Host "Environment setting Configuration is '$Configuration'."
 
 dotnet --version
 
