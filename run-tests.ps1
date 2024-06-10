@@ -1,6 +1,12 @@
 param(
-    [string[]]$tests = @()
+    [string[]]$tests = @(),
+    [string]$Configuration
 )
+
+if (-not $Configuration) {
+    Write-Host "Configuration not specified, defaulting to 'Release'" -ForegroundColor Yellow
+    $Configuration = "Release"
+}
 
 function RunTest([string]$project, [bool]$skipBuild = $false, [string]$filter = $null) {
     Write-Host "Running test: $project" -ForegroundColor DarkCyan
@@ -9,10 +15,10 @@ function RunTest([string]$project, [bool]$skipBuild = $false, [string]$filter = 
 
     $cmdargs = "test", ".\test\$project\$project.csproj", "-v", "m", "--logger", "trx;LogFileName=TEST.xml"
 
-    if ($null -ne $env:Configuration)
+    if ($Configuration)
     {
-        Write-Host "Adding: --configuration $env:Configuration"
-        $cmdargs += "--configuration", "$env:Configuration"
+        Write-Host "Adding: --configuration $Configuration"
+        $cmdargs += "--configuration", "$Configuration"
     }
 
     if ($filter) {
