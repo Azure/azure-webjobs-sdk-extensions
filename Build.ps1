@@ -5,8 +5,13 @@
   [bool]$isLocal = $false,
   [string]$outputDirectory = (Join-Path -Path $PSScriptRoot -ChildPath "buildoutput"),
   [bool]$pack = $false,
-  [string]$Configuration = "Release"
+  [string]$Configuration
 )
+
+if (-not $Configuration) {
+  Write-Host "Configuration not specified, defaulting to 'Release'" -ForegroundColor Yellow
+  $Configuration = 'Release'
+}
 
 if ($null -eq $buildNumber) {
   throw 'Parameter $buildNumber cannot be null or empty. Exiting script.'

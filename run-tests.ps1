@@ -1,7 +1,12 @@
 param(
     [string[]]$tests = @(),
-    [string]$Configuration = "Release"
+    [string]$Configuration
 )
+
+if (-not $Configuration) {
+    Write-Host "Configuration not specified, defaulting to 'Release'" -ForegroundColor Yellow
+    $Configuration = 'Release'
+}
 
 function RunTest([string]$project, [bool]$skipBuild = $false, [string]$filter = $null) {
     Write-Host "Running test: $project" -ForegroundColor DarkCyan
