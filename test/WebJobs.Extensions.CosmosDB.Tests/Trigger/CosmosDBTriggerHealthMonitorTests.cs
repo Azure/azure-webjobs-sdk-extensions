@@ -57,10 +57,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             string diagnosticsString = Guid.NewGuid().ToString();
             Mock<CosmosDiagnostics> diagnostics = new Mock<CosmosDiagnostics>();
             diagnostics.Setup(m => m.ToString()).Returns(diagnosticsString);
+            Headers headers = new Headers();
+            string continuationValue = Guid.NewGuid().ToString();
+            headers["x-ms-continuation"] = continuationValue;
             Mock<ChangeFeedProcessorContext> context = new Mock<ChangeFeedProcessorContext>();
             context.Setup(m => m.LeaseToken).Returns(leaseToken);
             context.Setup(m => m.Diagnostics).Returns(diagnostics.Object);
-
+            context.Setup(m => m.Headers).Returns(headers);
             cosmosDBTriggerHealthMonitor.OnChangesDelivered(context.Object);
 
             Assert.Single(mockedLogger.Events);
@@ -68,7 +71,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             LogEvent loggedEvent = mockedLogger.Events[0];
             Assert.Equal(LogLevel.Debug, loggedEvent.LogLevel);
             Assert.Null(loggedEvent.Exception);
-            Assert.True(loggedEvent.Message.Contains(leaseToken) && loggedEvent.Message.Contains(diagnosticsString));
+            Assert.True(loggedEvent.Message.Contains(leaseToken) && loggedEvent.Message.Contains(diagnosticsString) && loggedEvent.Message.Contains(continuationValue));
         }
 
         [Theory]
