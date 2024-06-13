@@ -148,7 +148,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 StartTimer(DateTime.Now);
             }
 
-            _logger.LogDebug($"Timer listener started ({_functionLogName})");
+            _logger.LogDebug("Timer listener started ({functionName})", _functionLogName);
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
@@ -342,7 +342,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 if (ScheduleMonitor != null)
                 {
                     await ScheduleMonitor.UpdateStatusAsync(_timerLookupName, ScheduleStatus);
-                    _logger.LogDebug($"Function '{_functionLogName}' updated status: Last='{ScheduleStatus.Last.ToString("o")}', Next='{ScheduleStatus.Next.ToString("o")}', LastUpdated='{ScheduleStatus.LastUpdated.ToString("o")}'");
+                    _logger.LogDebug("Function '{functionName}' updated status: Last='{lastScheduled}\', Next=\'{nextScheduled}\', LastUpdated=\'{lastUpdated}\'", 
+                        _functionLogName, ScheduleStatus.Last.ToString("o"), ScheduleStatus.Next.ToString("o"), ScheduleStatus.LastUpdated.ToString("o"));
                 }
             }
             finally

@@ -141,7 +141,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             catch (Exception ex)
             {
                 // best effort
-                _logger.LogError(ex, $"Function '{timerName}' failed to update the timer trigger status.");
+                _logger.LogError(ex, "Function '{timerName}' failed to update the timer trigger status.", timerName);
             }
         }
 
