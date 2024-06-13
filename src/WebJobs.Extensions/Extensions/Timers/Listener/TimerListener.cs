@@ -169,7 +169,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             await _invocationLock.WaitAsync();
             _invocationLock.Release();
 
-            _logger.LogDebug($"Timer listener stopped ({_functionLogName})");
+            _logger.LogDebug("Timer listener stopped ({functionLogName})", _functionLogName);
         }
 
         public void Cancel()
