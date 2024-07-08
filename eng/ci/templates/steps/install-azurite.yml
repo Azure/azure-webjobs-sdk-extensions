@@ -1,0 +1,6 @@
+steps:
+
+- pwsh: |
+    npm install -g azurite
+    Start-Process azurite -ArgumentList "--silent --inMemoryPersistence"
+  displayName: 'Install & run azurite'
