@@ -300,9 +300,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
 
-            Assert.Equal(_listener.ScheduleStatus.Last.Kind, DateTimeKind.Local);
-            Assert.Equal(_listener.ScheduleStatus.Next.Kind, DateTimeKind.Local);
-            Assert.Equal(_listener.ScheduleStatus.LastUpdated.Kind, DateTimeKind.Local);
+            Assert.Equal(DateTimeKind.Local, _listener.ScheduleStatus.Last.Kind);
+            Assert.Equal(DateTimeKind.Local, _listener.ScheduleStatus.Next.Kind);
+            Assert.Equal(DateTimeKind.Local, _listener.ScheduleStatus.LastUpdated.Kind);
 
             _listener.Dispose();
         }
@@ -493,21 +493,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [MemberData(nameof(TimerSchedulesAfterDST))]
         public void GetNextInterval_NextAfterDST_ReturnsExpectedValue(TimerSchedule schedule, TimeSpan expectedInterval)
         {
-            // This only works with a DST-supported time zone, so throw a nice exception
-            if (!TimeZoneInfo.Local.SupportsDaylightSavingTime)
-            {
-                throw new InvalidOperationException("This test will only pass if the time zone supports DST.");
-            }
-
             // Running on the Friday before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
             // Note: this test uses Local time, so if you're running in a timezone where
             // DST doesn't transition the test might not be valid.
             // The input schedules will run after DST changes. For some (Cron), they will subtract
             // an hour to account for the shift. For others (Constant), they will not.
-            var now = new DateTime(2018, 3, 9, 18, 0, 0, DateTimeKind.Local);
+            TimeZoneInfo pst = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
+            TimeSpan offset = pst.GetUtcOffset(new DateTime(2018, 3, 9, 18, 0, 0));
+            var now = new DateTimeOffset(2018, 3, 9, 18, 0, 0, offset);
 
-            var next = schedule.GetNextOccurrence(now);
-            var interval = TimerListener.GetNextTimerInterval(next, now, schedule.AdjustForDST);
+            var next = schedule.GetNextOccurrence(now.DateTime);
+            var interval = TimerListener.GetNextTimerInterval(next, now.DateTime, schedule.AdjustForDST, pst);
 
             // One week is normally 168 hours, but it's 167 hours across DST
             Assert.Equal(interval, expectedInterval);
@@ -521,20 +517,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [MemberData(nameof(TimerSchedulesWithinDST))]
         public void GetNextInterval_NextWithinDST_ReturnsExpectedValue(TimerSchedule schedule, TimeSpan expectedInterval)
         {
-            // This only works with a DST-supported time zone, so throw a nice exception
-            if (!TimeZoneInfo.Local.SupportsDaylightSavingTime)
-            {
-                throw new InvalidOperationException("This test will only pass if the time zone supports DST.");
-            }
-
             // Running at 1:59 AM, i.e. one minute before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
             // Note: this test uses Local time, so if you're running in a timezone where
             // DST doesn't transition the test might not be valid.
-            var now = new DateTime(2018, 3, 11, 1, 59, 0, DateTimeKind.Local);
+            TimeZoneInfo pst = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
+            TimeSpan offset = pst.GetUtcOffset(new DateTime(2018, 3, 11, 1, 59, 0));
+            var now = new DateTimeOffset(2018, 3, 11, 1, 59, 0, offset);
 
-            var next = schedule.GetNextOccurrence(now);
+            var next = schedule.GetNextOccurrence(now.DateTime);
 
-            var interval = TimerListener.GetNextTimerInterval(next, now, schedule.AdjustForDST);
+            var interval = TimerListener.GetNextTimerInterval(next, now.DateTime, schedule.AdjustForDST, pst);
             Assert.Equal(expectedInterval, interval);
         }
 

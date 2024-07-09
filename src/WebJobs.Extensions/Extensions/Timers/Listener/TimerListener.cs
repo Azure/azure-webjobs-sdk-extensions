@@ -369,8 +369,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         /// </remarks>
         /// <param name="next">The next schedule occurrence in Local time.</param>
         /// <param name="now">The current Local time.</param>
+        /// <param name="adjustForDST">True to adjust for daylight savings time (if crossing DST boundary), false otherwise.</param>
+        /// <param name="timeZone">The time zone info to use. Will use <see cref="TimeZoneInfo.Local"/> if not supplied.</param>
         /// <returns>The next timer interval.</returns>
-        internal static TimeSpan GetNextTimerInterval(DateTime next, DateTime now, bool adjustForDST)
+        internal static TimeSpan GetNextTimerInterval(DateTime next, DateTime now, bool adjustForDST, TimeZoneInfo timeZone = null)
         {
             TimeSpan nextInterval;
 
@@ -378,14 +380,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             {
                 // For calculations, we use DateTimeOffsets and TimeZoneInfo to ensure we honor time zone
                 // changes (e.g. Daylight Savings Time)
-                var nowOffset = new DateTimeOffset(now, TimeZoneInfo.Local.GetUtcOffset(now));
-                var nextOffset = new DateTimeOffset(next, TimeZoneInfo.Local.GetUtcOffset(next));
+                timeZone = timeZone ?? TimeZoneInfo.Local;
+                var nowOffset = new DateTimeOffset(now, timeZone.GetUtcOffset(now));
+                var nextOffset = new DateTimeOffset(next, timeZone.GetUtcOffset(next));
                 nextInterval = nextOffset - nowOffset;
             }
             else
             {
                 nextInterval = next - now;
             }
+
+            // If the interval happens to be negative (due to slow storage, for example), adjust the
+            // interval back up 1 Tick (Zero is invalid for a timer) for an immediate invocation.
+            if (nextInterval <= TimeSpan.Zero)
+            {
+                nextInterval = TimeSpan.FromTicks(1);
+            }
+
+            return nextInterval;
+        }
+
+        internal static TimeSpan GetNextTimerInterval(DateTimeOffset next, DateTimeOffset now)
+        {
+            TimeSpan nextInterval = next - now;
 
             // If the interval happens to be negative (due to slow storage, for example), adjust the
             // interval back up 1 Tick (Zero is invalid for a timer) for an immediate invocation.
