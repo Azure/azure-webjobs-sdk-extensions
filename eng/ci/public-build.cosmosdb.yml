@@ -7,11 +7,12 @@ trigger:
     - dev
   tags:
     include:
-    - extensions-v*
+    - cosmos-v*
   paths:
-    exclude:
+    include:
     - src/WebJobs.Extensions.CosmosDB/**
     - test/WebJobs.Extensions.CosmosDB.Tests/**
+    - test/WebJobs.Extensions.Tests.Common/**
 
 schedules:
 # Ensure we build nightly to catch any new CVEs and report SDL often.
@@ -27,9 +28,10 @@ pr:
     include:
     - dev
   paths:
-    exclude:
+    include:
     - src/WebJobs.Extensions.CosmosDB/**
     - test/WebJobs.Extensions.CosmosDB.Tests/**
+    - test/WebJobs.Extensions.Tests.Common/**
 
 resources:
   repositories:
@@ -65,4 +67,4 @@ extends:
         - template: /eng/ci/templates/jobs/build.yml@self
           parameters:
             official: false
-            project: /eng/ci/extensions.slnf
+            project: /eng/ci/cosmosdb.slnf

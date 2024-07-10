@@ -7,5 +7,3 @@ variables:
     value: 1
   - name: configuration
     value: release
-  - name: project
-    value: $(Build.SourcesDirectory)/eng/ci/ci.slnf

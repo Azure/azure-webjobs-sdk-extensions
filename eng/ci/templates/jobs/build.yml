@@ -2,7 +2,8 @@ parameters:
 - name: official
   type: boolean
   default: false
-  displayName: Official build
+- name: project
+  type: string
 
 jobs:
 - job: build
@@ -44,14 +45,14 @@ jobs:
       inputs:
         command: custom
         custom: restore
-        projects: $(project)
+        projects: ${{ parameters.project }}
         arguments: -v m -bl:$(log_dir)/restore.binlog
 
     - task: DotNetCoreCLI@2
       displayName: Build
       inputs:
         command: build
-        projects: $(project)
+        projects: ${{ parameters.project }}
         arguments: -c $(configuration) -v m -bl:$(log_dir)/build.binlog --no-restore -p:CommitHash=$(Build.SourceVersion)
 
     - template: /eng/ci/templates/steps/install-azurite.yml@self
@@ -61,7 +62,7 @@ jobs:
       inputs:
         command: test
         arguments: -c $(configuration) --no-build
-        projects: $(project)
+        projects: ${{ parameters.project }}
       env:
         AzureWebJobsStorage: UseDevelopmentStorage=true
         AzureWebJobsDashboard: UseDevelopmentStorage=true
@@ -80,7 +81,7 @@ jobs:
         command: custom
         custom: pack
         arguments: -c $(configuration) -v m -o $(pack_dir) -bl:$(log_dir)/pack.binlog --no-build $(version_suffix)
-        projects: $(project)
+        projects: ${{ parameters.project }}
 
     - ${{ if eq(parameters.official, true) }}:
       - template: ci/sign-files.yml@eng
