@@ -58,4 +58,4 @@ extends:
       - template: /eng/ci/templates/jobs/build.yml@self
         parameters:
           official: true
-          project: /eng/ci/cosmosdb.slnf
+          project: $(Build.SourcesDirectory)/eng/ci/cosmosdb.slnf

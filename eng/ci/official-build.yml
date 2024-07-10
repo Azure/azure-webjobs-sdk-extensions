@@ -57,4 +57,4 @@ extends:
       - template: /eng/ci/templates/jobs/build.yml@self
         parameters:
           official: true
-          project: /eng/ci/extensions.slnf
+          project: $(Build.SourcesDirectory)/eng/ci/extensions.slnf
