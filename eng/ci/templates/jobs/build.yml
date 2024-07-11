@@ -55,7 +55,7 @@ jobs:
         projects: ${{ parameters.project }}
         arguments: -c $(configuration) -v m -bl:$(log_dir)/build.binlog --no-restore -p:CommitHash=$(Build.SourceVersion)
 
-    - template: /eng/ci/templates/steps/install-azurite.yml@self
+    - template: /eng/ci/templates/steps/start-emulators.yml@self
 
     - task: DotNetCoreCLI@2
       displayName: Unit tests
@@ -64,8 +64,10 @@ jobs:
         arguments: -c $(configuration) --no-build
         projects: ${{ parameters.project }}
       env:
-        AzureWebJobsStorage: UseDevelopmentStorage=true
-        AzureWebJobsDashboard: UseDevelopmentStorage=true
+        AzureWebJobsStorage: $(Storage)
+        AzureWebJobsDashboard: $(Storage)
+        AzureWebJobsCosmosDBConnectionString: $(CosmosDB)
+        ConnectionStrings__CosmosDB: $(CosmosDB)
 
     - ${{ if eq(parameters.official, true) }}:
       - template: ci/sign-files.yml@eng
