@@ -35,7 +35,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             _loggerProvider.ClearAllLogMessages();
 
             using var host = BuildHost(typeof(EndToEndTestClass));
-            using var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName, createLeaseContainer: true);
+            using var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName);
 
             await host.StartAsync();
             try
@@ -94,7 +94,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             _loggerProvider.ClearAllLogMessages();
             using (var host = BuildHost(typeof(EndToEndCancellationTestClass)))
             {
-                using var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName, createLeaseContainer: true);
+                using var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName);
                 await host.StartAsync();
 
                 // Insert an item to ensure the function is triggered
@@ -108,8 +108,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             // Start the host again and wait for the logs to show the cancelled item was reprocessed
             using (var host = BuildHost(typeof(EndToEndCancellationTestClass)))
             {
+                using var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName);
                 await host.StartAsync();
-                var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName);
 
                 try
                 {
@@ -133,17 +133,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         }
 
         public static async Task<CosmosClient> InitializeDocumentClientAsync(
-            IConfiguration configuration, string databaseName, string collectionName, bool createLeaseContainer = false)
+            IConfiguration configuration, string databaseName, string collectionName)
         {
             var client = new CosmosClient(configuration.GetConnectionStringOrSetting(Constants.DefaultConnectionStringName).Value);
 
             Database database = await client.CreateDatabaseIfNotExistsAsync(databaseName);
-            await database.CreateContainerIfNotExistsAsync(collectionName, "/id");
-
-            if (createLeaseContainer)
-            {
-                await database.CreateContainerIfNotExistsAsync(LeaseCollectionName, "/id");
-            }
+            await database.CreateContainerIfNotExistsAsync(collectionName, "/_partitionKey");
+            await database.CreateContainerIfNotExistsAsync(LeaseCollectionName, "/id");
 
             return client;
         }
@@ -222,7 +218,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             [NoAutomaticTrigger]
             public static void Inputs(
                 [QueueTrigger("NotUsed")] QueueItem item,
-                [CosmosDB(DatabaseName, CollectionName, Id = "{DocumentId}", PartitionKey = "{DocumentId}")] JObject document,
+                [CosmosDB(DatabaseName, CollectionName, Id = "{DocumentId}")] JObject document,
                 [CosmosDB(DatabaseName, CollectionName, SqlQuery = "SELECT * FROM c where c.input = {Input}")] IEnumerable<Item> documents,
                 ILogger log)
             {

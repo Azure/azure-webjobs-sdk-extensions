@@ -112,7 +112,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 scaleOptions.ScaleMetricsSampleInterval = TimeSpan.FromSeconds(1);
             });
 
-            using (var client = await CosmosDBEndToEndTests.InitializeDocumentClientAsync(configuration, DatabaseName, CollectionName, createLeaseContainer: true))
+            using (var client = await CosmosDBEndToEndTests.InitializeDocumentClientAsync(configuration, DatabaseName, CollectionName))
             {
                 var container = client.GetDatabase(DatabaseName).GetContainer(CollectionName);
 
