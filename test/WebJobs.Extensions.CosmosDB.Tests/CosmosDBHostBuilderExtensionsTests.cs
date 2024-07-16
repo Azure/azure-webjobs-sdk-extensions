@@ -222,7 +222,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             CosmosDBExtensionConfigProvider cosmosDBExtensionConfigProvider = (CosmosDBExtensionConfigProvider)extensionConfig;
             CosmosClient dummyClient = cosmosDBExtensionConfigProvider.GetService(Constants.DefaultConnectionStringName, userAgent: "knownSuffix");
-            Assert.Equal(dummyClient.ClientOptions.ApplicationName, "knownSuffix");
+            Assert.Equal("knownSuffix", dummyClient.ClientOptions.ApplicationName);
         }
 
         private class CustomFactory : ICosmosDBSerializerFactory

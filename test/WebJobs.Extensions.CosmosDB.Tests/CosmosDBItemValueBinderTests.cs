@@ -210,7 +210,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 .Setup(m => m.GetContainer(It.Is<string>(d => d == DatabaseName), It.Is<string>(c => c == CollectionName)))
                 .Returns(mockContainer.Object);
 
-
             CosmosDBAttribute attribute = new CosmosDBAttribute(DatabaseName, CollectionName)
             {
                 Id = Id

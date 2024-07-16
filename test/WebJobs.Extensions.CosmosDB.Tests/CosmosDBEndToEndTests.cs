@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,58 +33,58 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         public async Task CosmosDBEndToEnd()
         {
             _loggerProvider.ClearAllLogMessages();
-            using (var host = await StartHostAsync(typeof(EndToEndTestClass)))
+
+            using var host = BuildHost(typeof(EndToEndTestClass));
+            using var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName, createLeaseContainer: true);
+
+            await host.StartAsync();
+            try
             {
-                var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName);
+                // Call the outputs function directly, which will write out 3 documents 
+                // using with the 'input' property set to the value we provide.
+                var input = Guid.NewGuid().ToString();
+                var parameter = new Dictionary<string, object>();
+                parameter["input"] = input;
 
-                try
+                await host.GetJobHost().CallAsync(nameof(EndToEndTestClass.Outputs), parameter);
+
+                // Also insert a new Document so we can query on it.
+                var response = await client.GetContainer(DatabaseName, CollectionName).UpsertItemAsync<Item>(new Item() { Id = Guid.NewGuid().ToString() });
+
+                // Now craft a queue message to send to the Inputs, which will pull these documents.
+                var queueInput = new QueueItem
                 {
-                    // Call the outputs function directly, which will write out 3 documents 
-                    // using with the 'input' property set to the value we provide.
-                    var input = Guid.NewGuid().ToString();
-                    var parameter = new Dictionary<string, object>();
-                    parameter["input"] = input;
+                    DocumentId = response.Resource.Id,
+                    Input = input
+                };
 
-                    await host.GetJobHost().CallAsync(nameof(EndToEndTestClass.Outputs), parameter);
+                parameter.Clear();
+                parameter["item"] = JsonConvert.SerializeObject(queueInput);
 
-                    // Also insert a new Document so we can query on it.
-                    var response = await client.GetContainer(DatabaseName, CollectionName).UpsertItemAsync<Item>(new Item() { Id = Guid.NewGuid().ToString() });
+                await host.GetJobHost().CallAsync(nameof(EndToEndTestClass.Inputs), parameter);
 
-                    // Now craft a queue message to send to the Inputs, which will pull these documents.
-                    var queueInput = new QueueItem
-                    {
-                        DocumentId = response.Resource.Id,
-                        Input = input
-                    };
-
-                    parameter.Clear();
-                    parameter["item"] = JsonConvert.SerializeObject(queueInput);
-
-                    await host.GetJobHost().CallAsync(nameof(EndToEndTestClass.Inputs), parameter);
-
-                    await TestHelpers.Await(() =>
-                    {
-                        var logMessages = _loggerProvider.GetAllLogMessages();
-                        return logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")) == 4
-                            && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with string called!")) == 4
-                            && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with retry called!")) == 8
-                            && logMessages.Count(p => p.Exception != null && p.Exception.InnerException.Message.Contains("Test exception") && !p.Category.StartsWith("Host.Results")) > 0;
-                    });
-
-                    // Make sure the Options were logged. Just check a few values.
-                    string optionsMessage = _loggerProvider.GetAllLogMessages()
-                        .Single(m => m.Category == "Microsoft.Azure.WebJobs.Hosting.OptionsLoggingService" && m.FormattedMessage.StartsWith(nameof(CosmosDBOptions)))
-                        .FormattedMessage;
-                    JObject loggedOptions = JObject.Parse(optionsMessage.Substring(optionsMessage.IndexOf(Environment.NewLine)));
-                    Assert.Null(loggedOptions["ConnectionMode"].Value<string>());
-                }
-                finally
+                await TestHelpers.Await(() =>
                 {
-                    // Clean-up leases
-                    await CleanUpLeaseContainer(client);
+                    var logMessages = _loggerProvider.GetAllLogMessages();
+                    return logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")) == 4
+                        && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with string called!")) == 4
+                        && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger with retry called!")) == 8
+                        && logMessages.Count(p => p.Exception != null && p.Exception.InnerException.Message.Contains("Test exception") && !p.Category.StartsWith("Host.Results")) > 0;
+                });
 
-                    await host.StopAsync();
-                }
+                // Make sure the Options were logged. Just check a few values.
+                string optionsMessage = _loggerProvider.GetAllLogMessages()
+                    .Single(m => m.Category == "Microsoft.Azure.WebJobs.Hosting.OptionsLoggingService" && m.FormattedMessage.StartsWith(nameof(CosmosDBOptions)))
+                    .FormattedMessage;
+                JObject loggedOptions = JObject.Parse(optionsMessage.Substring(optionsMessage.IndexOf(Environment.NewLine)));
+                Assert.Null(loggedOptions["ConnectionMode"].Value<string>());
+            }
+            finally
+            {
+                // Clean-up leases
+                await CleanUpLeaseContainer(client);
+
+                await host.StopAsync();
             }
         }
 
@@ -93,9 +92,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         public async Task CosmosDBEndToEndCancellation()
         {
             _loggerProvider.ClearAllLogMessages();
-            using (var host = await StartHostAsync(typeof(EndToEndCancellationTestClass)))
+            using (var host = BuildHost(typeof(EndToEndCancellationTestClass)))
             {
-                var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName);
+                using var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName, createLeaseContainer: true);
+                await host.StartAsync();
 
                 // Insert an item to ensure the function is triggered
                 var response = await client.GetContainer(DatabaseName, CollectionName).UpsertItemAsync<Item>(new Item() { Id = Guid.NewGuid().ToString() });
@@ -106,20 +106,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
 
             // Start the host again and wait for the logs to show the cancelled item was reprocessed
-            using (var host = await StartHostAsync(typeof(EndToEndCancellationTestClass)))
+            using (var host = BuildHost(typeof(EndToEndCancellationTestClass)))
             {
+                await host.StartAsync();
                 var client = await InitializeDocumentClientAsync(host.Services.GetRequiredService<IConfiguration>(), DatabaseName, CollectionName);
 
                 try
                 {
                     await TestHelpers.Await(() =>
-                        {
-                            var logMessages = _loggerProvider.GetAllLogMessages();
-                            return logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")) > 1
-                                && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger canceled!")) == 1
-                                && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Saw the first document again!")) == 1
-                                && logMessages.Count(p => p.Exception is TaskCanceledException) > 0;
-                        });
+                    {
+                        var logMessages = _loggerProvider.GetAllLogMessages();
+                        return logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger called!")) > 1
+                            && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Trigger canceled!")) == 1
+                            && logMessages.Count(p => p.FormattedMessage != null && p.FormattedMessage.Contains("Saw the first document again!")) == 1
+                            && logMessages.Count(p => p.Exception is TaskCanceledException) > 0;
+                    });
                 }
                 finally
                 {
@@ -131,19 +132,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
         }
 
-        public static async Task<CosmosClient> InitializeDocumentClientAsync(IConfiguration configuration, string databaseName, string collectionName)
+        public static async Task<CosmosClient> InitializeDocumentClientAsync(
+            IConfiguration configuration, string databaseName, string collectionName, bool createLeaseContainer = false)
         {
             var client = new CosmosClient(configuration.GetConnectionStringOrSetting(Constants.DefaultConnectionStringName).Value);
 
             Database database = await client.CreateDatabaseIfNotExistsAsync(databaseName);
+            await database.CreateContainerIfNotExistsAsync(collectionName, "/id");
 
-            try
+            if (createLeaseContainer)
             {
-                await database.GetContainer(collectionName).ReadContainerAsync();
-            }
-            catch (CosmosException cosmosException) when (cosmosException.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                await database.CreateContainerAsync(collectionName, "/id");
+                await database.CreateContainerIfNotExistsAsync(LeaseCollectionName, "/id");
             }
 
             return client;
@@ -168,7 +167,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
         }
 
-        private async Task<IHost> StartHostAsync(Type testType)
+        private IHost BuildHost(Type testType)
         {
             ExplicitTypeLocator locator = new ExplicitTypeLocator(testType);
 
@@ -194,7 +193,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 })
                 .Build();
 
-            await host.StartAsync();
             return host;
         }
 
@@ -224,7 +222,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             [NoAutomaticTrigger]
             public static void Inputs(
                 [QueueTrigger("NotUsed")] QueueItem item,
-                [CosmosDB(DatabaseName, CollectionName, Id = "{DocumentId}")] JObject document,
+                [CosmosDB(DatabaseName, CollectionName, Id = "{DocumentId}", PartitionKey = "{DocumentId}")] JObject document,
                 [CosmosDB(DatabaseName, CollectionName, SqlQuery = "SELECT * FROM c where c.input = {Input}")] IEnumerable<Item> documents,
                 ILogger log)
             {
