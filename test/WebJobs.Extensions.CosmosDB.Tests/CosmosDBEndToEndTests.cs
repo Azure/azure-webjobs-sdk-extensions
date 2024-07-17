@@ -139,7 +139,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             Database database = await client.CreateDatabaseIfNotExistsAsync(databaseName);
             await database.CreateContainerIfNotExistsAsync(collectionName, "/_partitionKey");
-            await database.CreateContainerIfNotExistsAsync(LeaseCollectionName, "/id");
+            await database.CreateContainerIfNotExistsAsync(LeaseCollectionName, "/_partitionKey");
 
             return client;
         }
