@@ -6,7 +6,6 @@ using System.Linq;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Extensions.Logging;
-using NCrontab;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
@@ -195,6 +194,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         public class CustomSchedule : TimerSchedule
         {
             public override bool AdjustForDST => true;
+
+            public override bool IsInterval => false;
 
             public override DateTime GetNextOccurrence(DateTime now)
             {

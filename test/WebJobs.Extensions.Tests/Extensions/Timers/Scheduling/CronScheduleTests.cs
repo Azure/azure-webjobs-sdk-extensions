@@ -13,7 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         public void GetNextOccurrence_NowEqualToNext_ReturnsCorrectValue()
         {
             CronSchedule.TryCreate("0 * * * * *", out CronSchedule schedule);
-                
+
             var now = schedule.GetNextOccurrence(DateTime.Now);
             var next = schedule.GetNextOccurrence(now);
 
@@ -66,6 +66,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
 
             Assert.Null(schedule);
             Assert.False(result);
+        }
+
+        [Theory]
+        [InlineData("* * * * * *", true)]
+        [InlineData("0 * * * * *", true)]
+        [InlineData("0 0 * * * *", true)]
+        [InlineData("0 0-15 * * * *", true)]
+        [InlineData("0 0 * * * 0", true)]
+        [InlineData("0 0 1-3 * * 0", true)]
+        [InlineData("0 0 0 * * *", false)]
+        [InlineData("0 0 0 1 * *", false)]
+        [InlineData("0 0 0 1 1 *", false)]
+        [InlineData("0 0 0 * * 1", false)]
+        [InlineData("* * * * *", true)]
+        [InlineData("0 * * * *", true)]
+        [InlineData("0-15 * * * *", true)]
+        [InlineData("0 * * * 0", true)]
+        [InlineData("0 1-3 * * 0", true)]
+        [InlineData("0 0 * * *", false)]
+        [InlineData("0 0 1 * *", false)]
+        [InlineData("0 0 1 1 *", false)]
+        [InlineData("0 0 * * 1", false)]
+        public void IsInterval_ReturnsExpectedValue(string expression, bool expected)
+        {
+            CronSchedule.TryCreate(expression, out CronSchedule cronSchedule);
+
+            Assert.Equal(expected, cronSchedule.IsInterval);
         }
     }
 }

@@ -28,6 +28,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         // based on whether the next time falls across a DST boundary.
         public override bool AdjustForDST => false;
 
+        /// <inheritdoc />
+        public override bool IsInterval => true;
+
         /// <inheritdoc/>
         public override DateTime GetNextOccurrence(DateTime now)
         {

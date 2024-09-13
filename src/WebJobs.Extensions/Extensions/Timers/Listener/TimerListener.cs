@@ -94,8 +94,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             bool isPastDue = false;
 
             // we use DateTime.Now rather than DateTime.UtcNow to allow the local machine to set the time zone. In Azure this will be
-            // UTC by default, but can be configured to use any time zone if it makes scheduling easier.
-            DateTime now = DateTime.Now;
+            // UTC by default, but can be configured to use any time zone if it makes scheduling easier.                        
+            DateTimeOffset now = DateTimeOffset.Now;
+
             Logger.ScheduleAndTimeZone(_logger, _functionLogName, _schedule, TimeZoneInfo.Local.DisplayName);
 
             if (ScheduleMonitor != null)
@@ -104,7 +105,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // If we have, invoke it immediately.
                 ScheduleStatus = await ScheduleMonitor.GetStatusAsync(_timerLookupName);
                 Logger.InitialStatus(_logger, _functionLogName, ScheduleStatus?.Last.ToString("o"), ScheduleStatus?.Next.ToString("o"), ScheduleStatus?.LastUpdated.ToString("o"));
-                TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerLookupName, now, _schedule, ScheduleStatus);
+                TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerLookupName, now.LocalDateTime, _schedule, ScheduleStatus);
                 isPastDue = pastDueDuration != TimeSpan.Zero;
             }
 
@@ -114,7 +115,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 ScheduleStatus = new ScheduleStatus
                 {
                     Last = default(DateTime).ToLocalTime(),
-                    Next = _schedule.GetNextOccurrence(now),
+                    Next = _schedule.GetNextOccurrence(now.LocalDateTime),
                     LastUpdated = default(DateTime).ToLocalTime()
                 };
             }
@@ -145,7 +146,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             else
             {
                 // start the regular schedule
-                StartTimer(DateTime.Now);
+                StartTimer(DateTimeOffset.Now);
             }
 
             _logger.LogDebug($"Timer listener started ({_functionLogName})");
@@ -255,7 +256,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             {
                 if (!timerStarted)
                 {
-                    StartTimer(DateTime.Now);
+                    StartTimer(DateTimeOffset.Now);
                 }
             }
         }
@@ -351,9 +352,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             }
         }
 
-        private void StartTimer(DateTime now)
+        private void StartTimer(DateTimeOffset now)
         {
-            var nextInterval = GetNextTimerInterval(ScheduleStatus.Next, now, _schedule.AdjustForDST);
+            var nextInterval = GetNextTimerInterval(ScheduleStatus.Next, now, _schedule.AdjustForDST, _schedule.IsInterval, _logger);
             StartTimer(nextInterval);
         }
 
@@ -372,7 +373,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         /// <param name="adjustForDST">True to adjust for daylight savings time (if crossing DST boundary), false otherwise.</param>
         /// <param name="timeZone">The time zone info to use. Will use <see cref="TimeZoneInfo.Local"/> if not supplied.</param>
         /// <returns>The next timer interval.</returns>
-        internal static TimeSpan GetNextTimerInterval(DateTime next, DateTime now, bool adjustForDST, TimeZoneInfo timeZone = null)
+        internal static TimeSpan GetNextTimerInterval(DateTime next, DateTimeOffset now, bool adjustForDST, bool isInterval, ILogger logger, TimeZoneInfo timeZone = null)
         {
             TimeSpan nextInterval;
 
@@ -381,13 +382,39 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // For calculations, we use DateTimeOffsets and TimeZoneInfo to ensure we honor time zone
                 // changes (e.g. Daylight Savings Time)
                 timeZone = timeZone ?? TimeZoneInfo.Local;
-                var nowOffset = new DateTimeOffset(now, timeZone.GetUtcOffset(now));
-                var nextOffset = new DateTimeOffset(next, timeZone.GetUtcOffset(next));
-                nextInterval = nextOffset - nowOffset;
+
+                // Note: An ambigious time is one one where a local time maps to multiple UTC times due to a time zone change. For example, 
+                // in the Pacific time zone, there are two 1:30am DateTimes when transitioning from Daylight Savings Time to Standard Time.
+                // Our 'next' calculation will never handle this correctly as it does not consider time zones.
+                bool isNowAmbiguous = timeZone.IsAmbiguousTime(now.LocalDateTime);
+                bool isNextAmbiguous = timeZone.IsAmbiguousTime(next);
+
+                // Note: If a time is ambiguous, GetUtcOffset() always returns the Standard (not Daylight Savings) offset.
+                var nextTimeZoneOffset = timeZone.GetUtcOffset(next);
+
+                // Only use this calculation if this is an interval schedule (as opposed to a point-in-time schedule).
+                if (isInterval && (isNowAmbiguous || isNextAmbiguous) && (nextTimeZoneOffset != now.Offset))
+                {
+                    // This scenario covers calculations where either of the times in our calculation are ambiguous and cross the
+                    // 'Daylight Savings Time' -> 'Standard Time' boundary.
+                    // In order to calculate the next interval correctly in this scenario, we need to ignore the time zones.
+                    nextInterval = next - now.LocalDateTime;
+
+                    DateTime ambiguousTime = isNowAmbiguous ? now.LocalDateTime : next;
+                    Logger.AmbiguousTimeAdjustment(logger, ambiguousTime, timeZone.DisplayName);
+                }
+                else
+                {
+                    // This scenario covers calculations involving all other scenarios, including where the current time is in one 
+                    // offset (e.g. Standard time) and the next occurrence is in a different offset (e.g. Daylight Savings time).
+                    var nextOffset = new DateTimeOffset(next, nextTimeZoneOffset);
+                    nextInterval = nextOffset - now;
+                }
             }
             else
             {
-                nextInterval = next - now;
+                // Ignore the offset and time zone if we're not adjusting for DST
+                nextInterval = next - now.LocalDateTime;
             }
 
             // If the interval happens to be negative (due to slow storage, for example), adjust the

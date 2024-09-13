@@ -13,6 +13,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     /// </summary>
     public class CronSchedule : TimerSchedule
     {
+        private readonly bool _isInterval;
         private readonly CrontabSchedule _cronSchedule;
 
         /// <summary>
@@ -22,6 +23,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         public CronSchedule(CrontabSchedule schedule)
         {
             _cronSchedule = schedule;
+            var cron = schedule.ToString();
+            var parts = cron.Split(' ');
+
+            _isInterval = false;
+
+            // in cron expressions, if any the first 3 parts (2 if not using seconds)
+            // contain "*", "-", or "/" then it is considered an interval
+            int partsToCheck = parts.Length == 6 ? 3 : 2;
+            for (int i = 0; i < partsToCheck; i++)
+            {
+                var part = parts[i];
+                if (part.Contains("*") ||
+                    part.Contains("/") ||
+                    part.Contains("-"))
+                {
+                    _isInterval = true;
+                    break;
+                }
+            }
         }
 
         internal CrontabSchedule InnerSchedule
@@ -34,6 +54,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
 
         /// <inheritdoc/>
         public override bool AdjustForDST => true;
+
+        /// <inheritdoc />
+        public override bool IsInterval => _isInterval;
+
+        // settable for testing
+        internal TimeZoneInfo TimeZoneInfo { get; set; } = TimeZoneInfo.Local;
 
         /// <inheritdoc/>
         public override DateTime GetNextOccurrence(DateTime now)

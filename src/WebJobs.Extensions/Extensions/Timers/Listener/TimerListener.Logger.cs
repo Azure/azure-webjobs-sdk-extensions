@@ -34,6 +34,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 LoggerMessage.Define<string, TimeSpan>(LogLevel.Debug, new EventId(6, nameof(TimerStarted)),
                     "Timer for '{functionName}' started with interval '{interval}'.");
 
+            private static readonly Action<ILogger, DateTime, string, Exception> _ambiguousTimeAdjustment =
+                LoggerMessage.Define<DateTime, string>(LogLevel.Debug, new EventId(7, nameof(AmbiguousTimeAdjustment)),
+                    "The time '{ambiguousTime}' is ambiguous in the time zone '{timeZone}' due to Daylight Savings Time. Ignoring time zone offsets to calculate correct interval.");
+
             public static void ScheduleAndTimeZone(ILogger logger, string functionName, TimerSchedule schedule, string timeZone) =>
                 _scheduleAndTimeZone(logger, functionName, schedule, timeZone, null);
 
@@ -51,6 +55,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             public static void TimerStarted(ILogger logger, string functionName, TimeSpan interval) =>
                 _timerStarted(logger, functionName, interval, null);
+
+            public static void AmbiguousTimeAdjustment(ILogger logger, DateTime ambiguousTime, string timeZone) =>
+                _ambiguousTimeAdjustment(logger, ambiguousTime, timeZone, null);
         }
     }
 }
