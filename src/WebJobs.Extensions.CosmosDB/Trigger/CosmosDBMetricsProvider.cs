@@ -128,10 +128,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
 
                 _logger.LogWarning(Events.OnScaling, errormsg);
             }
-            catch (Exception e)
-            {
-                _logger.LogWarning(Events.OnScaling, "Exception occurred while obtaining metrics for CosmosDB {0}: {1}.", e.GetType().ToString(), e.ToString());
-            }
 
             return new CosmosDBTriggerMetrics
             {
