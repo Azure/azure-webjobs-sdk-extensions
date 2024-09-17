@@ -59,7 +59,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public void OnChangesDelivered(ChangeFeedProcessorContext context)
         {
-            this.logger.LogDebug(Events.OnDelivery, "Events delivered to lease {LeaseToken} with diagnostics {Diagnostics}", context.LeaseToken, context.Diagnostics);
+            this.logger.LogDebug(Events.OnDelivery, "Events delivered to lease {LeaseToken}, Continuation {Continuation} with diagnostics {Diagnostics}", context.LeaseToken, context.Headers.ContinuationToken, context.Diagnostics);
         }
     }
 }

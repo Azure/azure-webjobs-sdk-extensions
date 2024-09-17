@@ -44,28 +44,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
             PartitionKey partitionKey = _context.ResolvedAttribute.PartitionKey == null ? PartitionKey.None : new PartitionKey(_context.ResolvedAttribute.PartitionKey);
 
-            // Strings need to be handled differently.
-            if (typeof(T) != typeof(string))
+            try
             {
-                try
+                // Strings need to be handled differently.
+                if (typeof(T) != typeof(string))
                 {
                     document = await _context.Service.GetContainer(_context.ResolvedAttribute.DatabaseName, _context.ResolvedAttribute.ContainerName)
                         .ReadItemAsync<T>(_context.ResolvedAttribute.Id, partitionKey);
 
                     _originalItem = JObject.FromObject(document);
                 }
-                catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+                else
                 {
-                    // ignore not found; we'll return null below
+                    JObject jObject = await _context.Service.GetContainer(_context.ResolvedAttribute.DatabaseName, _context.ResolvedAttribute.ContainerName)
+                            .ReadItemAsync<JObject>(_context.ResolvedAttribute.Id, partitionKey);
+                    _originalItem = jObject;
+
+                    document = _originalItem.ToString(Formatting.None) as T;
                 }
             }
-            else
+            catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
-                JObject jObject = await _context.Service.GetContainer(_context.ResolvedAttribute.DatabaseName, _context.ResolvedAttribute.ContainerName)
-                        .ReadItemAsync<JObject>(_context.ResolvedAttribute.Id, partitionKey);
-                _originalItem = jObject;
-
-                document = _originalItem.ToString(Formatting.None) as T;
+                // ignore not found; we'll return null below
             }
 
             return document;

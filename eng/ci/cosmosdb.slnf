@@ -1,0 +1,9 @@
+{
+  "solution": {
+    "path": "..\\..\\WebJobs.Extensions.sln",
+    "projects": [
+      "src\\WebJobs.Extensions.CosmosDB\\WebJobs.Extensions.CosmosDB.csproj",
+      "test\\WebJobs.Extensions.CosmosDB.Tests\\WebJobs.Extensions.CosmosDB.Tests.csproj"
+    ]
+  }
+}

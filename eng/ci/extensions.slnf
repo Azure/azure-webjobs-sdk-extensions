@@ -1,0 +1,18 @@
+{
+  "solution": {
+    "path": "..\\..\\WebJobs.Extensions.sln",
+    "projects": [
+      "src\\WebJobs.Extensions.Http\\WebJobs.Extensions.Http.csproj",
+      "src\\WebJobs.Extensions.SendGrid\\WebJobs.Extensions.SendGrid.csproj",
+      "src\\WebJobs.Extensions.Timers.Storage\\WebJobs.Extensions.Timers.Storage.csproj",
+      "src\\WebJobs.Extensions.Twilio\\WebJobs.Extensions.Twilio.csproj",
+      "src\\WebJobs.Extensions\\WebJobs.Extensions.csproj",
+      "test\\WebJobs.Extensions.Http.Tests\\WebJobs.Extensions.Http.Tests.csproj",
+      "test\\WebJobs.Extensions.SendGrid.Tests\\WebJobs.Extensions.SendGrid.Tests.csproj",
+      "test\\WebJobs.Extensions.Tests.Common\\WebJobs.Extensions.Tests.Common.csproj",
+      "test\\WebJobs.Extensions.Tests\\WebJobs.Extensions.Tests.csproj",
+      "test\\WebJobs.Extensions.Timers.Storage.Tests\\WebJobs.Extensions.Timers.Storage.Tests.csproj",
+      "test\\WebJobs.Extensions.Twilio.Tests\\WebJobs.Extensions.Twilio.Tests.csproj"
+    ]
+  }
+}
