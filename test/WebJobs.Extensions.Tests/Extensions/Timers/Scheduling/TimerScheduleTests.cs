@@ -195,8 +195,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         {
             public override bool AdjustForDST => true;
 
-            public override bool IsInterval => false;
-
             public override DateTime GetNextOccurrence(DateTime now)
             {
                 return new DateTime(2015, 5, 22, 9, 45, 00);

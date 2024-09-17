@@ -47,7 +47,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             string result = TimerInfo.FormatNextOccurrences(cronSchedule, 10, now: now.DateTime, pst);
 
             var expectedDates = Enumerable.Range(11, 10)
-                .Select(hour => new DateTime(2015, 09, 16, hour, 00, 00))
+                .Select(hour => new DateTime(2015, 09, 16, hour, 00, 00, DateTimeKind.Local))
                 .Select(dateTime => $"{DateFormatter(dateTime, pst)}\r\n")
                 .ToArray();
 

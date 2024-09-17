@@ -105,7 +105,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // If we have, invoke it immediately.
                 ScheduleStatus = await ScheduleMonitor.GetStatusAsync(_timerLookupName);
                 Logger.InitialStatus(_logger, _functionLogName, ScheduleStatus?.Last.ToString("o"), ScheduleStatus?.Next.ToString("o"), ScheduleStatus?.LastUpdated.ToString("o"));
-                TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerLookupName, now.LocalDateTime, _schedule, ScheduleStatus);
+                TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerLookupName, now, _schedule, ScheduleStatus);
                 isPastDue = pastDueDuration != TimeSpan.Zero;
             }
 
@@ -114,9 +114,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // no schedule status has been stored yet, so initialize
                 ScheduleStatus = new ScheduleStatus
                 {
-                    Last = default(DateTime).ToLocalTime(),
+                    Last = default(DateTime),
                     Next = _schedule.GetNextOccurrence(now.LocalDateTime),
-                    LastUpdated = default(DateTime).ToLocalTime()
+                    LastUpdated = default(DateTime)
                 };
             }
 
@@ -267,7 +267,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         /// <param name="invocationTime">The time of the invocation, likely DateTime.Now.</param>
         /// <param name="isPastDue">True if the invocation is because the invocation is due to a past due timer.</param>
         /// <param name="runOnStartup">True if the invocation is because the timer is configured to run on startup.</param>
-        internal async Task InvokeJobFunction(DateTime invocationTime, bool isPastDue = false, bool runOnStartup = false, DateTime? originalSchedule = null)
+        internal async Task InvokeJobFunction(DateTimeOffset invocationTime, bool isPastDue = false, bool runOnStartup = false, DateTimeOffset? originalSchedule = null)
         {
             try
             {
@@ -325,7 +325,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // adjust the invocation time forward for the purposes of calculating the next occurrence.
                 // Without this, it's possible to set the 'Next' value to the same time twice in a row, 
                 // which results in duplicate triggers if the site restarts.
-                DateTime adjustedInvocationTime = invocationTime;
+                DateTimeOffset adjustedInvocationTime = invocationTime;
                 if (!isPastDue && !runOnStartup && ScheduleStatus?.Next > invocationTime)
                 {
                     adjustedInvocationTime = ScheduleStatus.Next;
@@ -335,9 +335,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // consider this a schedule change when the host next starts.
                 ScheduleStatus = new ScheduleStatus
                 {
-                    Last = adjustedInvocationTime,
-                    Next = _schedule.GetNextOccurrence(adjustedInvocationTime),
-                    LastUpdated = adjustedInvocationTime
+                    Last = adjustedInvocationTime.LocalDateTime,
+                    Next = _schedule.GetNextOccurrence(adjustedInvocationTime.LocalDateTime),
+                    LastUpdated = adjustedInvocationTime.LocalDateTime
                 };
 
                 if (ScheduleMonitor != null)
@@ -354,7 +354,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
         private void StartTimer(DateTimeOffset now)
         {
-            var nextInterval = GetNextTimerInterval(ScheduleStatus.Next, now, _schedule.AdjustForDST, _schedule.IsInterval, _logger);
+            var nextInterval = GetNextTimerInterval(ScheduleStatus.Next, now);
             StartTimer(nextInterval);
         }
 
@@ -370,63 +370,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         /// </remarks>
         /// <param name="next">The next schedule occurrence in Local time.</param>
         /// <param name="now">The current Local time.</param>
-        /// <param name="adjustForDST">True to adjust for daylight savings time (if crossing DST boundary), false otherwise.</param>
-        /// <param name="timeZone">The time zone info to use. Will use <see cref="TimeZoneInfo.Local"/> if not supplied.</param>
         /// <returns>The next timer interval.</returns>
-        internal static TimeSpan GetNextTimerInterval(DateTime next, DateTimeOffset now, bool adjustForDST, bool isInterval, ILogger logger, TimeZoneInfo timeZone = null)
-        {
-            TimeSpan nextInterval;
-
-            if (adjustForDST)
-            {
-                // For calculations, we use DateTimeOffsets and TimeZoneInfo to ensure we honor time zone
-                // changes (e.g. Daylight Savings Time)
-                timeZone = timeZone ?? TimeZoneInfo.Local;
-
-                // Note: An ambigious time is one one where a local time maps to multiple UTC times due to a time zone change. For example, 
-                // in the Pacific time zone, there are two 1:30am DateTimes when transitioning from Daylight Savings Time to Standard Time.
-                // Our 'next' calculation will never handle this correctly as it does not consider time zones.
-                bool isNowAmbiguous = timeZone.IsAmbiguousTime(now.LocalDateTime);
-                bool isNextAmbiguous = timeZone.IsAmbiguousTime(next);
-
-                // Note: If a time is ambiguous, GetUtcOffset() always returns the Standard (not Daylight Savings) offset.
-                var nextTimeZoneOffset = timeZone.GetUtcOffset(next);
-
-                // Only use this calculation if this is an interval schedule (as opposed to a point-in-time schedule).
-                if (isInterval && (isNowAmbiguous || isNextAmbiguous) && (nextTimeZoneOffset != now.Offset))
-                {
-                    // This scenario covers calculations where either of the times in our calculation are ambiguous and cross the
-                    // 'Daylight Savings Time' -> 'Standard Time' boundary.
-                    // In order to calculate the next interval correctly in this scenario, we need to ignore the time zones.
-                    nextInterval = next - now.LocalDateTime;
-
-                    DateTime ambiguousTime = isNowAmbiguous ? now.LocalDateTime : next;
-                    Logger.AmbiguousTimeAdjustment(logger, ambiguousTime, timeZone.DisplayName);
-                }
-                else
-                {
-                    // This scenario covers calculations involving all other scenarios, including where the current time is in one 
-                    // offset (e.g. Standard time) and the next occurrence is in a different offset (e.g. Daylight Savings time).
-                    var nextOffset = new DateTimeOffset(next, nextTimeZoneOffset);
-                    nextInterval = nextOffset - now;
-                }
-            }
-            else
-            {
-                // Ignore the offset and time zone if we're not adjusting for DST
-                nextInterval = next - now.LocalDateTime;
-            }
-
-            // If the interval happens to be negative (due to slow storage, for example), adjust the
-            // interval back up 1 Tick (Zero is invalid for a timer) for an immediate invocation.
-            if (nextInterval <= TimeSpan.Zero)
-            {
-                nextInterval = TimeSpan.FromTicks(1);
-            }
-
-            return nextInterval;
-        }
-
         internal static TimeSpan GetNextTimerInterval(DateTimeOffset next, DateTimeOffset now)
         {
             TimeSpan nextInterval = next - now;
@@ -500,7 +444,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             public bool IsPastDue { get; set; }
 
-            public DateTime OriginalSchedule { get; set; }
+            public DateTimeOffset OriginalSchedule { get; set; }
 
             public TimeSpan Interval => TimeSpan.FromMilliseconds(IntervalMS);
         }

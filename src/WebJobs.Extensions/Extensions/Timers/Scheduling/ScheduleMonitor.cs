@@ -14,7 +14,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     /// </summary>
     public abstract class ScheduleMonitor
     {
-        private static DateTime defaultDateTime = default(DateTime).ToLocalTime();
+        private static DateTimeOffset defaultDateTime = default(DateTimeOffset).ToLocalTime();
 
         /// <summary>
         /// Gets the last recorded schedule status for the specified timer.
@@ -45,31 +45,31 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// <param name="schedule">The <see cref="TimerSchedule"/>.</param>
         /// <param name="lastStatus">The last recorded status, or null if the status has never been recorded.</param>
         /// <returns>A non-zero <see cref="TimeSpan"/> if the schedule is past due, otherwise <see cref="TimeSpan.Zero"/>.</returns>
-        public virtual async Task<TimeSpan> CheckPastDueAsync(string timerName, DateTime now, TimerSchedule schedule, ScheduleStatus lastStatus)
+        public virtual async Task<TimeSpan> CheckPastDueAsync(string timerName, DateTimeOffset now, TimerSchedule schedule, ScheduleStatus lastStatus)
         {
-            DateTime recordedNextOccurrence;
+            DateTimeOffset recordedNextOccurrence;
             if (lastStatus == null)
             {
                 // If we've never recorded a status for this timer, write an initial
                 // status entry. This ensures that for a new timer, we've captured a
                 // status log for the next occurrence even though no occurrence has happened yet
                 // (ensuring we don't miss an occurrence)
-                DateTime nextOccurrence = schedule.GetNextOccurrence(now);
+                DateTimeOffset nextOccurrence = schedule.GetNextOccurrence(now.LocalDateTime);
                 lastStatus = new ScheduleStatus
                 {
-                    Last = defaultDateTime,
-                    Next = nextOccurrence,
-                    LastUpdated = now
+                    Last = defaultDateTime.LocalDateTime,
+                    Next = nextOccurrence.LocalDateTime,
+                    LastUpdated = now.LocalDateTime
                 };
                 await UpdateStatusAsync(timerName, lastStatus);
                 recordedNextOccurrence = nextOccurrence;
             }
             else
             {
-                DateTime expectedNextOccurrence;
+                DateTimeOffset expectedNextOccurrence;
 
                 // Track the time that was used to create 'expectedNextOccurrence'.
-                DateTime lastUpdated;
+                DateTimeOffset lastUpdated;
 
                 if (lastStatus.Last != defaultDateTime)
                 {
@@ -89,7 +89,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 {
                     // If we do not have 'LastUpdated' or 'Last', we don't have enough information to
                     // properly calculate 'Next', so we'll calculate it from the current time.
-                    expectedNextOccurrence = schedule.GetNextOccurrence(now);
+                    expectedNextOccurrence = schedule.GetNextOccurrence(now.LocalDateTime);
                     lastUpdated = now;
                 }
 
@@ -102,13 +102,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                     // immediately as 'past due'.
                     if (now > expectedNextOccurrence)
                     {
-                        expectedNextOccurrence = schedule.GetNextOccurrence(now);
+                        expectedNextOccurrence = schedule.GetNextOccurrence(now.LocalDateTime);
                         lastUpdated = now;
                     }
 
-                    lastStatus.Last = defaultDateTime;
-                    lastStatus.Next = expectedNextOccurrence;
-                    lastStatus.LastUpdated = lastUpdated;
+                    lastStatus.Last = defaultDateTime.LocalDateTime;
+                    lastStatus.Next = expectedNextOccurrence.LocalDateTime;
+                    lastStatus.LastUpdated = lastUpdated.LocalDateTime;
                     await UpdateStatusAsync(timerName, lastStatus);
                 }
                 recordedNextOccurrence = lastStatus.Next;

@@ -16,10 +16,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         private readonly List<TimeSpan>[] schedule = new List<TimeSpan>[7];
 
         /// <inheritdoc/>
+        [Obsolete("This property is obsolete and will be removed in a future version.")]
         public override bool AdjustForDST => true;
-
-        /// <inheritdoc />
-        public override bool IsInterval => true;
 
         /// <summary>
         /// Adds the specified day/time occurrence to the schedule.

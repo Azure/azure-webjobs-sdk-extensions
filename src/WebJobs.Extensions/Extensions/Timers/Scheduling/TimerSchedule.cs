@@ -18,14 +18,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// <summary>
         /// Gets a value indicating whether intervals between invocations should account for DST.        
         /// </summary>
+        [Obsolete("This property is obsolete and will be removed in a future version. All TimerSchedule implementations should now handle their own DST transitions.")]
         public abstract bool AdjustForDST { get; }
-
-        /// <summary>
-        /// Gets a value indicating whether the schedule is an interval schedule as opposed to a point-in-time schedule.
-        /// For example, a schedule that fires every 5 minutes is an interval schedule, while a schedule that fires at
-        /// 5pm every day is a point-in-time schedule.
-        /// </summary>
-        public abstract bool IsInterval { get; }
 
         /// <summary>
         /// Gets the next occurrence of the schedule based on the specified

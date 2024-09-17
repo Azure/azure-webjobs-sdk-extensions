@@ -191,8 +191,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
                 public override bool AdjustForDST => true;
 
-                public override bool IsInterval => true;
-
                 public override DateTime GetNextOccurrence(DateTime now)
                 {
                     InvocationCount++;
