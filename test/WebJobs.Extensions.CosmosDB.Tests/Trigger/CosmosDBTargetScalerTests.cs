@@ -25,9 +25,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
         private readonly Mock<Container> _monitoredContainer;
         private readonly Mock<Container> _leasesContainer;
         private readonly Mock<FeedIterator<ChangeFeedProcessorState>> _estimatorIterator;
-        private readonly CosmosDBTriggerListener<dynamic> _listener;
         private readonly string _functionId;
-        private readonly string _logDetails;
         private readonly CosmosDBTargetScaler _targetScaler;
 
         private CosmosDBTriggerAttribute _attribute;

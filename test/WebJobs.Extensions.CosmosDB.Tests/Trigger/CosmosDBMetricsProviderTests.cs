@@ -78,8 +78,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
 
             var metrics = await _cosmosDbMetricsProvider.GetMetricsAsync();
 
-            Assert.Equal(0, metrics.PartitionCount);
-            Assert.Equal(0, metrics.RemainingWork);
+            Assert.Equal(1, metrics.PartitionCount);
+            Assert.Equal(1, metrics.RemainingWork);
             Assert.NotEqual(default(DateTime), metrics.Timestamp);
 
             _estimatorIterator
@@ -140,12 +140,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
 
             var metrics = (CosmosDBTriggerMetrics)await _cosmosDbMetricsProvider.GetMetricsAsync();
 
-            Assert.Equal(0, metrics.PartitionCount);
-            Assert.Equal(0, metrics.RemainingWork);
+            Assert.Equal(1, metrics.PartitionCount);
+            Assert.Equal(1, metrics.RemainingWork);
             Assert.NotEqual(default(DateTime), metrics.Timestamp);
 
             var warning = _loggerProvider.GetAllLogMessages().Single(p => p.Level == Microsoft.Extensions.Logging.LogLevel.Warning);
-            Assert.Equal("Please check that the CosmosDB container and leases container exist and are listed correctly in Functions config files.", warning.FormattedMessage);
+            Assert.StartsWith("Possible non-exiting lease container detected. Trying to create the lease container, attempt", warning.FormattedMessage);
             _loggerProvider.ClearAllLogMessages();
 
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await _cosmosDbMetricsProvider.GetMetricsAsync());
@@ -162,6 +162,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
 
             warning = _loggerProvider.GetAllLogMessages().Single(p => p.Level == Microsoft.Extensions.Logging.LogLevel.Warning);
             Assert.Equal("CosmosDBTrigger Exception message: Uh oh again.", warning.FormattedMessage);
+        }
+
+        [Fact]
+        public async Task GetMetrics_HandleSplit()
+        {
+            _estimatorIterator
+                .SetupSequence(m => m.HasMoreResults)
+                .Returns(true)
+                .Returns(false);
+
+            _estimatorIterator
+                .Setup(m => m.ReadNextAsync(It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new CosmosException("Partition is gone", HttpStatusCode.Gone, 1002, string.Empty, 0));
+
+            var metrics = await _cosmosDbMetricsProvider.GetMetricsAsync();
+
+            Assert.Equal(1, metrics.PartitionCount);
+            Assert.Equal(1, metrics.RemainingWork);
+            Assert.NotEqual(default(DateTime), metrics.Timestamp);
         }
     }
 }

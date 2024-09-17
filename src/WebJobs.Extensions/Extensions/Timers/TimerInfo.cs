@@ -59,14 +59,15 @@ namespace Microsoft.Azure.WebJobs
             return FormatNextOccurrences(Schedule, count, now);
         }
 
-        internal static string FormatNextOccurrences(TimerSchedule schedule, int count, DateTime? now = null)
+        internal static string FormatNextOccurrences(TimerSchedule schedule, int count, DateTime? now = null, TimeZoneInfo timeZone = null)
         {
             if (schedule == null)
             {
                 throw new ArgumentNullException("schedule");
             }
 
-            bool isUtc = TimeZoneInfo.Local.HasSameRules(TimeZoneInfo.Utc);
+            timeZone = timeZone ?? TimeZoneInfo.Local;
+            bool isUtc = timeZone.HasSameRules(TimeZoneInfo.Utc);
             IEnumerable<DateTime> nextOccurrences = schedule.GetNextOccurrences(count, now);
             StringBuilder builder = new StringBuilder();
             foreach (DateTime occurrence in nextOccurrences)
@@ -77,7 +78,7 @@ namespace Microsoft.Azure.WebJobs
                 }
                 else
                 {
-                    TimeSpan offset = TimeZoneInfo.Local.GetUtcOffset(occurrence);
+                    TimeSpan offset = timeZone.GetUtcOffset(occurrence);
                     builder.AppendLine($"{occurrence.ToString(DateTimeFormat)} ({occurrence.ToUniversalTime().ToString(DateTimeFormat)})");
                 }
             }
