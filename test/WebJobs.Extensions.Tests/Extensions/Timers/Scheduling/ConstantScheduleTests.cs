@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
 {
-    public class ConstantScheduleTests
+    public class ConstantScheduleTests : IDisposable
     {
         [Fact]
         public void GetNextOccurrence_ReturnsExpected()
@@ -58,15 +58,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void Interval_IntoDST_ReturnsExpectedValue()
         {
+            TimerListenerTests.SetLocalTimeZoneToPacific();
+
             var schedule = new ConstantSchedule(TimeSpan.FromHours(1));
 
             // Standard -> Daylight occurred on 3/11/2018 at 02:00            
             var start = new DateTime(2018, 3, 10, 23, 30, 0, DateTimeKind.Local);
-            TimeZoneInfo pst = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
-
-            TimeSpan offset = pst.GetUtcOffset(start);
-            var now = new DateTimeOffset(start, offset);
-            schedule.TimeZone = pst;
+            var now = new DateTimeOffset(start);
 
             var nextOccurrences = schedule.GetNextOccurrences(5, now.LocalDateTime);
 
@@ -83,15 +81,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void Interval_OutOfDST_ReturnsExpectedValue()
         {
+            TimerListenerTests.SetLocalTimeZoneToPacific();
+
             var schedule = new ConstantSchedule(TimeSpan.FromHours(1));
 
             // Standard -> Daylight occurred on 11/04/2018 at 02:00 (time went back to 01:00)            
             var start = new DateTime(2018, 11, 3, 23, 30, 0, DateTimeKind.Local);
-            TimeZoneInfo pst = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
-
-            TimeSpan offset = pst.GetUtcOffset(start);
-            var now = new DateTimeOffset(start, offset);
-            schedule.TimeZone = pst;
+            var now = new DateTimeOffset(start);
 
             var nextOccurrences = schedule.GetNextOccurrences(5, now.LocalDateTime);
 
@@ -103,6 +99,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
                 o => Assert.Equal(new DateTimeOffset(new DateTime(2018, 11, 4, 1, 30, 0), TimeSpan.FromHours(-8)), o), // offset changes
                 o => Assert.Equal(new DateTimeOffset(new DateTime(2018, 11, 4, 2, 30, 0), TimeSpan.FromHours(-8)), o),
                 o => Assert.Equal(new DateTimeOffset(new DateTime(2018, 11, 4, 3, 30, 0), TimeSpan.FromHours(-8)), o));
+        }
+
+        public void Dispose()
+        {
+            TimeZoneInfo.ClearCachedData();
         }
     }
 }

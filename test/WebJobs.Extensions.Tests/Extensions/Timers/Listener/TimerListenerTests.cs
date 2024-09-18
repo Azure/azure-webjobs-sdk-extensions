@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
@@ -17,7 +18,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 {
-    public class TimerListenerTests
+    public class TimerListenerTests : IDisposable
     {
         private readonly string _testTimerName = "Program.TestTimerJob";
         private readonly string _functionShortName = "TimerFunctionShortName";
@@ -542,13 +543,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [MemberData(nameof(TimerSchedulesEnteringDST))]
         public void GetNextInterval_NextAfterDSTBegins_ReturnsExpectedValue(TimerSchedule schedule, TimeSpan expectedInterval)
         {
+            SetLocalTimeZoneToPacific();
+
             // Running on the Friday before DST *begins* at 2 AM on 3/11 (Pacific Standard Time)
             // Note: this test uses Local time, so if you're running in a timezone where
             // DST doesn't transition the test might not be valid.
             // The input schedules will run after DST changes. For some (Cron), they will subtract
             // an hour to account for the shift. For others (Constant), they will not.
-            TimeZoneInfo pst = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
-            TimeSpan offset = pst.GetUtcOffset(new DateTime(2018, 3, 9, 18, 0, 0));
+            TimeSpan offset = TimeZoneInfo.Local.GetUtcOffset(new DateTime(2018, 3, 9, 18, 0, 0));
             var now = new DateTimeOffset(2018, 3, 9, 18, 0, 0, offset);
 
             var next = schedule.GetNextOccurrence(now.LocalDateTime);
@@ -566,6 +568,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [MemberData(nameof(TimerSchedulesWithinDST))]
         public void GetNextInterval_NextWithinDST_ReturnsExpectedValue(TimerSchedule schedule, TimeSpan expectedInterval)
         {
+            SetLocalTimeZoneToPacific();
+
             // Running at 1:59 AM, i.e. one minute before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
             // Note: this test uses Local time, so if you're running in a timezone where
             // DST doesn't transition the test might not be valid.
@@ -587,6 +591,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [MemberData(nameof(CronTimerSchedulesExitingDST))]
         public void GetNextInterval_NextAfterDSTEnds_ReturnsExpectedValue(DateTimeOffset now, string cronSchedule, TimeSpan expectedInterval, int expectedLogCount)
         {
+            SetLocalTimeZoneToPacific();
+
             var schedule = new CronSchedule(CrontabSchedule.Parse(cronSchedule, new CrontabSchedule.ParseOptions() { IncludingSeconds = true }));
             TimeZoneInfo pst = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
 
@@ -657,6 +663,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 .Returns(Task.FromResult(result));
             _logger = new TestLogger(null);
             _listener = new TimerListener(_attribute, _schedule, _testTimerName, _options, _mockTriggerExecutor.Object, _logger, _mockScheduleMonitor.Object, _functionShortName);
+        }
+
+        internal static void SetLocalTimeZoneToPacific()
+        {
+            var info = typeof(TimeZoneInfo).GetField("s_cachedData", BindingFlags.NonPublic | BindingFlags.Static);
+            var cachedData = info.GetValue(null);
+            var field = cachedData.GetType().GetField("_localTimeZone",
+                BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+            field.SetValue(cachedData, TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time"));
+        }
+
+        public void Dispose()
+        {
+            TimeZoneInfo.ClearCachedData();
         }
     }
 }
