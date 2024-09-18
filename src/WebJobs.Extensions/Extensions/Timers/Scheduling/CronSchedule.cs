@@ -120,11 +120,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         internal bool TryAdjustInvalidTime(DateTimeOffset next, out DateTimeOffset? adjusted)
         {
             adjusted = null;
-            DateTimeOffset converted = TimeZoneInfo.ConvertTime(next, TimeZoneInfo.Local);
 
-            if (converted.Offset != next.Offset)
+            if (TimeZoneInfo.Local.IsInvalidTime(next.DateTime))
             {
-                adjusted = converted;
+                // This forces the offset to be recalculated for the local time zone. It will also signal that we don't need to do the
+                // ambiguous time calculations as this cannot happen during ambiguous times.
+                adjusted = next.ToLocalTime();
                 _logger.LogDebug(new EventId(900, "DstInvalidTime"), $"The calculated next occurrence for the schedule '{_cronSchedule}' of '{next}' was determined to be an invalid time in the time zone '{TimeZoneInfo.Local.DisplayName}' due to Daylight Saving Time. The adjusted next occurrence is '{adjusted}'.");
                 return true;
             }
