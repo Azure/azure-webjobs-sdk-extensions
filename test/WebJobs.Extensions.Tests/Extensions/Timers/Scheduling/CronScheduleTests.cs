@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Xunit;
 
@@ -54,9 +55,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         public void Interval_IntoDST_ReturnsExpectedValue()
         {
             TimerListenerTests.SetLocalTimeZoneToPacific();
+            var testLogger = new TestLogger("Test");
 
             // Every hour at the 30 min mark
-            CronSchedule.TryCreate("0 30 * * * *", out CronSchedule schedule);
+            CronSchedule.TryCreate("0 30 * * * *", testLogger, out CronSchedule schedule);
 
             // Standard -> Daylight occurred on 3/11/2018 at 02:00 (time skipped ahead to 3:00)
             var start = new DateTime(2018, 3, 11, 0, 0, 0, DateTimeKind.Local);
@@ -132,9 +134,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         public void Interval_OutOfDST_ReturnsExpectedValue()
         {
             TimerListenerTests.SetLocalTimeZoneToPacific();
+            var logger = new TestLogger("Test");
 
             // Every hour at the 30 min mark
-            CronSchedule.TryCreate("0 30 * * * *", out CronSchedule schedule);
+            CronSchedule.TryCreate("0 30 * * * *", logger, out CronSchedule schedule);
 
             // Daylight -> Standard occurred on 11/04/2018 at 02:00 (time went back to 01:00)
             var start = new DateTime(2018, 11, 4, 0, 0, 0, DateTimeKind.Local);

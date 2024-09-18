@@ -65,7 +65,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             if (!string.IsNullOrEmpty(attribute.ScheduleExpression))
             {
                 string resolvedExpression = nameResolver.ResolveWholeString(attribute.ScheduleExpression);
-                if (CronSchedule.TryCreate(resolvedExpression, out CronSchedule cronSchedule))
+                if (CronSchedule.TryCreate(resolvedExpression, logger, out CronSchedule cronSchedule))
                 {
                     schedule = cronSchedule;
                     if (attribute.UseMonitor && ShouldDisableScheduleMonitor(cronSchedule, DateTime.Now))
