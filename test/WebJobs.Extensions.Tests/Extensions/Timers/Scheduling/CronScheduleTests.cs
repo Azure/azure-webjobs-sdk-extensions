@@ -59,9 +59,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             CronSchedule.TryCreate("0 30 * * * *", out CronSchedule schedule);
 
             // Standard -> Daylight occurred on 3/11/2018 at 02:00 (time skipped ahead to 3:00)
-            var start = new DateTime(2018, 3, 11, 0, 0, 0);
-            var offset = TimeZoneInfo.Local.GetUtcOffset(start);
-            var now = new DateTimeOffset(start, offset);
+            var start = new DateTime(2018, 3, 11, 0, 0, 0, DateTimeKind.Local);
+            var now = new DateTimeOffset(start);
 
             var nextOccurrences = schedule.GetNextOccurrences(5, now.LocalDateTime);
 
@@ -84,9 +83,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             CronSchedule.TryCreate("0 30 1 * * *", out CronSchedule schedule);
 
             // Standard -> Daylight occurred on 3/11/2018 at 02:00 (time skipped ahead to 3:00)
-            var start = new DateTime(2018, 3, 10, 0, 0, 0);
-            TimeSpan offset = TimeZoneInfo.Local.GetUtcOffset(start);
-            var now = new DateTimeOffset(start, offset);
+            var start = new DateTime(2018, 3, 10, 0, 0, 0, DateTimeKind.Local);
+            var now = new DateTimeOffset(start);
 
             var nextOccurrences = schedule.GetNextOccurrences(5, now.LocalDateTime);
 
@@ -111,7 +109,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             // Standard -> Daylight occurred on 11/04/2018 at 02:00 (time went back to 01:00)
             // Ambigous hour is 01:00 - 01:59 as there are two instances in of these in the day.
             var start = new DateTime(2018, 11, 4, 0, 30, 0, DateTimeKind.Local);
-            var now = new DateTimeOffset(start, TimeSpan.FromHours(-7));
+            var now = new DateTimeOffset(start);
 
             // just enough to go fully through the ambiguous time
             var nextOccurrences = schedule.GetNextOccurrences(9, now.LocalDateTime);
@@ -139,9 +137,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             CronSchedule.TryCreate("0 30 * * * *", out CronSchedule schedule);
 
             // Daylight -> Standard occurred on 11/04/2018 at 02:00 (time went back to 01:00)
-            var start = new DateTime(2018, 11, 4, 0, 0, 0);
-            TimeSpan offset = TimeZoneInfo.Local.GetUtcOffset(start);
-            var now = new DateTimeOffset(start, offset);
+            var start = new DateTime(2018, 11, 4, 0, 0, 0, DateTimeKind.Local);
+            var now = new DateTimeOffset(start);
 
             var nextOccurrences = schedule.GetNextOccurrences(5, now.LocalDateTime);
 
@@ -164,9 +161,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             CronSchedule.TryCreate("0 30 1 * * *", out CronSchedule schedule);
 
             // Standard -> Daylight occurred on 11/04/2018 at 02:00 (time went back to 01:00)
-            var start = new DateTime(2018, 11, 3, 0, 0, 0);
-            TimeSpan offset = TimeZoneInfo.Local.GetUtcOffset(start);
-            var now = new DateTimeOffset(start, offset);
+            var start = new DateTime(2018, 11, 3, 0, 0, 0, DateTimeKind.Local);
+            var now = new DateTimeOffset(start);
 
             var nextOccurrences = schedule.GetNextOccurrences(5, now.LocalDateTime);
 
@@ -225,9 +221,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             Assert.Equal(expected, cronSchedule.IsInterval);
         }
 
-        public void Dispose()
-        {
-            TimeZoneInfo.ClearCachedData();
-        }
+        public void Dispose() => TimeZoneInfo.ClearCachedData();
     }
 }

@@ -490,49 +490,49 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         public static IEnumerable<object[]> CronTimerSchedulesExitingDST =>
         [
             // Starts in ambiguous PDT, ends in PST. Run every hour at the 30 minute mark.
-            [new DateTimeOffset(2018, 11, 4, 1, 31, 0, TimeSpan.FromHours(-7)), "0 30 * * * *", TimeSpan.FromMinutes(59), 1],
+            [new DateTimeOffset(2018, 11, 4, 1, 31, 0, TimeSpan.FromHours(-7)), "0 30 * * * *", TimeSpan.FromMinutes(59)],
 
             // Starts in ambiguous PDT, ends in PST. Run every minute.
-            [new DateTimeOffset(2018, 11, 4, 1, 59, 0, TimeSpan.FromHours(-7)), "0 * * * * *", TimeSpan.FromMinutes(1), 1],
+            [new DateTimeOffset(2018, 11, 4, 1, 59, 0, TimeSpan.FromHours(-7)), "0 * * * * *", TimeSpan.FromMinutes(1)],
 
             // Starts in ambiguous PDT, ends in ambiguous PDT. Run every minute.
-            [new DateTimeOffset(2018, 11, 4, 1, 30, 0, TimeSpan.FromHours(-7)), "0 * * * * *", TimeSpan.FromMinutes(1), 1],
+            [new DateTimeOffset(2018, 11, 4, 1, 30, 0, TimeSpan.FromHours(-7)), "0 * * * * *", TimeSpan.FromMinutes(1)],
 
             // Starts in ambiguous PDT, ends in ambiguous PST. Run at 1:00/1:30/2:00/2:30. This is considered an interval and should
             // should run 6 times during the PDT -> PST transition.
-            [new DateTimeOffset(2018, 11, 4, 1, 45, 0, TimeSpan.FromHours(-7)), "0 0,30 1-2 * * *", TimeSpan.FromMinutes(15), 1],
+            [new DateTimeOffset(2018, 11, 4, 1, 45, 0, TimeSpan.FromHours(-7)), "0 0,30 1-2 * * *", TimeSpan.FromMinutes(15)],
 
             // Starts in ambiguous PST, ends in ambiguous PST. Run at 1:30/2:30. This is considered an interval and should
             // should run 6 times during the PDT -> PST transition. No log is expected because no adjustment is performed as the
             // offsets match in this case.
-            [new DateTimeOffset(2018, 11, 4, 1, 45, 0, TimeSpan.FromHours(-8)), "0 0,30 1-3 * * *", TimeSpan.FromMinutes(15), 0],
+            [new DateTimeOffset(2018, 11, 4, 1, 45, 0, TimeSpan.FromHours(-8)), "0 0,30 1-3 * * *", TimeSpan.FromMinutes(15)],
 
             // Starts in ambiguous PST, ends in ambiguous PDT. Run every minute for a range.
-            [new DateTimeOffset(2018, 11, 4, 1, 30, 0, TimeSpan.FromHours(-7)), "0 * 1-3 * * *", TimeSpan.FromMinutes(1), 1],
+            [new DateTimeOffset(2018, 11, 4, 1, 30, 0, TimeSpan.FromHours(-7)), "0 * 1-3 * * *", TimeSpan.FromMinutes(1)],
 
             // Starts in PDT, ends in ambiguous PDT. Run every minute.
-            [new DateTimeOffset(2018, 11, 4, 0, 59, 0, TimeSpan.FromHours(-7)), "0 * * * * *", TimeSpan.FromMinutes(1), 1],
+            [new DateTimeOffset(2018, 11, 4, 0, 59, 0, TimeSpan.FromHours(-7)), "0 * * * * *", TimeSpan.FromMinutes(1)],
 
             // Starts in ambiguous PST, ends in PST. Run every hour at the 30 minute mark.
-            [new DateTimeOffset(2018, 11, 4, 1, 31, 0, TimeSpan.FromHours(-8)), "0 30 * * * *", TimeSpan.FromMinutes(59), 0],
+            [new DateTimeOffset(2018, 11, 4, 1, 31, 0, TimeSpan.FromHours(-8)), "0 30 * * * *", TimeSpan.FromMinutes(59)],
 
             // Starts in PDT, ends in PST. Run every Friday at 6 PM.
-            [new DateTimeOffset(2018, 11, 2, 18, 0, 0, TimeSpan.FromHours(-7)), "0 0 18 * * 5", TimeSpan.FromHours(169), 0],
+            [new DateTimeOffset(2018, 11, 2, 18, 0, 0, TimeSpan.FromHours(-7)), "0 0 18 * * 5", TimeSpan.FromHours(169)],
 
             // Starts in ambiguous PDT, ends in PST. Run every day at 1:30 (only expect one invocation during ambiguous times).
-            [new DateTimeOffset(2018, 11, 4, 1, 30, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.FromHours(25), 0],
+            [new DateTimeOffset(2018, 11, 4, 1, 30, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.FromHours(25)],
 
             // Starts in PDT, ends in ambgiguous PDT. Run every day at 1:30 (only expect one invocation during ambiguous times).
-            [new DateTimeOffset(2018, 11, 4, 0, 30, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.FromHours(1), 0],
+            [new DateTimeOffset(2018, 11, 4, 0, 30, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.FromHours(1)],
 
             // Starts in ambiguous PDT, ends in ambgiguous PDT. Run every day at 1:30 (only expect one invocation during ambiguous times).
-            [new DateTimeOffset(2018, 11, 4, 1, 29, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.FromMinutes(1), 0],
+            [new DateTimeOffset(2018, 11, 4, 1, 29, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.FromMinutes(1)],
 
             // Starts in ambiguous PST, ends in PST. Run every day at 1:30 (only expect one invocation during ambiguous times).
-            [new DateTimeOffset(2018, 11, 4, 1, 29, 0, TimeSpan.FromHours(-8)), "0 30 1 * * *", TimeSpan.Parse("1.00:01"), 0],
+            [new DateTimeOffset(2018, 11, 4, 1, 29, 0, TimeSpan.FromHours(-8)), "0 30 1 * * *", TimeSpan.Parse("1.00:01")],
 
             // Starts in ambiguous PDT, ends in PST. Run every day at 1:30 (only expect one invocation during ambiguous times).
-            [new DateTimeOffset(2018, 11, 4, 1, 31, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.Parse("1.00:59"), 0],
+            [new DateTimeOffset(2018, 11, 4, 1, 31, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.Parse("1.00:59")],
         ];
 
         /// <summary>
@@ -550,8 +550,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             // DST doesn't transition the test might not be valid.
             // The input schedules will run after DST changes. For some (Cron), they will subtract
             // an hour to account for the shift. For others (Constant), they will not.
-            TimeSpan offset = TimeZoneInfo.Local.GetUtcOffset(new DateTime(2018, 3, 9, 18, 0, 0));
-            var now = new DateTimeOffset(2018, 3, 9, 18, 0, 0, offset);
+            var start = new DateTime(2018, 3, 9, 18, 0, 0, DateTimeKind.Local);
+            var now = new DateTimeOffset(start);
 
             var next = schedule.GetNextOccurrence(now.LocalDateTime);
             var interval = TimerListener.GetNextTimerInterval(next, now);
@@ -573,9 +573,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             // Running at 1:59 AM, i.e. one minute before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
             // Note: this test uses Local time, so if you're running in a timezone where
             // DST doesn't transition the test might not be valid.
-            TimeZoneInfo pst = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
-            TimeSpan offset = pst.GetUtcOffset(new DateTime(2018, 3, 11, 1, 59, 0));
-            var now = new DateTimeOffset(2018, 3, 11, 1, 59, 0, offset);
+            var start = new DateTime(2018, 3, 11, 1, 59, 0, DateTimeKind.Local);
+            var now = new DateTimeOffset(start);
 
             var next = schedule.GetNextOccurrence(now.DateTime);
 
@@ -589,20 +588,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         /// </summary>
         [Theory]
         [MemberData(nameof(CronTimerSchedulesExitingDST))]
-        public void GetNextInterval_NextAfterDSTEnds_ReturnsExpectedValue(DateTimeOffset now, string cronSchedule, TimeSpan expectedInterval, int expectedLogCount)
+        public void GetNextInterval_NextAfterDSTEnds_ReturnsExpectedValue(DateTimeOffset now, string cronSchedule, TimeSpan expectedInterval)
         {
             SetLocalTimeZoneToPacific();
 
             var schedule = new CronSchedule(CrontabSchedule.Parse(cronSchedule, new CrontabSchedule.ParseOptions() { IncludingSeconds = true }));
-            TimeZoneInfo pst = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
 
             var logger = new TestLogger(null);
-
             var next = schedule.GetNextOccurrence(now.LocalDateTime);
             var interval = TimerListener.GetNextTimerInterval(next, now);
 
             Assert.Equal(expectedInterval, interval);
-            //Assert.Equal(expectedLogCount, logger.GetLogMessages().Count);
         }
 
         [Fact]
@@ -667,16 +663,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
         internal static void SetLocalTimeZoneToPacific()
         {
+            // There are so many internal benefits to using DateTimeKind.Local for us, that we're relying 
+            // on it to provide the proper roundtripping support between DateTime and DateTimeOffset. This appears
+            // to be the only way to "mock" this value as it's hard-coded inside a lot of .NET libraries when
+            // calculating offsets, time zones, etc.
             var info = typeof(TimeZoneInfo).GetField("s_cachedData", BindingFlags.NonPublic | BindingFlags.Static);
             var cachedData = info.GetValue(null);
-            var field = cachedData.GetType().GetField("_localTimeZone",
-                BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+            var field = cachedData.GetType().GetField("_localTimeZone", BindingFlags.NonPublic | BindingFlags.Instance);
             field.SetValue(cachedData, TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time"));
         }
 
-        public void Dispose()
-        {
-            TimeZoneInfo.ClearCachedData();
-        }
+        public void Dispose() => TimeZoneInfo.ClearCachedData();
     }
 }

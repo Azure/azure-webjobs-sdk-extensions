@@ -74,6 +74,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             var nowDateTime = now.LocalDateTime;
             var nextDateTime = _cronSchedule.GetNextOccurrence(nowDateTime);
 
+            // This will apply the correct offset for the local time zone based on the DateTime.
+            var next = new DateTimeOffset(nextDateTime);
+
+            // Now we need to evaluate the possibility of Daylight Savings transitions.
             // Example of DST transitions in 2018 for reference (from .NET source):
             //
             //         -=-=-=-=-=- Pacific Standard Time -=-=-=-=-=-=-
@@ -82,28 +86,72 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             // |      +1 hr     |                        |       -1 hr      |
             // | <invalid time> |                        | <ambiguous time> |
             //                  [========== DST ========>)
+            if (TryAdjustInvalidTime(next, out DateTimeOffset? adjusted))
+            {
+                // "Spring Forward": "next" was invalid and was adjusted forward to a valid time.
+                next = adjusted.Value;
+            }
+            else if (TryAdjustAmbiguousTime(now, next, out adjusted))
+            {
+                // "Fall Back": Either "now" or "next" was ambiguous and the time was adjusted.
+                next = adjusted.Value;
+            }
 
-            // Scenario 1 -- When Daylight Savings begins and the clock springs forward, we need to ensure that we are 
-            //   not scheduling a job to run at an invalid time. If the next occurrence is invalid, we need to skip
-            //   it and look for the next possible valid time.
-            bool isInvalidTime = timeZone.IsInvalidTime(nextDateTime);
+            return next;
+        }
+
+        /// <summary>
+        /// If the provided DateTime is not valid, moves forward to the next occurrence in the schedule
+        /// until a valid DateTime is found. For example, 02:30 does not exist when "springing forward"
+        /// to Daylight Savings Time in the Pacific Standard Time Zone. Uses TimeZoneInfo.Local to make
+        /// the determination.
+        /// </summary>
+        /// <param name="next">The DateTimeOffset to evaluate.</param>
+        /// <param name="adjusted">The adjusted DateTimeOffset, if "next" is invalid.</param>
+        /// <returns></returns>
+        internal bool TryAdjustInvalidTime(DateTimeOffset next, out DateTimeOffset? adjusted)
+        {
+            var nextDateTime = next.LocalDateTime;
+            bool isInvalidTime = TimeZoneInfo.Local.IsInvalidTime(nextDateTime);
+            adjusted = null;
+
+            if (!isInvalidTime)
+            {
+                return false;
+            }
 
             while (isInvalidTime)
             {
                 nextDateTime = _cronSchedule.GetNextOccurrence(nextDateTime);
-                isInvalidTime = timeZone.IsInvalidTime(DateTime.SpecifyKind(nextDateTime, DateTimeKind.Unspecified));
+                isInvalidTime = TimeZoneInfo.Local.IsInvalidTime(nextDateTime);
+            }
+
+            adjusted = new DateTimeOffset(nextDateTime);
+            return true;
+        }
+
+        internal bool TryAdjustAmbiguousTime(DateTimeOffset now, DateTimeOffset next, out DateTimeOffset? adjusted)
+        {
+            adjusted = null;
+
+            TimeZoneInfo timeZone = TimeZoneInfo.Local;
+            if (!timeZone.SupportsDaylightSavingTime)
+            {
+                // There cannot be ambiguous times if there is no Daylight Saving Time.
+                return false;
             }
 
             // Begin evaluating scenarios when Daylight Savings ends and time falls back. This leads to "ambiguous" times
             // as the clock repeats an hour. For example, times from 1:00 - 1:59 AM will occur twice in Pacific Standard Time
             // and are therefore considered "ambiguous" for this time zone.            
-            bool isNowAmbiguous = timeZone.IsAmbiguousTime(nowDateTime);
-            bool isNextAmbiguous = timeZone.IsAmbiguousTime(nextDateTime);
+            bool isNowAmbiguous = timeZone.IsAmbiguousTime(now);
+            bool isNextAmbiguous = timeZone.IsAmbiguousTime(next);
 
-            // Because of how NCronTab constructs it's "next" DateTime, if the next time is ambiguous, it will *always*
-            // return the Standard Time offset when calling GetUtcOffset().
-            var nextOffset = timeZone.GetUtcOffset(nextDateTime);
-            var next = new DateTimeOffset(nextDateTime, nextOffset);
+            if (!isNowAmbiguous && !isNextAmbiguous)
+            {
+                // There are no ambiguous times to adjust.
+                return false;
+            }
 
             // We also need to differentiate between "interval" and "point-in-time" schedules when exiting Daylight Savings Time.
             //
@@ -116,38 +164,40 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             //    - Run on November 3rd at 01:30-7
             //    - Run on November 4th at 01:30-7 (and not run at 1:30-8)
             //    - Run on November 5th at 01:30-8
-            if (!IsInterval && isNextAmbiguous && nextOffset != now.Offset)
+            if (!IsInterval && isNextAmbiguous && next.Offset != now.Offset)
             {
-                // Scenario 2 -- Point-in-time schedule where the next time is ambiguous and the offsets have changed.
+                // "Fall Back" Scenario 1 -- Point-in-time schedule where the next time is ambiguous and the offsets have changed.
                 //   This means that "now" is in DST and "next" is in Standard Time. Since we never want to run an ambiguous
                 //   point-in-time schedule on Standard time, move the offset back to the Daylight offset.
-                var offsetDiff = nextOffset - now.Offset;
-                next = TimeZoneInfo.ConvertTime(next.Add(offsetDiff), timeZone);
+                var offsetDiff = next.Offset - now.Offset;
+                adjusted = TimeZoneInfo.ConvertTime(next.Add(offsetDiff), timeZone);
             }
-            else if (!IsInterval && isNextAmbiguous && nextOffset == now.Offset)
+            else if (!IsInterval && isNextAmbiguous && next.Offset == now.Offset)
             {
-                // Scenario 3 -- Point-in-time where "next" is ambiguous and "now" and "next" are in Standard time. This can happen
+                // "Fall Back" Scenario 2 -- Point-in-time where "next" is ambiguous and "now" and "next" are in Standard time. This can happen
                 //   when the timer starts and we are already past the "fall back" point. For example, if the trigger starts up at
                 //   01:29-8 and we have a "every day at 01:30" schedule, we have to assume that we've already run it at 01:30-7 and
                 //   therefore calculate the time after this.
+                var nextDateTime = next.LocalDateTime;
+
                 while (timeZone.IsAmbiguousTime(nextDateTime))
                 {
                     nextDateTime = _cronSchedule.GetNextOccurrence(nextDateTime);
                 }
 
-                next = new DateTimeOffset(nextDateTime, timeZone.GetUtcOffset(nextDateTime));
+                adjusted = new DateTimeOffset(nextDateTime);
             }
-            else if (IsInterval && (isNowAmbiguous || isNextAmbiguous) && nextOffset != now.Offset)
+            else if (IsInterval && (isNowAmbiguous || isNextAmbiguous) && next.Offset != now.Offset)
             {
-                // Scenario 4 -- Interval schedule where either point is ambiguous and we're crossing the offset boundary. For example, 
+                // "Fall Back" Scenario 3 -- Interval schedule where either point is ambiguous and we're crossing the offset boundary. For example, 
                 //   an "every 30 minute" interval in Pacific time:
                 //   - 00:30-7 -> 01:00-8 (because all ambiguous "next" use Standard time) -> adjust back 01:00-7
                 //   - 01:30-7 -> 02:00-8 -> adjust back to 01:00-8
-                var offsetDiff = nextOffset - now.Offset;
-                next = TimeZoneInfo.ConvertTime(next.Add(offsetDiff), timeZone);
+                var offsetDiff = next.Offset - now.Offset;
+                adjusted = TimeZoneInfo.ConvertTime(next.Add(offsetDiff), timeZone);
             }
 
-            return next;
+            return adjusted != null;
         }
 
         /// <inheritdoc/>
