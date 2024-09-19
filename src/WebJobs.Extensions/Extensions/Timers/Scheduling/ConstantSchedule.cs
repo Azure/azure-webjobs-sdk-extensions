@@ -33,7 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         public override DateTime GetNextOccurrence(DateTime now)
         {
             // Note: Tests mock TimeZoneInfo.Local
-            return GetNextOccurrence(new DateTimeOffset(now, TimeZoneInfo.Local.GetUtcOffset(now))).LocalDateTime;
+            return GetNextOccurrence(new DateTimeOffset(now)).LocalDateTime;
         }
 
         private DateTimeOffset GetNextOccurrence(DateTimeOffset now)

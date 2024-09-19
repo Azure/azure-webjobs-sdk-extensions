@@ -12,6 +12,7 @@ using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Listeners;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NCrontab;
 using Xunit;
@@ -642,7 +643,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 RunOnStartup = runOnStartup
             };
 
-            _schedule = TimerSchedule.Create(_attribute, new TestNameResolver(), _logger);
+            ILogger logger = (ILogger)_logger ?? NullLogger.Instance;
+            _schedule = TimerSchedule.Create(_attribute, new TestNameResolver(), logger);
             _attribute.UseMonitor = useMonitor;
             _options = new TimersOptions();
             _mockScheduleMonitor = new Mock<ScheduleMonitor>(MockBehavior.Strict);

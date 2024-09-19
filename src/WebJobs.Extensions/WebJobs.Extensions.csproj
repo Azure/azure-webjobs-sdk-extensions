@@ -4,6 +4,7 @@
     <AssemblyName>Microsoft.Azure.WebJobs.Extensions</AssemblyName>
     <RootNamespace>Microsoft.Azure.WebJobs.Extensions</RootNamespace>
     <PackageId>Microsoft.Azure.WebJobs.Extensions</PackageId>
+    <LangVersion>Latest</LangVersion>
     <Description>This package contains Timers and File triggers. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources.</Description>
   </PropertyGroup>
   <Import Project="..\..\build\common.props" />

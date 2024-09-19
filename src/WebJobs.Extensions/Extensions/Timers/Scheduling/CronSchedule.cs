@@ -71,7 +71,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         public override DateTime GetNextOccurrence(DateTime now)
         {
             // Note: TimeZoneInfo.Local is mocked in tests
-            return GetNextOccurrence(new DateTimeOffset(now, TimeZoneInfo.Local.GetUtcOffset(now))).LocalDateTime;
+            return GetNextOccurrence(new DateTimeOffset(now)).LocalDateTime;
         }
 
         private DateTimeOffset GetNextOccurrence(DateTimeOffset now)
@@ -82,8 +82,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             var nowDateTime = now.LocalDateTime;
             var nextDateTime = _cronSchedule.GetNextOccurrence(nowDateTime);
 
-            // This will apply the correct offset for the local time zone based on the DateTime.
-            var next = new DateTimeOffset(nextDateTime);
+            // This will apply the correct offset for the local time zone based on the DateTime. The way that
+            // NCronTab generates DateTimes means we may get a time that is invalid in this TimeZone due to
+            // Daylight Saving Time transitions.
+            var next = new DateTimeOffset(nextDateTime).ToLocalTime();
+
+            if (!TimeZoneInfo.Local.SupportsDaylightSavingTime)
+            {
+                // No more adjustments are necessary.
+                return next;
+            }
 
             // Now we need to evaluate the possibility of Daylight Saving transitions.
             // Example of DST transitions in 2018 for reference (from .NET source):
@@ -94,12 +102,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             // |      +1 hr     |                        |       -1 hr      |
             // | <invalid time> |                        | <ambiguous time> |
             //                  [========== DST ========>)
-            if (TryAdjustInvalidTime(next, out DateTimeOffset? adjusted))
-            {
-                // "Spring Forward": "next" was invalid and was adjusted forward to a valid time.                
-                next = adjusted.Value;
-            }
-            else if (TryAdjustAmbiguousTime(now, next, out adjusted))
+            //
+            // Note: Invalid times during "spring forward" are already handled by the call to ToLocalTime() above.
+            if (TryAdjustAmbiguousTime(now, next, out var adjusted))
             {
                 // "Fall Back": Either "now" or "next" was ambiguous and the time was adjusted.
                 next = adjusted.Value;
@@ -108,41 +113,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             return next;
         }
 
-        /// <summary>
-        /// If the provided DateTime is not valid, moves forward to the next occurrence in the schedule
-        /// until a valid DateTime is found. For example, 02:30 does not exist when "springing forward"
-        /// to Daylight Saving Time in the Pacific Standard Time Zone. Uses TimeZoneInfo.Local to make
-        /// the determination.
-        /// </summary>
-        /// <param name="next">The DateTimeOffset to evaluate.</param>
-        /// <param name="adjusted">The adjusted DateTimeOffset, if "next" is invalid.</param>
-        /// <returns></returns>
-        internal bool TryAdjustInvalidTime(DateTimeOffset next, out DateTimeOffset? adjusted)
-        {
-            adjusted = null;
-
-            if (TimeZoneInfo.Local.IsInvalidTime(next.DateTime))
-            {
-                // This forces the offset to be recalculated for the local time zone. It will also signal that we don't need to do the
-                // ambiguous time calculations as this cannot happen during ambiguous times.
-                adjusted = next.ToLocalTime();
-                _logger.LogDebug(new EventId(900, "DstInvalidTime"), $"The calculated next occurrence for the schedule '{_cronSchedule}' of '{next}' was determined to be an invalid time in the time zone '{TimeZoneInfo.Local.DisplayName}' due to Daylight Saving Time. The adjusted next occurrence is '{adjusted}'.");
-                return true;
-            }
-
-            return adjusted != null;
-        }
-
         internal bool TryAdjustAmbiguousTime(DateTimeOffset now, DateTimeOffset next, out DateTimeOffset? adjusted)
         {
             adjusted = null;
 
             TimeZoneInfo timeZone = TimeZoneInfo.Local;
-            if (!timeZone.SupportsDaylightSavingTime)
-            {
-                // There cannot be ambiguous times if there is no Daylight Saving Time.
-                return false;
-            }
 
             // Begin evaluating scenarios when Daylight Saving ends and time falls back. This leads to "ambiguous" times
             // as the clock repeats an hour. For example, times from 1:00 - 1:59 AM will occur twice in Pacific Standard Time
@@ -174,7 +149,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 //   point-in-time schedule on Standard time, move the offset back to the Daylight offset.
                 var offsetDiff = next.Offset - now.Offset;
                 adjusted = TimeZoneInfo.ConvertTime(next.Add(offsetDiff), timeZone);
-                _logger.LogDebug(new EventId(901, "DstAmbiguousTime"), $"Using the starting time of '{now}' the calculated next occurrence for the schedule '{_cronSchedule}' of '{next}' was determined to be an ambiguous time in the time zone '{TimeZoneInfo.Local.DisplayName}' due to Daylight Saving Time. The adjusted next occurrence is '{adjusted}'.");
+                Logger.DstAmbiguousTime(_logger, now, _cronSchedule.ToString(), next, TimeZoneInfo.Local.DisplayName, adjusted.Value);
             }
             else if (!IsInterval && isNextAmbiguous && next.Offset == now.Offset)
             {
@@ -190,7 +165,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 }
 
                 adjusted = new DateTimeOffset(nextDateTime);
-                _logger.LogDebug(new EventId(902, "DstAmbiguousTimeSecondOccurrence"), $"Using the starting time of '{now}' the calculated next occurrence for the schedule '{_cronSchedule}' of '{next}' was determined to be the second occurrence of this time in the time zone '{TimeZoneInfo.Local.DisplayName}' due to Daylight Saving Time. This occurrence will be skipped and the adjusted next occurrence is '{adjusted}'.");
+                Logger.DstAmbiguousTimeSecondOccurrence(_logger, now, _cronSchedule.ToString(), next, TimeZoneInfo.Local.DisplayName, adjusted.Value);
             }
             else if (IsInterval && (isNowAmbiguous || isNextAmbiguous) && next.Offset != now.Offset)
             {
@@ -200,10 +175,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 //   - 01:30-7 -> 02:00-8 -> adjust back to 01:00-8
                 var offsetDiff = next.Offset - now.Offset;
                 adjusted = TimeZoneInfo.ConvertTime(next.Add(offsetDiff), timeZone);
-                _logger.LogDebug(new EventId(903, "DstAmbiguousTimeInterval"), $"Using the starting time of '{now}', the calculated next occurrence for the schedule '{_cronSchedule}' of '{next}' was determined to be an ambiguous time in the time zone '{TimeZoneInfo.Local.DisplayName}' due to Daylight Saving Time. The adjusted next occurrence is '{adjusted}'.");
+                Logger.DstAmbiguousTimeInterval(_logger, now, _cronSchedule.ToString(), next, TimeZoneInfo.Local.DisplayName, adjusted.Value);
             }
 
-            return adjusted != null;
+            return adjusted is not null;
         }
 
         /// <inheritdoc/>
@@ -246,6 +221,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         private static bool HasSeconds(string cronExpression)
         {
             return cronExpression.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length != 5;
+        }
+
+        private static class Logger
+        {
+            private static readonly Action<ILogger, DateTimeOffset, string, DateTimeOffset, string, DateTimeOffset, Exception> _dstAmbiguousTime =
+                LoggerMessage.Define<DateTimeOffset, string, DateTimeOffset, string, DateTimeOffset>(LogLevel.Debug, new EventId(900, nameof(DstAmbiguousTime)),
+                    "Using the starting time of '{now}' the calculated next occurrence for the schedule '{schedule}' of '{next}' was determined to be an ambiguous time in the time zone '{timeZone}' due to Daylight Saving Time. The adjusted next occurrence is '{adjusted}'.");
+
+            private static readonly Action<ILogger, DateTimeOffset, string, DateTimeOffset, string, DateTimeOffset, Exception> _dstAmbiguousTimeSecondOccurrence =
+               LoggerMessage.Define<DateTimeOffset, string, DateTimeOffset, string, DateTimeOffset>(LogLevel.Debug, new EventId(901, nameof(DstAmbiguousTimeSecondOccurrence)),
+                   "Using the starting time of '{now}' the calculated next occurrence for the schedule '{schedule}' of '{next}' was determined to be the second occurrence of this time in the time zone '{timeZone}' due to Daylight Saving Time. This occurrence will be skipped and the adjusted next occurrence is '{adjusted}'.");
+
+            private static readonly Action<ILogger, DateTimeOffset, string, DateTimeOffset, string, DateTimeOffset, Exception> _dstAmbiguousTimeInterval =
+                LoggerMessage.Define<DateTimeOffset, string, DateTimeOffset, string, DateTimeOffset>(LogLevel.Debug, new EventId(902, nameof(DstAmbiguousTimeInterval)),
+                    "Using the starting time of '{now}', the calculated next occurrence for the schedule '{schedule}' of '{next}' was determined to be an ambiguous time in the time zone '{timeZone}' due to Daylight Saving Time. The adjusted next occurrence is '{adjusted}'.");
+
+            public static void DstAmbiguousTime(ILogger logger, DateTimeOffset now, string schedule, DateTimeOffset next, string timeZone, DateTimeOffset adjusted) =>
+                _dstAmbiguousTime(logger, now, schedule, next, timeZone, adjusted, null);
+
+            public static void DstAmbiguousTimeSecondOccurrence(ILogger logger, DateTimeOffset now, string schedule, DateTimeOffset next, string timeZone, DateTimeOffset adjusted) =>
+                _dstAmbiguousTimeSecondOccurrence(logger, now, schedule, next, timeZone, adjusted, null);
+
+            public static void DstAmbiguousTimeInterval(ILogger logger, DateTimeOffset now, string schedule, DateTimeOffset next, string timeZone, DateTimeOffset adjusted) =>
+                _dstAmbiguousTimeInterval(logger, now, schedule, next, timeZone, adjusted, null);
         }
     }
 }
