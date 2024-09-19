@@ -113,6 +113,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             return next;
         }
 
+        /// <summary>
+        /// Uses the 'now' and 'next' values to determine if either is ambiguous. If they are, adjusts the times
+        /// so that they are unambiguous, depending on the time of schedule it is (interval or point-in-time).
+        /// Uses TimeZoneInfo.Local to make the determination.
+        /// </summary>
+        /// <param name="now">The DateTimeOffset that represents the current time.</param>
+        /// <param name="next">The DateTimeOffset that represents the next occurrence.</param>
+        /// <param name="adjusted">The adjusted DateTimeOffset, if "next" is invalid.</param>
+        /// <returns>True if the 'next' time was adjusted. Otherwise, false.</returns>        
         internal bool TryAdjustAmbiguousTime(DateTimeOffset now, DateTimeOffset next, out DateTimeOffset? adjusted)
         {
             adjusted = null;
