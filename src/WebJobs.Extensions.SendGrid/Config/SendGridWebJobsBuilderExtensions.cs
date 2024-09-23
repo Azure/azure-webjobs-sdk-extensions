@@ -8,6 +8,7 @@ using Microsoft.Azure.WebJobs.Extensions.Config;
 using Microsoft.Azure.WebJobs.Extensions.SendGrid;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.Hosting
 {
@@ -37,7 +38,8 @@ namespace Microsoft.Extensions.Hosting
                     SendGridHelpers.ApplyConfiguration(section, options);
                 });
 
-            builder.Services.AddSingleton<ISendGridClientFactory, DefaultSendGridClientFactory>();
+            builder.Services.TryAddSingleton<ISendGridClientFactory, DefaultSendGridClientFactory>();
+            builder.Services.TryAddSingleton<ISendGridResponseHandler, DefaultSendGridResponseHandler>();
 
             return builder;
         }
