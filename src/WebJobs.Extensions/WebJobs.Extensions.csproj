@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.32" />
-    <PackageReference Include="ncrontab.signed" Version="3.3.2" />
+    <PackageReference Include="ncrontab.signed" Version="3.3.3" />
   </ItemGroup>
 
   <ItemGroup>

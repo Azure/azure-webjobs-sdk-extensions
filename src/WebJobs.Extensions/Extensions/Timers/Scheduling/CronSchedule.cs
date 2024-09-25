@@ -22,8 +22,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         {
             _cronSchedule = schedule;
             var cron = schedule.ToString();
-            var parts = cron.Split(' ');
 
+            var parts = cron.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             IsInterval = false;
 
             // in cron expressions, if any the first 3 parts (2 if not using seconds)
@@ -115,7 +115,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
 
         /// <summary>
         /// Uses the 'now' and 'next' values to determine if either is ambiguous. If they are, adjusts the times
-        /// so that they are unambiguous, depending on the time of schedule it is (interval or point-in-time).
+        /// so that they are unambiguous, depending on the type of schedule it is (interval or point-in-time).
         /// Uses TimeZoneInfo.Local to make the determination.
         /// </summary>
         /// <param name="now">The DateTimeOffset that represents the current time.</param>
@@ -156,6 +156,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 // "Fall Back" Scenario 1 -- Point-in-time schedule where the next time is ambiguous and the offsets have changed.
                 //   This means that "now" is in DST and "next" is in Standard Time. Since we never want to run an ambiguous
                 //   point-in-time schedule on Standard time, move the offset back to the Daylight offset.
+                //   Example, all on the "fall back" day:
+                //     - schedule:   every day at 01:30
+                //     - now:        00:59-7
+                //     - next:       01:30-8 (because all ambiguous "next" use Standard time when using NCronTab)
+                //     - offsetDiff: (-8)-(-7) = -1
+                //     - adjusted:   01:30-7
+                //     In this scenario, we see that we're going from DST to Standard, but the Standard time is ambiguous. In this case,
+                //     we always want to bring it back to the DST offset in the current local time zone.
                 var offsetDiff = next.Offset - now.Offset;
                 adjusted = TimeZoneInfo.ConvertTime(next.Add(offsetDiff), timeZone);
                 Logger.DstAmbiguousTime(_logger, now, _cronSchedule.ToString(), next, TimeZoneInfo.Local.DisplayName, adjusted.Value);
@@ -166,6 +174,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 //   when the timer starts and we are already past the "fall back" point. For example, if the trigger starts up at
                 //   01:29-8 and we have a "every day at 01:30" schedule, we have to assume that we've already run it at 01:30-7 and
                 //   therefore calculate the time after this.
+                //   Example:
+                //     - schedule:   every day at 01:30
+                //     - now:        11/4/2018 01:29-8
+                //     - next:       11/4/2018 01:30-8 (because all ambiguous "next" use Standard time when using NCronTab)                
+                //     - adjusted:   11/5/2018 01:30-8
+                //     In this scenario, we see that we're already in Standard time, but the Standard time is ambiguous. In this case,
+                //     we always assume that we've already run during DST and we don't want to run twice in one day.
                 var nextDateTime = next.LocalDateTime;
 
                 while (timeZone.IsAmbiguousTime(nextDateTime))

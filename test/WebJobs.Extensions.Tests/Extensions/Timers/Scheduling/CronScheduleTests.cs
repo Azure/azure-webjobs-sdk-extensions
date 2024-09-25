@@ -213,6 +213,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [InlineData("0-15 * * * *", true)]
         [InlineData("0 * * * 0", true)]
         [InlineData("0 1-3 * * 0", true)]
+        [InlineData(" 0 1 * * *", false)]
         [InlineData("0 0 * * *", false)]
         [InlineData("0 0 1 * *", false)]
         [InlineData("0 0 1 1 *", false)]

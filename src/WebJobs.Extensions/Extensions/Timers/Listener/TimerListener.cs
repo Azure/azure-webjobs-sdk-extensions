@@ -93,7 +93,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             // the current schedule status
             bool isPastDue = false;
 
-            // we use DateTime.Now rather than DateTime.UtcNow to allow the local machine to set the time zone. In Azure this will be
+            // we use DateTimeOffset.Now rather than DateTimeOffset.UtcNow to allow the local machine to set the time zone. In Azure this will be
             // UTC by default, but can be configured to use any time zone if it makes scheduling easier.                        
             DateTimeOffset now = DateTimeOffset.Now;
 
@@ -264,7 +264,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         /// <summary>
         /// Invokes the job function.
         /// </summary>
-        /// <param name="invocationTime">The time of the invocation, likely DateTime.Now.</param>
+        /// <param name="invocationTime">The time of the invocation, likely DateTimeOffset.Now.</param>
         /// <param name="isPastDue">True if the invocation is because the invocation is due to a past due timer.</param>
         /// <param name="runOnStartup">True if the invocation is because the timer is configured to run on startup.</param>
         internal async Task InvokeJobFunction(DateTimeOffset invocationTime, bool isPastDue = false, bool runOnStartup = false, DateTimeOffset? originalSchedule = null)
