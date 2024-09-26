@@ -43,6 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         }
 
         /// <inheritdoc/>
+        [Obsolete("This property is obsolete and will be removed in a future version.")]
         public override bool AdjustForDST => true;
 
         /// <inheritdoc/>

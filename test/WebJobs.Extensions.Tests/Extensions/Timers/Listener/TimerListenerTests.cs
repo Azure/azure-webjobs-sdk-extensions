@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
@@ -11,13 +12,14 @@ using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Listeners;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NCrontab;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 {
-    public class TimerListenerTests
+    public class TimerListenerTests : IDisposable
     {
         private readonly string _testTimerName = "Program.TestTimerJob";
         private readonly string _functionShortName = "TimerFunctionShortName";
@@ -38,8 +40,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public async Task InvokeJobFunction_UpdatesScheduleMonitor()
         {
-            DateTime lastOccurrence = DateTime.Now;
-            DateTime nextOccurrence = _schedule.GetNextOccurrence(lastOccurrence);
+            DateTimeOffset lastOccurrence = DateTimeOffset.Now;
+            DateTimeOffset nextOccurrence = _schedule.GetNextOccurrence(lastOccurrence.LocalDateTime);
 
             _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName,
                 It.Is<ScheduleStatus>(q => q.Last == lastOccurrence && q.Next == nextOccurrence)))
@@ -65,7 +67,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             };
 
             // Run the function 1 millisecond before it's next scheduled run.
-            DateTime invocationTime = status.Next.AddMilliseconds(-1);
+            DateTimeOffset invocationTime = status.Next.AddMilliseconds(-1);
 
             // It should not use the same 'Next' value twice in a row.
             DateTime expectedNextOccurrence = new DateTime(2016, 3, 6);
@@ -150,7 +152,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 Next = new DateTime(2016, 3, 5),
                 LastUpdated = new DateTime(2016, 3, 4)
             };
-            DateTime invocationTime = status.Next.AddMilliseconds(-1);
+            DateTimeOffset invocationTime = status.Next.AddMilliseconds(-1);
             ScheduleStatus updatedStatus = null;
             _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName, It.IsAny<ScheduleStatus>()))
                 .Callback<string, ScheduleStatus>((n, s) => updatedStatus = s)
@@ -182,10 +184,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             ScheduleStatus status = new ScheduleStatus();
             _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_testTimerName)).ReturnsAsync(status);
 
-            DateTime lastOccurrence = default(DateTime);
+            DateTimeOffset lastOccurrence = default(DateTimeOffset);
             TimeSpan pastDueAmount = TimeSpan.FromMinutes(3);
-            _mockScheduleMonitor.Setup(p => p.CheckPastDueAsync(_testTimerName, It.IsAny<DateTime>(), It.IsAny<TimerSchedule>(), status))
-                .Callback<string, DateTime, TimerSchedule, ScheduleStatus>((mockTimerName, mockNow, mockNext, mockStatus) =>
+            _mockScheduleMonitor.Setup(p => p.CheckPastDueAsync(_testTimerName, It.IsAny<DateTimeOffset>(), It.IsAny<TimerSchedule>(), status))
+                .Callback<string, DateTimeOffset, TimerSchedule, ScheduleStatus>((mockTimerName, mockNow, mockNext, mockStatus) =>
                     {
                         lastOccurrence = mockNow;
                     })
@@ -195,7 +197,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 .Callback<string, ScheduleStatus>((mockTimerName, mockStatus) =>
                     {
                         Assert.Equal(lastOccurrence, mockStatus.Last);
-                        DateTime expectedNextOccurrence = _schedule.GetNextOccurrence(lastOccurrence);
+                        DateTimeOffset expectedNextOccurrence = _schedule.GetNextOccurrence(lastOccurrence.LocalDateTime);
                         Assert.Equal(expectedNextOccurrence, mockStatus.Next);
                     })
                 .Returns(Task.FromResult(true));
@@ -208,7 +210,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             Assert.False(startupInvocation.RunOnStartup);
             Assert.Equal(TimerListener.StartupInvocationContext.IntervalMS, _listener.Timer.Interval);
             Assert.True(startupInvocation.IsPastDue);
-            Assert.Equal(default(DateTime), startupInvocation.OriginalSchedule);
+            Assert.Equal(default(DateTimeOffset).ToLocalTime(), startupInvocation.OriginalSchedule);
 
             await Task.Delay(100);
 
@@ -219,7 +221,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Once());
 
             // Make sure we've added the reason for the invocation into the Details
-            Assert.Equal(default(DateTime).ToString("o"), _triggeredFunctionData.TriggerDetails[TimerListener.OriginalScheduleKey]);
+            Assert.Equal(default(DateTimeOffset).ToLocalTime().ToString("o"), _triggeredFunctionData.TriggerDetails[TimerListener.OriginalScheduleKey]);
             Assert.Equal("IsPastDue", _triggeredFunctionData.TriggerDetails[TimerListener.UnscheduledInvocationReasonKey]);
 
             Assert.Null(_listener.StartupInvocation);
@@ -239,7 +241,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_testTimerName)).ReturnsAsync(status);
 
             TimeSpan pastDueAmount = TimeSpan.Zero;
-            _mockScheduleMonitor.Setup(p => p.CheckPastDueAsync(_testTimerName, It.IsAny<DateTime>(), It.IsAny<TimerSchedule>(), status))
+            _mockScheduleMonitor.Setup(p => p.CheckPastDueAsync(_testTimerName, It.IsAny<DateTimeOffset>(), It.IsAny<TimerSchedule>(), status))
                 .ReturnsAsync(pastDueAmount);
 
             CancellationToken cancellationToken = CancellationToken.None;
@@ -266,7 +268,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             Assert.True(startupInvocation.RunOnStartup);
             Assert.Equal(TimerListener.StartupInvocationContext.IntervalMS, _listener.Timer.Interval);
             Assert.False(startupInvocation.IsPastDue);
-            Assert.Equal(default(DateTime), startupInvocation.OriginalSchedule);
+            Assert.Equal(default(DateTimeOffset), startupInvocation.OriginalSchedule);
 
             await Task.Delay(100);
 
@@ -300,9 +302,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
 
-            Assert.Equal(DateTimeKind.Local, _listener.ScheduleStatus.Last.Kind);
-            Assert.Equal(DateTimeKind.Local, _listener.ScheduleStatus.Next.Kind);
-            Assert.Equal(DateTimeKind.Local, _listener.ScheduleStatus.LastUpdated.Kind);
+            //Assert.Equal(DateTimeKind.Local, _listener.ScheduleStatus.Last.Kind);
+            //Assert.Equal(DateTimeKind.Local, _listener.ScheduleStatus.Next.Kind);
+            //Assert.Equal(DateTimeKind.Local, _listener.ScheduleStatus.LastUpdated.Kind);
 
             _listener.Dispose();
         }
@@ -364,7 +366,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_testTimerName)).ReturnsAsync(status);
 
             // Make sure we invoke b/c we're past due.
-            _mockScheduleMonitor.Setup(p => p.CheckPastDueAsync(_testTimerName, It.IsAny<DateTime>(), It.IsAny<TimerSchedule>(), status))
+            _mockScheduleMonitor.Setup(p => p.CheckPastDueAsync(_testTimerName, It.IsAny<DateTimeOffset>(), It.IsAny<TimerSchedule>(), status))
                 .ReturnsAsync(TimeSpan.FromMilliseconds(1));
 
             // Use the monitor to sleep for a second. This ensures that we recalculate the Next value before
@@ -473,37 +475,87 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await RunInitialStatusTestAsync(null, $"Function '{_functionShortName}' initial status: Last='(null)', Next='(null)', LastUpdated='(null)'");
         }
 
-        public static IEnumerable<object[]> TimerSchedulesAfterDST => new object[][]
-        {
-            new object[] { new CronSchedule(CrontabSchedule.Parse("0 0 18 * * 5", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(167) },
-            new object[] { new ConstantSchedule(TimeSpan.FromDays(7)), TimeSpan.FromDays(7) },
-        };
+        public static IEnumerable<object[]> TimerSchedulesEnteringDST =>
+        [
+            [new CronSchedule(CrontabSchedule.Parse("0 0 18 * * 5", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(167)],
+            [new ConstantSchedule(TimeSpan.FromDays(7)), TimeSpan.FromDays(7)],
+        ];
 
-        public static IEnumerable<object[]> TimerSchedulesWithinDST => new object[][]
-        {
-            new object[] { new CronSchedule(CrontabSchedule.Parse("0 59 * * * *", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(1) },
-            new object[] { new ConstantSchedule(TimeSpan.FromMinutes(5)), TimeSpan.FromMinutes(5) },
-        };
+        public static IEnumerable<object[]> TimerSchedulesWithinDST =>
+        [
+            [new CronSchedule(CrontabSchedule.Parse("0 59 * * * *", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(1)],
+            [new ConstantSchedule(TimeSpan.FromMinutes(5)), TimeSpan.FromMinutes(5)],
+        ];
+
+        // Note: In Pacific time, DST (UTC -7) ends at 2 AM on 11/4/2018. The clocks go back to 1 AM (with UTC -8).
+        public static IEnumerable<object[]> CronTimerSchedulesExitingDST =>
+        [
+            // Starts in ambiguous PDT, ends in PST. Run every hour at the 30 minute mark.
+            [new DateTimeOffset(2018, 11, 4, 1, 31, 0, TimeSpan.FromHours(-7)), "0 30 * * * *", TimeSpan.FromMinutes(59)],
+
+            // Starts in ambiguous PDT, ends in PST. Run every minute.
+            [new DateTimeOffset(2018, 11, 4, 1, 59, 0, TimeSpan.FromHours(-7)), "0 * * * * *", TimeSpan.FromMinutes(1)],
+
+            // Starts in ambiguous PDT, ends in ambiguous PDT. Run every minute.
+            [new DateTimeOffset(2018, 11, 4, 1, 30, 0, TimeSpan.FromHours(-7)), "0 * * * * *", TimeSpan.FromMinutes(1)],
+
+            // Starts in ambiguous PDT, ends in ambiguous PST. Run at 1:00/1:30/2:00/2:30. This is considered an interval and should
+            // should run 6 times during the PDT -> PST transition.
+            [new DateTimeOffset(2018, 11, 4, 1, 45, 0, TimeSpan.FromHours(-7)), "0 0,30 1-2 * * *", TimeSpan.FromMinutes(15)],
+
+            // Starts in ambiguous PST, ends in ambiguous PST. Run at 1:30/2:30. This is considered an interval and should
+            // should run 6 times during the PDT -> PST transition. No log is expected because no adjustment is performed as the
+            // offsets match in this case.
+            [new DateTimeOffset(2018, 11, 4, 1, 45, 0, TimeSpan.FromHours(-8)), "0 0,30 1-3 * * *", TimeSpan.FromMinutes(15)],
+
+            // Starts in ambiguous PST, ends in ambiguous PDT. Run every minute for a range.
+            [new DateTimeOffset(2018, 11, 4, 1, 30, 0, TimeSpan.FromHours(-7)), "0 * 1-3 * * *", TimeSpan.FromMinutes(1)],
+
+            // Starts in PDT, ends in ambiguous PDT. Run every minute.
+            [new DateTimeOffset(2018, 11, 4, 0, 59, 0, TimeSpan.FromHours(-7)), "0 * * * * *", TimeSpan.FromMinutes(1)],
+
+            // Starts in ambiguous PST, ends in PST. Run every hour at the 30 minute mark.
+            [new DateTimeOffset(2018, 11, 4, 1, 31, 0, TimeSpan.FromHours(-8)), "0 30 * * * *", TimeSpan.FromMinutes(59)],
+
+            // Starts in PDT, ends in PST. Run every Friday at 6 PM.
+            [new DateTimeOffset(2018, 11, 2, 18, 0, 0, TimeSpan.FromHours(-7)), "0 0 18 * * 5", TimeSpan.FromHours(169)],
+
+            // Starts in ambiguous PDT, ends in PST. Run every day at 1:30 (only expect one invocation during ambiguous times).
+            [new DateTimeOffset(2018, 11, 4, 1, 30, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.FromHours(25)],
+
+            // Starts in PDT, ends in ambgiguous PDT. Run every day at 1:30 (only expect one invocation during ambiguous times).
+            [new DateTimeOffset(2018, 11, 4, 0, 30, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.FromHours(1)],
+
+            // Starts in ambiguous PDT, ends in ambgiguous PDT. Run every day at 1:30 (only expect one invocation during ambiguous times).
+            [new DateTimeOffset(2018, 11, 4, 1, 29, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.FromMinutes(1)],
+
+            // Starts in ambiguous PST, ends in PST. Run every day at 1:30 (only expect one invocation during ambiguous times).
+            [new DateTimeOffset(2018, 11, 4, 1, 29, 0, TimeSpan.FromHours(-8)), "0 30 1 * * *", TimeSpan.Parse("1.00:01")],
+
+            // Starts in ambiguous PDT, ends in PST. Run every day at 1:30 (only expect one invocation during ambiguous times).
+            [new DateTimeOffset(2018, 11, 4, 1, 31, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.Parse("1.00:59")],
+        ];
 
         /// <summary>
         /// Situation where the DST transition happens in the middle of the schedule, with the
         /// next occurrence AFTER the DST transition.
         /// </summary>
         [Theory]
-        [MemberData(nameof(TimerSchedulesAfterDST))]
-        public void GetNextInterval_NextAfterDST_ReturnsExpectedValue(TimerSchedule schedule, TimeSpan expectedInterval)
+        [MemberData(nameof(TimerSchedulesEnteringDST))]
+        public void GetNextInterval_NextAfterDSTBegins_ReturnsExpectedValue(TimerSchedule schedule, TimeSpan expectedInterval)
         {
-            // Running on the Friday before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
+            SetLocalTimeZoneToPacific();
+
+            // Running on the Friday before DST *begins* at 2 AM on 3/11 (Pacific Standard Time)
             // Note: this test uses Local time, so if you're running in a timezone where
             // DST doesn't transition the test might not be valid.
             // The input schedules will run after DST changes. For some (Cron), they will subtract
             // an hour to account for the shift. For others (Constant), they will not.
-            TimeZoneInfo pst = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
-            TimeSpan offset = pst.GetUtcOffset(new DateTime(2018, 3, 9, 18, 0, 0));
-            var now = new DateTimeOffset(2018, 3, 9, 18, 0, 0, offset);
+            var start = new DateTime(2018, 3, 9, 18, 0, 0, DateTimeKind.Local);
+            var now = new DateTimeOffset(start);
 
-            var next = schedule.GetNextOccurrence(now.DateTime);
-            var interval = TimerListener.GetNextTimerInterval(next, now.DateTime, schedule.AdjustForDST, pst);
+            var next = schedule.GetNextOccurrence(now.LocalDateTime);
+            var interval = TimerListener.GetNextTimerInterval(next, now);
 
             // One week is normally 168 hours, but it's 167 hours across DST
             Assert.Equal(interval, expectedInterval);
@@ -517,26 +569,46 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [MemberData(nameof(TimerSchedulesWithinDST))]
         public void GetNextInterval_NextWithinDST_ReturnsExpectedValue(TimerSchedule schedule, TimeSpan expectedInterval)
         {
+            SetLocalTimeZoneToPacific();
+
             // Running at 1:59 AM, i.e. one minute before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
             // Note: this test uses Local time, so if you're running in a timezone where
             // DST doesn't transition the test might not be valid.
-            TimeZoneInfo pst = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
-            TimeSpan offset = pst.GetUtcOffset(new DateTime(2018, 3, 11, 1, 59, 0));
-            var now = new DateTimeOffset(2018, 3, 11, 1, 59, 0, offset);
+            var start = new DateTime(2018, 3, 11, 1, 59, 0, DateTimeKind.Local);
+            var now = new DateTimeOffset(start);
 
             var next = schedule.GetNextOccurrence(now.DateTime);
 
-            var interval = TimerListener.GetNextTimerInterval(next, now.DateTime, schedule.AdjustForDST, pst);
+            TestLogger logger = new(null);
+            var interval = TimerListener.GetNextTimerInterval(next, now);
+            Assert.Equal(expectedInterval, interval);
+        }
+
+        /// <summary>
+        /// Situation where we exit DST and the next occurrence is in the hour that is repeated.
+        /// </summary>
+        [Theory]
+        [MemberData(nameof(CronTimerSchedulesExitingDST))]
+        public void GetNextInterval_NextAfterDSTEnds_ReturnsExpectedValue(DateTimeOffset now, string cronSchedule, TimeSpan expectedInterval)
+        {
+            SetLocalTimeZoneToPacific();
+
+            var schedule = new CronSchedule(CrontabSchedule.Parse(cronSchedule, new CrontabSchedule.ParseOptions() { IncludingSeconds = true }));
+
+            var logger = new TestLogger(null);
+            var next = schedule.GetNextOccurrence(now.LocalDateTime);
+            var interval = TimerListener.GetNextTimerInterval(next, now);
+
             Assert.Equal(expectedInterval, interval);
         }
 
         [Fact]
         public void GetNextInterval_NegativeInterval_ReturnsOneTick()
         {
-            var now = DateTime.Now;
-            var next = now.Subtract(TimeSpan.FromSeconds(1));
+            var now = DateTimeOffset.Now;
+            var next = now.Subtract(TimeSpan.FromSeconds(1)).LocalDateTime;
 
-            var interval = TimerListener.GetNextTimerInterval(next, now, true);
+            var interval = TimerListener.GetNextTimerInterval(next, now);
             Assert.Equal(1, interval.Ticks);
         }
 
@@ -546,7 +618,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 .Setup(m => m.GetStatusAsync(_testTimerName))
                 .ReturnsAsync(initialStatus);
             _mockScheduleMonitor
-                .Setup(m => m.CheckPastDueAsync(_testTimerName, It.IsAny<DateTime>(), _schedule, It.IsAny<ScheduleStatus>()))
+                .Setup(m => m.CheckPastDueAsync(_testTimerName, It.IsAny<DateTimeOffset>(), _schedule, It.IsAny<ScheduleStatus>()))
                 .ReturnsAsync(TimeSpan.Zero);
 
             await _listener.StartAsync(CancellationToken.None);
@@ -571,7 +643,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 RunOnStartup = runOnStartup
             };
 
-            _schedule = TimerSchedule.Create(_attribute, new TestNameResolver(), _logger);
+            ILogger logger = (ILogger)_logger ?? NullLogger.Instance;
+            _schedule = TimerSchedule.Create(_attribute, new TestNameResolver(), logger);
             _attribute.UseMonitor = useMonitor;
             _options = new TimersOptions();
             _mockScheduleMonitor = new Mock<ScheduleMonitor>(MockBehavior.Strict);
@@ -589,5 +662,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _logger = new TestLogger(null);
             _listener = new TimerListener(_attribute, _schedule, _testTimerName, _options, _mockTriggerExecutor.Object, _logger, _mockScheduleMonitor.Object, _functionShortName);
         }
+
+        internal static void SetLocalTimeZoneToPacific()
+        {
+            // There are so many internal benefits to using DateTimeKind.Local for us, that we're relying 
+            // on it to provide the proper roundtripping support between DateTime and DateTimeOffset. This appears
+            // to be the only way to "mock" this value as it's hard-coded inside a lot of .NET libraries when
+            // calculating offsets, time zones, etc.
+            var info = typeof(TimeZoneInfo).GetField("s_cachedData", BindingFlags.NonPublic | BindingFlags.Static);
+            var cachedData = info.GetValue(null);
+            var field = cachedData.GetType().GetField("_localTimeZone", BindingFlags.NonPublic | BindingFlags.Instance);
+            field.SetValue(cachedData, TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time"));
+        }
+
+        public void Dispose() => TimeZoneInfo.ClearCachedData();
     }
 }

@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
-using NCrontab;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers
 {
@@ -19,6 +18,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// <summary>
         /// Gets a value indicating whether intervals between invocations should account for DST.        
         /// </summary>
+        [Obsolete("This property is obsolete and will be removed in a future version. All TimerSchedule implementations should now handle their own DST transitions.")]
         public abstract bool AdjustForDST { get; }
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             if (!string.IsNullOrEmpty(attribute.ScheduleExpression))
             {
                 string resolvedExpression = nameResolver.ResolveWholeString(attribute.ScheduleExpression);
-                if (CronSchedule.TryCreate(resolvedExpression, out CronSchedule cronSchedule))
+                if (CronSchedule.TryCreate(resolvedExpression, logger, out CronSchedule cronSchedule))
                 {
                     schedule = cronSchedule;
                     if (attribute.UseMonitor && ShouldDisableScheduleMonitor(cronSchedule, DateTime.Now))

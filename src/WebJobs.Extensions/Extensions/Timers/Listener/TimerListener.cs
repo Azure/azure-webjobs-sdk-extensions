@@ -93,9 +93,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             // the current schedule status
             bool isPastDue = false;
 
-            // we use DateTime.Now rather than DateTime.UtcNow to allow the local machine to set the time zone. In Azure this will be
-            // UTC by default, but can be configured to use any time zone if it makes scheduling easier.
-            DateTime now = DateTime.Now;
+            // we use DateTimeOffset.Now rather than DateTimeOffset.UtcNow to allow the local machine to set the time zone. In Azure this will be
+            // UTC by default, but can be configured to use any time zone if it makes scheduling easier.                        
+            DateTimeOffset now = DateTimeOffset.Now;
+
             Logger.ScheduleAndTimeZone(_logger, _functionLogName, _schedule, TimeZoneInfo.Local.DisplayName);
 
             if (ScheduleMonitor != null)
@@ -114,7 +115,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 ScheduleStatus = new ScheduleStatus
                 {
                     Last = default(DateTime).ToLocalTime(),
-                    Next = _schedule.GetNextOccurrence(now),
+                    Next = _schedule.GetNextOccurrence(now.LocalDateTime),
                     LastUpdated = default(DateTime).ToLocalTime()
                 };
             }
@@ -145,7 +146,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             else
             {
                 // start the regular schedule
-                StartTimer(DateTime.Now);
+                StartTimer(DateTimeOffset.Now);
             }
 
             _logger.LogDebug($"Timer listener started ({_functionLogName})");
@@ -255,7 +256,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             {
                 if (!timerStarted)
                 {
-                    StartTimer(DateTime.Now);
+                    StartTimer(DateTimeOffset.Now);
                 }
             }
         }
@@ -263,10 +264,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         /// <summary>
         /// Invokes the job function.
         /// </summary>
-        /// <param name="invocationTime">The time of the invocation, likely DateTime.Now.</param>
+        /// <param name="invocationTime">The time of the invocation, likely DateTimeOffset.Now.</param>
         /// <param name="isPastDue">True if the invocation is because the invocation is due to a past due timer.</param>
         /// <param name="runOnStartup">True if the invocation is because the timer is configured to run on startup.</param>
-        internal async Task InvokeJobFunction(DateTime invocationTime, bool isPastDue = false, bool runOnStartup = false, DateTime? originalSchedule = null)
+        internal async Task InvokeJobFunction(DateTimeOffset invocationTime, bool isPastDue = false, bool runOnStartup = false, DateTimeOffset? originalSchedule = null)
         {
             try
             {
@@ -324,7 +325,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // adjust the invocation time forward for the purposes of calculating the next occurrence.
                 // Without this, it's possible to set the 'Next' value to the same time twice in a row, 
                 // which results in duplicate triggers if the site restarts.
-                DateTime adjustedInvocationTime = invocationTime;
+                DateTimeOffset adjustedInvocationTime = invocationTime;
                 if (!isPastDue && !runOnStartup && ScheduleStatus?.Next > invocationTime)
                 {
                     adjustedInvocationTime = ScheduleStatus.Next;
@@ -334,9 +335,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // consider this a schedule change when the host next starts.
                 ScheduleStatus = new ScheduleStatus
                 {
-                    Last = adjustedInvocationTime,
-                    Next = _schedule.GetNextOccurrence(adjustedInvocationTime),
-                    LastUpdated = adjustedInvocationTime
+                    Last = adjustedInvocationTime.LocalDateTime,
+                    Next = _schedule.GetNextOccurrence(adjustedInvocationTime.LocalDateTime),
+                    LastUpdated = adjustedInvocationTime.LocalDateTime
                 };
 
                 if (ScheduleMonitor != null)
@@ -351,9 +352,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             }
         }
 
-        private void StartTimer(DateTime now)
+        private void StartTimer(DateTimeOffset now)
         {
-            var nextInterval = GetNextTimerInterval(ScheduleStatus.Next, now, _schedule.AdjustForDST);
+            var nextInterval = GetNextTimerInterval(ScheduleStatus.Next, now);
             StartTimer(nextInterval);
         }
 
@@ -369,37 +370,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         /// </remarks>
         /// <param name="next">The next schedule occurrence in Local time.</param>
         /// <param name="now">The current Local time.</param>
-        /// <param name="adjustForDST">True to adjust for daylight savings time (if crossing DST boundary), false otherwise.</param>
-        /// <param name="timeZone">The time zone info to use. Will use <see cref="TimeZoneInfo.Local"/> if not supplied.</param>
         /// <returns>The next timer interval.</returns>
-        internal static TimeSpan GetNextTimerInterval(DateTime next, DateTime now, bool adjustForDST, TimeZoneInfo timeZone = null)
-        {
-            TimeSpan nextInterval;
-
-            if (adjustForDST)
-            {
-                // For calculations, we use DateTimeOffsets and TimeZoneInfo to ensure we honor time zone
-                // changes (e.g. Daylight Savings Time)
-                timeZone = timeZone ?? TimeZoneInfo.Local;
-                var nowOffset = new DateTimeOffset(now, timeZone.GetUtcOffset(now));
-                var nextOffset = new DateTimeOffset(next, timeZone.GetUtcOffset(next));
-                nextInterval = nextOffset - nowOffset;
-            }
-            else
-            {
-                nextInterval = next - now;
-            }
-
-            // If the interval happens to be negative (due to slow storage, for example), adjust the
-            // interval back up 1 Tick (Zero is invalid for a timer) for an immediate invocation.
-            if (nextInterval <= TimeSpan.Zero)
-            {
-                nextInterval = TimeSpan.FromTicks(1);
-            }
-
-            return nextInterval;
-        }
-
         internal static TimeSpan GetNextTimerInterval(DateTimeOffset next, DateTimeOffset now)
         {
             TimeSpan nextInterval = next - now;
@@ -473,7 +444,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
             public bool IsPastDue { get; set; }
 
-            public DateTime OriginalSchedule { get; set; }
+            public DateTimeOffset OriginalSchedule { get; set; }
 
             public TimeSpan Interval => TimeSpan.FromMilliseconds(IntervalMS);
         }

@@ -26,10 +26,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// <inheritdoc/>
         // We always want to run these based on the configured interval. We don't want to adjust
         // based on whether the next time falls across a DST boundary.
+        [Obsolete("This property is obsolete and will be removed in a future version.")]
         public override bool AdjustForDST => false;
 
         /// <inheritdoc/>
         public override DateTime GetNextOccurrence(DateTime now)
+        {
+            // Note: Tests mock TimeZoneInfo.Local
+            return GetNextOccurrence(new DateTimeOffset(now)).LocalDateTime;
+        }
+
+        private DateTimeOffset GetNextOccurrence(DateTimeOffset now)
         {
             TimeSpan nextInterval = _interval;
             if (_intervalOverride != null)
