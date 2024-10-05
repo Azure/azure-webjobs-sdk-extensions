@@ -3,8 +3,10 @@
 
 using System;
 using System.Net.Http.Formatting;
+#if !NET6_0_OR_GREATER
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.WebApiCompatShim;
+#endif
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -37,6 +39,9 @@ namespace Microsoft.Extensions.Hosting
 
             // Compatibility shim configuration and services
             builder.Services.TryAddSingleton<IContentNegotiator, DefaultContentNegotiator>();
+
+#if !NET6_0_OR_GREATER
+
             builder.Services.Configure<MvcOptions>(o =>
             {
                 o.OutputFormatters.Insert(0, new HttpResponseMessageOutputFormatter());
@@ -46,6 +51,8 @@ namespace Microsoft.Extensions.Hosting
             {
                 o.Formatters.AddRange(new MediaTypeFormatterCollection());
             });
+
+#endif
 
             return builder;
         }

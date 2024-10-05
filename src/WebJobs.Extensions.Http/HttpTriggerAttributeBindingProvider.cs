@@ -15,7 +15,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+#if NET6_0_OR_GREATER
+using Microsoft.Azure.WebJobs.Extensions.Http.Shim;
+#else
 using Microsoft.AspNetCore.Mvc.WebApiCompatShim;
+#endif
 using Microsoft.AspNetCore.Routing.Template;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Azure.WebJobs.Extensions.Bindings;
