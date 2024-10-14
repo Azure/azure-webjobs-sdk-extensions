@@ -36,9 +36,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
             ILoggerFactory loggerFactory = serviceProvider.GetService<ILoggerFactory>();
             CosmosDbMetadata cosmosDbMetadata = JsonConvert.DeserializeObject<CosmosDbMetadata>(triggerMetadata.Metadata.ToString());
             cosmosDbMetadata.ResolveProperties(serviceProvider.GetService<INameResolver>());
-            IOptions<CosmosClientOptions> options = serviceProvider.GetService<IOptions<CosmosClientOptions>>();
             ICosmosDBServiceFactory serviceFactory = new DefaultCosmosDBServiceFactory(config, azureComponentFactory);
-            CosmosClient cosmosClient = serviceFactory.CreateService(cosmosDbMetadata.Connection, options.Value);
+            CosmosClient cosmosClient = serviceFactory.CreateService(cosmosDbMetadata.Connection, new CosmosClientOptions
+            {
+                ConnectionMode = ConnectionMode.Gateway
+            });
             var monitoredContainer = cosmosClient.GetContainer(cosmosDbMetadata.DatabaseName, cosmosDbMetadata.ContainerName);
             var leaseContainer = cosmosClient.GetContainer(string.IsNullOrEmpty(cosmosDbMetadata.LeaseDatabaseName) ? cosmosDbMetadata.DatabaseName : cosmosDbMetadata.LeaseDatabaseName, string.IsNullOrEmpty(cosmosDbMetadata.LeaseContainerName) ? CosmosDBTriggerConstants.DefaultLeaseCollectionName : cosmosDbMetadata.LeaseContainerName);
             _scaleMonitor = new CosmosDBScaleMonitor(triggerMetadata.FunctionName, loggerFactory.CreateLogger<CosmosDBScaleMonitor>(), monitoredContainer, leaseContainer, cosmosDbMetadata.LeaseContainerPrefix);
