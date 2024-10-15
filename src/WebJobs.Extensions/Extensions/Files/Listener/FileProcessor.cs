@@ -330,7 +330,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files
 
             if (filesDeleted > 0)
             {
-                _logger.LogDebug($"File Cleanup ({_filePath}): {filesDeleted} files deleted");
+                _logger.LogDebug("File Cleanup ({filePath}): {filesDeleted} files deleted", 
+                    _filePath, filesDeleted);
             }
         }
 
