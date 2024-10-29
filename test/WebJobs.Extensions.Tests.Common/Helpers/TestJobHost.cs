@@ -24,6 +24,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
             _jobActivator = jobActivator;
         }
 
+        // $$$ Meant to simplify some tests - is this worth it? 
+        public interface IProgramWithResult<TResult>
+        {
+            TaskCompletionSource<TResult> TaskSource { get; set; }
+        }
+
         public Task CallAsync(string methodName, object arguments)
         {
             return CallAsync(typeof(TProgram).GetMethod(methodName), arguments);
@@ -71,11 +77,5 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
             }
             Assert.True(false, "Invoker should have failed");
         }
-    }
-
-    // $$$ Meant to simplify some tests - is this worth it? 
-    public interface IProgramWithResult<TResult>
-    {
-        TaskCompletionSource<TResult> TaskSource { get; set; }
     }
 }

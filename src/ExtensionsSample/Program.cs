@@ -31,7 +31,8 @@ namespace ExtensionsSample
                {
                    webJobsBuilder
                    .AddAzureStorageCoreServices()
-                   .AddAzureStorage()
+                   .AddAzureStorageBlobs()
+                   .AddAzureStorageQueues()
                    .AddFiles(o =>
                    {
                        o.RootPath = filesTestPath;

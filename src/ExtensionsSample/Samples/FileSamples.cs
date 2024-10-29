@@ -4,7 +4,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Azure.Storage.Blob;
+using Azure.Storage.Blobs;
 using Microsoft.Azure.WebJobs;
 
 namespace ExtensionsSample
@@ -15,11 +15,11 @@ namespace ExtensionsSample
         // container then deleted.
         public static async Task ImportFile(
             [FileTrigger(@"import/{name}", "*.dat", autoDelete: true)] Stream file,
-            [Blob(@"processed/{name}")] CloudBlockBlob output,
+            [Blob(@"processed/{name}")] BlobClient output,
             string name,
             TextWriter log)
         {
-            await output.UploadFromStreamAsync(file);
+            await output.UploadAsync(file);
             file.Close();
 
             log.WriteLine(string.Format("Processed input file '{0}'!", name));

@@ -6,9 +6,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.Storage;
-using Microsoft.Azure.Storage.Blob;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Extensions.Hosting;
@@ -32,7 +31,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                     {
                         o.SetResponse = SetResultHook;
                     })
-                    .AddAzureStorage();
+                    .AddAzureStorageBlobs()
+                    .AddAzureStorageQueues();
                 }, typeof(TestFunctions))
                 .Build();
             _jobHost = _host.GetJobHost();
@@ -116,14 +116,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
             // verify blob was written
             string blobName = $"test-{testId}-{testSuffix}";
-            var account = CloudStorageAccount.Parse(Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
-            CloudBlobClient client = account.CreateCloudBlobClient();
-            CloudBlobContainer container = client.GetContainerReference("test-output");
-            var blobRef = await container.GetBlobReferenceFromServerAsync(blobName);
-            await TestHelpers.Await(() => blobRef.ExistsAsync());
+            var client = new BlobServiceClient(Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
+            var container = client.GetBlobContainerClient("test-output");
+            var blobRef = container.GetBlobClient(blobName);
+            await TestHelpers.Await(async () => await blobRef.ExistsAsync());
 
             MemoryStream stream = new MemoryStream();
-            await blobRef.DownloadToStreamAsync(stream);
+            await blobRef.DownloadToAsync(stream);
             stream.Seek(0, SeekOrigin.Begin);
 
             string result;

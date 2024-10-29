@@ -310,7 +310,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.MobileApps
             IHost host = new HostBuilder()
                 .ConfigureWebJobs(builder =>
                 {
-                    builder.AddAzureStorage()
+                    builder
+                    .AddAzureStorageBlobs()
+                    .AddAzureStorageQueues()
                     .AddMobileApps(o =>
                     {
                         if (configUri != null)
