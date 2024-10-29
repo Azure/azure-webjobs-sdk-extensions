@@ -174,7 +174,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 .ConfigureWebJobs(builder =>
                 {
                     builder
-                    .AddAzureStorage()
+                    .AddAzureStorageBlobs()
+                    .AddAzureStorageQueues()
                     .AddCosmosDB();
                 })
                 .ConfigureAppConfiguration(c =>

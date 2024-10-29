@@ -422,8 +422,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             IHost host = new HostBuilder()
                 .ConfigureWebJobs(builder =>
                 {
-                    builder.AddAzureStorage()
-                    .AddCosmosDB();
+                    builder
+                        .AddAzureStorageBlobs()
+                        .AddAzureStorageQueues()
+                        .AddCosmosDB();
                 })
                 .ConfigureAppConfiguration(c =>
                 {

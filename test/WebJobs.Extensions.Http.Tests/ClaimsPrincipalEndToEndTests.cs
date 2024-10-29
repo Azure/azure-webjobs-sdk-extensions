@@ -25,8 +25,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         private const string UserNameClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name";
         private const string UserRoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
         private const string UserAuthType = "aad";
-        private const string UserNameClaimValue = "Connor McMahon";
-        private const string UserRoleClaimValue = "Software Engineer";
+        private const string UserNameClaimValue = "Some User";
+        private const string UserRoleClaimValue = "Test Asset";
       
         private JobHost GetJobHost(INameResolver resolver = null)
         {
@@ -48,9 +48,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                     {
                         o.SetResponse = SetResultHook;
                     })
-                    .AddAzureStorageCoreServices()
-                    .AddTimers()
-                    .AddAzureStorage();
+                    .AddAzureStorageBlobs()
+                    .AddAzureStorageQueues()
+                    .AddTimers();
                 }, typeof(TestFunctions))
                 .Build();
 
