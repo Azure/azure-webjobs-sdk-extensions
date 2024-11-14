@@ -25,6 +25,7 @@
     <PackageReference Include="Azure.Storage.Blobs" Version="12.22.1" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Host.Storage" Version="5.0.1" />
     <PackageReference Include="Microsoft.Extensions.Azure" Version="1.7.5" />
+    <PackageReference Include="System.Text.Json" Version="6.0.11" />
   </ItemGroup>
 
   <ItemGroup>
