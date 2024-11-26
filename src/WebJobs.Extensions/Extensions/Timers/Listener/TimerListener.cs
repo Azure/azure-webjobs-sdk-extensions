@@ -164,10 +164,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 throw new InvalidOperationException("The listener has not yet been started or has already been stopped.");
             }
 
-            // If we're in drain mode, we don't want to signal cancellation for ongoing invocations
+            // If we're in drain mode, we don't want to signal cancellation for outstanding invocations
             if (!_drainModeManager.IsDrainModeEnabled)
             {
-                _cancellationTokenSource.Cancel();
+                Cancel();
             }
 
             _timer.Dispose();
@@ -177,13 +177,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             await _invocationLock.WaitAsync();
             _invocationLock.Release();
 
+            // After outstanding invocations are complete, we can safely cancel the token to stop new invocations
+            Cancel();
+
             _logger.LogDebug($"Timer listener stopped ({_functionLogName})");
         }
 
         public void Cancel()
         {
             ThrowIfDisposed();
-            _cancellationTokenSource.Cancel();
+
+            if (!_cancellationTokenSource.IsCancellationRequested)
+            {
+                _cancellationTokenSource.Cancel();
+            }
         }
 
         public void Dispose()
