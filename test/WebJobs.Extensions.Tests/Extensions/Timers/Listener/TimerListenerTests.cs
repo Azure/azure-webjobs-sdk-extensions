@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Listeners;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -31,6 +32,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         private Mock<ITriggeredFunctionExecutor> _mockTriggerExecutor;
         private TriggeredFunctionData _triggeredFunctionData;
         private TestLogger _logger;
+        private Mock<IDrainModeManager> _drainModeManager;
 
         public TimerListenerTests()
         {
@@ -118,7 +120,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             var ex = new Exception("Kaboom!");
             _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName, It.IsAny<ScheduleStatus>())).ThrowsAsync(ex);
 
-            var listener = new TimerListener(_attribute, _schedule, _testTimerName, _options, _mockTriggerExecutor.Object, _logger, _mockScheduleMonitor.Object, _functionShortName);
+            var listener = new TimerListener(_attribute, _schedule, _testTimerName, _options, _mockTriggerExecutor.Object, _logger, _mockScheduleMonitor.Object, _functionShortName, _drainModeManager.Object);
 
             Assert.Null(listener.Timer);
 
@@ -660,7 +662,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 })
                 .Returns(Task.FromResult(result));
             _logger = new TestLogger(null);
-            _listener = new TimerListener(_attribute, _schedule, _testTimerName, _options, _mockTriggerExecutor.Object, _logger, _mockScheduleMonitor.Object, _functionShortName);
+            _drainModeManager = new Mock<IDrainModeManager>();
+            _listener = new TimerListener(_attribute, _schedule, _testTimerName, _options, _mockTriggerExecutor.Object, _logger, _mockScheduleMonitor.Object, _functionShortName, _drainModeManager.Object);
         }
 
         internal static void SetLocalTimeZoneToPacific()
