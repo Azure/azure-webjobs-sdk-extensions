@@ -32,7 +32,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         private Mock<ITriggeredFunctionExecutor> _mockTriggerExecutor;
         private TriggeredFunctionData _triggeredFunctionData;
         private TestLogger _logger;
-        private Mock<IDrainModeManager> _drainModeManager;
 
         public TimerListenerTests()
         {
@@ -119,8 +118,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             // force an exception to occur outside of the function invocation path
             var ex = new Exception("Kaboom!");
             _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName, It.IsAny<ScheduleStatus>())).ThrowsAsync(ex);
+            var drainModeManager = new Mock<IDrainModeManager>().Object;
 
-            var listener = new TimerListener(_attribute, _schedule, _testTimerName, _options, _mockTriggerExecutor.Object, _logger, _mockScheduleMonitor.Object, _functionShortName, _drainModeManager.Object);
+            var listener = new TimerListener(_attribute, _schedule, _testTimerName, _options, _mockTriggerExecutor.Object, _logger, _mockScheduleMonitor.Object, _functionShortName, drainModeManager);
 
             Assert.Null(listener.Timer);
 
@@ -427,6 +427,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         }
 
         [Fact]
+        public async Task StopAsync_DrainMode_DoesNotCancelCts()
+        {
+            bool invocationStarted = false;
+            bool invocationCompleted = false;
+
+            var mockDrainModeManager = new Mock<IDrainModeManager>(MockBehavior.Strict);
+            mockDrainModeManager.Setup(p => p.IsDrainModeEnabled).Returns(true);
+
+            CreateTestListener("* * * * * *", useMonitor: false, functionAction: () =>
+            {
+                invocationStarted = true;
+                Task.Delay(3000).Wait();
+                invocationCompleted = true;
+            }, drainManager: mockDrainModeManager.Object);
+
+            var cts = new CancellationTokenSource();
+            await _listener.StartAsync(cts.Token);
+
+            await TestHelpers.Await(() => invocationStarted, pollingInterval: 500);
+
+            // after the function has started running, stop the listener
+            await _listener.StopAsync(cts.Token);
+
+
+            Assert.False(cts.IsCancellationRequested);
+        }
+
+        [Fact]
         public async Task StoppedListener_DoesNotContinueRunning()
         {
             // There was a bug where we would re-create a disposed _timer after a call to StopAsync(). This only
@@ -638,7 +666,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             Assert.Contains($"Timer for '{_functionShortName}' started with interval", verboseTraces[2].FormattedMessage);
         }
 
-        private void CreateTestListener(string expression, bool useMonitor = true, bool runOnStartup = false, Action functionAction = null)
+        private void CreateTestListener(string expression, bool useMonitor = true, bool runOnStartup = false, Action functionAction = null, IDrainModeManager drainManager = null)
         {
             _attribute = new TimerTriggerAttribute(expression)
             {
@@ -662,8 +690,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 })
                 .Returns(Task.FromResult(result));
             _logger = new TestLogger(null);
-            _drainModeManager = new Mock<IDrainModeManager>();
-            _listener = new TimerListener(_attribute, _schedule, _testTimerName, _options, _mockTriggerExecutor.Object, _logger, _mockScheduleMonitor.Object, _functionShortName, _drainModeManager.Object);
+            var drainModeManager = drainManager ?? new Mock<IDrainModeManager>().Object;
+            _listener = new TimerListener(_attribute, _schedule, _testTimerName, _options, _mockTriggerExecutor.Object, _logger, _mockScheduleMonitor.Object, _functionShortName, drainModeManager);
         }
 
         internal static void SetLocalTimeZoneToPacific()

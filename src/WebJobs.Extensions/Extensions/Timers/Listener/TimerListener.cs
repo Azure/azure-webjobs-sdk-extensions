@@ -164,9 +164,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 throw new InvalidOperationException("The listener has not yet been started or has already been stopped.");
             }
 
+            // If we're in drain mode, we don't want to signal cancellation for ongoing invocations
             if (!_drainModeManager.IsDrainModeEnabled)
             {
-                // if we're in drain mode, we don't want to cancel ongoing invocations
                 _cancellationTokenSource.Cancel();
             }
 
