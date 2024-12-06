@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Bindings;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Extensions.Logging;
@@ -48,7 +49,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Bindings
             ILoggerFactory loggerFactory = new LoggerFactory();
             loggerFactory.AddProvider(new TestLoggerProvider());
 
-            TimerTriggerBinding binding = new TimerTriggerBinding(parameter, attribute, schedule, options, loggerFactory.CreateLogger("Test"), mockScheduleMonitor.Object);
+            Mock<IDrainModeManager> mockDrainModeManager = new Mock<IDrainModeManager>(MockBehavior.Strict);
+
+            TimerTriggerBinding binding = new TimerTriggerBinding(parameter, attribute, schedule, options, loggerFactory.CreateLogger("Test"), mockScheduleMonitor.Object, mockDrainModeManager.Object);
 
             // when we bind to a non-TimerInfo (e.g. in a Dashboard invocation) a new
             // TimerInfo is created, with the ScheduleStatus populated

@@ -2,14 +2,22 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
+using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Azure.WebJobs.Host.Executors.Internal;
+using Microsoft.Azure.WebJobs.Host.Executors;
+using Microsoft.Azure.WebJobs.Host.Loggers;
 using Microsoft.Azure.WebJobs.Host.Timers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
@@ -80,7 +88,55 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             CustomScheduleTestJobs.InvocationCount = 0;
         }
 
-        private async Task RunTimerJobTest(Type jobClassType, Func<bool> condition)
+        [Fact]
+        public async Task TimerJobCancelTest_StopHost_WithDrainMode_CancellationNotSignalled()
+        {
+            Assert.Equal(0, TimerTestJobWithCancellationNotExpected.InvocationCount);
+
+            await RunTimerJobTest(
+                typeof(TimerTestJobWithCancellationNotExpected),
+                () =>
+                {
+                    return TimerTestJobWithCancellationNotExpected.InvocationCount >= 1;
+                }, stopWithDrainMode: true);
+
+            TimerTestJobWithCancellationNotExpected.InvocationCount = 0;
+
+            var messages = _loggerProvider.GetAllLogMessages().Where(m => m.FormattedMessage is not null);
+
+            var functionExecutedSuccessfullyLog = messages.Where(m =>
+            {
+                return m.FormattedMessage.Contains("Executed 'TimerTestJobWithCancellationNotExpected.Run' (Succeeded");
+            });
+
+            Assert.True(functionExecutedSuccessfullyLog.Count() == 1, string.Join(Environment.NewLine, messages));
+        }
+
+        [Fact]
+        public async Task TimerJobCancelTest_StopHost_WithoutDrainMode_CancellationSignalled()
+        {
+            Assert.Equal(0, TimerTestJobWithCancellationExpected.InvocationCount);
+
+            await RunTimerJobTest(
+                typeof(TimerTestJobWithCancellationExpected),
+                () =>
+                {
+                    return TimerTestJobWithCancellationExpected.InvocationCount >= 1;
+                }, stopWithDrainMode: false);
+
+            TimerTestJobWithCancellationExpected.InvocationCount = 0;
+
+            var messages = _loggerProvider.GetAllLogMessages().Where(m => m.FormattedMessage is not null);
+
+            var functionSucceededLog = messages.Where(m =>
+            {
+                return m.FormattedMessage.Contains("Executed 'TimerTestJobWithCancellationExpected.Run' (Succeeded");
+            });
+
+            Assert.True(functionSucceededLog.Count() == 1, string.Join(Environment.NewLine, messages));
+        }
+
+        private async Task RunTimerJobTest(Type jobClassType, Func<bool> condition, bool stopWithDrainMode = false)
         {
             ExplicitTypeLocator locator = new ExplicitTypeLocator(jobClassType);
             var resolver = new TestNameResolver();
@@ -114,9 +170,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 return condition();
             });
 
-            await host.StopAsync();
+            if (stopWithDrainMode)
+            {
+                await StopWithDrainAsync(host);
+            }
+            else
+            {
+                await host.StopAsync();
+            }
 
             // TODO: ensure there were no errors
+        }
+
+        private static async Task StopWithDrainAsync(IHost host)
+        {
+            // Enable drain mode so checkpointing occurs when stopping
+            var drainModeManager = host.Services.GetService<IDrainModeManager>();
+            await drainModeManager.EnableDrainModeAsync(CancellationToken.None);
+            await host.StopAsync();
         }
 
         public static class CronScheduleTestJobs
@@ -195,6 +266,64 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 {
                     InvocationCount++;
                     return now + TimeSpan.FromSeconds(2);
+                }
+            }
+        }
+
+        public static class TimerTestJobWithCancellationNotExpected
+        {
+            static TimerTestJobWithCancellationNotExpected()
+            {
+                InvocationCount = 0;
+            }
+
+            public static int InvocationCount { get; set; }
+
+            public static async Task Run(
+                [TimerTrigger("*/3 * * *  * *")] TimerInfo timer, CancellationToken cancellationToken)
+            {
+                Assert.NotNull(timer.Schedule);
+                Assert.Null(timer.ScheduleStatus);
+                InvocationCount++;
+
+                try
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await Task.Delay(2000, cancellationToken);
+                    Assert.False(cancellationToken.IsCancellationRequested);
+                }
+                catch (OperationCanceledException)
+                {
+                    Assert.True(false, "Cancellation token should not have been signalled.");
+                }
+            }
+        }
+
+        public static class TimerTestJobWithCancellationExpected
+        {
+            static TimerTestJobWithCancellationExpected()
+            {
+                InvocationCount = 0;
+            }
+
+            public static int InvocationCount { get; set; }
+
+            public static async Task Run(
+                [TimerTrigger("*/3 * * * * *")] TimerInfo timer, CancellationToken cancellationToken)
+            {
+                Assert.NotNull(timer.Schedule);
+                Assert.Null(timer.ScheduleStatus);
+                InvocationCount++;
+
+                try
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await Task.Delay(2000, cancellationToken);
+                    Assert.True(false, "Cancellation token should have been signalled.");
+                }
+                catch (OperationCanceledException)
+                {
+                    Assert.True(cancellationToken.IsCancellationRequested);
                 }
             }
         }

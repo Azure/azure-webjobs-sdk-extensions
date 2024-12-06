@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Extensions.Logging;
@@ -24,6 +25,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private readonly ILogger _logger;
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly SemaphoreSlim _invocationLock = new SemaphoreSlim(1, 1);
+        private readonly IDrainModeManager _drainModeManager;
 
         // _functionLogName is the [FunctionName] value and used for logging,
         // while _timerLookupName is the fully-qualified method name and used for lookups
@@ -41,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private TimeSpan _remainingInterval;
 
         public TimerListener(TimerTriggerAttribute attribute, TimerSchedule schedule, string timerName, TimersOptions options, ITriggeredFunctionExecutor executor,
-            ILogger logger, ScheduleMonitor scheduleMonitor, string functionLogName)
+            ILogger logger, ScheduleMonitor scheduleMonitor, string functionLogName, IDrainModeManager drainModeManager)
         {
             _attribute = attribute;
             _timerLookupName = timerName;
@@ -52,6 +54,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             _schedule = schedule;
             ScheduleMonitor = _attribute.UseMonitor ? scheduleMonitor : null;
             _functionLogName = functionLogName;
+            _drainModeManager = drainModeManager;
         }
 
         internal static TimeSpan MaxTimerInterval
@@ -94,7 +97,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             bool isPastDue = false;
 
             // we use DateTimeOffset.Now rather than DateTimeOffset.UtcNow to allow the local machine to set the time zone. In Azure this will be
-            // UTC by default, but can be configured to use any time zone if it makes scheduling easier.                        
+            // UTC by default, but can be configured to use any time zone if it makes scheduling easier.
             DateTimeOffset now = DateTimeOffset.Now;
 
             Logger.ScheduleAndTimeZone(_logger, _functionLogName, _schedule, TimeZoneInfo.Local.DisplayName);
@@ -161,7 +164,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 throw new InvalidOperationException("The listener has not yet been started or has already been stopped.");
             }
 
-            _cancellationTokenSource.Cancel();
+            // If we're in drain mode, we don't want to signal cancellation for outstanding invocations
+            if (!_drainModeManager.IsDrainModeEnabled)
+            {
+                Cancel();
+            }
 
             _timer.Dispose();
             _timer = null;
@@ -170,13 +177,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             await _invocationLock.WaitAsync();
             _invocationLock.Release();
 
+            // After outstanding invocations are complete, we can safely cancel the token to stop new invocations
+            Cancel();
+
             _logger.LogDebug($"Timer listener stopped ({_functionLogName})");
         }
 
         public void Cancel()
         {
             ThrowIfDisposed();
-            _cancellationTokenSource.Cancel();
+
+            if (!_cancellationTokenSource.IsCancellationRequested)
+            {
+                _cancellationTokenSource.Cancel();
+            }
         }
 
         public void Dispose()

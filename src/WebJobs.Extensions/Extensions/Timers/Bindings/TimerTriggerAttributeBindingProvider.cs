@@ -4,6 +4,7 @@
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Extensions.Logging;
 
@@ -15,13 +16,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
         private readonly INameResolver _nameResolver;
         private readonly ILogger _logger;
         private readonly ScheduleMonitor _scheduleMonitor;
+        private readonly IDrainModeManager _drainModeManager;
 
-        public TimerTriggerAttributeBindingProvider(TimersOptions options, INameResolver nameResolver, ILogger logger, ScheduleMonitor scheduleMonitor)
+        public TimerTriggerAttributeBindingProvider(TimersOptions options, INameResolver nameResolver, ILogger logger, ScheduleMonitor scheduleMonitor, IDrainModeManager drainModeManager)
         {
             _options = options;
             _nameResolver = nameResolver;
             _logger = logger;
             _scheduleMonitor = scheduleMonitor;
+            _drainModeManager = drainModeManager;
         }
 
         public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
@@ -46,7 +49,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
 
             TimerSchedule schedule = TimerSchedule.Create(timerTriggerAttribute, _nameResolver, _logger);
 
-            return Task.FromResult<ITriggerBinding>(new TimerTriggerBinding(parameter, timerTriggerAttribute, schedule, _options, _logger, _scheduleMonitor));
+            return Task.FromResult<ITriggerBinding>(new TimerTriggerBinding(parameter, timerTriggerAttribute, schedule, _options, _logger, _scheduleMonitor, _drainModeManager));
         }
     }
 }
