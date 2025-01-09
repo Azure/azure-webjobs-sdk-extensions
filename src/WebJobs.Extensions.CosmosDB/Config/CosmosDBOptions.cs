@@ -22,7 +22,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         public string UserAgentSuffix { get; set; }
 
         /// <summary>
-        /// Gets or sets a string to be included in the User Agent for all operations by Cosmos DB bindings and triggers.
+        /// Gets or sets SerializerSettings to be used in CosmosDB serializer.
         /// </summary>
         public SerializerSettings SerializerSettings { get; set; }
 
@@ -44,10 +44,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
                 writer.WritePropertyName(nameof(this.SerializerSettings));
 
-                writer.WriteStartObject();
+                writer.WriteStartObject(); // writing nested object
 
-                writer.WritePropertyName(nameof(this.SerializerSettings.DateTimeParse));
-                writer.WriteValue(this.SerializerSettings.DateTimeParse);
+                writer.WritePropertyName(nameof(this.SerializerSettings.DateParseHandling));
+                writer.WriteValue(this.SerializerSettings.DateParseHandling);
 
                 writer.WriteEndObject();
 

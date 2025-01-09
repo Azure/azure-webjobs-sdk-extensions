@@ -23,7 +23,6 @@
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.41" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="Microsoft.Extensions.Azure" Version="1.7.5" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Microsoft.Azure.Core.NewtonsoftJson" Version="2.0.0" />
   </ItemGroup>
   <ItemGroup>

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+// Adapted from: https://github.com/Azure/azure-cosmos-dotnet-v3/blob/master/Microsoft.Azure.Cosmos/src/Serializer/CosmosJsonDotNetSerializer.cs
 using System;
 using System.IO;
 using Azure.Core.Serialization;
@@ -9,7 +10,7 @@ using Microsoft.Azure.Cosmos;
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
     /// <summary>
-    /// This is a wrapper that allows us to use the worker options ObjectSerializer to create a CosmosSerializer.
+    /// This is a wrapper that allows us to use cosmosDB options ObjectSerializer to create a CosmosSerializer.
     /// </summary>
     internal sealed class ObjectCosmosSerializer : CosmosSerializer
     {

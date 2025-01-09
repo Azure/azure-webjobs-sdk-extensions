@@ -13,11 +13,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public CosmosSerializer CreateSerializer(CosmosDBOptions cosmosDBOptions)
         {
-            if (cosmosDBOptions.SerializerSettings.DateTimeParse == DateTimeHandling.None)
+            if (cosmosDBOptions.SerializerSettings.DateParseHandling == DateParseHandling.None)
             {
                 return new ObjectCosmosSerializer(new NewtonsoftJsonObjectSerializer(new JsonSerializerSettings()
                 {
-                    DateParseHandling = DateParseHandling.None,
+                    DateParseHandling = Newtonsoft.Json.DateParseHandling.None,
                 }));
             }
             else

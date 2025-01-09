@@ -8,6 +8,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         /// <summary>
         /// Gets or sets a string to be included in the User Agent for all operations by Cosmos DB bindings and triggers.
         /// </summary>
-        public DateTimeHandling? DateTimeParse { get; set; }
+        public DateParseHandling? DateParseHandling { get; set; }
     }
 }
