@@ -15,5 +15,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         {
             builder.AddCosmosDB();
         }
+
+        /*
+        public void Configure(WebJobsBuilderContext context, IWebJobsBuilder builder)
+        {
+            builder.AddCosmosDB(options =>
+            {
+                /*
+                // Configure your CosmosDB options here
+                options.ConnectionMode = context.Configuration.GetSection("CosmosDB").ToString();
+                options.DatabaseName = "your-database-name";
+                // Other properties of CosmosDBOptions
+                
+            }
+        }
+        */
     }
 }
