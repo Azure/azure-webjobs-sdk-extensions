@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Azure.Core.Serialization;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Extensions.Azure;
@@ -102,6 +103,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             Assert.Equal(ConnectionMode.Direct, options.ConnectionMode);
             Assert.Equal("randomtext", options.UserAgentSuffix);
+            Assert.Null(options.SerializerSettings);
+        }
+
+        [Fact]
+        public void ConfigurationBindsToOptions_WithConfigureServices_WithSerializerSettings()
+        {
+            IHost host = new HostBuilder()
+                 .ConfigureWebJobs(builder =>
+                 {
+                     builder.AddCosmosDB();
+                 })
+                .ConfigureServices(s =>
+                {
+                    // Verifies that you can modify the bound options
+                    s.Configure<CosmosDBOptions>(o =>
+                    {
+                        o.SerializerSettings = new SerializerSettings()
+                        {
+                            DateParseHandling = DateParseHandling.None
+                        };
+                    });
+                })
+                .Build();
+
+            var options = host.Services.GetService<IOptions<CosmosDBOptions>>().Value;
+
+            Assert.NotNull(options.SerializerSettings);
+            Assert.Equal(DateParseHandling.None, options.SerializerSettings.DateParseHandling);
         }
 
         [Fact]
@@ -230,6 +259,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             public bool CreateWasCalled { get; private set; } = false;
 
             public CosmosSerializer CreateSerializer()
+            {
+                this.CreateWasCalled = true;
+                return new CustomSerializer();
+            }
+
+            CosmosSerializer ICosmosDBSerializerFactory.CreateSerializer(CosmosDBOptions cosmosDBOptions)
             {
                 this.CreateWasCalled = true;
                 return new CustomSerializer();

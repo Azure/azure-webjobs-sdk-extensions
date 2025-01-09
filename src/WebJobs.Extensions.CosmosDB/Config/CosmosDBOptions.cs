@@ -47,7 +47,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 writer.WriteStartObject(); // writing nested object
 
                 writer.WritePropertyName(nameof(this.SerializerSettings.DateParseHandling));
-                writer.WriteValue(this.SerializerSettings.DateParseHandling);
+                writer.WriteValue(this.SerializerSettings?.DateParseHandling);
 
                 writer.WriteEndObject();
 
