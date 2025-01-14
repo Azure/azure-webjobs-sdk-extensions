@@ -297,7 +297,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             CosmosSerializer ICosmosDBSerializerFactory.CreateSerializer(CosmosDBOptions cosmosDBOptions)
             {
-                throw new NotImplementedException();
+                this.CreateWasCalled = true;
+                return new CustomSerializer();
             }
         }
 
