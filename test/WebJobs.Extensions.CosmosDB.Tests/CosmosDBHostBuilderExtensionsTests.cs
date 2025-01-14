@@ -289,8 +289,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         {
             public bool CreateWasCalled { get; private set; } = false;
 
-            public bool CreateWithOptionsWasCalled { get; private set; } = false;
-
             public CosmosSerializer CreateSerializer()
             {
                 this.CreateWasCalled = true;
@@ -299,8 +297,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             CosmosSerializer ICosmosDBSerializerFactory.CreateSerializer(CosmosDBOptions cosmosDBOptions)
             {
-                this.CreateWithOptionsWasCalled = true;
-                return new CustomSerializer();
+                throw new NotImplementedException();
             }
         }
 
