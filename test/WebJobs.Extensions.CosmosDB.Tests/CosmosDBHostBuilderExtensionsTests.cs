@@ -225,6 +225,37 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             CosmosDBExtensionConfigProvider cosmosDBExtensionConfigProvider = (CosmosDBExtensionConfigProvider)extensionConfig;
             CosmosClient dummyClient = cosmosDBExtensionConfigProvider.GetService(Constants.DefaultConnectionStringName, userAgent: "knownSuffix");
             Assert.Equal(dummyClient.ClientOptions.ApplicationName, "knownSuffix" + "randomtext");
+            Assert.NotEqual(typeof(ObjectCosmosSerializer), dummyClient.ClientOptions.Serializer.GetType());
+        }
+
+        [Fact]
+        public void ConfigurationGetService_WithSerializerSettings()
+        {
+            IHost host = new HostBuilder()
+                 .ConfigureAppConfiguration(c =>
+                 {
+                     c.Sources.Clear();
+                     c.AddInMemoryCollection(new Dictionary<string, string>
+                     {
+                         { Constants.DefaultConnectionStringName, "AccountEndpoint=https://defaultUri;AccountKey=c29tZV9rZXk=;" },
+                         { "AzureWebJobs:extensions:cosmosDB:UserAgentSuffix", "randomtext" },
+                         { "AzureWebJobs:extensions:cosmosDB:serializerSettings:dateParseHandling", "None" }
+                     });
+                 })
+                 .ConfigureWebJobs(builder =>
+                 {
+                     builder.AddCosmosDB();
+                 })
+                .Build();
+
+            var extensionConfig = host.Services.GetServices<IExtensionConfigProvider>().Single();
+            Assert.NotNull(extensionConfig);
+            Assert.IsType<CosmosDBExtensionConfigProvider>(extensionConfig);
+
+            CosmosDBExtensionConfigProvider cosmosDBExtensionConfigProvider = (CosmosDBExtensionConfigProvider)extensionConfig;
+            CosmosClient dummyClient = cosmosDBExtensionConfigProvider.GetService(Constants.DefaultConnectionStringName, userAgent: "knownSuffix");
+            Assert.Equal(dummyClient.ClientOptions.ApplicationName, "knownSuffix" + "randomtext");
+            Assert.Equal(typeof(ObjectCosmosSerializer), dummyClient.ClientOptions.Serializer.GetType());
         }
 
         [Fact]
@@ -258,6 +289,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         {
             public bool CreateWasCalled { get; private set; } = false;
 
+            public bool CreateWithOptionsWasCalled { get; private set; } = false;
+
             public CosmosSerializer CreateSerializer()
             {
                 this.CreateWasCalled = true;
@@ -266,7 +299,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             CosmosSerializer ICosmosDBSerializerFactory.CreateSerializer(CosmosDBOptions cosmosDBOptions)
             {
-                this.CreateWasCalled = true;
+                this.CreateWithOptionsWasCalled = true;
                 return new CustomSerializer();
             }
         }
