@@ -15,5 +15,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         /// </summary>
         /// <returns></returns>
         CosmosSerializer CreateSerializer();
+
+        /// <summary>
+        /// Provides a custom implementation of <see cref="CosmosSerializer"/> using <see cref="CosmosDBOptions"/>.
+        /// </summary>
+        /// <returns></returns>
+        CosmosSerializer CreateSerializer(CosmosDBOptions cosmosDBOptions);
     }
 }
