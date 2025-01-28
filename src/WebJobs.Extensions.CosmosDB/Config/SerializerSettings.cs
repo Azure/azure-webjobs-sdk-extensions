@@ -6,7 +6,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
     public class SerializerSettings
     {
         /// <summary>
-        /// Gets or sets a string to be included in the User Agent for all operations by Cosmos DB bindings and triggers.
+        /// Gets or sets the DateParseHandling to be used in CosmosDB serializer settings.
         /// </summary>
         public DateParseHandling? DateParseHandling { get; set; }
     }
