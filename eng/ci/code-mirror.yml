@@ -4,6 +4,9 @@ trigger:
     # Below branches are examples for Azure/azure-functions-host. Replace with appropriate branches for your repository.
     # Keep this set limited as appropriate (don't mirror individual user branches).
     - dev
+  tags:
+    include:
+    - cosmos-v*
 
 resources:
   repositories:
