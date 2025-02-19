@@ -14,7 +14,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     /// </summary>
     public abstract class ScheduleMonitor
     {
-        private static DateTimeOffset defaultDateTime = default(DateTimeOffset).ToLocalTime();
+        private static DateTime defaultDateTime = new DateTime(0, DateTimeKind.Local);
 
         /// <summary>
         /// Gets the last recorded schedule status for the specified timer.
@@ -57,7 +57,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 DateTimeOffset nextOccurrence = schedule.GetNextOccurrence(now.LocalDateTime);
                 lastStatus = new ScheduleStatus
                 {
-                    Last = defaultDateTime.LocalDateTime,
+                    Last = defaultDateTime,
                     Next = nextOccurrence.LocalDateTime,
                     LastUpdated = now.LocalDateTime
                 };
@@ -106,7 +106,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                         lastUpdated = now;
                     }
 
-                    lastStatus.Last = defaultDateTime.LocalDateTime;
+                    lastStatus.Last = defaultDateTime;
                     lastStatus.Next = expectedNextOccurrence.LocalDateTime;
                     lastStatus.LastUpdated = lastUpdated.LocalDateTime;
                     await UpdateStatusAsync(timerName, lastStatus);
