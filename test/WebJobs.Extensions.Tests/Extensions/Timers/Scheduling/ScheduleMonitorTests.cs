@@ -42,7 +42,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         [InlineData(false, false)]
         [InlineData(true, true)]
         [InlineData(false, true)]
-        public async Task CheckPastDue(bool lastSet, bool lastUpdatedSet)
+        public Task CheckPastDue_UTC(bool lastSet, bool lastUpdatedSet)
+        {
+            using var timeZoneSetter = TimeZoneSetter.Utc;
+            return CheckPastDue(lastSet, lastUpdatedSet);
+        }
+
+        private async Task CheckPastDue(bool lastSet, bool lastUpdatedSet)
         {
             DateTime now = DateTime.Parse("1/1/2017 9:35");
 
@@ -67,7 +73,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         [InlineData(false, false)]
         [InlineData(true, true)]
         [InlineData(false, true)]
-
         public Task CheckPastDue_PlusTimeZone(bool lastSet, bool lastUpdatedSet)
         {
             // tokyo is +9 hours from utc

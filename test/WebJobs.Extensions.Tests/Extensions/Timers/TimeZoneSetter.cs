@@ -17,6 +17,8 @@ internal class TimeZoneSetter : IDisposable
         field.SetValue(cachedData, TimeZoneInfo.FindSystemTimeZoneById(timeZoneId));
     }
 
+    public static TimeZoneSetter Utc => new("UTC");
+
     public static TimeZoneSetter PacificStandard => new("Pacific Standard Time");
 
     public static TimeZoneSetter TokyoStandard => new("Tokyo Standard Time");
