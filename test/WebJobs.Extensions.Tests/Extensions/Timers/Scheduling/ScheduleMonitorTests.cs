@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Globalization;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using NCrontab;
@@ -69,6 +67,32 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         [InlineData(false, false)]
         [InlineData(true, true)]
         [InlineData(false, true)]
+
+        public Task CheckPastDue_PlusTimeZone(bool lastSet, bool lastUpdatedSet)
+        {
+            // tokyo is +9 hours from utc
+            using var timeZoneSetter = TimeZoneSetter.TokyoStandard;
+            return CheckPastDue(lastSet, lastUpdatedSet);
+        }
+
+        [Theory]
+        [InlineData(true, false)]
+        [InlineData(false, false)]
+        [InlineData(true, true)]
+        [InlineData(false, true)]
+
+        public Task CheckPastDue_MinusTimeZone(bool lastSet, bool lastUpdatedSet)
+        {
+            // pacific is -8 hours from utc
+            using var timeZoneSetter = TimeZoneSetter.PacificStandard;
+            return CheckPastDue(lastSet, lastUpdatedSet);
+        }
+
+        [Theory]
+        [InlineData(true, false)]
+        [InlineData(false, false)]
+        [InlineData(true, true)]
+        [InlineData(false, true)]
         public async Task CheckPastDue_NowPastNext(bool lastSet, bool lastUpdatedSet)
         {
             // Move the time 1 second ahead of 'Next'. We should catch this as past due.
@@ -108,7 +132,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         [InlineData(false, false)]
         [InlineData(true, true)]
         [InlineData(false, true)]
-        private async Task CheckPastDue_ScheduleChange_Longer(bool lastSet, bool lastUpdatedSet)
+        public async Task CheckPastDue_ScheduleChange_Longer(bool lastSet, bool lastUpdatedSet)
         {
             DateTime now = DateTime.Parse("1/1/2017 9:35");
 
@@ -147,7 +171,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         [InlineData(false, false)]
         [InlineData(true, true)]
         [InlineData(false, true)]
-        private async Task CheckPastDue_ScheduleChange_Shorter(bool lastSet, bool lastUpdatedSet)
+        public async Task CheckPastDue_ScheduleChange_Shorter(bool lastSet, bool lastUpdatedSet)
         {
             DateTime now = new DateTime(2017, 1, 1, 9, 35, 0);
 

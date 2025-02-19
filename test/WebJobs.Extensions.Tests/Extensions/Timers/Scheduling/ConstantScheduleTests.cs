@@ -2,12 +2,13 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
 {
-    public class ConstantScheduleTests : IDisposable
+    public class ConstantScheduleTests
     {
         [Fact]
         public void GetNextOccurrence_ReturnsExpected()
@@ -58,7 +59,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void Interval_IntoDST_ReturnsExpectedValue()
         {
-            TimerListenerTests.SetLocalTimeZoneToPacific();
+            using var timeZoneSetter = TimeZoneSetter.PacificStandard;
 
             var schedule = new ConstantSchedule(TimeSpan.FromHours(1));
 
@@ -81,7 +82,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void Interval_OutOfDST_ReturnsExpectedValue()
         {
-            TimerListenerTests.SetLocalTimeZoneToPacific();
+            using var timeZoneSetter = TimeZoneSetter.PacificStandard;
 
             var schedule = new ConstantSchedule(TimeSpan.FromHours(1));
 
@@ -99,11 +100,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
                 o => Assert.Equal(new DateTimeOffset(new DateTime(2018, 11, 4, 1, 30, 0), TimeSpan.FromHours(-8)), o), // offset changes
                 o => Assert.Equal(new DateTimeOffset(new DateTime(2018, 11, 4, 2, 30, 0), TimeSpan.FromHours(-8)), o),
                 o => Assert.Equal(new DateTimeOffset(new DateTime(2018, 11, 4, 3, 30, 0), TimeSpan.FromHours(-8)), o));
-        }
-
-        public void Dispose()
-        {
-            TimeZoneInfo.ClearCachedData();
         }
     }
 }

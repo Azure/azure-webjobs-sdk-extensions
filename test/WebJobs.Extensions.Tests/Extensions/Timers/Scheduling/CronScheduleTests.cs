@@ -3,6 +3,7 @@
 
 using System;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
+using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Xunit;
 
@@ -54,7 +55,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void Interval_IntoDST_ReturnsExpectedValue()
         {
-            TimerListenerTests.SetLocalTimeZoneToPacific();
+            using var timeZoneSetter = TimeZoneSetter.PacificStandard;
             var testLogger = new TestLogger("Test");
 
             // Every hour at the 30 min mark
@@ -79,7 +80,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void PointInTime_IntoDST_ReturnsExpectedValue()
         {
-            TimerListenerTests.SetLocalTimeZoneToPacific();
+            using var timeZoneSetter = TimeZoneSetter.PacificStandard;
 
             // 01:30 every day
             CronSchedule.TryCreate("0 30 1 * * *", out CronSchedule schedule);
@@ -103,7 +104,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void PointInTime_WithinAmbiguousHour_ReturnsExpectedValue()
         {
-            TimerListenerTests.SetLocalTimeZoneToPacific();
+            using var timeZoneSetter = TimeZoneSetter.PacificStandard;
 
             // every 20 minutes
             CronSchedule.TryCreate("0 */20 * * * *", out CronSchedule schedule);
@@ -133,7 +134,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void Interval_OutOfDST_ReturnsExpectedValue()
         {
-            TimerListenerTests.SetLocalTimeZoneToPacific();
+            using var timeZoneSetter = TimeZoneSetter.PacificStandard;
             var logger = new TestLogger("Test");
 
             // Every hour at the 30 min mark
@@ -158,7 +159,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void PointInTime_OutOfDST_ReturnsExpectedValue()
         {
-            TimerListenerTests.SetLocalTimeZoneToPacific();
+            using var timeZoneSetter = TimeZoneSetter.PacificStandard;
 
             // 01:30 every day
             CronSchedule.TryCreate("0 30 1 * * *", out CronSchedule schedule);
