@@ -14,7 +14,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     /// </summary>
     public abstract class ScheduleMonitor
     {
-        // Avoid anything close to DateTime.MinValue as time zone conversions have caused bugs
+        // Recalculate this value every time as our time zone can change dynamically when hosted.
         internal static DateTime DefaultDateTime => DateTime.MinValue.ToLocalTime();
 
         // We consider anything below this as a "default", unset value. Refactoring to use nullable DateTime would
