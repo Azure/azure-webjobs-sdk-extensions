@@ -51,7 +51,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
 
             TimeSpan pastDueAmount = await monitor.CheckPastDueAsync(_timerName, now, _dailySchedule, null);
             Assert.Equal(TimeSpan.Zero, pastDueAmount);
-            Assert.Equal(default(DateTime), monitor.CurrentStatus.Last);
+            Assert.Equal(ScheduleMonitor.DefaultDateTime, monitor.CurrentStatus.Last);
             Assert.Equal(DateTimeKind.Local, monitor.CurrentStatus.Last.Kind);
             Assert.Equal(new DateTime(2017, 1, 2), monitor.CurrentStatus.Next);
             Assert.Equal(now, monitor.CurrentStatus.LastUpdated);
@@ -151,7 +151,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
                 //      but we miss it because there is no 'Last' value, which we require to calculate the 'Next'
                 //      value. It also shouldn't register as a schedule change.
                 Assert.Equal(TimeSpan.Zero, pastDueAmount);
-                Assert.Equal(default(DateTime), monitor.CurrentStatus.Last);
+                Assert.Equal(ScheduleMonitor.DefaultDateTime, monitor.CurrentStatus.Last);
                 Assert.Equal(DateTimeKind.Local, monitor.CurrentStatus.Last.Kind);
                 Assert.Equal(DateTime.Parse("1/1/2017 11:00"), monitor.CurrentStatus.Next);
                 Assert.Equal(now, monitor.CurrentStatus.LastUpdated);
@@ -182,7 +182,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             Assert.Equal(TimeSpan.Zero, pastDueAmount);
 
             DateTime expectedNext = new DateTime(2017, 1, 2);
-            Assert.Equal(default(DateTime), monitor.CurrentStatus.Last);
+            Assert.Equal(ScheduleMonitor.DefaultDateTime, monitor.CurrentStatus.Last);
             Assert.Equal(DateTimeKind.Local, monitor.CurrentStatus.Last.Kind);
             Assert.Equal(expectedNext, monitor.CurrentStatus.Next);
 
@@ -223,7 +223,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             {
                 // Because the new time is in the past, we re-calculate it to be the next invocation from 'now'.
                 Assert.Equal(TimeSpan.Zero, pastDueAmount);
-                Assert.Equal(default(DateTime), monitor.CurrentStatus.Last);
+                Assert.Equal(ScheduleMonitor.DefaultDateTime, monitor.CurrentStatus.Last);
                 Assert.Equal(DateTimeKind.Local, monitor.CurrentStatus.Last.Kind);
                 Assert.Equal(new DateTime(2017, 1, 1, 10, 0, 0), monitor.CurrentStatus.Next);
                 Assert.Equal(now, monitor.CurrentStatus.LastUpdated);

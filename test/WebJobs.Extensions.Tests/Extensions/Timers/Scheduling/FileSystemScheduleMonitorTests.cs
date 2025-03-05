@@ -125,7 +125,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
 
             TimeSpan pastDueAmount = await _monitor.CheckPastDueAsync(_testTimerName, now, mockSchedule.Object, null);
             Assert.True(File.Exists(_statusFile));
-            VerifyScheduleStatus(default(DateTime), next, now);
+            VerifyScheduleStatus(ScheduleMonitor.DefaultDateTime, next, now);
             Assert.Equal(TimeSpan.Zero, pastDueAmount);
         }
 
@@ -182,7 +182,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             pastDueAmount = await _monitor.CheckPastDueAsync(_testTimerName, now, mockSchedule.Object, status);
             Assert.Equal(TimeSpan.Zero, pastDueAmount);
             ScheduleStatus updatedStatus = await _monitor.GetStatusAsync(_testTimerName);
-            Assert.Equal(default(DateTime), updatedStatus.Last);
+            Assert.Equal(ScheduleMonitor.DefaultDateTime, updatedStatus.Last);
             Assert.Equal(adjustedNext, updatedStatus.Next);
             Assert.Equal(now, updatedStatus.LastUpdated);
 

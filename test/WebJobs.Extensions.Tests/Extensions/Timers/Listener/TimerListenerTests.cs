@@ -317,11 +317,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _ = (DateTimeOffset)_listener.ScheduleStatus.Next;
             _ = (DateTimeOffset)_listener.ScheduleStatus.LastUpdated;
 
-            var defaultDateTime = default(DateTime).ToLocalTime();
-
-            Assert.Equal(defaultDateTime, _listener.ScheduleStatus.Last);
+            Assert.Equal(ScheduleMonitor.DefaultDateTime, _listener.ScheduleStatus.Last);
             Assert.True(_listener.ScheduleStatus.Next > DateTime.Now);
-            Assert.Equal(defaultDateTime, _listener.ScheduleStatus.LastUpdated);
+            Assert.Equal(ScheduleMonitor.DefaultDateTime, _listener.ScheduleStatus.LastUpdated);
         }
 
         [Fact]
@@ -376,9 +374,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _ = (DateTimeOffset)_listener.ScheduleStatus.Next;
             _ = (DateTimeOffset)_listener.ScheduleStatus.LastUpdated;
 
-            var defaultDateTime = default(DateTime).ToLocalTime();
-
-            Assert.Equal(defaultDateTime, _listener.ScheduleStatus.Last);
+            Assert.Equal(ScheduleMonitor.DefaultDateTime, _listener.ScheduleStatus.Last);
             Assert.Equal(invalidStatus.Next, _listener.ScheduleStatus.Next);
             Assert.Equal(invalidStatus.LastUpdated, _listener.ScheduleStatus.LastUpdated);
         }

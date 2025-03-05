@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers;
 
-public class TimeZoneSetter : IDisposable
+internal class TimeZoneSetter : IDisposable
 {
     // There are so many internal benefits to using DateTimeKind.Local for us, that we're relying 
     // on it to provide the proper roundtripping support between DateTime and DateTimeOffset. This appears

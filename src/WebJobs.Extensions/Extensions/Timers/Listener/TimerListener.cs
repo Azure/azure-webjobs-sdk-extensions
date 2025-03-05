@@ -107,6 +107,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // check to see if we've missed an occurrence since we last started.
                 // If we have, invoke it immediately.
                 ScheduleStatus = await ScheduleMonitor.GetStatusAsync(_timerLookupName);
+
+                // Move any 'Last' value up to the new default. This fixes any serialization issues that
+                // we may hit due to time zone conversions
+                if (ScheduleStatus?.Last < ScheduleMonitor.DefaultDateTimeThreshold)
+                {
+                    ScheduleStatus.Last = ScheduleMonitor.DefaultDateTime;
+                }
+
                 Logger.InitialStatus(_logger, _functionLogName, ScheduleStatus?.Last.ToString("o"), ScheduleStatus?.Next.ToString("o"), ScheduleStatus?.LastUpdated.ToString("o"));
                 TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerLookupName, now, _schedule, ScheduleStatus);
                 isPastDue = pastDueDuration != TimeSpan.Zero;
@@ -117,9 +125,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 // no schedule status has been stored yet, so initialize
                 ScheduleStatus = new ScheduleStatus
                 {
-                    Last = default(DateTime).ToLocalTime(),
+                    Last = ScheduleMonitor.DefaultDateTime,
                     Next = _schedule.GetNextOccurrence(now.LocalDateTime),
-                    LastUpdated = default(DateTime).ToLocalTime()
+                    LastUpdated = ScheduleMonitor.DefaultDateTime
                 };
             }
 
