@@ -15,11 +15,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     public abstract class ScheduleMonitor
     {
         // Avoid anything close to DateTime.MinValue as time zone conversions have caused bugs
-        internal static readonly DateTime DefaultDateTime = default(DateTime).ToLocalTime();
+        internal static readonly DateTime DefaultDateTime = DateTime.MinValue.ToLocalTime();
 
         // We consider anything below this as a "default", unset value. Refactoring to use nullable DateTime would
         // be a disruptive change.
-        internal static readonly DateTime DefaultDateTimeThreshold = default(DateTime).ToLocalTime().AddYears(1);
+        internal static readonly DateTime DefaultDateTimeThreshold = DefaultDateTime.AddYears(1);
 
         /// <summary>
         /// Gets the last recorded schedule status for the specified timer.
