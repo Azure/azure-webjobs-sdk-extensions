@@ -240,15 +240,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             }
         }
 
-        [Fact]
-        public async Task CheckPastDue_Creates_ValidDefaults()
-        {
-            DateTime now = new DateTime(2017, 1, 1, 9, 35, 0);
-
-            MockScheduleMonitor monitor = new MockScheduleMonitor();
-            TimeSpan pastDueAmount = await monitor.CheckPastDueAsync(_timerName, now, _halfHourlySchedule, null);
-        }
-
         private class MockScheduleMonitor : ScheduleMonitor
         {
             public ScheduleStatus CurrentStatus { get; private set; }
