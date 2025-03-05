@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers;
+using Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling;
 using Microsoft.Azure.WebJobs.Extensions.Timers;
 using Microsoft.Azure.WebJobs.Extensions.Timers.Listeners;
 using Microsoft.Azure.WebJobs.Host;
@@ -311,11 +312,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
             await _listener.StartAsync(CancellationToken.None);
 
-            // ensure that these are valid DateTimeOffsets as they need to be able to
-            // round-trip during serialization/deserialization
-            _ = (DateTimeOffset)_listener.ScheduleStatus.Last;
-            _ = (DateTimeOffset)_listener.ScheduleStatus.Next;
-            _ = (DateTimeOffset)_listener.ScheduleStatus.LastUpdated;
+            ScheduleMonitorTests.ValidateSchedule(_listener.ScheduleStatus);
 
             Assert.Equal(ScheduleMonitor.DefaultDateTime, _listener.ScheduleStatus.Last);
             Assert.True(_listener.ScheduleStatus.Next > DateTime.Now);
@@ -368,11 +365,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
             await _listener.StartAsync(CancellationToken.None);
 
-            // ensure that these are valid DateTimeOffsets as they need to be able to
-            // round-trip during serialization/deserialization
-            _ = (DateTimeOffset)_listener.ScheduleStatus.Last;
-            _ = (DateTimeOffset)_listener.ScheduleStatus.Next;
-            _ = (DateTimeOffset)_listener.ScheduleStatus.LastUpdated;
+            ScheduleMonitorTests.ValidateSchedule(_listener.ScheduleStatus);
 
             Assert.Equal(ScheduleMonitor.DefaultDateTime, _listener.ScheduleStatus.Last);
             Assert.Equal(invalidStatus.Next, _listener.ScheduleStatus.Next);
