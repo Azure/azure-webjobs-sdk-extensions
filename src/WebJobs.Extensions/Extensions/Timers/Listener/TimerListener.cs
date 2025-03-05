@@ -10,6 +10,7 @@ using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 {
@@ -18,6 +19,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
     {
         public const string UnscheduledInvocationReasonKey = "UnscheduledInvocationReason";
         public const string OriginalScheduleKey = "OriginalSchedule";
+        public const string ScheduleStatusKey = "ScheduleStatus";
 
         private readonly TimerTriggerAttribute _attribute;
         private readonly TimersOptions _options;
@@ -31,6 +33,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         // while _timerLookupName is the fully-qualified method name and used for lookups
         private readonly string _functionLogName;
         private readonly string _timerLookupName;
+
+        private readonly JsonSerializerSettings _serializerSsettings = new JsonSerializerSettings
+        {
+            DateFormatHandling = DateFormatHandling.IsoDateFormat
+        };
 
         // Since Timer uses an integer internally for it's interval,
         // it has a maximum interval of 24.8 days.
@@ -325,6 +332,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 if (originalSchedule.HasValue)
                 {
                     details[OriginalScheduleKey] = originalSchedule.Value.ToString("o");
+                }
+
+                try
+                {
+                    if (timerInfo?.ScheduleStatus is not null)
+                    {
+                        details[ScheduleStatusKey] = JsonConvert.SerializeObject(timerInfo.ScheduleStatus, _serializerSsettings);
+                    }
+                }
+                catch
+                {
+                    // best effort
                 }
 
                 TriggeredFunctionData input = new TriggeredFunctionData
