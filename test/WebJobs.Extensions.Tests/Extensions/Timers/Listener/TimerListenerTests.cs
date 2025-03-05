@@ -20,7 +20,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 {
-    public class TimerListenerTests
+    public class TimerListenerTests : IDisposable
     {
         private readonly string _testTimerName = "Program.TestTimerJob";
         private readonly string _functionShortName = "TimerFunctionShortName";
@@ -297,6 +297,93 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         }
 
         [Fact]
+        public async Task StartAsync_NullStatus_DefaultsToValidDates()
+        {
+            using var tz = TimeZoneSetter.TokyoStandard;
+
+            _mockScheduleMonitor
+                .Setup(p => p.GetStatusAsync(_testTimerName))
+                .Returns(Task.FromResult<ScheduleStatus>(null));
+
+            _mockScheduleMonitor
+                .Setup(p => p.CheckPastDueAsync(_testTimerName, It.IsAny<DateTimeOffset>(), It.IsAny<TimerSchedule>(), It.IsAny<ScheduleStatus>()))
+                .Returns(Task.FromResult(TimeSpan.Zero));
+
+            await _listener.StartAsync(CancellationToken.None);
+
+            // ensure that these are valid DateTimeOffsets as they need to be able to
+            // round-trip during serialization/deserialization
+            _ = (DateTimeOffset)_listener.ScheduleStatus.Last;
+            _ = (DateTimeOffset)_listener.ScheduleStatus.Next;
+            _ = (DateTimeOffset)_listener.ScheduleStatus.LastUpdated;
+
+            var defaultDateTime = default(DateTime).ToLocalTime();
+
+            Assert.Equal(defaultDateTime, _listener.ScheduleStatus.Last);
+            Assert.True(_listener.ScheduleStatus.Next > DateTime.Now);
+            Assert.Equal(defaultDateTime, _listener.ScheduleStatus.LastUpdated);
+        }
+
+        [Fact]
+        public Task StartAsync_InvalidStatus_DefaultsToValidDates_Utc()
+        {
+            using var tz = TimeZoneSetter.Utc;
+            return StartAsync_InvalidStatus_DefaultsToValidDates();
+        }
+
+        [Fact]
+        public Task StartAsync_InvalidStatus_DefaultsToValidDates_Tokyo()
+        {
+            using var tz = TimeZoneSetter.TokyoStandard;
+            return StartAsync_InvalidStatus_DefaultsToValidDates();
+        }
+
+        [Fact]
+        public Task StartAsync_InvalidStatus_DefaultsToValidDates_Pacific()
+        {
+            using var tz = TimeZoneSetter.PacificStandard;
+            return StartAsync_InvalidStatus_DefaultsToValidDates();
+        }
+
+        private async Task StartAsync_InvalidStatus_DefaultsToValidDates()
+        {
+            var testStart = DateTime.Now;
+
+            // This is invalid in UTC + time zones like Tokyo but used to be used as a 
+            // default value in the past.
+            var invalidDateTime = new DateTime(0, DateTimeKind.Local);
+
+            var invalidStatus = new ScheduleStatus()
+            {
+                Last = invalidDateTime,
+                Next = DateTime.Now.ToLocalTime(),
+                LastUpdated = DateTime.Now.ToLocalTime()
+            };
+
+            _mockScheduleMonitor
+                .Setup(p => p.GetStatusAsync(_testTimerName))
+                .Returns(Task.FromResult(invalidStatus));
+
+            _mockScheduleMonitor
+                .Setup(p => p.CheckPastDueAsync(_testTimerName, It.IsAny<DateTimeOffset>(), It.IsAny<TimerSchedule>(), It.IsAny<ScheduleStatus>()))
+                .Returns(Task.FromResult(TimeSpan.Zero));
+
+            await _listener.StartAsync(CancellationToken.None);
+
+            // ensure that these are valid DateTimeOffsets as they need to be able to
+            // round-trip during serialization/deserialization
+            _ = (DateTimeOffset)_listener.ScheduleStatus.Last;
+            _ = (DateTimeOffset)_listener.ScheduleStatus.Next;
+            _ = (DateTimeOffset)_listener.ScheduleStatus.LastUpdated;
+
+            var defaultDateTime = default(DateTime).ToLocalTime();
+
+            Assert.Equal(defaultDateTime, _listener.ScheduleStatus.Last);
+            Assert.Equal(invalidStatus.Next, _listener.ScheduleStatus.Next);
+            Assert.Equal(invalidStatus.LastUpdated, _listener.ScheduleStatus.LastUpdated);
+        }
+
+        [Fact]
         public async Task StartAsync_ScheduleStatus_DateKindIsLocal()
         {
             _listener.ScheduleMonitor = null;
@@ -304,9 +391,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             CancellationToken cancellationToken = CancellationToken.None;
             await _listener.StartAsync(cancellationToken);
 
-            //Assert.Equal(DateTimeKind.Local, _listener.ScheduleStatus.Last.Kind);
-            //Assert.Equal(DateTimeKind.Local, _listener.ScheduleStatus.Next.Kind);
-            //Assert.Equal(DateTimeKind.Local, _listener.ScheduleStatus.LastUpdated.Kind);
+            Assert.Equal(DateTimeKind.Local, _listener.ScheduleStatus.Last.Kind);
+            Assert.Equal(DateTimeKind.Local, _listener.ScheduleStatus.Next.Kind);
+            Assert.Equal(DateTimeKind.Local, _listener.ScheduleStatus.LastUpdated.Kind);
 
             _listener.Dispose();
         }
@@ -692,6 +779,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _logger = new TestLogger(null);
             var drainModeManager = drainManager ?? new Mock<IDrainModeManager>().Object;
             _listener = new TimerListener(_attribute, _schedule, _testTimerName, _options, _mockTriggerExecutor.Object, _logger, _mockScheduleMonitor.Object, _functionShortName, drainModeManager);
+        }
+
+        public void Dispose()
+        {
+            _listener?.Dispose();
         }
     }
 }

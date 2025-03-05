@@ -24,7 +24,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         }
 
         [Fact]
-        public async Task CheckPastDue_NullStatus()
+        public Task CheckPastDue_NullStatus_Tokyo()
+        {
+            using var timeZoneSetter = TimeZoneSetter.TokyoStandard;
+            return CheckPastDue_NullStatus();
+        }
+
+        [Fact]
+        public Task CheckPastDue_NullStatus_Utc()
+        {
+            using var timeZoneSetter = TimeZoneSetter.Utc;
+            return CheckPastDue_NullStatus();
+        }
+
+        [Fact]
+        public Task CheckPastDue_NullStatus_Pacific()
+        {
+            using var timeZoneSetter = TimeZoneSetter.PacificStandard;
+            return CheckPastDue_NullStatus();
+        }
+
+        private async Task CheckPastDue_NullStatus()
         {
             DateTime now = new DateTime(2017, 1, 1, 9, 35, 0);
             MockScheduleMonitor monitor = new MockScheduleMonitor();
@@ -35,6 +55,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             Assert.Equal(DateTimeKind.Local, monitor.CurrentStatus.Last.Kind);
             Assert.Equal(new DateTime(2017, 1, 2), monitor.CurrentStatus.Next);
             Assert.Equal(now, monitor.CurrentStatus.LastUpdated);
+
+            // ensure that these are valid DateTimeOffsets as they need to be able to
+            // round-trip during serialization/deserialization
+            _ = (DateTimeOffset)monitor.CurrentStatus.Last;
+            _ = (DateTimeOffset)monitor.CurrentStatus.Next;
+            _ = (DateTimeOffset)monitor.CurrentStatus.LastUpdated;
         }
 
         [Theory]
@@ -212,6 +238,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
                 // Because the 'Next' times happen to line up, we don't see it as a new schedule and don't update it
                 Assert.Null(monitor.CurrentStatus);
             }
+        }
+
+        [Fact]
+        public async Task CheckPastDue_Creates_ValidDefaults()
+        {
+            DateTime now = new DateTime(2017, 1, 1, 9, 35, 0);
+
+            MockScheduleMonitor monitor = new MockScheduleMonitor();
+            TimeSpan pastDueAmount = await monitor.CheckPastDueAsync(_timerName, now, _halfHourlySchedule, null);
         }
 
         private class MockScheduleMonitor : ScheduleMonitor
