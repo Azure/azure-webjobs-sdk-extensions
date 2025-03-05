@@ -184,7 +184,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             // it shouldn't be run twice.
             _attribute.RunOnStartup = true;
 
-            ScheduleStatus status = new ScheduleStatus();
+            ScheduleStatus status = new ScheduleStatus
+            {
+                Last = ScheduleMonitor.DefaultDateTime,
+                Next = ScheduleMonitor.DefaultDateTime,
+                LastUpdated = ScheduleMonitor.DefaultDateTime
+            };
+
             _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_testTimerName)).ReturnsAsync(status);
 
             DateTimeOffset lastOccurrence = default(DateTimeOffset);
@@ -302,6 +308,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         {
             using var tz = TimeZoneSetter.TokyoStandard;
 
+            DateTime testStart = DateTime.Now;
+
             _mockScheduleMonitor
                 .Setup(p => p.GetStatusAsync(_testTimerName))
                 .Returns(Task.FromResult<ScheduleStatus>(null));
@@ -315,7 +323,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             ScheduleMonitorTests.ValidateSchedule(_listener.ScheduleStatus);
 
             Assert.Equal(ScheduleMonitor.DefaultDateTime, _listener.ScheduleStatus.Last);
-            Assert.True(_listener.ScheduleStatus.Next > DateTime.Now);
+            Assert.True(_listener.ScheduleStatus.Next > testStart);
             Assert.Equal(ScheduleMonitor.DefaultDateTime, _listener.ScheduleStatus.LastUpdated);
         }
 
@@ -440,7 +448,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         {
             CreateTestListener("* * * * * *", useMonitor: true);
 
-            ScheduleStatus status = new ScheduleStatus();
+            ScheduleStatus status = new ScheduleStatus
+            {
+                Last = ScheduleMonitor.DefaultDateTime,
+                Next = ScheduleMonitor.DefaultDateTime,
+                LastUpdated = ScheduleMonitor.DefaultDateTime
+            };
+
             _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_testTimerName)).ReturnsAsync(status);
 
             // Make sure we invoke b/c we're past due.
