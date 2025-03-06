@@ -24,17 +24,39 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         }
 
         [Fact]
-        public async Task CheckPastDue_NullStatus()
+        public Task CheckPastDue_NullStatus_Tokyo()
+        {
+            using var timeZoneSetter = TimeZoneSetter.TokyoStandard;
+            return CheckPastDue_NullStatus();
+        }
+
+        [Fact]
+        public Task CheckPastDue_NullStatus_Utc()
+        {
+            using var timeZoneSetter = TimeZoneSetter.Utc;
+            return CheckPastDue_NullStatus();
+        }
+
+        [Fact]
+        public Task CheckPastDue_NullStatus_Pacific()
+        {
+            using var timeZoneSetter = TimeZoneSetter.PacificStandard;
+            return CheckPastDue_NullStatus();
+        }
+
+        private async Task CheckPastDue_NullStatus()
         {
             DateTime now = new DateTime(2017, 1, 1, 9, 35, 0);
             MockScheduleMonitor monitor = new MockScheduleMonitor();
 
             TimeSpan pastDueAmount = await monitor.CheckPastDueAsync(_timerName, now, _dailySchedule, null);
             Assert.Equal(TimeSpan.Zero, pastDueAmount);
-            Assert.Equal(default(DateTime), monitor.CurrentStatus.Last);
+            Assert.Equal(ScheduleMonitor.DefaultDateTime, monitor.CurrentStatus.Last);
             Assert.Equal(DateTimeKind.Local, monitor.CurrentStatus.Last.Kind);
             Assert.Equal(new DateTime(2017, 1, 2), monitor.CurrentStatus.Next);
             Assert.Equal(now, monitor.CurrentStatus.LastUpdated);
+
+            ValidateSchedule(monitor.CurrentStatus);
         }
 
         [Theory]
@@ -73,7 +95,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         [InlineData(false, false)]
         [InlineData(true, true)]
         [InlineData(false, true)]
-        public Task CheckPastDue_PlusTimeZone(bool lastSet, bool lastUpdatedSet)
+        public Task CheckPastDue_Tokyo(bool lastSet, bool lastUpdatedSet)
         {
             // tokyo is +9 hours from utc
             using var timeZoneSetter = TimeZoneSetter.TokyoStandard;
@@ -86,7 +108,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         [InlineData(true, true)]
         [InlineData(false, true)]
 
-        public Task CheckPastDue_MinusTimeZone(bool lastSet, bool lastUpdatedSet)
+        public Task CheckPastDue_Pacific(bool lastSet, bool lastUpdatedSet)
         {
             // pacific is -8 hours from utc
             using var timeZoneSetter = TimeZoneSetter.PacificStandard;
@@ -125,7 +147,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
                 //      but we miss it because there is no 'Last' value, which we require to calculate the 'Next'
                 //      value. It also shouldn't register as a schedule change.
                 Assert.Equal(TimeSpan.Zero, pastDueAmount);
-                Assert.Equal(default(DateTime), monitor.CurrentStatus.Last);
+                Assert.Equal(ScheduleMonitor.DefaultDateTime, monitor.CurrentStatus.Last);
                 Assert.Equal(DateTimeKind.Local, monitor.CurrentStatus.Last.Kind);
                 Assert.Equal(DateTime.Parse("1/1/2017 11:00"), monitor.CurrentStatus.Next);
                 Assert.Equal(now, monitor.CurrentStatus.LastUpdated);
@@ -137,6 +159,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         [InlineData(false, false)]
         [InlineData(true, true)]
         [InlineData(false, true)]
+        public Task CheckPastDue_ScheduleChange_Longer_Tokyo(bool lastSet, bool lastUpdatedSet)
+        {
+            using var timeZoneSetter = TimeZoneSetter.TokyoStandard;
+            return CheckPastDue_ScheduleChange_Longer(lastSet, lastUpdatedSet);
+        }
+
+        [Theory]
+        [InlineData(true, false)]
+        [InlineData(false, false)]
+        [InlineData(true, true)]
+        [InlineData(false, true)]
+        public Task CheckPastDue_ScheduleChange_Longer_Utc(bool lastSet, bool lastUpdatedSet)
+        {
+            using var timeZoneSetter = TimeZoneSetter.Utc;
+            return CheckPastDue_ScheduleChange_Longer(lastSet, lastUpdatedSet);
+        }
+
+        [Theory]
+        [InlineData(true, false)]
+        [InlineData(false, false)]
+        [InlineData(true, true)]
+        [InlineData(false, true)]
+        public Task CheckPastDue_ScheduleChange_Longer_Pacific(bool lastSet, bool lastUpdatedSet)
+        {
+            using var timeZoneSetter = TimeZoneSetter.PacificStandard;
+            return CheckPastDue_ScheduleChange_Longer(lastSet, lastUpdatedSet);
+        }
+
         public async Task CheckPastDue_ScheduleChange_Longer(bool lastSet, bool lastUpdatedSet)
         {
             DateTime now = DateTime.Parse("1/1/2017 9:35");
@@ -156,9 +206,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             Assert.Equal(TimeSpan.Zero, pastDueAmount);
 
             DateTime expectedNext = new DateTime(2017, 1, 2);
-            Assert.Equal(default(DateTime), monitor.CurrentStatus.Last);
+            Assert.Equal(ScheduleMonitor.DefaultDateTime, monitor.CurrentStatus.Last);
             Assert.Equal(DateTimeKind.Local, monitor.CurrentStatus.Last.Kind);
             Assert.Equal(expectedNext, monitor.CurrentStatus.Next);
+
+            ValidateSchedule(monitor.CurrentStatus);
 
             if (lastUpdatedSet || lastSet)
             {
@@ -176,7 +228,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
         [InlineData(false, false)]
         [InlineData(true, true)]
         [InlineData(false, true)]
-        public async Task CheckPastDue_ScheduleChange_Shorter(bool lastSet, bool lastUpdatedSet)
+        public Task CheckPastDue_ScheduleChange_Shorter_Tokyo(bool lastSet, bool lastUpdatedSet)
+        {
+            using var timeZoneSetter = TimeZoneSetter.TokyoStandard;
+            return CheckPastDue_ScheduleChange_Shorter(lastSet, lastUpdatedSet);
+        }
+
+        [Theory]
+        [InlineData(true, false)]
+        [InlineData(false, false)]
+        [InlineData(true, true)]
+        [InlineData(false, true)]
+        public Task CheckPastDue_ScheduleChange_Shorter_Pacific(bool lastSet, bool lastUpdatedSet)
+        {
+            using var timeZoneSetter = TimeZoneSetter.PacificStandard;
+            return CheckPastDue_ScheduleChange_Shorter(lastSet, lastUpdatedSet);
+        }
+
+        [Theory]
+        [InlineData(true, false)]
+        [InlineData(false, false)]
+        [InlineData(true, true)]
+        [InlineData(false, true)]
+        public Task CheckPastDue_ScheduleChange_Shorter_Utc(bool lastSet, bool lastUpdatedSet)
+        {
+            using var timeZoneSetter = TimeZoneSetter.Utc;
+            return CheckPastDue_ScheduleChange_Shorter(lastSet, lastUpdatedSet);
+        }
+
+        private async Task CheckPastDue_ScheduleChange_Shorter(bool lastSet, bool lastUpdatedSet)
         {
             DateTime now = new DateTime(2017, 1, 1, 9, 35, 0);
 
@@ -197,10 +277,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
             {
                 // Because the new time is in the past, we re-calculate it to be the next invocation from 'now'.
                 Assert.Equal(TimeSpan.Zero, pastDueAmount);
-                Assert.Equal(default(DateTime), monitor.CurrentStatus.Last);
+                Assert.Equal(ScheduleMonitor.DefaultDateTime, monitor.CurrentStatus.Last);
                 Assert.Equal(DateTimeKind.Local, monitor.CurrentStatus.Last.Kind);
                 Assert.Equal(new DateTime(2017, 1, 1, 10, 0, 0), monitor.CurrentStatus.Next);
                 Assert.Equal(now, monitor.CurrentStatus.LastUpdated);
+
+                ValidateSchedule(monitor.CurrentStatus);
             }
             else
             {
@@ -212,6 +294,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
                 // Because the 'Next' times happen to line up, we don't see it as a new schedule and don't update it
                 Assert.Null(monitor.CurrentStatus);
             }
+        }
+
+        public static void ValidateSchedule(ScheduleStatus schedule)
+        {
+            // ensure that these are valid DateTimeOffsets as they need to be able to
+            // round-trip during serialization/deserialization
+            _ = (DateTimeOffset)schedule.Last;
+            _ = (DateTimeOffset)schedule.Next;
+            _ = (DateTimeOffset)schedule.LastUpdated;
         }
 
         private class MockScheduleMonitor : ScheduleMonitor

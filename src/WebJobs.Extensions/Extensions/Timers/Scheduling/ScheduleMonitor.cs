@@ -14,7 +14,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     /// </summary>
     public abstract class ScheduleMonitor
     {
-        private static DateTime defaultDateTime = new DateTime(0, DateTimeKind.Local);
+        // Recalculate this value every time as our time zone can change dynamically when hosted.
+        internal static DateTime DefaultDateTime => DateTime.MinValue.ToLocalTime();
+
+        // We consider anything below this as a "default", unset value. Refactoring to use nullable DateTime would
+        // be a disruptive change.
+        internal static DateTime DefaultDateTimeThreshold => DefaultDateTime.AddYears(1);
 
         /// <summary>
         /// Gets the last recorded schedule status for the specified timer.
@@ -57,7 +62,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 DateTimeOffset nextOccurrence = schedule.GetNextOccurrence(now.LocalDateTime);
                 lastStatus = new ScheduleStatus
                 {
-                    Last = defaultDateTime,
+                    Last = DefaultDateTime,
                     Next = nextOccurrence.LocalDateTime,
                     LastUpdated = now.LocalDateTime
                 };
@@ -71,14 +76,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 // Track the time that was used to create 'expectedNextOccurrence'.
                 DateTimeOffset lastUpdated;
 
-                if (lastStatus.Last != defaultDateTime)
+                if (lastStatus.Last > DefaultDateTimeThreshold)
                 {
                     // If we have a 'Last' value, we know that we used this to calculate 'Next'
                     // in a previous invocation.
                     expectedNextOccurrence = schedule.GetNextOccurrence(lastStatus.Last);
                     lastUpdated = lastStatus.Last;
                 }
-                else if (lastStatus.LastUpdated != defaultDateTime)
+                else if (lastStatus.LastUpdated > DefaultDateTimeThreshold)
                 {
                     // If the trigger has never fired, we won't have 'Last', but we will have
                     // 'LastUpdated', which tells us the last time that we used to calculate 'Next'.
@@ -106,7 +111,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                         lastUpdated = now;
                     }
 
-                    lastStatus.Last = defaultDateTime;
+                    lastStatus.Last = DefaultDateTime;
                     lastStatus.Next = expectedNextOccurrence.LocalDateTime;
                     lastStatus.LastUpdated = lastUpdated.LocalDateTime;
                     await UpdateStatusAsync(timerName, lastStatus);
