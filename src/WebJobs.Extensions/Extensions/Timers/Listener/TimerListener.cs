@@ -34,7 +34,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         private readonly string _functionLogName;
         private readonly string _timerLookupName;
 
-        private readonly JsonSerializerSettings _serializerSsettings = new JsonSerializerSettings
+        private readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings
         {
             DateFormatHandling = DateFormatHandling.IsoDateFormat
         };
@@ -338,7 +338,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 {
                     if (timerInfo?.ScheduleStatus is not null)
                     {
-                        details[ScheduleStatusKey] = JsonConvert.SerializeObject(timerInfo.ScheduleStatus, _serializerSsettings);
+                        details[ScheduleStatusKey] = JsonConvert.SerializeObject(timerInfo.ScheduleStatus, _serializerSettings);
                     }
                 }
                 catch
