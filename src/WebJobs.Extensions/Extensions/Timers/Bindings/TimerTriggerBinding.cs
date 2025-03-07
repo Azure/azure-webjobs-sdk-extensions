@@ -66,7 +66,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Bindings
                 ScheduleStatus status = null;
                 if (_attribute.UseMonitor && _scheduleMonitor != null)
                 {
-                    status = await _scheduleMonitor.GetStatusAsync(_timerName);
+                    status = await _scheduleMonitor.GetSafeStatusAsync(_timerName);
                 }
                 timerInfo = new TimerInfo(_schedule, status);
             }
