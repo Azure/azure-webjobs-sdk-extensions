@@ -30,6 +30,34 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         public abstract Task<ScheduleStatus> GetStatusAsync(string timerName);
 
         /// <summary>
+        /// Internally, calls <see cref="GetStatusAsync(string)"/> and corrects any invalid values
+        /// on the returned <see cref="ScheduleStatus"/> object before returning.
+        /// </summary>
+        /// <param name="timerName">The name of the timer to check.</param>
+        /// <returns>The schedule status.</returns>
+        public async Task<ScheduleStatus> GetSafeStatusAsync(string timerName)
+        {
+            var status = await GetStatusAsync(timerName);
+
+            if (status?.Last < DefaultDateTimeThreshold)
+            {
+                status.Last = DefaultDateTime;
+            }
+
+            if (status?.Next < DefaultDateTimeThreshold)
+            {
+                status.Next = DefaultDateTime;
+            }
+
+            if (status?.LastUpdated < DefaultDateTimeThreshold)
+            {
+                status.LastUpdated = DefaultDateTime;
+            }
+
+            return status;
+        }
+
+        /// <summary>
         /// Updates the schedule status for the specified timer.
         /// </summary>
         /// <param name="timerName">The name of the timer.</param>
