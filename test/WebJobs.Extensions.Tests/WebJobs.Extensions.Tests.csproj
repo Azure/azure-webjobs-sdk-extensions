@@ -1,28 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\..\build\common.props" />
+
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <IsPackable>false</IsPackable>
-    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.Tests</AssemblyName>
-    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.WebJobs.Host.Storage" Version="5.0.1" />
     <PackageReference Include="Microsoft.Extensions.Azure" Version="1.7.5" />
-    <PackageReference Update="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\WebJobs.Extensions\WebJobs.Extensions.csproj" />
-    <ProjectReference Include="..\WebJobs.Extensions.Tests.Common\WebJobs.Extensions.Tests.Common.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="xunit.runner.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <ProjectReference Include="$(SrcRoot)WebJobs.Extensions/WebJobs.Extensions.csproj" />
+    <ProjectReference Include="../WebJobs.Extensions.Tests.Common/WebJobs.Extensions.Tests.Common.csproj" />
   </ItemGroup>
 
 </Project>

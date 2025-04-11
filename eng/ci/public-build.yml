@@ -5,6 +5,7 @@ trigger:
   branches:
     include:
     - dev
+    - release/*
   tags:
     include:
     - extensions-v*
@@ -65,4 +66,4 @@ extends:
         - template: /eng/ci/templates/jobs/build.yml@self
           parameters:
             official: false
-            project: $(Build.SourcesDirectory)/eng/ci/extensions.slnf
+            project: $(Build.SourcesDirectory)/eng/ci/sln/extensions.slnf
