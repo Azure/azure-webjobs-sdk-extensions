@@ -1,6 +1,6 @@
 {
   "solution": {
-    "path": "..\\..\\WebJobs.Extensions.sln",
+    "path": "..\\..\\..\\WebJobs.Extensions.sln",
     "projects": [
       "src\\WebJobs.Extensions.Http\\WebJobs.Extensions.Http.csproj",
       "src\\WebJobs.Extensions.SendGrid\\WebJobs.Extensions.SendGrid.csproj",
