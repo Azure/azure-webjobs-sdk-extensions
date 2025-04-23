@@ -125,10 +125,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
 
             //await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToStringInput"));
             //await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToByteArrayInput"));
-            await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToStreamInput"));
             //await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToStreamReaderInput"));
             //await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToTextReaderInput"));
             //await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToFileInfoInput"));
+            await VerifyInputBinding(host, typeof(FilesTestJobs).GetMethod("BindToStreamInput"));
 
             await host.StopAsync();
         }

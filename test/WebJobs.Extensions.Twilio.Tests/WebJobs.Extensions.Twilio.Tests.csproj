@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <NoWarn>$(NoWarn);8002</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

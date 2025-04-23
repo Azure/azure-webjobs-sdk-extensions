@@ -188,7 +188,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 PartitionKey = attribute.PartitionKey;
                 ContainerThroughput = attribute.ContainerThroughput;
                 SqlQuery = attribute.SqlQuery;
-                SqlQueryParameters = attribute.SqlQueryParameters is null ? default : attribute.SqlQueryParameters.ToDictionary(x => x.Item1, x => x.Item2);
+                SqlQueryParameters = attribute.SqlQueryParameters is null ? default : attribute.SqlQueryParameters.ToDictionary(x => x.Key, x => x.Value);
                 PreferredLocations = attribute.PreferredLocations;
             }
 

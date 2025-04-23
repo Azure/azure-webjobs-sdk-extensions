@@ -34,7 +34,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 {
                     foreach (var parameter in attribute.SqlQueryParameters)
                     {
-                        queryDefinition.WithParameter(parameter.Item1, parameter.Item2);
+                        queryDefinition.WithParameter(parameter.Key, parameter.Value);
                     }
                 }
             }

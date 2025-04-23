@@ -16,7 +16,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
     public abstract class TimerSchedule
     {
         /// <summary>
-        /// Gets a value indicating whether intervals between invocations should account for DST.        
+        /// Gets a value indicating whether intervals between invocations should account for DST.
         /// </summary>
         [Obsolete("This property is obsolete and will be removed in a future version. All TimerSchedule implementations should now handle their own DST transitions.")]
         public abstract bool AdjustForDST { get; }
@@ -74,11 +74,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                         attribute.UseMonitor = false;
                     }
                 }
-                else if (TimeSpan.TryParse(resolvedExpression, out TimeSpan periodTimespan))
+                else if (TimeSpan.TryParse(resolvedExpression, out TimeSpan periodTimeSpan))
                 {
-                    schedule = new ConstantSchedule(periodTimespan);
+                    schedule = new ConstantSchedule(periodTimeSpan);
 
-                    if (attribute.UseMonitor && periodTimespan.TotalMinutes < 1)
+                    if (attribute.UseMonitor && periodTimeSpan.TotalMinutes < 1)
                     {
                         // for very frequent constant schedules, we want to disable persistence
                         logger.LogDebug("UseMonitor changed to false based on schedule frequency.");

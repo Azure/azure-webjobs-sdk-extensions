@@ -193,6 +193,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Scheduling
 
         public class CustomSchedule : TimerSchedule
         {
+            [Obsolete("This property is obsolete and will be removed in a future version. All TimerSchedule implementations should now handle their own DST transitions.")]
             public override bool AdjustForDST => true;
 
             public override DateTime GetNextOccurrence(DateTime now)
