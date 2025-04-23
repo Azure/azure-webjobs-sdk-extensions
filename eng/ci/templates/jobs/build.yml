@@ -1,5 +1,5 @@
 parameters:
-- name: official
+- name: sign
   type: boolean
   default: false
 - name: project
@@ -16,12 +16,8 @@ jobs:
     value: $(Build.ArtifactStagingDirectory)/pkg
   - name: buildNumber
     value: $[ counter('constant', 12000) ]
-  - ${{ if and(eq(parameters.official, true), startsWith(variables['Build.SourceBranch'], 'refs/tags')) }}:
-    - name: version_suffix
-      value: ''
-  - ${{ else }}:
-    - name: version_suffix
-      value: --version-suffix -$(buildNumber)
+  - name: sign
+    value: ${{ parameters.sign }}
 
   templateContext:
     outputParentDirectory: $(Build.ArtifactStagingDirectory)
@@ -29,10 +25,21 @@ jobs:
     - output: pipelineArtifact
       displayName: Publish logs
       path: $(pack_dir)
-      artifact: drop
+      artifact: drop_packages
 
   steps:
     - template: /eng/ci/templates/steps/install-dotnet.yml@self
+
+    # If sign=false, verify this is not an "sign" branch
+    - ${{ if ne(parameters.sign, true) }}:
+      - pwsh: |
+          $source = "$(Build.SourceBranch)"
+          if ($source -like "refs/tags/*-v*" || $source -like "refs/tags/v*" || $source -like "refs/heads/release/*")
+          {
+            Write-Host "##vso[task.logissue type=error]Branch/tag $source must have 'sign' set to 'true'."
+            exit 1
+          }
+        displayName: Verify not sign branch
 
     - task: DotNetCoreCLI@2
       displayName: Restore
@@ -63,7 +70,7 @@ jobs:
         AzureWebJobsCosmosDBConnectionString: $(CosmosDB)
         ConnectionStrings__CosmosDB: $(CosmosDB)
 
-    - ${{ if eq(parameters.official, true) }}:
+    - ${{ if eq(parameters.sign, true) }}:
       - template: ci/sign-files.yml@eng
         parameters:
           displayName: Sign assemblies
@@ -76,13 +83,18 @@ jobs:
       inputs:
         command: custom
         custom: pack
-        arguments: -c $(configuration) -v m -o $(pack_dir) --no-build $(version_suffix)
+        arguments: -c $(configuration) -v m -o $(pack_dir) --no-build
         projects: ${{ parameters.project }}
 
-    - ${{ if eq(parameters.official, true) }}:
+    - ${{ if eq(parameters.sign, true) }}:
       - template: ci/sign-files.yml@eng
         parameters:
           displayName: Sign nuget packages
           folderPath: $(pack_dir)
           pattern: Microsoft.Azure.WebJobs.Extensions*.nupkg
           signType: nuget
+
+      - task: DeleteFiles@1
+        displayName: Delete CodeSignSummary files
+        inputs:
+          contents: $(pack_dir)/CodeSignSummary-*.md

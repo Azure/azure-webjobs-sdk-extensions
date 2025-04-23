@@ -6,8 +6,7 @@ trigger:
     - dev
   tags:
     include:
-    - cosmos-v*
-    - extensions-v*
+    - '*'
 
 resources:
   repositories:

@@ -1,0 +1,21 @@
+parameters:
+- name: package
+  type: string
+- name: targetPath
+  type: string
+
+steps:
+
+# Finding all packages with the provided name.
+# We need to make sure "PackageA" matches "PackageA.1.0.0.nupkg" and not "PackageA.Something.1.0.0.nupkg"
+# In addition to copying .nupkg, we also copy .symbols.nupkg and .snupkg
+- pwsh: |
+    $packages = Get-ChildItem -Path $(drop_path) -Filter *.nupkg -Recurse
+    foreach ($p in $packages) {
+      # trim name off to see if we ONLY have version and extension remaining
+      $trimmed = $p.Name.Trim("${{ parameters.package }}.")
+      if ([Regex]::IsMatch($trimmed, '^\d+\.\d+\.\d+.*$')) {
+        Copy-Item $p '${{ parameters.targetPath }}'
+      }
+    }
+  displayName: Copy ${{ parameters.package }}
