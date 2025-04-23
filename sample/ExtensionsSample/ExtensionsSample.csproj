@@ -17,12 +17,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\WebJobs.Extensions.CosmosDB\WebJobs.Extensions.CosmosDB.csproj" />
-    <ProjectReference Include="..\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj" />
-    <ProjectReference Include="..\WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.csproj" />
-    <ProjectReference Include="..\WebJobs.Extensions.Timers.Storage\WebJobs.Extensions.Timers.Storage.csproj" />
-    <ProjectReference Include="..\WebJobs.Extensions.Twilio\WebJobs.Extensions.Twilio.csproj" />
-    <ProjectReference Include="..\WebJobs.Extensions\WebJobs.Extensions.csproj" />
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.CosmosDB\WebJobs.Extensions.CosmosDB.csproj" />
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.MobileApps\WebJobs.Extensions.MobileApps.csproj" />
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.SendGrid\WebJobs.Extensions.SendGrid.csproj" />
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.Timers.Storage\WebJobs.Extensions.Timers.Storage.csproj" />
+    <ProjectReference Include="..\..\src\WebJobs.Extensions.Twilio\WebJobs.Extensions.Twilio.csproj" />
+    <ProjectReference Include="..\..\src\WebJobs.Extensions\WebJobs.Extensions.csproj" />
   </ItemGroup>
 
   <ItemGroup>
