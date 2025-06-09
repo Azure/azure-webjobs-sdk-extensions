@@ -5,6 +5,7 @@ trigger:
   branches:
     include:
     - dev
+    - release/*
   tags:
     include:
     - cosmos-v*
@@ -67,4 +68,4 @@ extends:
         - template: /eng/ci/templates/jobs/build.yml@self
           parameters:
             official: false
-            project: $(Build.SourcesDirectory)/eng/ci/cosmosdb.slnf
+            project: $(Build.SourcesDirectory)/eng/ci/sln/cosmosdb.slnf

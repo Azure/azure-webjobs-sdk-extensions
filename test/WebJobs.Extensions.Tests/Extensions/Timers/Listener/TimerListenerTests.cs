@@ -39,6 +39,69 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             CreateTestListener("0 */1 * * * *");
         }
 
+        public static IEnumerable<object[]> TimerSchedulesEnteringDST =>
+        [
+            [new CronSchedule(CrontabSchedule.Parse("0 0 18 * * 5", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(167)],
+            [new ConstantSchedule(TimeSpan.FromDays(7)), TimeSpan.FromDays(7)],
+        ];
+
+        public static IEnumerable<object[]> TimerSchedulesWithinDST =>
+        [
+            [new CronSchedule(CrontabSchedule.Parse("0 59 * * * *", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(1)],
+            [new ConstantSchedule(TimeSpan.FromMinutes(5)), TimeSpan.FromMinutes(5)],
+        ];
+
+        // Note: In Pacific time, DST (UTC -7) ends at 2 AM on 11/4/2018. The clocks go back to 1 AM (with UTC -8).
+#pragma warning disable SA1515 // Single-line comment should be preceded by blank line
+        public static IEnumerable<object[]> CronTimerSchedulesExitingDST =>
+        [
+            // Starts in ambiguous PDT, ends in PST. Run every hour at the 30 minute mark.
+            [new DateTimeOffset(2018, 11, 4, 1, 31, 0, TimeSpan.FromHours(-7)), "0 30 * * * *", TimeSpan.FromMinutes(59)],
+
+            // Starts in ambiguous PDT, ends in PST. Run every minute.
+            [new DateTimeOffset(2018, 11, 4, 1, 59, 0, TimeSpan.FromHours(-7)), "0 * * * * *", TimeSpan.FromMinutes(1)],
+
+            // Starts in ambiguous PDT, ends in ambiguous PDT. Run every minute.
+            [new DateTimeOffset(2018, 11, 4, 1, 30, 0, TimeSpan.FromHours(-7)), "0 * * * * *", TimeSpan.FromMinutes(1)],
+
+            // Starts in ambiguous PDT, ends in ambiguous PST. Run at 1:00/1:30/2:00/2:30. This is considered an interval and should
+            // should run 6 times during the PDT -> PST transition.
+            [new DateTimeOffset(2018, 11, 4, 1, 45, 0, TimeSpan.FromHours(-7)), "0 0,30 1-2 * * *", TimeSpan.FromMinutes(15)],
+
+            // Starts in ambiguous PST, ends in ambiguous PST. Run at 1:30/2:30. This is considered an interval and should
+            // should run 6 times during the PDT -> PST transition. No log is expected because no adjustment is performed as the
+            // offsets match in this case.
+            [new DateTimeOffset(2018, 11, 4, 1, 45, 0, TimeSpan.FromHours(-8)), "0 0,30 1-3 * * *", TimeSpan.FromMinutes(15)],
+
+            // Starts in ambiguous PST, ends in ambiguous PDT. Run every minute for a range.
+            [new DateTimeOffset(2018, 11, 4, 1, 30, 0, TimeSpan.FromHours(-7)), "0 * 1-3 * * *", TimeSpan.FromMinutes(1)],
+
+            // Starts in PDT, ends in ambiguous PDT. Run every minute.
+            [new DateTimeOffset(2018, 11, 4, 0, 59, 0, TimeSpan.FromHours(-7)), "0 * * * * *", TimeSpan.FromMinutes(1)],
+
+            // Starts in ambiguous PST, ends in PST. Run every hour at the 30 minute mark.
+            [new DateTimeOffset(2018, 11, 4, 1, 31, 0, TimeSpan.FromHours(-8)), "0 30 * * * *", TimeSpan.FromMinutes(59)],
+
+            // Starts in PDT, ends in PST. Run every Friday at 6 PM.
+            [new DateTimeOffset(2018, 11, 2, 18, 0, 0, TimeSpan.FromHours(-7)), "0 0 18 * * 5", TimeSpan.FromHours(169)],
+
+            // Starts in ambiguous PDT, ends in PST. Run every day at 1:30 (only expect one invocation during ambiguous times).
+            [new DateTimeOffset(2018, 11, 4, 1, 30, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.FromHours(25)],
+
+            // Starts in PDT, ends in ambiguous PDT. Run every day at 1:30 (only expect one invocation during ambiguous times).
+            [new DateTimeOffset(2018, 11, 4, 0, 30, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.FromHours(1)],
+
+            // Starts in ambiguous PDT, ends in ambiguous PDT. Run every day at 1:30 (only expect one invocation during ambiguous times).
+            [new DateTimeOffset(2018, 11, 4, 1, 29, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.FromMinutes(1)],
+
+            // Starts in ambiguous PST, ends in PST. Run every day at 1:30 (only expect one invocation during ambiguous times).
+            [new DateTimeOffset(2018, 11, 4, 1, 29, 0, TimeSpan.FromHours(-8)), "0 30 1 * * *", TimeSpan.Parse("1.00:01")],
+
+            // Starts in ambiguous PDT, ends in PST. Run every day at 1:30 (only expect one invocation during ambiguous times).
+            [new DateTimeOffset(2018, 11, 4, 1, 31, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.Parse("1.00:59")],
+        ];
+#pragma warning restore SA1515 // Single-line comment should be preceded by blank line
+
         [Fact]
         public async Task InvokeJobFunction_UpdatesScheduleMonitor()
         {
@@ -520,7 +583,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         public async Task StopAsync_DrainMode_DoesNotCancelCts()
         {
             bool invocationStarted = false;
-            bool invocationCompleted = false;
 
             var mockDrainModeManager = new Mock<IDrainModeManager>(MockBehavior.Strict);
             mockDrainModeManager.Setup(p => p.IsDrainModeEnabled).Returns(true);
@@ -529,7 +591,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             {
                 invocationStarted = true;
                 Task.Delay(3000).Wait();
-                invocationCompleted = true;
             }, drainManager: mockDrainModeManager.Object);
 
             var cts = new CancellationTokenSource();
@@ -539,7 +600,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
             // after the function has started running, stop the listener
             await _listener.StopAsync(cts.Token);
-
 
             Assert.False(cts.IsCancellationRequested);
         }
@@ -594,67 +654,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         {
             await RunInitialStatusTestAsync(null, $"Function '{_functionShortName}' initial status: Last='(null)', Next='(null)', LastUpdated='(null)'");
         }
-
-        public static IEnumerable<object[]> TimerSchedulesEnteringDST =>
-        [
-            [new CronSchedule(CrontabSchedule.Parse("0 0 18 * * 5", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(167)],
-            [new ConstantSchedule(TimeSpan.FromDays(7)), TimeSpan.FromDays(7)],
-        ];
-
-        public static IEnumerable<object[]> TimerSchedulesWithinDST =>
-        [
-            [new CronSchedule(CrontabSchedule.Parse("0 59 * * * *", new CrontabSchedule.ParseOptions() { IncludingSeconds = true })), TimeSpan.FromHours(1)],
-            [new ConstantSchedule(TimeSpan.FromMinutes(5)), TimeSpan.FromMinutes(5)],
-        ];
-
-        // Note: In Pacific time, DST (UTC -7) ends at 2 AM on 11/4/2018. The clocks go back to 1 AM (with UTC -8).
-        public static IEnumerable<object[]> CronTimerSchedulesExitingDST =>
-        [
-            // Starts in ambiguous PDT, ends in PST. Run every hour at the 30 minute mark.
-            [new DateTimeOffset(2018, 11, 4, 1, 31, 0, TimeSpan.FromHours(-7)), "0 30 * * * *", TimeSpan.FromMinutes(59)],
-
-            // Starts in ambiguous PDT, ends in PST. Run every minute.
-            [new DateTimeOffset(2018, 11, 4, 1, 59, 0, TimeSpan.FromHours(-7)), "0 * * * * *", TimeSpan.FromMinutes(1)],
-
-            // Starts in ambiguous PDT, ends in ambiguous PDT. Run every minute.
-            [new DateTimeOffset(2018, 11, 4, 1, 30, 0, TimeSpan.FromHours(-7)), "0 * * * * *", TimeSpan.FromMinutes(1)],
-
-            // Starts in ambiguous PDT, ends in ambiguous PST. Run at 1:00/1:30/2:00/2:30. This is considered an interval and should
-            // should run 6 times during the PDT -> PST transition.
-            [new DateTimeOffset(2018, 11, 4, 1, 45, 0, TimeSpan.FromHours(-7)), "0 0,30 1-2 * * *", TimeSpan.FromMinutes(15)],
-
-            // Starts in ambiguous PST, ends in ambiguous PST. Run at 1:30/2:30. This is considered an interval and should
-            // should run 6 times during the PDT -> PST transition. No log is expected because no adjustment is performed as the
-            // offsets match in this case.
-            [new DateTimeOffset(2018, 11, 4, 1, 45, 0, TimeSpan.FromHours(-8)), "0 0,30 1-3 * * *", TimeSpan.FromMinutes(15)],
-
-            // Starts in ambiguous PST, ends in ambiguous PDT. Run every minute for a range.
-            [new DateTimeOffset(2018, 11, 4, 1, 30, 0, TimeSpan.FromHours(-7)), "0 * 1-3 * * *", TimeSpan.FromMinutes(1)],
-
-            // Starts in PDT, ends in ambiguous PDT. Run every minute.
-            [new DateTimeOffset(2018, 11, 4, 0, 59, 0, TimeSpan.FromHours(-7)), "0 * * * * *", TimeSpan.FromMinutes(1)],
-
-            // Starts in ambiguous PST, ends in PST. Run every hour at the 30 minute mark.
-            [new DateTimeOffset(2018, 11, 4, 1, 31, 0, TimeSpan.FromHours(-8)), "0 30 * * * *", TimeSpan.FromMinutes(59)],
-
-            // Starts in PDT, ends in PST. Run every Friday at 6 PM.
-            [new DateTimeOffset(2018, 11, 2, 18, 0, 0, TimeSpan.FromHours(-7)), "0 0 18 * * 5", TimeSpan.FromHours(169)],
-
-            // Starts in ambiguous PDT, ends in PST. Run every day at 1:30 (only expect one invocation during ambiguous times).
-            [new DateTimeOffset(2018, 11, 4, 1, 30, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.FromHours(25)],
-
-            // Starts in PDT, ends in ambgiguous PDT. Run every day at 1:30 (only expect one invocation during ambiguous times).
-            [new DateTimeOffset(2018, 11, 4, 0, 30, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.FromHours(1)],
-
-            // Starts in ambiguous PDT, ends in ambgiguous PDT. Run every day at 1:30 (only expect one invocation during ambiguous times).
-            [new DateTimeOffset(2018, 11, 4, 1, 29, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.FromMinutes(1)],
-
-            // Starts in ambiguous PST, ends in PST. Run every day at 1:30 (only expect one invocation during ambiguous times).
-            [new DateTimeOffset(2018, 11, 4, 1, 29, 0, TimeSpan.FromHours(-8)), "0 30 1 * * *", TimeSpan.Parse("1.00:01")],
-
-            // Starts in ambiguous PDT, ends in PST. Run every day at 1:30 (only expect one invocation during ambiguous times).
-            [new DateTimeOffset(2018, 11, 4, 1, 31, 0, TimeSpan.FromHours(-7)), "0 30 1 * * *", TimeSpan.Parse("1.00:59")],
-        ];
 
         /// <summary>
         /// Situation where the DST transition happens in the middle of the schedule, with the

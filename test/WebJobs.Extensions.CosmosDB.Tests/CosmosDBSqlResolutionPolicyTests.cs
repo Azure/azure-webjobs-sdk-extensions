@@ -28,8 +28,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             string result = policy.TemplateBind(propInfo, resolvedAttribute, bindingTemplate, bindingData);
 
             // Assert
-            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Item1 == "@foo" && p.Item2.ToString() == "1234");
-            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Item1 == "@bar" && p.Item2.ToString() == "5678");
+            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Key == "@foo" && p.Value.ToString() == "1234");
+            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Key == "@bar" && p.Value.ToString() == "5678");
 
             Assert.Equal("SELECT * FROM c WHERE c.id = @foo AND c.value = @bar", result);
         }
@@ -51,7 +51,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             string result = policy.TemplateBind(propInfo, resolvedAttribute, bindingTemplate, bindingData);
 
             // Assert
-            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Item1 == "@foo" && p.Item2.ToString() == "1234");
+            Assert.Single(resolvedAttribute.SqlQueryParameters, p => p.Key == "@foo" && p.Value.ToString() == "1234");
             Assert.Equal("SELECT * FROM c WHERE c.id = @foo AND c.value = @foo", result);
         }
     }

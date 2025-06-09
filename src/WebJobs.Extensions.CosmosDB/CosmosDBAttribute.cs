@@ -106,6 +106,6 @@ namespace Microsoft.Azure.WebJobs
         [AutoResolve]
         public string PreferredLocations { get; set; }
 
-        internal IEnumerable<(string, object)> SqlQueryParameters { get; set; }
+        internal IEnumerable<(string Key, object Value)> SqlQueryParameters { get; set; }
     }
 }

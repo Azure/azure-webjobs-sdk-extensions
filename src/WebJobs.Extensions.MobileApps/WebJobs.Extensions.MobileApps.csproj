@@ -1,31 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.MobileApps</AssemblyName>
-    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.MobileApps</RootNamespace>
-    <PackageId>Microsoft.Azure.WebJobs.Extensions.MobileApps</PackageId>
     <Description>This package contains binding extensions for Azure Mobile Apps.</Description>
-  </PropertyGroup>
-  <Import Project="..\..\build\common.props" />
-  <PropertyGroup>
-    <Version>$(MobileAppsVersion)</Version>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors />
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors />
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Mobile.Client" Version="4.1.2" />
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.41" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="StyleCop.Analyzers" Version="1.1.118" />
   </ItemGroup>
 
 </Project>

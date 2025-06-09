@@ -7,11 +7,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1118E0AD-83C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{6D6CF06F-EFCF-4E01-99F1-CB7991C279D8}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{9C98036B-0901-45FA-A18B-0D8E226B6A61}"
-	ProjectSection(SolutionItems) = preProject
-		build\common.props = build\common.props
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions.Tests", "test\WebJobs.Extensions.Tests\WebJobs.Extensions.Tests.csproj", "{1729561F-D598-4208-9154-3A5497523D54}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJobs.Extensions", "src\WebJobs.Extensions\WebJobs.Extensions.csproj", "{7719584E-9863-405A-9D26-2CC02AFC2427}"
