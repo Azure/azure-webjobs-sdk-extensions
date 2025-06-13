@@ -16,6 +16,13 @@ steps:
       $trimmed = $p.Name.Trim("${{ parameters.package }}.")
       if ([Regex]::IsMatch($trimmed, '^\d+\.\d+\.\d+.*$')) {
         Copy-Item $p '${{ parameters.targetPath }}'
+
+        if ($trimmed.EndsWith(".nupkg") && !$trimmed.EndsWith(".symbols.nupkg"))
+        {
+          $tag = $p.Name.TrimEnd(".nupkg")
+          Write-Host "##vso[build.addbuildtag]${{ parameters.package }}"
+          Write-Host "##vso[build.addbuildtag]$tag"
+        }
       }
     }
   displayName: Copy ${{ parameters.package }}
