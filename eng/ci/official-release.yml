@@ -1,0 +1,134 @@
+parameters:
+- name: releaseExtensions
+  displayName: Release WebJobs.Extensions
+  type: boolean
+  default: false
+- name: releaseHttp
+  displayName: Release WebJobs.Extensions.Http
+  type: boolean
+  default: false
+- name: releaseSendGrid
+  displayName: Release WebJobs.Extensions.SendGrid
+  type: boolean
+  default: false
+- name: releaseTimersStorage
+  displayName: Release WebJobs.Extensions.Timers.Storage
+  type: boolean
+  default: false
+- name: releaseTwilio
+  displayName: Release WebJobs.Extensions.Twilio
+  type: boolean
+  default: false
+- name: releaseCosmosDB
+  displayName: Release WebJobs.Extensions.CosmosDB
+  type: boolean
+  default: false
+
+# Release has no triggers outside of pipeline
+trigger: none
+pr: none
+
+resources:
+  repositories:
+  - repository: 1es
+    type: git
+    name: 1ESPipelineTemplates/1ESPipelineTemplates
+    ref: refs/tags/release
+  - repository: eng
+    type: git
+    name: engineering
+    ref: refs/heads/main
+  pipelines:
+  - pipeline: build
+    source: webjobs-sdk-extensions.official
+
+variables:
+- template: /ci/variables/cfs.yml@eng
+
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1es
+  parameters:
+    pool:
+      name: 1es-pool-azfunc
+      image: 1es-ubuntu-22.04
+      os: linux
+
+    stages:
+    - stage: Prepare
+
+      variables:
+      - name: drop_path
+        value: $(Pipeline.Workspace)/build/drop_packages
+        readonly: true
+      - name: upload_path
+        value: $(Build.ArtifactStagingDirectory)
+        readonly: true
+
+      jobs:
+      - job: Prepare
+
+        templateContext:
+          type: validationJob
+          outputs:
+          - output: pipelineArtifact
+            artifactName: drop_packages
+            targetPath: $(upload_path)
+
+        steps:
+        - checkout: none
+
+        - download: build
+          artifact: drop_packages
+
+        - ${{ if eq(parameters.releaseExtensions, true) }}:
+          - template: /eng/ci/templates/steps/copy-package.yml@self
+            parameters:
+              package: Microsoft.Azure.WebJobs.Extensions
+              targetPath: $(upload_path)
+
+        - ${{ if eq(parameters.releaseHttp, true) }}:
+          - template: /eng/ci/templates/steps/copy-package.yml@self
+            parameters:
+              package: Microsoft.Azure.WebJobs.Extensions.Http
+              targetPath: $(upload_path)
+
+        - ${{ if eq(parameters.releaseSendGrid, true) }}:
+          - template: /eng/ci/templates/steps/copy-package.yml@self
+            parameters:
+              package: Microsoft.Azure.WebJobs.Extensions.SendGrid
+              targetPath: $(upload_path)
+
+        - ${{ if eq(parameters.releaseTimersStorage, true) }}:
+          - template: /eng/ci/templates/steps/copy-package.yml@self
+            parameters:
+              package: Microsoft.Azure.WebJobs.Extensions.Timers.Storage
+              targetPath: $(upload_path)
+
+        - ${{ if eq(parameters.releaseTwilio, true) }}:
+          - template: /eng/ci/templates/steps/copy-package.yml@self
+            parameters:
+              package: Microsoft.Azure.WebJobs.Extensions.Twilio
+              targetPath: $(upload_path)
+
+        - ${{ if eq(parameters.releaseCosmosDB, true) }}:
+          - template: /eng/ci/templates/steps/copy-package.yml@self
+            parameters:
+              package: Microsoft.Azure.WebJobs.Extensions.CosmosDB
+              targetPath: $(upload_path)
+
+    - stage: Release
+      dependsOn: Prepare
+
+      jobs:
+      - template: /ci/release-nuget-package.yml@eng
+        parameters:
+          isProduction: true
+          approvers: '[internal]\Azure Functions Core'
+          stagingFeed: public/pre-release
+          packages: |
+            **/*.nupkg
+            !**/*.symbols.nupkg
+          artifact: drop_packages
+          partnerDrop:
+            serviceConnection: azure-sdk-partner-drops
+            targetFolder: azure-functions/dotnet/azure-webjobs-extensions/$(Build.BuildNumber)

@@ -107,10 +107,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
             JobHost host = CreateTestJobHost();
             await host.StartAsync();
 
+            await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToFileStreamOutput"));
             await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToStringOutput"));
             await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToByteArrayOutput"));
             await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToStreamOutput"));
-            await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToFileStreamOutput"));
             await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToStreamWriterOutput"));
             await VerifyOutputBinding(typeof(FilesTestJobs).GetMethod("BindToTextWriterOutput"));
 
@@ -157,15 +157,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
             await host.CallAsync(method);
 
             string outputFile = Path.Combine(rootPath, OutputTestPath, string.Format("{0}.txt", method.Name));
-            await TestHelpers.Await(() =>
-            {
-                return File.Exists(outputFile);
-            });
+            await TestHelpers.Await(() => File.Exists(outputFile));
 
             // give time for file to close
-            await Task.Delay(1000);
-
-            string result = File.ReadAllText(outputFile);
+            string result = await TestHelpers.RetryAsync(() => File.ReadAllTextAsync(outputFile));
             Assert.Equal(data, result);
         }
 
@@ -176,15 +171,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
             File.WriteAllText(inputFile, data);
 
             string outputFile = Path.Combine(rootPath, OutputTestPath, string.Format("{0}.txt", method.Name));
-            await TestHelpers.Await(() =>
-            {
-                return File.Exists(outputFile);
-            });
+            await TestHelpers.Await(() => File.Exists(outputFile));
 
             // give time for file to close
-            await Task.Delay(1000);
-
-            string result = File.ReadAllText(outputFile);
+            string result = await TestHelpers.RetryAsync(() => File.ReadAllTextAsync(outputFile));
             Assert.Equal(data, result);
         }
 

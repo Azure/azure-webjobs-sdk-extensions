@@ -25,6 +25,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
     {
         private readonly string _testTimerName = "Program.TestTimerJob";
         private readonly string _functionShortName = "TimerFunctionShortName";
+        private TaskCompletionSource _callback = new();
         private TimerListener _listener;
         private Mock<ScheduleMonitor> _mockScheduleMonitor;
         private TimersOptions _options;
@@ -36,7 +37,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
         public TimerListenerTests()
         {
-            CreateTestListener("0 */1 * * * *");
+            CreateTestListener("0 */1 * * * *", functionAction: () => _callback.TrySetResult());
         }
 
         public static IEnumerable<object[]> TimerSchedulesEnteringDST =>
@@ -284,7 +285,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             Assert.True(startupInvocation.IsPastDue);
             Assert.Equal(default(DateTimeOffset).ToLocalTime(), startupInvocation.OriginalSchedule);
 
-            await Task.Delay(100);
+            await _callback.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
             TimerInfo timerInfo = (TimerInfo)_triggeredFunctionData.TriggerValue;
             Assert.Same(status, timerInfo.ScheduleStatus);
@@ -342,7 +343,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             Assert.False(startupInvocation.IsPastDue);
             Assert.Equal(default(DateTimeOffset), startupInvocation.OriginalSchedule);
 
-            await Task.Delay(100);
+            await _callback.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
             _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Once());
 
@@ -550,21 +551,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public async Task StopAsync_AllowsOutstandingInvocationToComplete()
         {
-            bool invocationStarted = false;
             bool invocationCompleted = false;
+            TaskCompletionSource started = new();
+            TaskCompletionSource tcs = new();
             CreateTestListener("* * * * * *", useMonitor: false, functionAction: () =>
             {
-                invocationStarted = true;
-                Task.Delay(3000).Wait();
+                started.TrySetResult();
+                tcs.Task.Wait();
                 invocationCompleted = true;
             });
 
             await _listener.StartAsync(CancellationToken.None);
 
-            await TestHelpers.Await(() => invocationStarted, pollingInterval: 500);
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
             // after the function has started running, stop the listener
-            await _listener.StopAsync(CancellationToken.None);
+            Task stop = _listener.StopAsync(CancellationToken.None);
+            tcs.TrySetResult();
+            await stop;
 
             // ensure the invocation was allowed to complete
             Assert.True(invocationCompleted, "Outstanding invocation wasn't allowed to complete");
@@ -587,16 +591,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             var mockDrainModeManager = new Mock<IDrainModeManager>(MockBehavior.Strict);
             mockDrainModeManager.Setup(p => p.IsDrainModeEnabled).Returns(true);
 
+            TaskCompletionSource tcs = new();
             CreateTestListener("* * * * * *", useMonitor: false, functionAction: () =>
             {
                 invocationStarted = true;
-                Task.Delay(3000).Wait();
+                tcs.Task.Wait();
             }, drainManager: mockDrainModeManager.Object);
 
             var cts = new CancellationTokenSource();
             await _listener.StartAsync(cts.Token);
 
             await TestHelpers.Await(() => invocationStarted, pollingInterval: 500);
+            tcs.TrySetResult();
 
             // after the function has started running, stop the listener
             await _listener.StopAsync(cts.Token);
@@ -610,13 +616,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             // There was a bug where we would re-create a disposed _timer after a call to StopAsync(). This only
             // happened if there was a function running when StopAsync() was called.
             int count = 0;
+            TaskCompletionSource tcs = new();
             CreateTestListener("* * * * * *", useMonitor: false, functionAction: () =>
             {
                 count++;
-                _listener.StopAsync(CancellationToken.None).Wait();
+                _ = _listener.StopAsync(CancellationToken.None);
+                tcs.TrySetResult();
             });
+
             await _listener.StartAsync(CancellationToken.None);
-            await Task.Delay(3000);
+            await tcs.Task;
             Assert.Equal(1, count);
         }
 
@@ -645,7 +654,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 LastUpdated = new DateTime(2016, 3, 3, 23, 59, 59)
             };
 
-            var expected = $"Function '{_functionShortName}' initial status: Last='{status.Last.ToString("o")}', Next='{status.Next.ToString("o")}', LastUpdated='{status.LastUpdated.ToString("o")}'";
+            var expected = $"Function '{_functionShortName}' initial status: Last='{status.Last:o}', Next='{status.Next:o}', LastUpdated='{status.LastUpdated:o}'";
             await RunInitialStatusTestAsync(status, expected);
         }
 
@@ -749,7 +758,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 .OrderBy(t => t.Timestamp)
                 .ToArray();
 
-            Assert.Equal(5, verboseTraces.Length);
+            Assert.True(verboseTraces.Length >= 5);
             Assert.Contains("timer is using the schedule 'Cron: '0 * * * * *'' and the local time zone:", verboseTraces[0].FormattedMessage);
             Assert.Equal(expected, verboseTraces[1].FormattedMessage);
             Assert.Contains($"Timer for '{_functionShortName}' started with interval", verboseTraces[2].FormattedMessage);

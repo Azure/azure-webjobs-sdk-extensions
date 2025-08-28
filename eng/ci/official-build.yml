@@ -2,7 +2,7 @@ parameters:
 - name: sign
   displayName: Sign Files (release/* always signed)
   type: boolean
-  default: true
+  default: false
 
 trigger:
   batch: true
@@ -12,11 +12,8 @@ trigger:
     - release/*
   tags:
     include:
-    - extensions-v*
-  paths:
-    exclude:
-    - src/WebJobs.Extensions.CosmosDB/**
-    - test/WebJobs.Extensions.CosmosDB.Tests/**
+    - v*
+    - '*-v*'
 
 schedules:
 # Ensure we build nightly to catch any new CVEs and report SDL often.
@@ -69,5 +66,5 @@ extends:
       jobs:
       - template: /eng/ci/templates/jobs/build.yml@self
         parameters:
-          official: ${{ variables.sign }}
-          project: $(Build.SourcesDirectory)/eng/ci/sln/extensions.slnf
+          sign: ${{ variables.sign }}
+          project: $(Build.SourcesDirectory)/WebJobs.Extensions.sln

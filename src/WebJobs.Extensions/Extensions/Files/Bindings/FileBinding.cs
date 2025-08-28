@@ -91,11 +91,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
                 _fileInfo = fileInfo;
             }
 
-            protected override Stream GetStream()
-            {
-                return _fileInfo.Open(_attribute.Mode, _attribute.Access);
-            }
-
             public override Task<object> GetValueAsync()
             {
                 if (_parameter.ParameterType == typeof(FileInfo))
@@ -108,6 +103,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Files.Bindings
             public override string ToInvokeString()
             {
                 return _fileInfo.FullName;
+            }
+
+            protected override Stream GetStream()
+            {
+                return _fileInfo.Open(_attribute.Mode, _attribute.Access);
             }
         }
     }
