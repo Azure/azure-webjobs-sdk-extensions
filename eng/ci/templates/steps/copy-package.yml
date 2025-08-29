@@ -11,16 +11,21 @@ steps:
 # In addition to copying .nupkg, we also copy .symbols.nupkg and .snupkg
 - pwsh: |
     $packages = Get-ChildItem -Path $(drop_path) -Filter *.nupkg -Recurse
+    $name = '${{ parameters.package }}'
     foreach ($p in $packages) {
       # trim name off to see if we ONLY have version and extension remaining
-      $trimmed = $p.Name.Trim("${{ parameters.package }}.")
+      if (!$p.Name.StartsWith($name))
+      {
+          continue
+      }
+
+      $trimmed = $p.Name.Substring($name.Length + 1)
       if ([Regex]::IsMatch($trimmed, '^\d+\.\d+\.\d+.*$')) {
         Copy-Item $p '${{ parameters.targetPath }}'
 
         if ($trimmed.EndsWith(".nupkg") && !$trimmed.EndsWith(".symbols.nupkg"))
         {
           $tag = $p.Name.TrimEnd(".nupkg")
-          Write-Host "##vso[build.addbuildtag]${{ parameters.package }}"
           Write-Host "##vso[build.addbuildtag]$tag"
         }
       }

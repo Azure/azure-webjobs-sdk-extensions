@@ -74,9 +74,12 @@ jobs:
       - template: ci/sign-files.yml@eng
         parameters:
           displayName: Sign assemblies
-          folderPath: src
-          pattern: Microsoft.Azure.WebJobs.Extensions*.dll
+          minimatch: true
           signType: dll-strong-name
+          folderPath: out/bin
+          pattern: |
+            **/Microsoft.Azure.WebJobs.Extensions*.dll
+            !**/*Test*.dll
 
     - task: DotNetCoreCLI@2
       displayName: Pack
@@ -90,9 +93,9 @@ jobs:
       - template: ci/sign-files.yml@eng
         parameters:
           displayName: Sign nuget packages
+          signType: nuget
           folderPath: $(pack_dir)
           pattern: Microsoft.Azure.WebJobs.Extensions*.nupkg
-          signType: nuget
 
       - task: DeleteFiles@1
         displayName: Delete CodeSignSummary files
