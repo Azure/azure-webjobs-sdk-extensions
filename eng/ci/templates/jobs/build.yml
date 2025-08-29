@@ -76,10 +76,9 @@ jobs:
           displayName: Sign assemblies
           minimatch: true
           signType: dll-strong-name
-          folderPath: out/bin
+          folderPath: out/bin/src
           pattern: |
             **/Microsoft.Azure.WebJobs.Extensions*.dll
-            !**/*Test*.dll
 
     - task: DotNetCoreCLI@2
       displayName: Pack
