@@ -2,7 +2,7 @@ parameters:
 - name: sign
   type: boolean
   default: false
-- name: project
+- name: projects
   type: string
 
 jobs:
@@ -14,10 +14,11 @@ jobs:
     value: $(Build.ArtifactStagingDirectory)/log
   - name: pack_dir
     value: $(Build.ArtifactStagingDirectory)/pkg
-  - name: buildNumber
-    value: $[ counter('constant', 12000) ]
-  - name: sign
-    value: ${{ parameters.sign }}
+  - name: extra_args
+    ${{ if eq(parameters.sign, true) }}:
+      value: -p:IsReleaseCI=true
+    ${{ else }}:
+      value: ''
 
   templateContext:
     outputParentDirectory: $(Build.ArtifactStagingDirectory)
@@ -30,31 +31,31 @@ jobs:
   steps:
     - template: /eng/ci/templates/steps/install-dotnet.yml@self
 
-    # If sign=false, verify this is not an "sign" branch
-    - ${{ if ne(parameters.sign, true) }}:
+    # If sign=true, verify this is a valid branch or tag
+    - ${{ if eq(parameters.sign, true) }}:
       - pwsh: |
           $source = "$(Build.SourceBranch)"
-          if ($source -like "refs/tags/*-v*" || $source -like "refs/tags/v*" || $source -like "refs/heads/release/*")
+          if (!($source -like "refs/tags/*-v*" || $source -like "refs/tags/v*" || $source -like "refs/heads/release/*"))
           {
-            Write-Host "##vso[task.logissue type=error]Branch/tag $source must have 'sign' set to 'true'."
+            Write-Host "##vso[task.logissue type=error]Signing is not allowed on non-release branches or tags"
             exit 1
           }
-        displayName: Verify not sign branch
+        displayName: Verify sign is allowed
 
     - task: DotNetCoreCLI@2
       displayName: Restore
       inputs:
         command: custom
         custom: restore
-        projects: ${{ parameters.project }}
+        projects: ${{ parameters.projects }}
         arguments: -v m
 
     - task: DotNetCoreCLI@2
       displayName: Build
       inputs:
         command: build
-        projects: ${{ parameters.project }}
-        arguments: -c $(configuration) -v m --no-restore -p:CommitHash=$(Build.SourceVersion)
+        projects: ${{ parameters.projects }}
+        arguments: -c $(configuration) -v m --no-restore
 
     - template: /eng/ci/templates/steps/start-emulators.yml@self
 
@@ -63,7 +64,7 @@ jobs:
       inputs:
         command: test
         arguments: -c $(configuration) --no-build
-        projects: ${{ parameters.project }}
+        projects: ${{ parameters.projects }}
       env:
         AzureWebJobsStorage: $(Storage)
         AzureWebJobsDashboard: $(Storage)
@@ -86,7 +87,7 @@ jobs:
         command: custom
         custom: pack
         arguments: -c $(configuration) -v m -o $(pack_dir) --no-build
-        projects: ${{ parameters.project }}
+        projects: ${{ parameters.projects }}
 
     - ${{ if eq(parameters.sign, true) }}:
       - template: ci/sign-files.yml@eng

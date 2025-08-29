@@ -1,9 +1,3 @@
-parameters:
-- name: sign
-  displayName: Sign Files (release/* always signed)
-  type: boolean
-  default: false
-
 trigger:
   batch: true
   branches:
@@ -43,12 +37,6 @@ resources:
 variables:
   - template: /eng/ci/templates/variables/build.yml@self
   - template: /ci/variables/cfs.yml@eng
-  - name: sign
-    readonly: true
-    ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/release/') }}:
-      value: true
-    ${{ else }}:
-      value: ${{ parameters.sign }}
 
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1es
@@ -68,5 +56,5 @@ extends:
       jobs:
       - template: /eng/ci/templates/jobs/build.yml@self
         parameters:
-          sign: ${{ variables.sign }}
-          project: $(Build.SourcesDirectory)/WebJobs.Extensions.sln
+          sign: false
+          projects: $(Build.SourcesDirectory)/WebJobs.Extensions.sln

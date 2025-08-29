@@ -34,7 +34,7 @@ extends:
     - template: /eng/ci/templates/stages/release.yml@self
       parameters:
         public: ${{ parameters.public }}
-        folder: azure-webjobs-extensions
+        folder: azure-webjobs-extensions-http
         projects: |
-          $(Build.SourcesDirectory)/src/WebJobs.Extensions/WebJobs.Extensions.csproj
-          $(Build.SourcesDirectory)/test/WebJobs.Extensions.Tests/WebJobs.Extensions.Tests.csproj
+          $(Build.SourcesDirectory)/src/WebJobs.Extensions.Http/WebJobs.Extensions.Http.csproj
+          $(Build.SourcesDirectory)/test/WebJobs.Extensions.Http.Tests/WebJobs.Extensions.Http.Tests.csproj
