@@ -6,6 +6,7 @@
   <PropertyGroup>
     <IsPackable>true</IsPackable>
     <ArtifactsBinOutputName>bin/src</ArtifactsBinOutputName>
+    <UpdateBuildNumber Condition="'$(IsReleaseCI)' == 'true'">true</UpdateBuildNumber>
   </PropertyGroup>
 
 </Project>

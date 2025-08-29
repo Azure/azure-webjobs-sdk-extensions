@@ -34,7 +34,7 @@ extends:
     - template: /eng/ci/templates/stages/release.yml@self
       parameters:
         public: ${{ parameters.public }}
-        folder: azure-webjobs-extensions
+        folder: azure-webjobs-extensions-twilio
         projects: |
-          $(Build.SourcesDirectory)/src/WebJobs.Extensions/WebJobs.Extensions.csproj
-          $(Build.SourcesDirectory)/test/WebJobs.Extensions.Tests/WebJobs.Extensions.Tests.csproj
+          $(Build.SourcesDirectory)/src/WebJobs.Extensions.Twilio/WebJobs.Extensions.Twilio.csproj
+          $(Build.SourcesDirectory)/test/WebJobs.Extensions.Twilio.Tests/WebJobs.Extensions.Twilio.Tests.csproj
