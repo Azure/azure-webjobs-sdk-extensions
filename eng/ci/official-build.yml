@@ -10,10 +10,12 @@ trigger:
     include:
     - dev
     - release/*
-  tags:
-    include:
-    - v*
-    - '*-v*'
+
+  # Not auto triggering for these as can't auto-enable 'sign: true' parameter. Needs a manual queue.
+  # tags:
+  #   include:
+  #   - v*
+  #   - '*-v*'
 
 schedules:
 # Ensure we build nightly to catch any new CVEs and report SDL often.
