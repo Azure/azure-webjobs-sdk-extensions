@@ -34,10 +34,6 @@ resources:
     name: engineering
     ref: refs/tags/release
 
-variables:
-  - template: /eng/ci/templates/variables/build.yml@self
-  - template: /ci/variables/cfs.yml@eng
-
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1es
   parameters:
