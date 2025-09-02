@@ -57,7 +57,7 @@ jobs:
       inputs:
         command: build
         projects: ${{ parameters.projects }}
-        arguments: -c $(configuration) -v m --no-restore
+        arguments: -c $(configuration) -v m --no-restore $(extra_args)
 
     - template: /eng/ci/templates/steps/start-emulators.yml@self
 
