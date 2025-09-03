@@ -11,7 +11,6 @@ jobs:
 
   variables:
   - template: /eng/ci/templates/variables/build.yml@self
-  - template: /ci/variables/cfs.yml@eng
   - name: pack_dir
     value: $(Build.ArtifactStagingDirectory)/pkg
   - name: extra_args

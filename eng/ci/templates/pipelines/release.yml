@@ -28,6 +28,9 @@ extends:
 
     stages:
     - stage: Build
+      variables:
+      - template: /ci/variables/cfs.yml@eng
+
       jobs:
       - template: /eng/ci/templates/jobs/build.yml@self
         parameters:
