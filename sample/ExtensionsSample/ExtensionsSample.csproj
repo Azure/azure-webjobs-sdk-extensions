@@ -14,7 +14,6 @@
 
   <ItemGroup>
     <ProjectReference Include="$(SrcRoot)WebJobs.Extensions.CosmosDB/WebJobs.Extensions.CosmosDB.csproj" />
-    <ProjectReference Include="$(SrcRoot)WebJobs.Extensions.MobileApps/WebJobs.Extensions.MobileApps.csproj" />
     <ProjectReference Include="$(SrcRoot)WebJobs.Extensions.SendGrid/WebJobs.Extensions.SendGrid.csproj" />
     <ProjectReference Include="$(SrcRoot)WebJobs.Extensions.Timers.Storage/WebJobs.Extensions.Timers.Storage.csproj" />
     <ProjectReference Include="$(SrcRoot)WebJobs.Extensions.Twilio/WebJobs.Extensions.Twilio.csproj" />
