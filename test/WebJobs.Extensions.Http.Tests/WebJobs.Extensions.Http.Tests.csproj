@@ -5,6 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- We use a package reference to avoid building this in CI. -->
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions" Version="5.1.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="5.3.2" />
   </ItemGroup>
 
