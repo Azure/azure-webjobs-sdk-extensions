@@ -38,7 +38,6 @@ namespace ExtensionsSample
                        o.RootPath = filesTestPath;
                    })
                    .AddTimers()
-                   .AddMobileApps()
                    .AddTwilioSms()
                    .AddCosmosDB()
                    .AddSendGrid(o =>

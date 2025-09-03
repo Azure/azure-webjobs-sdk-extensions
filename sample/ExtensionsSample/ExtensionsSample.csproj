@@ -7,17 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions" Version="5.1.0" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.CosmosDB" Version="4.10.0" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.SendGrid" Version="3.1.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="5.3.2" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Timers.Storage" Version="1.0.0" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Twilio" Version="4.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
-	<PackageReference Include="Microsoft.Extensions.Azure" Version="1.12.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="$(SrcRoot)WebJobs.Extensions.CosmosDB/WebJobs.Extensions.CosmosDB.csproj" />
-    <ProjectReference Include="$(SrcRoot)WebJobs.Extensions.SendGrid/WebJobs.Extensions.SendGrid.csproj" />
-    <ProjectReference Include="$(SrcRoot)WebJobs.Extensions.Timers.Storage/WebJobs.Extensions.Timers.Storage.csproj" />
-    <ProjectReference Include="$(SrcRoot)WebJobs.Extensions.Twilio/WebJobs.Extensions.Twilio.csproj" />
-    <ProjectReference Include="$(SrcRoot)WebJobs.Extensions/WebJobs.Extensions.csproj" />
   </ItemGroup>
 
   <ItemGroup>
