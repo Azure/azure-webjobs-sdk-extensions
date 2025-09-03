@@ -32,6 +32,10 @@ resources:
     type: git
     name: 1ESPipelineTemplates/1ESPipelineTemplates
     ref: refs/tags/release
+  - repository: eng
+    type: git
+    name: engineering
+    ref: refs/tags/release
 
 extends:
   template: v1/1ES.Unofficial.PipelineTemplate.yml@1es
@@ -52,9 +56,9 @@ extends:
       skipBuildTagsForGitHubPullRequests: ${{ variables['System.PullRequest.IsFork'] }}
 
     stages:
-      - stage: Build
-        jobs:
-        - template: /eng/ci/templates/jobs/build.yml@self
-          parameters:
-            sign: false
-            project: $(Build.SourcesDirectory)/WebJobs.Extensions.sln
+    - stage: Build
+      jobs:
+      - template: /eng/ci/templates/jobs/build.yml@self
+        parameters:
+          sign: false
+          projects: $(Build.SourcesDirectory)/WebJobs.Extensions.sln
