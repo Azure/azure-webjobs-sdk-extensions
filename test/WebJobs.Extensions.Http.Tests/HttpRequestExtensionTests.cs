@@ -18,9 +18,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
         public void GetAppServiceIdentity_XMsClientPrincipalCorrectEasyAuthFormat_ReturnsEasyAuthIdentity()
         {
             HttpRequest req = new DefaultHttpContext().Request;
-            var claims = new List<Claim>();
-            claims.Add(new Claim("name", "Connor McMahon"));
-            claims.Add(new Claim("role", "Software Engineer"));
+            var claims = new List<Claim>
+            {
+                new Claim("name", "Connor McMahon"),
+                new Claim("role", "Software Engineer")
+            };
             var identity = new ClaimsIdentity(authenticationType: "aad", nameType: "name", roleType: "role", claims: claims);
 
             //Load onto header
@@ -52,11 +54,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
                 IdentityProvider = "facebook",
                 UserId = "50cf51ecad1a49429e35243afde6b92b",
                 UserDetails = "mikarmar@microsoft.com",
-                UserRoles = new List<string>
-                {
+                UserRoles =
+                [
                     "admin",
                     "super_admin",
-                },
+                ],
             };
 
             //Load onto header
@@ -86,9 +88,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
         public void GetAppServiceIdentity_XMsClientPrincipalInvalidJson_ReturnsNull()
         {
             HttpRequest req = new DefaultHttpContext().Request;
-            var claims = new List<Claim>();
-            claims.Add(new Claim("name", "Connor McMahon"));
-            claims.Add(new Claim("role", "Software Engineer"));
+            var claims = new List<Claim>
+            {
+                new Claim("name", "Connor McMahon"),
+                new Claim("role", "Software Engineer")
+            };
             var identity = new ClaimsIdentity(authenticationType: "aad", nameType: "name", roleType: "role", claims: claims);
 
             //Load onto header

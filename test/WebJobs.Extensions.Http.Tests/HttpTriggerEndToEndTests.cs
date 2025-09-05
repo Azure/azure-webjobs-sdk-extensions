@@ -47,8 +47,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         public async Task BasicInvoke()
         {
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions.com/api/123/two/test?q1=123&q2=two");
-            request.Headers.Add("h1", "value1");
-            request.Headers.Add("h2", "value2");
+            request.Headers.Append("h1", "value1");
+            request.Headers.Append("h2", "value2");
             var routeDataValues = new Dictionary<string, object>
             {
                 { "r1", 123 },
@@ -70,8 +70,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             string json = jo.ToString();
 
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions.com/api/123/two/test?q1=one&q2=two", body: json);
-            request.Headers.Add("h1", "value1");
-            request.Headers.Add("h2", "value2");
+            request.Headers.Append("h1", "value1");
+            request.Headers.Append("h2", "value2");
             var routeDataValues = new Dictionary<string, object>
             {
                 { "r1", 123 },
@@ -100,10 +100,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             string testValue = Guid.NewGuid().ToString();
             string testSuffix = Guid.NewGuid().ToString();
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", $"http://functions.com/api/test?testId={testId}");
-            request.Headers.Add("h1", "value1");
-            request.Headers.Add("h2", "value2");
-            request.Headers.Add("testSuffix", testSuffix);
-            request.Headers.Add("testValue", testValue);
+            request.Headers.Append("h1", "value1");
+            request.Headers.Append("h2", "value2");
+            request.Headers.Append("testSuffix", testSuffix);
+            request.Headers.Append("testValue", testValue);
             var routeDataValues = new Dictionary<string, object>
             {
                 { "r1", 123 },

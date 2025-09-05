@@ -30,18 +30,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             requestFeature.PathBase = "/";
             requestFeature.QueryString = uri.GetComponents(UriComponents.KeepDelimiter | UriComponents.Query, UriFormat.Unescaped);
 
-            headers = headers ?? new HeaderDictionary();
+            headers ??= new HeaderDictionary();
 
             if (!string.IsNullOrEmpty(uri.Host))
             {    
-                headers.Add("Host", uri.Host);
+                headers.Host = uri.Host;
             }
 
             if (body != null)
             {
                 requestFeature.Body = new MemoryStream(Encoding.UTF8.GetBytes(body));
                 request.ContentLength = request.Body.Length;
-                headers.Add("Content-Length", request.Body.Length.ToString());
+                headers.ContentLength = request.Body.Length;
             }
 
             requestFeature.Headers = headers;
