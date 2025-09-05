@@ -16,7 +16,7 @@ using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
+namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
 {
     [Trait("Category", "E2E")]
     public class ClaimsPrincipalEndToEndTests

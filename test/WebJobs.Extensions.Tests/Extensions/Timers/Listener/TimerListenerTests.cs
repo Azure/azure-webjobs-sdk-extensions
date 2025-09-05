@@ -21,7 +21,7 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 {
-    public class TimerListenerTests : IDisposable
+    public sealed class TimerListenerTests : IDisposable
     {
         private readonly string _testTimerName = "Program.TestTimerJob";
         private readonly string _functionShortName = "TimerFunctionShortName";
@@ -126,7 +126,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         {
             CreateTestListener(schedule, useMonitor);
 
-            var status = new ScheduleStatus
+            ScheduleStatus status = new()
             {
                 Last = new DateTime(2016, 3, 4),
                 Next = new DateTime(2016, 3, 5)
@@ -181,11 +181,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         public async Task HandleTimerEvent_HandlesExceptions()
         {
             // force an exception to occur outside of the function invocation path
-            var ex = new Exception("Kaboom!");
+            Exception ex = new("Kaboom!");
             _mockScheduleMonitor.Setup(p => p.UpdateStatusAsync(_testTimerName, It.IsAny<ScheduleStatus>())).ThrowsAsync(ex);
-            var drainModeManager = new Mock<IDrainModeManager>().Object;
+            IDrainModeManager drainModeManager = Mock.Of<IDrainModeManager>();
 
-            var listener = new TimerListener(_attribute, _schedule, _testTimerName, _options, _mockTriggerExecutor.Object, _logger, _mockScheduleMonitor.Object, _functionShortName, drainModeManager);
+            TimerListener listener = new(_attribute, _schedule, _testTimerName, _options, _mockTriggerExecutor.Object, _logger, _mockScheduleMonitor.Object, _functionShortName, drainModeManager);
 
             Assert.Null(listener.Timer);
 
@@ -213,7 +213,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             // First, invoke a function with clock skew. This will store the next status back in the 
             // 'updatedStatus' variable.
             CreateTestListener("0 0 0 * * *");
-            var status = new ScheduleStatus
+            ScheduleStatus status = new()
             {
                 Last = new DateTime(2016, 3, 4),
                 Next = new DateTime(2016, 3, 5),
@@ -248,7 +248,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             // it shouldn't be run twice.
             _attribute.RunOnStartup = true;
 
-            ScheduleStatus status = new ScheduleStatus
+            ScheduleStatus status = new()
             {
                 Last = ScheduleMonitor.DefaultDateTime,
                 Next = ScheduleMonitor.DefaultDateTime,
@@ -257,7 +257,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
 
             _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_testTimerName)).ReturnsAsync(status);
 
-            DateTimeOffset lastOccurrence = default(DateTimeOffset);
+            DateTimeOffset lastOccurrence = default;
             TimeSpan pastDueAmount = TimeSpan.FromMinutes(3);
             _mockScheduleMonitor.Setup(p => p.CheckPastDueAsync(_testTimerName, It.IsAny<DateTimeOffset>(), It.IsAny<TimerSchedule>(), status))
                 .Callback<string, DateTimeOffset, TimerSchedule, ScheduleStatus>((mockTimerName, mockNow, mockNext, mockStatus) =>
@@ -305,8 +305,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public async Task StartAsync_ScheduleNotPastDue_DoesNotScheduleImmediateInvocation()
         {
-            var now = DateTime.Now;
-            ScheduleStatus status = new ScheduleStatus
+            DateTime now = DateTime.Now;
+            ScheduleStatus status = new()
             {
                 Last = now.AddHours(-1),
                 Next = now.AddHours(1)
@@ -370,7 +370,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public async Task StartAsync_NullStatus_DefaultsToValidDates()
         {
-            using var tz = TimeZoneSetter.TokyoStandard;
+            using TimeZoneSetter tz = TimeZoneSetter.TokyoStandard;
 
             DateTime testStart = DateTime.Now;
 
@@ -394,33 +394,33 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public Task StartAsync_InvalidStatus_DefaultsToValidDates_Utc()
         {
-            using var tz = TimeZoneSetter.Utc;
+            using TimeZoneSetter tz = TimeZoneSetter.Utc;
             return StartAsync_InvalidStatus_DefaultsToValidDates();
         }
 
         [Fact]
         public Task StartAsync_InvalidStatus_DefaultsToValidDates_Tokyo()
         {
-            using var tz = TimeZoneSetter.TokyoStandard;
+            using TimeZoneSetter tz = TimeZoneSetter.TokyoStandard;
             return StartAsync_InvalidStatus_DefaultsToValidDates();
         }
 
         [Fact]
         public Task StartAsync_InvalidStatus_DefaultsToValidDates_Pacific()
         {
-            using var tz = TimeZoneSetter.PacificStandard;
+            using TimeZoneSetter tz = TimeZoneSetter.PacificStandard;
             return StartAsync_InvalidStatus_DefaultsToValidDates();
         }
 
         private async Task StartAsync_InvalidStatus_DefaultsToValidDates()
         {
-            var testStart = DateTime.Now;
+            DateTime testStart = DateTime.Now;
 
             // This is invalid in UTC + time zones like Tokyo but used to be used as a 
             // default value in the past.
-            var invalidDateTime = new DateTime(0, DateTimeKind.Local);
+            DateTime invalidDateTime = new(0, DateTimeKind.Local);
 
-            var invalidStatus = new ScheduleStatus()
+            ScheduleStatus invalidStatus = new()
             {
                 Last = invalidDateTime,
                 Next = DateTime.Now.ToLocalTime(),
@@ -588,7 +588,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         {
             bool invocationStarted = false;
 
-            var mockDrainModeManager = new Mock<IDrainModeManager>(MockBehavior.Strict);
+            Mock<IDrainModeManager> mockDrainModeManager = new(MockBehavior.Strict);
             mockDrainModeManager.Setup(p => p.IsDrainModeEnabled).Returns(true);
 
             TaskCompletionSource tcs = new();
@@ -598,7 +598,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 tcs.Task.Wait();
             }, drainManager: mockDrainModeManager.Object);
 
-            var cts = new CancellationTokenSource();
+            CancellationTokenSource cts = new();
             await _listener.StartAsync(cts.Token);
 
             await TestHelpers.Await(() => invocationStarted, pollingInterval: 500);
@@ -647,14 +647,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public async Task Listener_LogsInitialStatus_WhenUsingMonitor()
         {
-            var status = new ScheduleStatus
+            ScheduleStatus status = new()
             {
                 Last = new DateTime(2016, 3, 4),
                 Next = new DateTime(2016, 3, 4, 0, 0, 1),
                 LastUpdated = new DateTime(2016, 3, 3, 23, 59, 59)
             };
 
-            var expected = $"Function '{_functionShortName}' initial status: Last='{status.Last:o}', Next='{status.Next:o}', LastUpdated='{status.LastUpdated:o}'";
+            string expected = $"Function '{_functionShortName}' initial status: Last='{status.Last:o}', Next='{status.Next:o}', LastUpdated='{status.LastUpdated:o}'";
             await RunInitialStatusTestAsync(status, expected);
         }
 
@@ -679,11 +679,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             // DST doesn't transition the test might not be valid.
             // The input schedules will run after DST changes. For some (Cron), they will subtract
             // an hour to account for the shift. For others (Constant), they will not.
-            var start = new DateTime(2018, 3, 9, 18, 0, 0, DateTimeKind.Local);
-            var now = new DateTimeOffset(start);
+            DateTime start = new(2018, 3, 9, 18, 0, 0, DateTimeKind.Local);
+            DateTimeOffset now = new(start);
 
-            var next = schedule.GetNextOccurrence(now.LocalDateTime);
-            var interval = TimerListener.GetNextTimerInterval(next, now);
+            DateTime next = schedule.GetNextOccurrence(now.LocalDateTime);
+            TimeSpan interval = TimerListener.GetNextTimerInterval(next, now);
 
             // One week is normally 168 hours, but it's 167 hours across DST
             Assert.Equal(interval, expectedInterval);
@@ -697,18 +697,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [MemberData(nameof(TimerSchedulesWithinDST))]
         public void GetNextInterval_NextWithinDST_ReturnsExpectedValue(TimerSchedule schedule, TimeSpan expectedInterval)
         {
-            using var timeZoneSetter = TimeZoneSetter.PacificStandard;
+            using TimeZoneSetter timeZoneSetter = TimeZoneSetter.PacificStandard;
 
             // Running at 1:59 AM, i.e. one minute before the DST switch at 2 AM on 3/11 (Pacific Standard Time)
             // Note: this test uses Local time, so if you're running in a timezone where
             // DST doesn't transition the test might not be valid.
-            var start = new DateTime(2018, 3, 11, 1, 59, 0, DateTimeKind.Local);
-            var now = new DateTimeOffset(start);
+            DateTime start = new(2018, 3, 11, 1, 59, 0, DateTimeKind.Local);
+            DateTimeOffset now = new(start);
 
-            var next = schedule.GetNextOccurrence(now.DateTime);
+            DateTime next = schedule.GetNextOccurrence(now.DateTime);
 
             TestLogger logger = new(null);
-            var interval = TimerListener.GetNextTimerInterval(next, now);
+            TimeSpan interval = TimerListener.GetNextTimerInterval(next, now);
             Assert.Equal(expectedInterval, interval);
         }
 
@@ -719,13 +719,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [MemberData(nameof(CronTimerSchedulesExitingDST))]
         public void GetNextInterval_NextAfterDSTEnds_ReturnsExpectedValue(DateTimeOffset now, string cronSchedule, TimeSpan expectedInterval)
         {
-            using var timeZoneSetter = TimeZoneSetter.PacificStandard;
+            using TimeZoneSetter timeZoneSetter = TimeZoneSetter.PacificStandard;
 
-            var schedule = new CronSchedule(CrontabSchedule.Parse(cronSchedule, new CrontabSchedule.ParseOptions() { IncludingSeconds = true }));
+            CronSchedule schedule = new(CrontabSchedule.Parse(cronSchedule, new CrontabSchedule.ParseOptions() { IncludingSeconds = true }));
 
-            var logger = new TestLogger(null);
-            var next = schedule.GetNextOccurrence(now.LocalDateTime);
-            var interval = TimerListener.GetNextTimerInterval(next, now);
+            TestLogger logger = new(null);
+            DateTime next = schedule.GetNextOccurrence(now.LocalDateTime);
+            TimeSpan interval = TimerListener.GetNextTimerInterval(next, now);
 
             Assert.Equal(expectedInterval, interval);
         }
@@ -733,10 +733,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         [Fact]
         public void GetNextInterval_NegativeInterval_ReturnsOneTick()
         {
-            var now = DateTimeOffset.Now;
-            var next = now.Subtract(TimeSpan.FromSeconds(1)).LocalDateTime;
+            DateTimeOffset now = DateTimeOffset.Now;
+            DateTime next = now.Subtract(TimeSpan.FromSeconds(1)).LocalDateTime;
 
-            var interval = TimerListener.GetNextTimerInterval(next, now);
+            TimeSpan interval = TimerListener.GetNextTimerInterval(next, now);
             Assert.Equal(1, interval.Ticks);
         }
 
@@ -753,10 +753,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             await _listener.StopAsync(CancellationToken.None);
             _listener.Dispose();
 
-            LogMessage[] verboseTraces = _logger.GetLogMessages()
+            LogMessage[] verboseTraces = [.. _logger.GetLogMessages()
                 .Where(m => m.Level == LogLevel.Debug)
-                .OrderBy(t => t.Timestamp)
-                .ToArray();
+                .OrderBy(t => t.Timestamp)];
 
             Assert.True(verboseTraces.Length >= 5);
             Assert.Contains("timer is using the schedule 'Cron: '0 * * * * *'' and the local time zone:", verboseTraces[0].FormattedMessage);
@@ -777,7 +776,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _options = new TimersOptions();
             _mockScheduleMonitor = new Mock<ScheduleMonitor>(MockBehavior.Strict);
             _mockTriggerExecutor = new Mock<ITriggeredFunctionExecutor>(MockBehavior.Strict);
-            FunctionResult result = new FunctionResult(true);
+            FunctionResult result = new(true);
             _mockTriggerExecutor.Setup(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()))
                 .Callback<TriggeredFunctionData, CancellationToken>((mockFunctionData, mockToken) =>
                 {

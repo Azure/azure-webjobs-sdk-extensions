@@ -52,9 +52,9 @@ extends:
       skipBuildTagsForGitHubPullRequests: ${{ variables['System.PullRequest.IsFork'] }}
 
     stages:
-      - stage: Build
-        jobs:
-        - template: /eng/ci/templates/jobs/build.yml@self
-          parameters:
-            sign: false
-            project: $(Build.SourcesDirectory)/WebJobs.Extensions.sln
+    - stage: Build
+      jobs:
+      - template: /eng/ci/templates/jobs/build.yml@self
+        parameters:
+          sign: false
+          projects: $(Build.SourcesDirectory)/WebJobs.Extensions.sln

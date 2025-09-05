@@ -8,19 +8,18 @@ using System.Linq;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
+namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
 {
     [Trait("Category", "E2E")]
     public class HttpTriggerEndToEndTests
     {
-        private IHost _host;
-        private JobHost _jobHost;
+        private readonly IHost _host;
+        private readonly JobHost _jobHost;
 
         public HttpTriggerEndToEndTests()
         {
@@ -47,8 +46,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         public async Task BasicInvoke()
         {
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions.com/api/123/two/test?q1=123&q2=two");
-            request.Headers.Add("h1", "value1");
-            request.Headers.Add("h2", "value2");
+            request.Headers.Append("h1", "value1");
+            request.Headers.Append("h2", "value2");
             var routeDataValues = new Dictionary<string, object>
             {
                 { "r1", 123 },
@@ -63,15 +62,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         [Fact]
         public async Task BindToPoco()
         {
-            JObject jo = new JObject
+            JObject jo = new()
             {
                 { "b1", "bodyvalue1" }
             };
             string json = jo.ToString();
 
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions.com/api/123/two/test?q1=one&q2=two", body: json);
-            request.Headers.Add("h1", "value1");
-            request.Headers.Add("h2", "value2");
+            request.Headers.Append("h1", "value1");
+            request.Headers.Append("h2", "value2");
             var routeDataValues = new Dictionary<string, object>
             {
                 { "r1", 123 },
@@ -100,10 +99,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             string testValue = Guid.NewGuid().ToString();
             string testSuffix = Guid.NewGuid().ToString();
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", $"http://functions.com/api/test?testId={testId}");
-            request.Headers.Add("h1", "value1");
-            request.Headers.Add("h2", "value2");
-            request.Headers.Add("testSuffix", testSuffix);
-            request.Headers.Add("testValue", testValue);
+            request.Headers.Append("h1", "value1");
+            request.Headers.Append("h2", "value2");
+            request.Headers.Append("testSuffix", testSuffix);
+            request.Headers.Append("testValue", testValue);
             var routeDataValues = new Dictionary<string, object>
             {
                 { "r1", 123 },
@@ -121,7 +120,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             var blobRef = container.GetBlobClient(blobName);
             await TestHelpers.Await(async () => await blobRef.ExistsAsync());
 
-            MemoryStream stream = new MemoryStream();
+            MemoryStream stream = new();
             await blobRef.DownloadToAsync(stream);
             stream.Seek(0, SeekOrigin.Begin);
 
