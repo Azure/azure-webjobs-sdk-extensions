@@ -8,19 +8,18 @@ using System.Linq;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
+namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
 {
     [Trait("Category", "E2E")]
     public class HttpTriggerEndToEndTests
     {
-        private IHost _host;
-        private JobHost _jobHost;
+        private readonly IHost _host;
+        private readonly JobHost _jobHost;
 
         public HttpTriggerEndToEndTests()
         {
@@ -63,7 +62,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         [Fact]
         public async Task BindToPoco()
         {
-            JObject jo = new JObject
+            JObject jo = new()
             {
                 { "b1", "bodyvalue1" }
             };
@@ -121,7 +120,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             var blobRef = container.GetBlobClient(blobName);
             await TestHelpers.Await(async () => await blobRef.ExistsAsync());
 
-            MemoryStream stream = new MemoryStream();
+            MemoryStream stream = new();
             await blobRef.DownloadToAsync(stream);
             stream.Seek(0, SeekOrigin.Begin);
 

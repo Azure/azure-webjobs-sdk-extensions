@@ -18,12 +18,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
         public void GetAppServiceIdentity_XMsClientPrincipalCorrectEasyAuthFormat_ReturnsEasyAuthIdentity()
         {
             HttpRequest req = new DefaultHttpContext().Request;
-            var claims = new List<Claim>
-            {
-                new Claim("name", "Connor McMahon"),
-                new Claim("role", "Software Engineer")
-            };
-            var identity = new ClaimsIdentity(authenticationType: "aad", nameType: "name", roleType: "role", claims: claims);
+            List<Claim> claims =
+            [
+                new("name", "FirstName LastName"),
+                new("role", "Software Engineer")
+            ];
+
+            ClaimsIdentity identity = new(authenticationType: "aad", nameType: "name", roleType: "role", claims: claims);
 
             //Load onto header
             string json = JsonConvert.SerializeObject(ClaimsIdentitySlim.FromClaimsIdentity(identity));
@@ -38,7 +39,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
             Assert.Equal("role", easyAuthIdentity.RoleClaimType);
             var claim1 = easyAuthIdentity.Claims.ElementAt(0);
             Assert.Equal("name", claim1.Type);
-            Assert.Equal("Connor McMahon", claim1.Value);
+            Assert.Equal("FirstName LastName", claim1.Value);
             var claim2 = easyAuthIdentity.Claims.ElementAt(1);
             Assert.Equal("role", claim2.Type);
             Assert.Equal("Software Engineer", claim2.Value);
@@ -49,16 +50,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
         {
             HttpRequest req = new DefaultHttpContext().Request;
 
-            var staticWebAppsClientPrincipal = new StaticWebAppsClientPrincipal
+            StaticWebAppsClientPrincipal staticWebAppsClientPrincipal = new()
             {
                 IdentityProvider = "facebook",
                 UserId = "50cf51ecad1a49429e35243afde6b92b",
                 UserDetails = "mikarmar@microsoft.com",
-                UserRoles =
-                [
-                    "admin",
-                    "super_admin",
-                ],
+                UserRoles = ["admin", "super_admin"],
             };
 
             //Load onto header
@@ -88,12 +85,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
         public void GetAppServiceIdentity_XMsClientPrincipalInvalidJson_ReturnsNull()
         {
             HttpRequest req = new DefaultHttpContext().Request;
-            var claims = new List<Claim>
-            {
-                new Claim("name", "Connor McMahon"),
-                new Claim("role", "Software Engineer")
-            };
-            var identity = new ClaimsIdentity(authenticationType: "aad", nameType: "name", roleType: "role", claims: claims);
+            List<Claim> claims =
+            [
+                new("name", "FirstName LastName"),
+                new("role", "Software Engineer")
+            ];
+
+            ClaimsIdentity identity = new(authenticationType: "aad", nameType: "name", roleType: "role", claims: claims);
 
             //Load onto header
             string json = JsonConvert.SerializeObject(ClaimsIdentitySlim.FromClaimsIdentity(identity));
@@ -110,7 +108,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
         public void GetAppServiceIdentity_DefaultClaimsIdentity_ReturnsNull()
         {
             HttpRequest req = new DefaultHttpContext().Request;
-            var identitySlim = default(ClaimsIdentitySlim);
+            ClaimsIdentitySlim identitySlim = default;
 
             //Load onto header
             string json = JsonConvert.SerializeObject(identitySlim);
@@ -125,7 +123,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
         public void GetAppServiceIdentity_DefaultStaticWebAppsClientPrincipal_ReturnsNull()
         {
             HttpRequest req = new DefaultHttpContext().Request;
-            var staticWebAppsClientPrincipal = default(StaticWebAppsClientPrincipal);
+            StaticWebAppsClientPrincipal staticWebAppsClientPrincipal = default;
 
             //Load onto header
             string json = JsonConvert.SerializeObject(staticWebAppsClientPrincipal);

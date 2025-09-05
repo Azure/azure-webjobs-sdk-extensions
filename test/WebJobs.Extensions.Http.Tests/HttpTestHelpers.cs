@@ -2,27 +2,26 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
+namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
 {
     public class HttpTestHelpers
     {
         public static HttpRequest CreateHttpRequest(string method, string uriString, IHeaderDictionary headers = null, string body = null)
         {
-            var context = new DefaultHttpContext();
-            var services = new ServiceCollection();
-            var sp = services.BuildServiceProvider();
+            DefaultHttpContext context = new();
+            ServiceCollection services = new();
+            IServiceProvider sp = services.BuildServiceProvider();
             context.RequestServices = sp;
 
-            var uri = new Uri(uriString);
-            var request = context.Request;
-            var requestFeature = request.HttpContext.Features.Get<IHttpRequestFeature>();
+            Uri uri = new(uriString);
+            HttpRequest request = context.Request;
+            IHttpRequestFeature requestFeature = request.HttpContext.Features.Get<IHttpRequestFeature>();
             requestFeature.Method = method;
             requestFeature.Scheme = uri.Scheme;
             requestFeature.PathBase = uri.Host;
