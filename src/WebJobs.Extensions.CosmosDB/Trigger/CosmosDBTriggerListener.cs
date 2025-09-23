@@ -158,7 +158,27 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         {
             if (this._hostBuilder == null)
             {
-                this._hostBuilder = this._monitoredContainer.GetChangeFeedProcessorBuilder<T>(this._processorName, this.ProcessChangesAsync)
+                var builder = this._monitoredContainer.GetChangeFeedProcessorBuilder<T>(this._processorName, this.ProcessChangesAsync);
+
+                // Use reflection to set ChangeFeedMode if SDK version supports it (forward/backward compatible)
+                var changeFeedModeType = Type.GetType("Microsoft.Azure.Cosmos.ChangeFeedMode, Microsoft.Azure.Cosmos");
+                var withChangeFeedMode = builder.GetType().GetMethod("WithChangeFeedMode", new Type[] { changeFeedModeType });
+                if (withChangeFeedMode != null && changeFeedModeType != null)
+                {
+                    string propertyName = this._cosmosDBAttribute.ChangeFeedMode == CosmosDBTriggerChangeFeedMode.AllVersionsAndDeletes ? "AllVersionsAndDeletes" : "LatestVersion";
+                    var modeProperty = changeFeedModeType.GetProperty(propertyName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                    var modeValue = modeProperty?.GetValue(null);
+                    if (modeValue != null)
+                    {
+                        builder = (ChangeFeedProcessorBuilder)withChangeFeedMode.Invoke(builder, new object[] { modeValue });
+                    }
+                    else if (this._cosmosDBAttribute.ChangeFeedMode == CosmosDBTriggerChangeFeedMode.AllVersionsAndDeletes)
+                    {
+                        this._logger.LogWarning("Cosmos DB SDK does not expose ChangeFeedMode.AllVersionsAndDeletes; falling back to LatestVersion.");
+                    }
+                }
+
+                this._hostBuilder = builder
                     .WithErrorNotification(this._healthMonitor.OnErrorAsync)
                     .WithLeaseAcquireNotification(this._healthMonitor.OnLeaseAcquireAsync)
                     .WithLeaseReleaseNotification(this._healthMonitor.OnLeaseReleaseAsync)
