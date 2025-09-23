@@ -130,5 +130,14 @@ namespace Microsoft.Azure.WebJobs
         /// PreferredLocations = "East US,South Central US,North Europe".
         /// </example>
         public string PreferredLocations { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Change Feed mode to use when processing changes. Defaults to <see cref="CosmosDBTriggerChangeFeedMode.LatestVersion"/>.
+        /// </summary>
+        /// <remarks>
+        /// Set to <see cref="CosmosDBTriggerChangeFeedMode.AllVersionsAndDeletes"/> to receive all intermediate mutations and delete events (preview feature in Azure Cosmos DB).
+        /// When using AllVersionsAndDeletes the JSON payload for each item will include metadata describing the operation type and related system information. Use a parameter type such as <c>IReadOnlyList<JObject></c> to access these metadata fields.
+        /// </remarks>
+        public CosmosDBTriggerChangeFeedMode ChangeFeedMode { get; set; } = CosmosDBTriggerChangeFeedMode.LatestVersion;
     }
 }

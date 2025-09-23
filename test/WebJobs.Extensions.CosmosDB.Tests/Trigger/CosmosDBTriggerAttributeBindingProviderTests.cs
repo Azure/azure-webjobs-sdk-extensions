@@ -7,7 +7,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
@@ -21,6 +20,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
+using Microsoft.Azure.Cosmos;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 {
@@ -451,6 +451,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             Assert.Equal(new Uri("https://fromSettings"), binding.LeaseContainer.Database.Client.Endpoint);
         }
 
+        [Fact]
+    public async Task ChangeFeedMode_AllVersionsAndDeletes_SetsAttribute()
+        {
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    { "CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;" }
+                })
+                .Build();
+
+            var parameter = GetFirstParameter(typeof(ValidCosmosDBTriggerBindigsWithChangeFeedMode), "Func1");
+
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(new TestNameResolver(), _options, CreateExtensionConfigProvider(_options, config), _drainModeManager, _loggerFactory);
+
+            CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+
+            Assert.Equal(CosmosDBTriggerChangeFeedMode.AllVersionsAndDeletes, binding.CosmosDBAttribute.ChangeFeedMode);
+        }
+
         [Theory]
         [MemberData(nameof(ValidCosmosDBTriggerBindigsWithStartTimeParameters))]
         public async Task ValidStartFromTime_Succeed(ParameterInfo parameter)
@@ -541,6 +560,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                     new[] { GetFirstParameter(type, "Func2") },
                     new[] { GetFirstParameter(type, "Func3") }
                 };
+            }
+        }
+
+        private static class ValidCosmosDBTriggerBindigsWithChangeFeedMode
+        {
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", Connection = "CosmosDBConnectionString", ChangeFeedMode = CosmosDBTriggerChangeFeedMode.AllVersionsAndDeletes)] IReadOnlyList<dynamic> docs)
+            {
             }
         }
 

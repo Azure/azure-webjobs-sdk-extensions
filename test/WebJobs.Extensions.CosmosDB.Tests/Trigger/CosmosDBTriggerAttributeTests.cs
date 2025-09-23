@@ -33,6 +33,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             Assert.Equal(databaseName, attributeWithNoLeaseSpecified.DatabaseName);
             Assert.Equal(defaultLeaseCollectionName, attributeWithNoLeaseSpecified.LeaseContainerName);
             Assert.Equal(databaseName, attributeWithNoLeaseSpecified.LeaseDatabaseName);
+            Assert.Equal(CosmosDBTriggerChangeFeedMode.LatestVersion, attributeWithNoLeaseSpecified.ChangeFeedMode);
 
             CosmosDBTriggerAttribute attributeWithLeaseSpecified = new CosmosDBTriggerAttribute(databaseName, collectionName) { LeaseDatabaseName = leaseDatabaseName, LeaseContainerName = leaseCollectionName };
 
@@ -40,6 +41,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             Assert.Equal(databaseName, attributeWithLeaseSpecified.DatabaseName);
             Assert.Equal(leaseCollectionName, attributeWithLeaseSpecified.LeaseContainerName);
             Assert.Equal(leaseDatabaseName, attributeWithLeaseSpecified.LeaseDatabaseName);
+            attributeWithLeaseSpecified.ChangeFeedMode = CosmosDBTriggerChangeFeedMode.AllVersionsAndDeletes;
+            Assert.Equal(CosmosDBTriggerChangeFeedMode.AllVersionsAndDeletes, attributeWithLeaseSpecified.ChangeFeedMode);
         }
     }
 }
