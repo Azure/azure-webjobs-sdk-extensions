@@ -11,7 +11,8 @@ trigger:
 
 schedules:
 # Run once a month to prevent disablement from inactivity.
-- cron: "0 0 1 * *"
+# Not using 12:00 UTC to spread out our schedules.
+- cron: "0 2 1 * *"
   displayName: Monthly sync
   branches:
     include:
