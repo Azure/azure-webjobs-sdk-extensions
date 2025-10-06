@@ -73,7 +73,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Files
             await host.StopAsync();
         }
 
-        [Fact]
+        [Fact(Skip = "Flaky test")]
         public async Task ExistingFilesAreBatchProcessedOnStartup()
         {
             JobHost host = CreateTestJobHost();

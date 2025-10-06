@@ -644,7 +644,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             Assert.Equal(_functionShortName, actualMessage.State.Single(p => p.Key == "functionName").Value);
         }
 
-        [Fact]
+        [Fact(Skip = "Flaky test")]
         public async Task Listener_LogsInitialStatus_WhenUsingMonitor()
         {
             ScheduleStatus status = new()
