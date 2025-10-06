@@ -8,6 +8,16 @@ trigger:
     include:
     - '*'
 
+schedules:
+# Run once a month to prevent disablement from inactivity.
+# Not using 12:00 UTC to spread out our schedules.
+- cron: "0 2 1 * *"
+  displayName: Monthly sync
+  branches:
+    include:
+    - dev
+  always: true
+
 resources:
   repositories:
   - repository: eng
