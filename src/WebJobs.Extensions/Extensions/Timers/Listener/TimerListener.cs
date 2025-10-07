@@ -155,6 +155,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             }
         }
 
+        /// <summary>
+        /// Internal start method that returns the startup invocation context. This is exposed for testing purposes only.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The startup invocation context. May be null.</returns>
+        /// <remarks>
+        /// Tests want to capture and validate <see cref="StartupInvocation" />, but they cannot reliable do so via the property
+        /// as the timer may fire and clear out the property before the test can capture it. We expose this internal method which
+        /// will directly return the value to the test.
+        /// </remarks>
         internal async Task<StartupInvocationContext> StartInternalAsync(CancellationToken cancellationToken)
         {
             ThrowIfDisposed();
