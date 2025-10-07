@@ -55,5 +55,5 @@ extends:
       jobs:
       - template: /eng/ci/templates/jobs/build.yml@self
         parameters:
-          sign: false
+          sign: true
           projects: $(Build.SourcesDirectory)/WebJobs.Extensions.sln
