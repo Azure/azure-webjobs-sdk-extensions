@@ -275,10 +275,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                     })
                 .Returns(Task.FromResult(true));
 
-            CancellationToken cancellationToken = CancellationToken.None;
-            await _listener.StartAsync(cancellationToken);
-
-            var startupInvocation = _listener.StartupInvocation;
+            var startupInvocation = await _listener.StartInternalAsync(default);
             Assert.NotNull(startupInvocation);
             Assert.False(startupInvocation.RunOnStartup);
             Assert.Equal(TimerListener.StartupInvocationContext.IntervalMS, _listener.Timer.Interval);
@@ -317,9 +314,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _mockScheduleMonitor.Setup(p => p.CheckPastDueAsync(_testTimerName, It.IsAny<DateTimeOffset>(), It.IsAny<TimerSchedule>(), status))
                 .ReturnsAsync(pastDueAmount);
 
-            CancellationToken cancellationToken = CancellationToken.None;
-            await _listener.StartAsync(cancellationToken);
-
+            var startupInvocation = await _listener.StartInternalAsync(default);
+            Assert.Null(startupInvocation);
             Assert.Null(_listener.StartupInvocation);
 
             _mockTriggerExecutor.Verify(p => p.TryExecuteAsync(It.IsAny<TriggeredFunctionData>(), It.IsAny<CancellationToken>()), Times.Never());
@@ -333,15 +329,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             _listener.ScheduleMonitor = null;
             _attribute.RunOnStartup = true;
 
-            CancellationToken cancellationToken = CancellationToken.None;
-            await _listener.StartAsync(cancellationToken);
-
-            var startupInvocation = _listener.StartupInvocation;
+            var startupInvocation = await _listener.StartInternalAsync(default);
             Assert.NotNull(startupInvocation);
             Assert.True(startupInvocation.RunOnStartup);
             Assert.Equal(TimerListener.StartupInvocationContext.IntervalMS, _listener.Timer.Interval);
             Assert.False(startupInvocation.IsPastDue);
-            Assert.Equal(default(DateTimeOffset), startupInvocation.OriginalSchedule);
+            Assert.Equal(default, startupInvocation.OriginalSchedule);
 
             await _callback.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
@@ -644,7 +637,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             Assert.Equal(_functionShortName, actualMessage.State.Single(p => p.Key == "functionName").Value);
         }
 
-        [Fact(Skip = "Flaky test")]
+        [Fact]
         public async Task Listener_LogsInitialStatus_WhenUsingMonitor()
         {
             ScheduleStatus status = new()
@@ -760,7 +753,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             Assert.True(verboseTraces.Length >= 5);
             Assert.Contains("timer is using the schedule 'Cron: '0 * * * * *'' and the local time zone:", verboseTraces[0].FormattedMessage);
             Assert.Equal(expected, verboseTraces[1].FormattedMessage);
-            Assert.Contains($"Timer for '{_functionShortName}' started with interval", verboseTraces[2].FormattedMessage);
+
+            // Order of log not guaranteed. Timer may trigger and insert logs before OR after this log.
+            Assert.Contains(verboseTraces, x => x.FormattedMessage.StartsWith($"Timer for '{_functionShortName}' started with interval"));
         }
 
         private void CreateTestListener(string expression, bool useMonitor = true, bool runOnStartup = false, Action functionAction = null, IDrainModeManager drainManager = null)

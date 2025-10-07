@@ -92,75 +92,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            ThrowIfDisposed();
-
-            if (_timer != null && _timer.Enabled)
-            {
-                throw new InvalidOperationException("The listener has already been started.");
-            }
-
-            // if schedule monitoring is enabled, record (or initialize)
-            // the current schedule status
-            bool isPastDue = false;
-
-            // we use DateTimeOffset.Now rather than DateTimeOffset.UtcNow to allow the local machine to set the time zone. In Azure this will be
-            // UTC by default, but can be configured to use any time zone if it makes scheduling easier.
-            DateTimeOffset now = DateTimeOffset.Now;
-
-            Logger.ScheduleAndTimeZone(_logger, _functionLogName, _schedule, TimeZoneInfo.Local.DisplayName);
-
-            if (ScheduleMonitor != null)
-            {
-                // check to see if we've missed an occurrence since we last started.
-                // If we have, invoke it immediately.
-                ScheduleStatus = await ScheduleMonitor.GetSafeStatusAsync(_timerLookupName);
-
-                Logger.InitialStatus(_logger, _functionLogName, ScheduleStatus?.Last.ToString("o"), ScheduleStatus?.Next.ToString("o"), ScheduleStatus?.LastUpdated.ToString("o"));
-                TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerLookupName, now, _schedule, ScheduleStatus);
-                isPastDue = pastDueDuration != TimeSpan.Zero;
-            }
-
-            if (ScheduleStatus == null)
-            {
-                // no schedule status has been stored yet, so initialize
-                ScheduleStatus = new ScheduleStatus
-                {
-                    Last = ScheduleMonitor.DefaultDateTime,
-                    Next = _schedule.GetNextOccurrence(now.LocalDateTime),
-                    LastUpdated = ScheduleMonitor.DefaultDateTime
-                };
-            }
-
-            // log the next several occurrences to console for visibility
-            string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5);
-            Logger.NextOccurrences(_logger, _functionLogName, _schedule, nextOccurrences);
-
-            if (isPastDue)
-            {
-                // when we're past due, so we schedule an immediate invocation
-                StartupInvocation = new StartupInvocationContext
-                {
-                    IsPastDue = true,
-                    OriginalSchedule = ScheduleStatus.Next
-                };
-                StartTimer(StartupInvocation.Interval);
-            }
-            else if (_attribute.RunOnStartup)
-            {
-                // function is marked RunOnStartup, so we schedule an immediate invocation
-                StartupInvocation = new StartupInvocationContext
-                {
-                    RunOnStartup = true
-                };
-                StartTimer(StartupInvocation.Interval);
-            }
-            else
-            {
-                // start the regular schedule
-                StartTimer(DateTimeOffset.Now);
-            }
-
-            _logger.LogDebug($"Timer listener started ({_functionLogName})");
+            await StartInternalAsync(cancellationToken);
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
@@ -221,6 +153,89 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
                 _disposed = true;
             }
+        }
+
+        internal async Task<StartupInvocationContext> StartInternalAsync(CancellationToken cancellationToken)
+        {
+            ThrowIfDisposed();
+
+            if (_timer != null && _timer.Enabled)
+            {
+                throw new InvalidOperationException("The listener has already been started.");
+            }
+
+            // if schedule monitoring is enabled, record (or initialize)
+            // the current schedule status
+            bool isPastDue = false;
+
+            // we use DateTimeOffset.Now rather than DateTimeOffset.UtcNow to allow the local machine to set the time zone. In Azure this will be
+            // UTC by default, but can be configured to use any time zone if it makes scheduling easier.
+            DateTimeOffset now = DateTimeOffset.Now;
+
+            Logger.ScheduleAndTimeZone(_logger, _functionLogName, _schedule, TimeZoneInfo.Local.DisplayName);
+
+            if (ScheduleMonitor != null)
+            {
+                // check to see if we've missed an occurrence since we last started.
+                // If we have, invoke it immediately.
+                ScheduleStatus = await ScheduleMonitor.GetSafeStatusAsync(_timerLookupName);
+
+                Logger.InitialStatus(_logger, _functionLogName, ScheduleStatus?.Last.ToString("o"), ScheduleStatus?.Next.ToString("o"), ScheduleStatus?.LastUpdated.ToString("o"));
+                TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerLookupName, now, _schedule, ScheduleStatus);
+                isPastDue = pastDueDuration != TimeSpan.Zero;
+            }
+
+            if (ScheduleStatus == null)
+            {
+                // no schedule status has been stored yet, so initialize
+                ScheduleStatus = new ScheduleStatus
+                {
+                    Last = ScheduleMonitor.DefaultDateTime,
+                    Next = _schedule.GetNextOccurrence(now.LocalDateTime),
+                    LastUpdated = ScheduleMonitor.DefaultDateTime
+                };
+            }
+
+            // log the next several occurrences to console for visibility
+            string nextOccurrences = TimerInfo.FormatNextOccurrences(_schedule, 5);
+            Logger.NextOccurrences(_logger, _functionLogName, _schedule, nextOccurrences);
+
+            StartupInvocationContext startupInvocation = null;
+            if (isPastDue)
+            {
+                // when we're past due, so we schedule an immediate invocation
+                StartupInvocation = new StartupInvocationContext
+                {
+                    IsPastDue = true,
+                    OriginalSchedule = ScheduleStatus.Next
+                };
+
+                // Timer will clear out the StartupInvocation after it fires
+                // Capture and return value for testing purposes.
+                startupInvocation = StartupInvocation;
+                StartTimer(StartupInvocation.Interval);
+            }
+            else if (_attribute.RunOnStartup)
+            {
+                // function is marked RunOnStartup, so we schedule an immediate invocation
+                StartupInvocation = new StartupInvocationContext
+                {
+                    RunOnStartup = true
+                };
+
+                // Timer will clear out the StartupInvocation after it fires
+                // Capture and return value for testing purposes.
+                startupInvocation = StartupInvocation;
+                StartTimer(StartupInvocation.Interval);
+            }
+            else
+            {
+                // start the regular schedule
+                StartTimer(DateTimeOffset.Now);
+            }
+
+            _logger.LogDebug($"Timer listener started ({_functionLogName})");
+            return startupInvocation;
         }
 
         private async void OnTimer(object sender, ElapsedEventArgs e)
