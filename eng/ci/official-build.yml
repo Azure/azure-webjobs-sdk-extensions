@@ -1,3 +1,8 @@
+parameters:
+- name: sign
+  type: boolean
+  default: false
+
 trigger:
   batch: true
   branches:
@@ -55,5 +60,5 @@ extends:
       jobs:
       - template: /eng/ci/templates/jobs/build.yml@self
         parameters:
-          sign: true
+          sign: ${{ parameters.sign }}
           projects: $(Build.SourcesDirectory)/WebJobs.Extensions.sln
