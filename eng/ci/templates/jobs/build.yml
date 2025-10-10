@@ -2,6 +2,9 @@ parameters:
 - name: sign
   type: boolean
   default: false
+- name: extra_args
+  type: string
+  default: ''
 - name: projects
   type: string
 
@@ -13,11 +16,6 @@ jobs:
   - template: /eng/ci/templates/variables/build.yml@self
   - name: pack_dir
     value: $(Build.ArtifactStagingDirectory)/pkg
-  - name: extra_args
-    ${{ if eq(parameters.sign, true) }}:
-      value: -p:IsReleaseCI=true
-    ${{ else }}:
-      value: ''
 
   templateContext:
     outputParentDirectory: $(Build.ArtifactStagingDirectory)
@@ -29,17 +27,6 @@ jobs:
 
   steps:
     - template: /eng/ci/templates/steps/install-dotnet.yml@self
-
-    # If sign=true, verify this is a valid branch or tag
-    - ${{ if eq(parameters.sign, true) }}:
-      - pwsh: |
-          $source = "$(Build.SourceBranch)"
-          if (!($source -like "refs/tags/*-v*" || $source -like "refs/tags/v*" || $source -like "refs/heads/release/*"))
-          {
-            Write-Host "##vso[task.logissue type=error]Signing is not allowed on non-release branches or tags"
-            exit 1
-          }
-        displayName: Verify sign is allowed
 
     - task: DotNetCoreCLI@2
       displayName: Restore
@@ -54,7 +41,7 @@ jobs:
       inputs:
         command: build
         projects: ${{ parameters.projects }}
-        arguments: -c $(configuration) -v m --no-restore $(extra_args)
+        arguments: -c $(configuration) -v m --no-restore ${{ parameters.extra_args }}
 
     - template: /eng/ci/templates/steps/start-emulators.yml@self
 
