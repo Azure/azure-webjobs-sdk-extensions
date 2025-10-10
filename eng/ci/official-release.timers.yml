@@ -14,5 +14,5 @@ extends:
     public: ${{ parameters.public }}
     folder: azure-webjobs-extensions-timers
     projects: |
-      $(Build.SourcesDirectory)/src/WebJobs.Extensions.Timers/WebJobs.Extensions.Timers.csproj
-      $(Build.SourcesDirectory)/test/WebJobs.Extensions.Timers.Tests/WebJobs.Extensions.Timers.Tests.csproj
+      $(Build.SourcesDirectory)/src/WebJobs.Extensions.Timers.Storage/WebJobs.Extensions.Timers.Storage.csproj
+      $(Build.SourcesDirectory)/test/WebJobs.Extensions.Timers.Storage.Tests/WebJobs.Extensions.Timers.Storage.Tests.csproj
