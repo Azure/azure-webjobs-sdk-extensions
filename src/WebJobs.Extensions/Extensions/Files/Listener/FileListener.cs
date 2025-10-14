@@ -260,7 +260,8 @@ namespace Microsoft.Azure.WebJobs.Files.Listeners
 
             if (filesToProcess.Length > 0)
             {
-                _logger.LogDebug($"Found {filesToProcess.Length} file(s) at path '{_watchPath}' for ready processing");
+                _logger.LogDebug("Found {fileCount} file(s) at path '{watchPath}' for ready processing", 
+                    filesToProcess.Length, _watchPath);
             }
 
             foreach (string fileToProcess in filesToProcess)

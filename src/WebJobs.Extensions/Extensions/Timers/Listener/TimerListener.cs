@@ -120,7 +120,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             // After outstanding invocations are complete, we can safely cancel the token to stop new invocations
             Cancel();
 
-            _logger.LogDebug($"Timer listener stopped ({_functionLogName})");
+            _logger.LogDebug("Timer listener stopped ({functionName})", _functionLogName);
         }
 
         public void Cancel()
@@ -244,7 +244,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 StartTimer(DateTimeOffset.Now);
             }
 
-            _logger.LogDebug($"Timer listener started ({_functionLogName})");
+            _logger.LogDebug("Timer listener started ({functionName})", _functionLogName);
             return startupInvocation;
         }
 
@@ -335,7 +335,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 }
                 TimerInfo timerInfo = new TimerInfo(_schedule, timerInfoStatus, isPastDue);
 
-                // Build up trigger details that will be logged if the timer is running at a different time 
+                // Build up trigger details that will be logged if the timer is running at a different time
                 // than originally scheduled.
                 IDictionary<string, string> details = new Dictionary<string, string>();
                 if (isPastDue)
@@ -382,7 +382,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
                 // If the trigger fired before it was officially scheduled (likely under 1 second due to clock skew),
                 // adjust the invocation time forward for the purposes of calculating the next occurrence.
-                // Without this, it's possible to set the 'Next' value to the same time twice in a row, 
+                // Without this, it's possible to set the 'Next' value to the same time twice in a row,
                 // which results in duplicate triggers if the site restarts.
                 DateTimeOffset adjustedInvocationTime = invocationTime;
                 if (!isPastDue && !runOnStartup && ScheduleStatus?.Next > invocationTime)
@@ -402,7 +402,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 if (ScheduleMonitor != null)
                 {
                     await ScheduleMonitor.UpdateStatusAsync(_timerLookupName, ScheduleStatus);
-                    _logger.LogDebug($"Function '{_functionLogName}' updated status: Last='{ScheduleStatus.Last.ToString("o")}', Next='{ScheduleStatus.Next.ToString("o")}', LastUpdated='{ScheduleStatus.LastUpdated.ToString("o")}'");
+                    _logger.LogDebug("Function '{functionName}' updated status: Last='{lastScheduled:o}', Next='{nextScheduled:o}', LastUpdated='{lastUpdated:o}'",
+                        _functionLogName, ScheduleStatus.Last, ScheduleStatus.Next, ScheduleStatus.LastUpdated);
                 }
             }
             finally
@@ -424,7 +425,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
         /// We calculate based on the current time because we don't know how long
         /// the previous function invocation took. Example: if you have an hourly timer
         /// invoked at 12:00 and the invocation takes 1 minute, we want to calculate
-        /// the interval for the next timer using 12:01 rather than at 12:00. Otherwise, 
+        /// the interval for the next timer using 12:01 rather than at 12:00. Otherwise,
         /// you'd start a 1-hour timer at 12:01 when we really want it to be a 59-minute timer.
         /// </remarks>
         /// <param name="next">The next schedule occurrence in Local time.</param>
@@ -446,7 +447,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
 
         private void StartTimer(TimeSpan interval)
         {
-            // Restart the timer with the next schedule occurrence, but only 
+            // Restart the timer with the next schedule occurrence, but only
             // if Cancel, Stop, and Dispose have not been called.
             if (_cancellationTokenSource.IsCancellationRequested)
             {
