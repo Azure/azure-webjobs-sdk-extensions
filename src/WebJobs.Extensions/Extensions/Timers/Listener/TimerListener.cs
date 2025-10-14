@@ -402,7 +402,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 if (ScheduleMonitor != null)
                 {
                     await ScheduleMonitor.UpdateStatusAsync(_timerLookupName, ScheduleStatus);
-                    _logger.LogDebug("Function '{functionName}' updated status: Last='{lastScheduled:o}', Next='{nextScheduled:o}', LastUpdated='{lastUpdated:p}'",
+                    _logger.LogDebug("Function '{functionName}' updated status: Last='{lastScheduled:o}', Next='{nextScheduled:o}', LastUpdated='{lastUpdated:o}'",
                         _functionLogName, ScheduleStatus.Last, ScheduleStatus.Next, ScheduleStatus.LastUpdated);
                 }
             }
