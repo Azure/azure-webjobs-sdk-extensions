@@ -124,7 +124,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 userAgent += _options.UserAgentSuffix;
             }
 
-            CosmosClientOptions cosmosClientOptions = CosmosDBUtility.BuildClientOptions(_options.ConnectionMode, _cosmosSerializerFactory.CreateSerializer(), preferredLocations, userAgent);
+            CosmosClientOptions cosmosClientOptions = CosmosDBUtility.BuildClientOptions(_options.ConnectionMode, _cosmosSerializerFactory.CreateSerializer(_options), preferredLocations, userAgent);
             return ClientCache.GetOrAdd(cacheKey, (c) => _cosmosDBServiceFactory.CreateService(connection, cosmosClientOptions));
         }
 
@@ -188,7 +188,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 PartitionKey = attribute.PartitionKey;
                 ContainerThroughput = attribute.ContainerThroughput;
                 SqlQuery = attribute.SqlQuery;
-                SqlQueryParameters = attribute.SqlQueryParameters is null ? default : attribute.SqlQueryParameters.ToDictionary(x => x.Item1, x => x.Item2);
+                SqlQueryParameters = attribute.SqlQueryParameters is null ? default : attribute.SqlQueryParameters.ToDictionary(x => x.Key, x => x.Value);
                 PreferredLocations = attribute.PreferredLocations;
             }
 

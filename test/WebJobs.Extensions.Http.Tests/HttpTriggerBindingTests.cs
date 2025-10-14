@@ -13,23 +13,20 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Bindings.Path;
 using Microsoft.Azure.WebJobs.Host.Triggers;
-using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.ObjectPool;
 using Microsoft.Extensions.Options;
-using Microsoft.Net.Http.Headers;
 using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
+namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
 {
     public class HttpTriggerBindingTests
     {
@@ -55,19 +52,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         [Fact]
         public void GetRequestBindingData_ReadsFromQueryString()
         {
-            HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/test?name=Mathew%20Charles&location=Seattle");
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/test?name=FirstName%20LastName&location=MyCity");
 
             var bindingData = HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingData(request);
 
             Assert.Equal(4, bindingData.Count);
-            Assert.Equal("Mathew Charles", bindingData["name"]);
-            Assert.Equal("Seattle", bindingData["location"]);
+            Assert.Equal("FirstName LastName", bindingData["name"]);
+            Assert.Equal("MyCity", bindingData["location"]);
 
             TestBindingData(bindingData,
-                "{name}", "Mathew Charles",
-                "{location}", "Seattle",
-                "{query.name}", "Mathew Charles",
-                "{query.location}", "Seattle");
+                "{name}", "FirstName LastName",
+                "{location}", "MyCity",
+                "{query.name}", "FirstName LastName",
+                "{query.location}", "MyCity");
         }
 
         [Fact]
@@ -75,18 +72,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         {
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/test");
 
-            Dictionary<string, object> routeData = new Dictionary<string, object>
+            Dictionary<string, object> routeData = new()
             {
-                { "Name", "Mathew Charles" },
-                { "Location", "Seattle" }
+                { "Name", "FirstName LastName" },
+                { "Location", "MyCity" }
             };
             request.HttpContext.Items.Add(HttpExtensionConstants.AzureWebJobsHttpRouteDataKey, routeData);
 
             var bindingData = HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingData(request);
 
             Assert.Equal(4, bindingData.Count);
-            Assert.Equal("Mathew Charles", bindingData["Name"]);
-            Assert.Equal("Seattle", bindingData["Location"]);
+            Assert.Equal("FirstName LastName", bindingData["Name"]);
+            Assert.Equal("MyCity", bindingData["Location"]);
         }
 
         [Theory]
@@ -95,13 +92,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         {
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/test");
 
-            Dictionary<string, object> routeData = new Dictionary<string, object>
+            Dictionary<string, object> routeData = new()
             {
                 { "test", stringValue }
             };
             request.HttpContext.Items.Add(HttpExtensionConstants.AzureWebJobsHttpRouteDataKey, routeData);
 
-            Dictionary<string, Type> bindingDataContract = new Dictionary<string, Type>
+            Dictionary<string, Type> bindingDataContract = new()
             {
                 { "test", type }
             };
@@ -125,21 +122,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         public void GetRequestBindingData_ReadsFrom_Duplicates()
         {
             string input = "{ name: 'body1', nestedObject: { name: 'body2' } }";
-            var headers = new HeaderDictionary();
-            headers.Add("name", "Mathew");
+            HeaderDictionary headers = new()
+            {
+                ["name"] = "FirstName"
+            };
 
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/{test:alpha}/test?name=Amy", headers, input);
 
-            var routeData = new Dictionary<string, object>
+            Dictionary<string, object> routeData = new()
             {
-                { "test", "path1" }
+                ["test"] = "path1"
             };
-            request.HttpContext.Items.Add(HttpExtensionConstants.AzureWebJobsHttpRouteDataKey, routeData);
 
+            request.HttpContext.Items.Add(HttpExtensionConstants.AzureWebJobsHttpRouteDataKey, routeData);
             var bindingData = HttpTriggerAttributeBindingProvider.HttpTriggerBinding.GetRequestBindingData(request, input);
 
             TestBindingData(bindingData,
-                "{headers.name}", "Mathew",
+                "{headers.name}", "FirstName",
                 "{test}", "path1",
                 "{query.name}", "Amy");
         }
@@ -148,10 +147,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         [Fact]
         public void GetRequestBindingData_Auth_Header()
         {
-            var headers = new HeaderDictionary();
-
-            headers.Add("Authorization", "Bearer ey123");
-            headers.Add("x-ms-id-aad", "ey456");
+            HeaderDictionary headers = new()
+            {
+                { "Authorization", "Bearer ey123" },
+                { "x-ms-id-aad", "ey456" }
+            };
 
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/test", headers);
 
@@ -172,21 +172,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             {
                 EnableChunkedRequestBinding = isChunked
             });
-            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, true, httpOptions);
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new(new HttpTriggerAttribute(), parameterInfo, true, httpOptions);
 
-            JObject requestBody = new JObject
+            JObject requestBody = new()
             {
-                { "Name", "Mathew Charles" },
-                { "Location", "Seattle" }
+                { "Name", "FirstName LastName" },
+                { "Location", "MyCity" }
             };
 
-            var headers = new HeaderDictionary();
-            headers.Add("Content-Type", "application/json");
+            HeaderDictionary headers = new() { ["Content-Type"] = "application/json" };
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/myfunc?code=abc123", headers, requestBody.ToString());
             if (isChunked) 
             {
                 request.ContentLength = null;
-                request.Headers.Add(HeaderNames.TransferEncoding, "chunked");
+                request.Headers.TransferEncoding = "chunked";
             }
 
             IServiceCollection services = new ServiceCollection();
@@ -196,42 +195,42 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
             request.HttpContext.RequestServices = services.BuildServiceProvider();
 
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
-            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            FunctionBindingContext functionContext = new(Guid.NewGuid(), CancellationToken.None);
+            ValueBindingContext context = new(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
             Assert.Equal(5, triggerData.BindingData.Count);
-            Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
-            Assert.Equal("Seattle", triggerData.BindingData["Location"]);
+            Assert.Equal("FirstName LastName", triggerData.BindingData["Name"]);
+            Assert.Equal("MyCity", triggerData.BindingData["Location"]);
 
-            TestPoco testPoco = (TestPoco)(await triggerData.ValueProvider.GetValueAsync());
-            Assert.Equal("Mathew Charles", testPoco.Name);
-            Assert.Equal("Seattle", testPoco.Location);
+            TestPoco testPoco = (TestPoco)await triggerData.ValueProvider.GetValueAsync();
+            Assert.Equal("FirstName LastName", testPoco.Name);
+            Assert.Equal("MyCity", testPoco.Location);
         }
 
         [Fact]
         public async Task BindAsync_Poco_WebHookData()
         {
             ParameterInfo parameterInfo = GetType().GetMethod("TestPocoFunction").GetParameters()[0];
-            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, true);
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new(new HttpTriggerAttribute(), parameterInfo, true);
 
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/myfunc?code=abc123");
-            TestPoco testPoco = new TestPoco
+            TestPoco testPoco = new()
             {
-                Name = "Mathew Charles",
-                Location = "Seattle"
+                Name = "FirstName LastName",
+                Location = "MyCity"
             };
             request.HttpContext.Items.Add(HttpExtensionConstants.AzureWebJobsWebHookDataKey, testPoco);
 
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
-            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            FunctionBindingContext functionContext = new(Guid.NewGuid(), CancellationToken.None);
+            ValueBindingContext context = new(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
             Assert.Equal(5, triggerData.BindingData.Count);
-            Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
-            Assert.Equal("Seattle", triggerData.BindingData["Location"]);
+            Assert.Equal("FirstName LastName", triggerData.BindingData["Name"]);
+            Assert.Equal("MyCity", triggerData.BindingData["Location"]);
 
-            TestPoco result = (TestPoco)(await triggerData.ValueProvider.GetValueAsync());
+            TestPoco result = (TestPoco)await triggerData.ValueProvider.GetValueAsync();
             Assert.Same(testPoco, result);
         }
 
@@ -239,65 +238,64 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         public async Task BindAsync_Poco_FromQueryParameters()
         {
             ParameterInfo parameterInfo = GetType().GetMethod("TestPocoFunction").GetParameters()[0];
-            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, true);
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new(new HttpTriggerAttribute(), parameterInfo, true);
 
-            HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions/myfunc?code=abc123&Name=Mathew%20Charles&Location=Seattle");
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions/myfunc?code=abc123&Name=FirstName%20LastName&Location=MyCity");
 
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
-            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            FunctionBindingContext functionContext = new(Guid.NewGuid(), CancellationToken.None);
+            ValueBindingContext context = new(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
             Assert.Equal(5, triggerData.BindingData.Count);
-            Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
-            Assert.Equal("Seattle", triggerData.BindingData["Location"]);
+            Assert.Equal("FirstName LastName", triggerData.BindingData["Name"]);
+            Assert.Equal("MyCity", triggerData.BindingData["Location"]);
 
-            TestPoco testPoco = (TestPoco)(await triggerData.ValueProvider.GetValueAsync());
-            Assert.Equal("Mathew Charles", testPoco.Name);
-            Assert.Equal("Seattle", testPoco.Location);
+            TestPoco testPoco = (TestPoco)await triggerData.ValueProvider.GetValueAsync();
+            Assert.Equal("FirstName LastName", testPoco.Name);
+            Assert.Equal("MyCity", testPoco.Location);
         }
 
         [Fact]
         public async Task BindAsync_Poco_FromRouteParameters()
         {
             ParameterInfo parameterInfo = GetType().GetMethod("TestPocoFunction").GetParameters()[0];
-            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, true);
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new(new HttpTriggerAttribute(), parameterInfo, true);
 
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions/myfunc");
 
-            Dictionary<string, object> routeData = new Dictionary<string, object>
+            Dictionary<string, object> routeData = new()
             {
-                { "Name", "Mathew Charles" },
-                { "Location", "Seattle" }
+                { "Name", "FirstName LastName" },
+                { "Location", "MyCity" }
             };
             request.HttpContext.Items.Add(HttpExtensionConstants.AzureWebJobsHttpRouteDataKey, routeData);
 
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
-            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            FunctionBindingContext functionContext = new(Guid.NewGuid(), CancellationToken.None);
+            ValueBindingContext context = new(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
             Assert.Equal(5, triggerData.BindingData.Count);
-            Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
-            Assert.Equal("Seattle", triggerData.BindingData["Location"]);
+            Assert.Equal("FirstName LastName", triggerData.BindingData["Name"]);
+            Assert.Equal("MyCity", triggerData.BindingData["Location"]);
 
-            TestPoco testPoco = (TestPoco)(await triggerData.ValueProvider.GetValueAsync());
-            Assert.Equal("Mathew Charles", testPoco.Name);
-            Assert.Equal("Seattle", testPoco.Location);
+            TestPoco testPoco = (TestPoco)await triggerData.ValueProvider.GetValueAsync();
+            Assert.Equal("FirstName LastName", testPoco.Name);
+            Assert.Equal("MyCity", testPoco.Location);
         }
 
         [Fact]
         public async Task BindAsync_Poco_MergedBindingData()
         {
             ParameterInfo parameterInfo = GetType().GetMethod("TestPocoFunctionEx").GetParameters()[0];
-            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, true);
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new(new HttpTriggerAttribute(), parameterInfo, true);
 
-            JObject requestBody = new JObject
+            JObject requestBody = new()
             {
-                { "Name", "Mathew Charles" },
+                { "Name", "FirstName LastName" },
                 { "Phone", "(425) 555-6666" }
             };
 
-            var headers = new HeaderDictionary();
-            headers.Add("Content-Type", "application/json");
+            HeaderDictionary headers = new() { ["Content-Type"] = "application/json" };
 
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions/myfunc?code=abc123&Age=25", headers, requestBody.ToString());
             var services = new ServiceCollection();
@@ -308,7 +306,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
                 .ReturnsAsync((InputFormatterContext c) =>
                 {
                     TextReader reader = c.ReaderFactory(c.HttpContext.Request.Body, Encoding.UTF8);
-                    JsonSerializer serializer = new JsonSerializer();
+                    JsonSerializer serializer = new();
                     object result = serializer.Deserialize(reader, c.Metadata.ModelType);
 
                     return InputFormatterResult.Success(result);
@@ -317,25 +315,25 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             services.AddMvcCore(o => o.InputFormatters.Add(formatter.Object));
             request.HttpContext.RequestServices = services.BuildServiceProvider();
 
-            Dictionary<string, object> routeData = new Dictionary<string, object>
+            Dictionary<string, object> routeData = new()
             {
-                { "Location", "Seattle" }
+                { "Location", "MyCity" }
             };
             request.HttpContext.Items.Add(HttpExtensionConstants.AzureWebJobsHttpRouteDataKey, routeData);
 
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
-            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            FunctionBindingContext functionContext = new(Guid.NewGuid(), CancellationToken.None);
+            ValueBindingContext context = new(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
             Assert.Equal(9, triggerData.BindingData.Count);
-            Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
-            Assert.Equal("Seattle", triggerData.BindingData["Location"]);
+            Assert.Equal("FirstName LastName", triggerData.BindingData["Name"]);
+            Assert.Equal("MyCity", triggerData.BindingData["Location"]);
             Assert.Equal("(425) 555-6666", triggerData.BindingData["Phone"]);
             Assert.Equal("25", triggerData.BindingData["Age"]);
 
-            TestPocoEx testPoco = (TestPocoEx)(await triggerData.ValueProvider.GetValueAsync());
-            Assert.Equal("Mathew Charles", testPoco.Name);
-            Assert.Equal("Seattle", testPoco.Location);
+            TestPocoEx testPoco = (TestPocoEx)await triggerData.ValueProvider.GetValueAsync();
+            Assert.Equal("FirstName LastName", testPoco.Name);
+            Assert.Equal("MyCity", testPoco.Location);
             Assert.Equal("(425) 555-6666", testPoco.Phone);
             Assert.Equal(25, testPoco.Age);
         }
@@ -344,26 +342,26 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         public async Task BindAsync_HttpRequest_FromRequestBody()
         {
             ParameterInfo parameterInfo = GetType().GetMethod("TestHttpRequestFunction").GetParameters()[0];
-            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, false);
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new(new HttpTriggerAttribute(), parameterInfo, false);
 
             // we intentionally do not send a content type on the request
             // to ensure that we can still extract binding data in such cases
-            JObject requestBody = new JObject
+            JObject requestBody = new()
             {
-                { "Name", "Mathew Charles" },
-                { "Location", "Seattle" }
+                { "Name", "FirstName LastName" },
+                { "Location", "MyCity" }
             };
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/myfunc?code=abc123", null, requestBody.ToString());
 
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
-            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            FunctionBindingContext functionContext = new(Guid.NewGuid(), CancellationToken.None);
+            ValueBindingContext context = new(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
             Assert.Equal(5, triggerData.BindingData.Count);
-            Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
-            Assert.Equal("Seattle", triggerData.BindingData["Location"]);
+            Assert.Equal("FirstName LastName", triggerData.BindingData["Name"]);
+            Assert.Equal("MyCity", triggerData.BindingData["Location"]);
 
-            HttpRequest result = (HttpRequest)(await triggerData.ValueProvider.GetValueAsync());
+            HttpRequest result = (HttpRequest)await triggerData.ValueProvider.GetValueAsync();
             Assert.Same(request, result);
         }
 
@@ -371,19 +369,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         public async Task BindAsync_HttpRequest_FromQueryParameters()
         {
             ParameterInfo parameterInfo = GetType().GetMethod("TestHttpRequestFunction").GetParameters()[0];
-            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, false);
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new(new HttpTriggerAttribute(), parameterInfo, false);
 
-            HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions/myfunc?code=abc123&Name=Mathew%20Charles&Location=Seattle");
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions/myfunc?code=abc123&Name=FirstName%20LastName&Location=MyCity");
 
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
-            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            FunctionBindingContext functionContext = new(Guid.NewGuid(), CancellationToken.None);
+            ValueBindingContext context = new(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
             Assert.Equal(5, triggerData.BindingData.Count);
-            Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
-            Assert.Equal("Seattle", triggerData.BindingData["Location"]);
+            Assert.Equal("FirstName LastName", triggerData.BindingData["Name"]);
+            Assert.Equal("MyCity", triggerData.BindingData["Location"]);
 
-            HttpRequest result = (HttpRequest)(await triggerData.ValueProvider.GetValueAsync());
+            HttpRequest result = (HttpRequest)await triggerData.ValueProvider.GetValueAsync();
             Assert.Same(request, result);
         }
 
@@ -391,51 +389,51 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         public async Task BindAsync_HttpRequestMessage_FromRequestBody()
         {
             ParameterInfo parameterInfo = GetType().GetMethod("TestHttpRequestMessageFunction").GetParameters()[0];
-            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, false);
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new(new HttpTriggerAttribute(), parameterInfo, false);
 
             // we intentionally do not send a content type on the request
             // to ensure that we can still extract binding data in such cases
-            JObject requestBody = new JObject
+            JObject requestBody = new()
             {
-                { "Name", "Mathew Charles" },
-                { "Location", "Seattle" }
+                { "Name", "FirstName LastName" },
+                { "Location", "MyCity" }
             };
 
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/myfunc?code=abc123", null, requestBody.ToString());
             request.ContentType = "application/json";
 
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
-            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            FunctionBindingContext functionContext = new(Guid.NewGuid(), CancellationToken.None);
+            ValueBindingContext context = new(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
             Assert.Equal(5, triggerData.BindingData.Count);
-            Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
-            Assert.Equal("Seattle", triggerData.BindingData["Location"]);
+            Assert.Equal("FirstName LastName", triggerData.BindingData["Name"]);
+            Assert.Equal("MyCity", triggerData.BindingData["Location"]);
 
-            HttpRequestMessage result = (HttpRequestMessage)(await triggerData.ValueProvider.GetValueAsync());
+            HttpRequestMessage result = (HttpRequestMessage)await triggerData.ValueProvider.GetValueAsync();
             Assert.NotNull(result);
 
             var contentResult = await result.Content.ReadAsAsync<JObject>();
-            Assert.Equal("Mathew Charles", contentResult["Name"]);
+            Assert.Equal("FirstName LastName", contentResult["Name"]);
         }
 
         [Fact]
         public async Task BindAsync_HttpRequestMessage_FromQueryParameters()
         {
             ParameterInfo parameterInfo = GetType().GetMethod("TestHttpRequestMessageFunction").GetParameters()[0];
-            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, false);
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new(new HttpTriggerAttribute(), parameterInfo, false);
 
-            HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions/myfunc?code=abc123&Name=Mathew%20Charles&location=Hawaii&Location=Ohio&Location=Seattle");
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions/myfunc?code=abc123&Name=FirstName%20LastName&location=Hawaii&Location=Ohio&Location=MyCity");
 
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
-            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            FunctionBindingContext functionContext = new(Guid.NewGuid(), CancellationToken.None);
+            ValueBindingContext context = new(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
             Assert.Equal(5, triggerData.BindingData.Count);
-            Assert.Equal("Mathew Charles", triggerData.BindingData["Name"]);
-            Assert.Equal("Seattle", triggerData.BindingData["Location"]);
+            Assert.Equal("FirstName LastName", triggerData.BindingData["Name"]);
+            Assert.Equal("MyCity", triggerData.BindingData["Location"]);
 
-            HttpRequestMessage result = (HttpRequestMessage)(await triggerData.ValueProvider.GetValueAsync());
+            HttpRequestMessage result = (HttpRequestMessage)await triggerData.ValueProvider.GetValueAsync();
             Assert.NotNull(result);
         }
 
@@ -443,19 +441,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         public async Task BindAsync_String()
         {
             ParameterInfo parameterInfo = GetType().GetMethod("TestStringFunction").GetParameters()[0];
-            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, false);
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new(new HttpTriggerAttribute(), parameterInfo, false);
 
-            var headers = new HeaderDictionary();
-            headers.Add("Content-Type", "application/text");
+            HeaderDictionary headers = new() { ["Content-Type"] = "application/text" };
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/myfunc?code=abc123", headers, "This is a test");
 
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
-            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            FunctionBindingContext functionContext = new(Guid.NewGuid(), CancellationToken.None);
+            ValueBindingContext context = new(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
             Assert.Equal(3, triggerData.BindingData.Count);
 
-            string result = (string)(await triggerData.ValueProvider.GetValueAsync());
+            string result = (string)await triggerData.ValueProvider.GetValueAsync();
             Assert.Equal("This is a test", result);
         }
 
@@ -463,36 +460,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         public async Task BindAsync_Dynamic()
         {
             ParameterInfo parameterInfo = GetType().GetMethod(nameof(TestDynamicFunction)).GetParameters()[0];
-            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, false);
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new(new HttpTriggerAttribute(), parameterInfo, false);
 
-            var headers = new HeaderDictionary();
-            headers.Add("Content-Type", "application/json");
+            HeaderDictionary headers = new() { ["Content-Type"] = "application/json" };
             HttpRequest request = HttpTestHelpers.CreateHttpRequest("POST", "http://functions/myfunc?code=abc123", headers, "{ \"value\" : \"This is a test\" }");
 
-            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
-            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            FunctionBindingContext functionContext = new(Guid.NewGuid(), CancellationToken.None);
+            ValueBindingContext context = new(functionContext, CancellationToken.None);
             ITriggerData triggerData = await binding.BindAsync(request, context);
 
             Assert.Equal(4, triggerData.BindingData.Count);
 
-            var result = (JObject)(await triggerData.ValueProvider.GetValueAsync());
+            var result = (JObject)await triggerData.ValueProvider.GetValueAsync();
             Assert.Equal("This is a test", result["value"].ToString());
         }
 
         [Fact]
         public static void ApplyBindingData_Succeeds()
         {
-            TestPocoEx poco = new TestPocoEx();
-            Dictionary<string, string> properties = new Dictionary<string, string>
+            TestPocoEx poco = new();
+            Dictionary<string, string> properties = new()
             {
                 { "A", "123" },
                 { "B", "456" },
                 { "c", "789" }
             };
-            Dictionary<string, object> bindingData = new Dictionary<string, object>()
+            Dictionary<string, object> bindingData = new()
             {
                 { "name", "Ted" },
-                { "Location", "Seattle" },
+                { "Location", "MyCity" },
                 { "Age", "25" },
                 { "Readonly", "Test" },
                 { "Properties", properties }
@@ -501,7 +497,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
             HttpTriggerAttributeBindingProvider.HttpTriggerBinding.ApplyBindingData(poco, bindingData);
 
             Assert.Equal("Ted", poco.Name);
-            Assert.Equal("Seattle", poco.Location);
+            Assert.Equal("MyCity", poco.Location);
             Assert.Equal(25, poco.Age);  // verifies string was converted
             Assert.Null(poco.Readonly);
             Assert.Equal(3, poco.Properties.Count);
@@ -515,7 +511,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
         public static void LazyBindingData_DelaysInstantiation()
         {
             int invokeCount = 0;
-            Dictionary<string, object> bindingData = new Dictionary<string, object>
+            Dictionary<string, object> bindingData = new()
             {
                 { "d1", 1 },
                 { "d2", 2 },
@@ -574,24 +570,24 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Http
 
         public class BindsAllTypesTestData : IEnumerable<object[]>
         {
-            private readonly List<object[]> _data = new List<object[]>
-            {
-                new object[] { typeof(string), "12345", "12345" },
-                new object[] { typeof(int), (int)12345, "12345" },
-                new object[] { typeof(int?), (int)12345, "12345" },
-                new object[] { typeof(int?), null, null },
-                new object[] { typeof(decimal), new decimal(1.2345), "1.2345" },
-                new object[] { typeof(double), (double)1.2345, "1.2345" },
-                new object[] { typeof(float), 1.2345f, "1.2345" },
-                new object[] { typeof(long), 12345L, "12345" },
-                new object[] { typeof(Guid), new Guid("CD2C1638-1638-72D5-1638-DEADBEEF1638"), "CD2C1638-1638-72D5-1638-DEADBEEF1638" },
-                new object[] { typeof(Guid?), new Guid("CD2C1638-1638-72D5-1638-DEADBEEF1638"), "CD2C1638-1638-72D5-1638-DEADBEEF1638" },
-                new object[] { typeof(Guid?), null, null },
-                new object[] { typeof(bool), true, "true" },
-                new object[] { typeof(DateTime), new DateTime(2019, 8, 20), "2019-08-20" },
-                new object[] { typeof(DateTime?), new DateTime(2019, 8, 20), "2019-08-20" },
-                new object[] { typeof(DateTime?), null, null }
-            };
+            private readonly List<object[]> _data =
+            [
+                [typeof(string), "12345", "12345"],
+                [typeof(int), (int)12345, "12345"],
+                [typeof(int?), (int)12345, "12345"],
+                [typeof(int?), null, null],
+                [typeof(decimal), new decimal(1.2345), "1.2345"],
+                [typeof(double), (double)1.2345, "1.2345"],
+                [typeof(float), 1.2345f, "1.2345"],
+                [typeof(long), 12345L, "12345"],
+                [typeof(Guid), new Guid("CD2C1638-1638-72D5-1638-DEADBEEF1638"), "CD2C1638-1638-72D5-1638-DEADBEEF1638"],
+                [typeof(Guid?), new Guid("CD2C1638-1638-72D5-1638-DEADBEEF1638"), "CD2C1638-1638-72D5-1638-DEADBEEF1638"],
+                [typeof(Guid?), null, null],
+                [typeof(bool), true, "true"],
+                [typeof(DateTime), new DateTime(2019, 8, 20), "2019-08-20"],
+                [typeof(DateTime?), new DateTime(2019, 8, 20), "2019-08-20"],
+                [typeof(DateTime?), null, null]
+            ];
 
             public IEnumerator<object[]> GetEnumerator() => _data.GetEnumerator();
 

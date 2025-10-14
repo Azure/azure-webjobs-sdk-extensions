@@ -1,0 +1,18 @@
+parameters:
+- name: public
+  displayName: Publish to nuget.org?
+  type: boolean
+  default: false
+
+# Release has no triggers outside of pipeline
+trigger: none
+pr: none
+
+extends:
+  template: /eng/ci/templates/pipelines/release.yml@self
+  parameters:
+    public: ${{ parameters.public }}
+    folder: azure-webjobs-extensions-timers
+    projects: |
+      $(Build.SourcesDirectory)/src/WebJobs.Extensions.Timers.Storage/WebJobs.Extensions.Timers.Storage.csproj
+      $(Build.SourcesDirectory)/test/WebJobs.Extensions.Timers.Storage.Tests/WebJobs.Extensions.Timers.Storage.Tests.csproj

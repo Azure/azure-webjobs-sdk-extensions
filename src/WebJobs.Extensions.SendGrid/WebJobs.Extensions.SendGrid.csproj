@@ -1,31 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyName>Microsoft.Azure.WebJobs.Extensions.SendGrid</AssemblyName>
-    <RootNamespace>Microsoft.Azure.WebJobs.Extensions.SendGrid</RootNamespace>
-    <PackageId>Microsoft.Azure.WebJobs.Extensions.SendGrid</PackageId>
     <Description>This package contains SendGrid binding extensions.</Description>
   </PropertyGroup>
-  <Import Project="..\..\build\common.props" />
-  <PropertyGroup>
-    <Version>$(SendGridVersion)</Version>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors />
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors />
-  </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.32" />
-    <PackageReference Include="SendGrid" Version="9.10.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="StyleCop.Analyzers" Version="1.1.118" />
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.42" />
+    <PackageReference Include="SendGrid" Version="9.29.3" />
   </ItemGroup>
 
 </Project>

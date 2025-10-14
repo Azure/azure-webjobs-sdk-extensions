@@ -247,7 +247,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                     return mockResponse.Object;
                 });
 
-
             var factoryMock = new Mock<ICosmosDBServiceFactory>(MockBehavior.Strict);
             factoryMock
                 .Setup(f => f.CreateService(It.IsAny<string>(), It.IsAny<CosmosClientOptions>()))
@@ -423,8 +422,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             IHost host = new HostBuilder()
                 .ConfigureWebJobs(builder =>
                 {
-                    builder.AddAzureStorage()
-                    .AddCosmosDB();
+                    builder
+                        .AddAzureStorageBlobs()
+                        .AddAzureStorageQueues()
+                        .AddCosmosDB();
                 })
                 .ConfigureAppConfiguration(c =>
                 {

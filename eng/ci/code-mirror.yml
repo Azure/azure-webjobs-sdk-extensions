@@ -1,0 +1,32 @@
+trigger:
+  branches:
+    include:
+    # Below branches are examples for Azure/azure-functions-host. Replace with appropriate branches for your repository.
+    # Keep this set limited as appropriate (don't mirror individual user branches).
+    - dev
+  tags:
+    include:
+    - '*'
+
+schedules:
+# Run once a month to prevent disablement from inactivity.
+# Not using 12:00 UTC to spread out our schedules.
+- cron: "0 2 1 * *"
+  displayName: Monthly sync
+  branches:
+    include:
+    - dev
+  always: true
+
+resources:
+  repositories:
+  - repository: eng
+    type: git
+    name: engineering
+    ref: refs/tags/release
+
+variables:
+  - template: ci/variables/cfs.yml@eng
+
+extends:
+  template: ci/code-mirror.yml@eng

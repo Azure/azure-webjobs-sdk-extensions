@@ -101,7 +101,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             };
         }
 
-        public static IConfiguration BuildConfiguration(List<Tuple<string,string>> configs)
+        public static IConfiguration BuildConfiguration(List<Tuple<string, string>> configs)
         {
             var mock = new Mock<IConfiguration>();
             foreach (var config in configs)

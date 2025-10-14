@@ -1,32 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyName>Microsoft.Azure.WebJobs.Extensions</AssemblyName>
-    <RootNamespace>Microsoft.Azure.WebJobs.Extensions</RootNamespace>
-    <PackageId>Microsoft.Azure.WebJobs.Extensions</PackageId>
     <Description>This package contains Timers and File triggers. For more information, please visit https://azure.microsoft.com/en-us/documentation/articles/websites-webjobs-resources.</Description>
   </PropertyGroup>
-  <Import Project="..\..\build\common.props" />
-  <PropertyGroup>
-    <Version>$(ExtensionsVersion)</Version>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE;DEBUG;NETSTANDARD;NETSTANDARD2_0</DefineConstants>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors />
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors />
-  </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.32" />
-    <PackageReference Include="ncrontab.signed" Version="3.3.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="StyleCop.Analyzers" Version="1.1.118" />
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.42" />
+    <PackageReference Include="ncrontab.signed" Version="3.3.3" />
   </ItemGroup>
 
 </Project>

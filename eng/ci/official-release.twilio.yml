@@ -1,0 +1,18 @@
+parameters:
+- name: public
+  displayName: Publish to nuget.org?
+  type: boolean
+  default: false
+
+# Release has no triggers outside of pipeline
+trigger: none
+pr: none
+
+extends:
+  template: /eng/ci/templates/pipelines/release.yml@self
+  parameters:
+    public: ${{ parameters.public }}
+    folder: azure-webjobs-extensions-twilio
+    projects: |
+      $(Build.SourcesDirectory)/src/WebJobs.Extensions.Twilio/WebJobs.Extensions.Twilio.csproj
+      $(Build.SourcesDirectory)/test/WebJobs.Extensions.Twilio.Tests/WebJobs.Extensions.Twilio.Tests.csproj

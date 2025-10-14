@@ -61,7 +61,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
 
             if (string.IsNullOrEmpty(_statusFilePath) || !Directory.Exists(_statusFilePath))
             {
-                _statusFilePath = Path.Combine(rootPath, @"webjobs\timers");
+                _statusFilePath = Path.Combine(rootPath, "webjobs", "timers");
             }
             Directory.CreateDirectory(_statusFilePath);
 

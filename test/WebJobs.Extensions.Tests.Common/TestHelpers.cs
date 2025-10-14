@@ -37,6 +37,39 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Common
             }
         }
 
+        public static Task RetryAsync(Func<Task> action, int maxAttempts = 3, int millisecondsDelay = 1000)
+        {
+            async Task<object> Wrapper()
+            {
+                await action();
+                return null;
+            }
+
+            return RetryAsync(Wrapper, maxAttempts, millisecondsDelay);
+        }
+
+        public static async Task<T> RetryAsync<T>(Func<Task<T>> action, int maxAttempts = 3, int millisecondsDelay = 1000)
+        {
+            int attempt = 0;
+            while (true)
+            {
+                attempt++;
+                try
+                {
+                    return await action();
+                }
+                catch
+                {
+                    if (attempt == maxAttempts)
+                    {
+                        throw;
+                    }
+
+                    await Task.Delay(millisecondsDelay);
+                }
+            }
+        }
+
         public static JobHost GetJobHost(this IHost host)
         {
             return host.Services.GetService<IJobHost>() as JobHost;

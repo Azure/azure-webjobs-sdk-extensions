@@ -68,9 +68,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 }}
              ]}}";
 
-            IHost host = new HostBuilder().ConfigureServices(services => services.AddAzureClientsCore()).Build();
-            AzureComponentFactory defaultAzureComponentFactory = host.Services.GetService<AzureComponentFactory>();
-
             string hostId = "test-host";
             var loggerProvider = new TestLoggerProvider();
 
@@ -115,7 +112,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
                 scaleOptions.ScaleMetricsSampleInterval = TimeSpan.FromSeconds(1);
             });
 
-            using (var client = await CosmosDBEndToEndTests.InitializeDocumentClientAsync(configuration, DatabaseName, CollectionName))
+            using (var client = await CosmosDBEndToEndTests.InitializeDocumentClientAsync(
+                configuration, DatabaseName, CollectionName, "/id"))
             {
                 var container = client.GetDatabase(DatabaseName).GetContainer(CollectionName);
 
@@ -199,11 +197,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             await processor.StartAsync();
         }
 
-        private static async Task HandleChangesAsync(
-            ChangeFeedProcessorContext context,
-            IReadOnlyCollection<Item> changes,
-            CancellationToken cancellationToken)
+        private static Task HandleChangesAsync(
+            ChangeFeedProcessorContext context, IReadOnlyCollection<Item> changes, CancellationToken cancellationToken)
         {
+            return Task.CompletedTask;
         }
     }
 }

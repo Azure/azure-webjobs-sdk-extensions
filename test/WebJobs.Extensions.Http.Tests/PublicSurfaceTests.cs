@@ -4,7 +4,7 @@
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Xunit;
 
-namespace Microsoft.Azure.WebJobs.Extensions.Tests
+namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
 {
     public class PublicSurfaceTests
     {
@@ -13,8 +13,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
         {
             var assembly = typeof(HttpTriggerAttribute).Assembly;
 
-            var expected = new[]
-            {
+            string[] expected =
+            [
                 "HttpExtensionConstants",
                 "AuthorizationLevel",
                 "HttpTriggerAttribute",
@@ -28,7 +28,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests
                 "HttpOptions",
                 "HttpWebJobsBuilderExtensions",
                 "HttpWebJobsStartup",
-            };
+            ];
 
             JobHostTestHelpers.AssertPublicTypes(expected, assembly);
         }
