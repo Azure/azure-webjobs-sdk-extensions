@@ -3,6 +3,13 @@ parameters:
   displayName: Publish to nuget.org?
   type: boolean
   default: false
+- name: quality
+  displayName: Release quality
+  type: string
+  default: stable
+  values:
+  - stable
+  - preview
 
 # Release has no triggers outside of pipeline
 trigger: none
@@ -13,6 +20,7 @@ extends:
   parameters:
     public: ${{ parameters.public }}
     folder: azure-webjobs-extensions-cosmosdb
+    quality: ${{ parameters.quality }}
     projects: |
       $(Build.SourcesDirectory)/src/WebJobs.Extensions.CosmosDB/WebJobs.Extensions.CosmosDB.csproj
       $(Build.SourcesDirectory)/test/WebJobs.Extensions.CosmosDB.Tests/WebJobs.Extensions.CosmosDB.Tests.csproj

@@ -60,4 +60,6 @@ extends:
       - template: /eng/ci/templates/jobs/build.yml@self
         parameters:
           sign: false
-          projects: $(Build.SourcesDirectory)/WebJobs.Extensions.sln
+          projects: |
+            $(Build.SourcesDirectory)/WebJobs.Extensions.sln
+            $(Build.SourcesDirectory)/eng/sln/WebJobs.Extensions.Preview.proj
