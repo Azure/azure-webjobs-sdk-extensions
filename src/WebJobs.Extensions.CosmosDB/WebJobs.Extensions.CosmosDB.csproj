@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>This package contains binding extensions for Azure Cosmos DB.</Description>
+    <ReleaseNotesFile Condition="'$(Preview)' == 'true'">release_notes_preview.md</ReleaseNotesFile>
   </PropertyGroup>
 
   <ItemGroup>
