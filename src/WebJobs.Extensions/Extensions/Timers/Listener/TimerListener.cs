@@ -120,7 +120,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             // After outstanding invocations are complete, we can safely cancel the token to stop new invocations
             Cancel();
 
-            _logger.LogDebug($"Timer listener stopped ({_functionLogName})");
+            _logger.LogDebug("Timer listener stopped ({functionName})", _functionLogName);
         }
 
         public void Cancel()
@@ -244,7 +244,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 StartTimer(DateTimeOffset.Now);
             }
 
-            _logger.LogDebug($"Timer listener started ({_functionLogName})");
+            _logger.LogDebug("Timer listener started ({functionName})", _functionLogName);
             return startupInvocation;
         }
 
@@ -402,8 +402,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
                 if (ScheduleMonitor != null)
                 {
                     await ScheduleMonitor.UpdateStatusAsync(_timerLookupName, ScheduleStatus);
-                    _logger.LogDebug("Function '{functionName}' updated status: Last='{lastScheduled}\', Next=\'{nextScheduled}\', LastUpdated=\'{lastUpdated}\'",
-                        _functionLogName, ScheduleStatus.Last.ToString("o"), ScheduleStatus.Next.ToString("o"), ScheduleStatus.LastUpdated.ToString("o"));
+                    _logger.LogDebug("Function '{functionName}' updated status: Last='{lastScheduled:o}', Next='{nextScheduled:o}', LastUpdated='{lastUpdated:p}'",
+                        _functionLogName, ScheduleStatus.Last, ScheduleStatus.Next, ScheduleStatus.LastUpdated);
                 }
             }
             finally
