@@ -35,7 +35,7 @@ namespace Microsoft.Azure.WebJobs
             ContainerName = containerName;
             DatabaseName = databaseName;
             LeaseContainerName = CosmosDBTriggerConstants.DefaultLeaseCollectionName;
-            LeaseDatabaseName = this.DatabaseName;
+            LeaseDatabaseName = DatabaseName;
         }
 
         /// <summary>
@@ -131,6 +131,7 @@ namespace Microsoft.Azure.WebJobs
         /// </example>
         public string PreferredLocations { get; set; }
 
+#if PREVIEW
         /// <summary>
         /// Gets or sets the Change Feed mode to use when processing changes. Defaults to <see cref="CosmosDBTriggerChangeFeedMode.LatestVersion"/>.
         /// </summary>
@@ -139,5 +140,6 @@ namespace Microsoft.Azure.WebJobs
         /// When using AllVersionsAndDeletes the JSON payload for each item will include metadata describing the operation type and related system information. Use a parameter type such as <c>IReadOnlyList<JObject></c> to access these metadata fields.
         /// </remarks>
         public CosmosDBTriggerChangeFeedMode ChangeFeedMode { get; set; } = CosmosDBTriggerChangeFeedMode.LatestVersion;
+#endif
     }
 }
