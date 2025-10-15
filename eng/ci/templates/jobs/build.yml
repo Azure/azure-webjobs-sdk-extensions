@@ -7,10 +7,13 @@ parameters:
 - name: build_args
   type: string
   default: ''
+- name: display_name
+  type: string
+  default: Build
 
 jobs:
 - job: build
-  displayName: Build
+  displayName: ${{ parameters.display_name }}
 
   variables:
   - template: /eng/ci/templates/variables/build.yml@self

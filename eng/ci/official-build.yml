@@ -59,6 +59,11 @@ extends:
       - template: /eng/ci/templates/jobs/build.yml@self
         parameters:
           sign: false
-          projects: |
-            $(Build.SourcesDirectory)/WebJobs.Extensions.sln
-            $(Build.SourcesDirectory)/eng/sln/WebJobs.Extensions.Preview.proj
+          projects: $(Build.SourcesDirectory)/WebJobs.Extensions.sln
+          display_name: Build Stable
+
+      - template: /eng/ci/templates/jobs/build.yml@self
+        parameters:
+          sign: false
+          projects: $(Build.SourcesDirectory)/eng/sln/WebJobs.Extensions.Preview.proj
+          display_name: Build Preview
