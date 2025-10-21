@@ -7,16 +7,12 @@ parameters:
 - name: build_args
   type: string
   default: ''
-- name: display_name
+- name: label
   type: string
-  default: Build
-- name: job_id
-  type: string
-  default: build
+  default: ''
 
 jobs:
-- job: ${{ parameters.job_id }}
-  displayName: ${{ parameters.display_name }}
+- job: ${{ iif(eq(parameters.label, ''), 'build', format('build_{0}', parameters.label)) }}
 
   variables:
   - template: /eng/ci/templates/variables/build.yml@self
@@ -36,7 +32,7 @@ jobs:
     - output: pipelineArtifact
       displayName: Publish logs
       path: $(pack_dir)
-      artifact: drop_packages
+      artifact: ${{ iif(eq(parameters.label, ''), 'drop_packages', format('drop_packages_{0}', parameters.label)) }}
 
   steps:
     - template: /eng/ci/templates/steps/install-dotnet.yml@self
