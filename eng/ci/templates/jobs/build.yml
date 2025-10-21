@@ -10,9 +10,12 @@ parameters:
 - name: display_name
   type: string
   default: Build
+- name: job_id
+  type: string
+  default: build
 
 jobs:
-- job: build
+- job: ${{ parameters.job_id }}
   displayName: ${{ parameters.display_name }}
 
   variables:
