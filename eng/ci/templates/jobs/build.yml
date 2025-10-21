@@ -13,6 +13,7 @@ parameters:
 
 jobs:
 - job: ${{ iif(eq(parameters.label, ''), 'build', format('build_{0}', parameters.label)) }}
+  displayName: ${{ iif(eq(parameters.label, ''), 'Build', format('Build ({0})', parameters.label)) }}
 
   variables:
   - template: /eng/ci/templates/variables/build.yml@self
