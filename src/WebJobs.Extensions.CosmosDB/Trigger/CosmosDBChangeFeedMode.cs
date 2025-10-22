@@ -2,15 +2,13 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 #if PREVIEW
-using Microsoft.Azure.Cosmos;
-
 namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
     /// Represents the change feed mode for the Cosmos DB Trigger.
     /// This mirrors the SDK ChangeFeedMode options while remaining attribute-friendly.
     /// </summary>
-    public enum CosmosDBTriggerChangeFeedMode
+    public enum CosmosDBChangeFeedMode
     {
         /// <summary>
         /// Only the latest version of each item is included. Deletes are not surfaced.
@@ -20,6 +18,9 @@ namespace Microsoft.Azure.WebJobs
         /// <summary>
         /// All intermediate versions and delete tombstones are included (preview feature in Azure Cosmos DB).
         /// </summary>
+        /// <remarks>
+        /// When using <see cref="AllVersionsAndDeletes"/> the item type should be wrapped with <see cref="Microsoft.Azure.Cosmos.ChangeFeedItem{T}"/>.
+        /// </remarks>
         AllVersionsAndDeletes = 1
     }
 }

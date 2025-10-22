@@ -468,7 +468,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
             CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
 
-            Assert.Equal(CosmosDBTriggerChangeFeedMode.AllVersionsAndDeletes, binding.CosmosDBAttribute.ChangeFeedMode);
+            Assert.Equal(CosmosDBChangeFeedMode.AllVersionsAndDeletes, binding.CosmosDBAttribute.ChangeFeedMode);
         }
 #endif
 
@@ -568,7 +568,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 #if PREVIEW
         private static class ValidCosmosDBTriggerBindingsWithChangeFeedMode
         {
-            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", Connection = "CosmosDBConnectionString", ChangeFeedMode = CosmosDBTriggerChangeFeedMode.AllVersionsAndDeletes)] IReadOnlyList<dynamic> docs)
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", Connection = "CosmosDBConnectionString", ChangeFeedMode = CosmosDBChangeFeedMode.AllVersionsAndDeletes)] IReadOnlyList<ChangeFeedItem<dynamic>> docs)
             {
             }
         }

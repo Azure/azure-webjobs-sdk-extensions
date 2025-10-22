@@ -252,8 +252,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 #if PREVIEW
             return _cosmosDBAttribute.ChangeFeedMode switch
             {
-                CosmosDBTriggerChangeFeedMode.LatestVersion => _monitoredContainer.GetChangeFeedProcessorBuilder<T>(_processorName, ProcessChangesAsync),
-                CosmosDBTriggerChangeFeedMode.AllVersionsAndDeletes => _monitoredContainer.GetChangeFeedProcessorBuilderWithAllVersionsAndDeletes<T>(_processorName, ProcessChangesAsync),
+                CosmosDBChangeFeedMode.LatestVersion => _monitoredContainer.GetChangeFeedProcessorBuilder<T>(_processorName, ProcessChangesAsync),
+                CosmosDBChangeFeedMode.AllVersionsAndDeletes => _monitoredContainer.GetChangeFeedProcessorBuilderWithAllVersionsAndDeletes<T>(_processorName, ProcessChangesAsync),
                 _ => throw new InvalidOperationException($"Unsupported ChangeFeedMode '{_cosmosDBAttribute.ChangeFeedMode}'"),
             };
 #else

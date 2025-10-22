@@ -44,7 +44,7 @@ namespace ExtensionsSample
 
         // Sample implementation of the CosmosDBTrigger that listens for changes in a collection.
         // The trigger uses an auxiliary collection for leases for multiple partitions.
-        // This sample will also copy modifications to another target collection.        
+        // This sample will also copy modifications to another target collection.
         public static async Task ListenAndCopy(
             [CosmosDBTrigger("ItemDb", "ItemCollection", LeaseContainerName = "Leases")] IReadOnlyList<Document> modifiedDocuments,
             [CosmosDB("ItemDb", "ItemCollectionCopy")] IAsyncCollector<Document> copyItems)
