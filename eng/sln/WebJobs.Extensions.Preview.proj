@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <!--
+    This project is used to build the "preview" versions of extensions. It will ensure restore and build is performed with Preview=true.
+    Build with configuration as normal: -c debug or -c release.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="$(SrcRoot)WebJobs.Extensions.CosmosDB\WebJobs.Extensions.CosmosDB.csproj" />
+    <ProjectReference Include="$(TestRoot)WebJobs.Extensions.CosmosDB.Tests\WebJobs.Extensions.CosmosDB.Tests.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Update="@(ProjectReference)" AdditionalProperties="Preview=true" />
+  </ItemGroup>
+
+  <Target Name="_AddPreviewProperties" BeforeTargets="_GenerateRestoreGraph">
+    <PropertyGroup>
+      <_GenerateRestoreGraphProjectEntryInputProperties>$(_GenerateRestoreGraphProjectEntryInputProperties);Preview=true</_GenerateRestoreGraphProjectEntryInputProperties>
+    </PropertyGroup>
+  </Target>
+
+</Project>

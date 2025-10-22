@@ -6,6 +6,13 @@ parameters:
 - name: public
   type: boolean
   default: false
+- name: quality
+  displayName: Release quality
+  type: string
+  default: stable
+  values:
+  - stable
+  - preview
 
 resources:
   repositories:
@@ -52,8 +59,11 @@ extends:
       - template: /eng/ci/templates/jobs/build.yml@self
         parameters:
           sign: true
-          extra_args: '-p:IsReleaseCI=true'
           projects: ${{ parameters.projects }}
+          ${{ if eq(parameters.quality, 'preview') }}:
+            build_args: -p:Preview=true -p:IsReleaseCI=true
+          ${{ else }}:
+            build_args: -p:IsReleaseCI=true
 
     - stage: Release
       dependsOn: Build
