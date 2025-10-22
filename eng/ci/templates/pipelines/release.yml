@@ -6,6 +6,13 @@ parameters:
 - name: public
   type: boolean
   default: false
+- name: quality
+  displayName: Release quality
+  type: string
+  default: stable
+  values:
+  - stable
+  - preview
 
 resources:
   repositories:
@@ -36,6 +43,8 @@ extends:
         parameters:
           sign: true
           projects: ${{ parameters.projects }}
+          ${{ if eq(parameters.quality, 'preview') }}:
+            build_args: -p:Preview=true
 
     - stage: Release
       dependsOn: Build

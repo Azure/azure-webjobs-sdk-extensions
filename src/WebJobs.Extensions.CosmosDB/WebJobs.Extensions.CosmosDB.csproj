@@ -3,14 +3,19 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>This package contains binding extensions for Azure Cosmos DB.</Description>
+    <ReleaseNotesFile Condition="'$(Preview)' == 'true'">release_notes_preview.md</ReleaseNotesFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.53.1" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.54.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.42" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="Microsoft.Extensions.Azure" Version="1.12.0" />
     <PackageReference Include="Microsoft.Azure.Core.NewtonsoftJson" Version="2.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Preview)' == 'true'">
+    <PackageReference Update="Microsoft.Azure.Cosmos" Version="3.54.0-preview.1" />
   </ItemGroup>
 
 </Project>

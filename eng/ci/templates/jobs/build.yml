@@ -4,20 +4,28 @@ parameters:
   default: false
 - name: projects
   type: string
+- name: build_args
+  type: string
+  default: ''
+- name: label
+  type: string
+  default: ''
 
 jobs:
-- job: build
-  displayName: Build
+- job: ${{ iif(eq(parameters.label, ''), 'build', format('build_{0}', parameters.label)) }}
+  displayName: ${{ iif(eq(parameters.label, ''), 'Build', format('Build ({0})', parameters.label)) }}
 
   variables:
   - template: /eng/ci/templates/variables/build.yml@self
   - name: pack_dir
+    readonly: true
     value: $(Build.ArtifactStagingDirectory)/pkg
-  - name: extra_args
+  - name: build_args
+    readonly: true
     ${{ if eq(parameters.sign, true) }}:
-      value: -p:IsReleaseCI=true
+      value: -p:IsReleaseCI=true ${{ parameters.build_args }}
     ${{ else }}:
-      value: ''
+      value: ${{ parameters.build_args }}
 
   templateContext:
     outputParentDirectory: $(Build.ArtifactStagingDirectory)
@@ -25,7 +33,7 @@ jobs:
     - output: pipelineArtifact
       displayName: Publish logs
       path: $(pack_dir)
-      artifact: drop_packages
+      artifact: ${{ iif(eq(parameters.label, ''), 'drop_packages', format('drop_packages_{0}', parameters.label)) }}
 
   steps:
     - template: /eng/ci/templates/steps/install-dotnet.yml@self
@@ -54,7 +62,7 @@ jobs:
       inputs:
         command: build
         projects: ${{ parameters.projects }}
-        arguments: -c $(configuration) -v m --no-restore $(extra_args)
+        arguments: -c $(configuration) -v m --no-restore $(build_args)
 
     - template: /eng/ci/templates/steps/start-emulators.yml@self
 

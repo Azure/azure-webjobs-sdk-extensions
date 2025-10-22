@@ -8,11 +8,11 @@
     <IsPackable>false</IsPackable> <!-- default false -->
   </PropertyGroup>
 
-
   <!-- paths -->
   <PropertyGroup>
     <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
     <SrcRoot>$(RepoRoot)src/</SrcRoot>
+    <TestRoot>$(RepoRoot)test/</TestRoot>
     <EngRoot>$(RepoRoot)eng/</EngRoot>
     <EngBuildRoot>$(EngRoot)build/</EngBuildRoot>
     <EngResourceRoot>$(EngRoot)res/</EngResourceRoot>

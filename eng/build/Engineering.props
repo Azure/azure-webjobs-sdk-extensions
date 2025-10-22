@@ -1,5 +1,15 @@
 <Project>
 
+  <!-- configurations -->
+  <PropertyGroup>
+    <!-- These are here just for the Visual Studio experience. -->
+    <Configurations>Debug;Release;Debug-Preview;Release-Preview</Configurations>
+    <Preview Condition="'$(Configuration)' == 'Debug-Preview' or '$(Configuration)' == 'Release-Preview'">true</Preview>
+    <DefineConstants Condition="'$(Preview)' == 'true'">$(DefineConstants);PREVIEW</DefineConstants>
+    <DefineConstants Condition="'$(Configuration)' == 'Debug-Preview'">$(DefineConstants);DEBUG</DefineConstants>
+    <DefineConstants Condition="'$(Configuration)' == 'Release-Preview'">$(DefineConstants);RELEASE</DefineConstants>
+  </PropertyGroup>
+
   <PropertyGroup>
     <!-- Nuget audit as warnings only, even in TreatWarningsAsErrors. -->
     <!-- Except for in CI, critical will fail the build. -->
