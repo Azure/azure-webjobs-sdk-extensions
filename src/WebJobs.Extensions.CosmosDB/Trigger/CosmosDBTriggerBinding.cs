@@ -65,7 +65,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         internal CosmosDBTriggerAttribute CosmosDBAttribute => _cosmosDBAttribute;
 
-        public IReadOnlyDictionary<string, Type> BindingDataContract => CosmosDBTriggerBinding<T>._emptyBindingContract;
+        public IReadOnlyDictionary<string, Type> BindingDataContract => _emptyBindingContract;
 
         public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
         {
@@ -84,12 +84,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return Task.FromResult<IListener>(new CosmosDBTriggerListener<T>(
                 context.Executor,
                 context.Descriptor.Id,
-                this._processorName,
-                this._monitoredContainer, 
-                this._leaseContainer, 
-                this._cosmosDBAttribute,
-                this._drainModeManager,
-                this._logger));
+                _processorName,
+                _monitoredContainer,
+                _leaseContainer,
+                _cosmosDBAttribute,
+                _drainModeManager,
+                _logger));
         }
 
         /// <summary>
@@ -102,7 +102,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 Name = _parameter.Name,
                 Type = CosmosDBTriggerConstants.TriggerName,
-                CollectionName = this._monitoredContainer.Id
+                CollectionName = _monitoredContainer.Id
             };
         }
     }

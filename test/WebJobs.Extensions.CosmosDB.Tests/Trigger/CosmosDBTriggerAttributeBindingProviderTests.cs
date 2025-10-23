@@ -28,18 +28,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
     {
         private readonly ILoggerFactory _loggerFactory = new LoggerFactory();
         private readonly IDrainModeManager _drainModeManager = Mock.Of<IDrainModeManager>();
-        private static readonly IConfiguration _baseConfig = CosmosDBTestUtility.BuildConfiguration(new List<Tuple<string, string>>()
-        {
+        private static readonly IConfiguration _baseConfig = CosmosDBTestUtility.BuildConfiguration(
+        [
             Tuple.Create(Constants.DefaultConnectionStringName, "AccountEndpoint=https://fromEnvironment;AccountKey=c29tZV9rZXk=;")
-        });
+        ]);
 
         private readonly CosmosDBOptions _options = new CosmosDBOptions();
 
-        public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsWithLeaseHostOptionsParameters
-            => ValidCosmosDBTriggerBindigsWithLeaseHostOptions.GetParameters();
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsWithLeaseHostOptionsParameters
+            => ValidCosmosDBTriggerBindingsWithLeaseHostOptions.GetParameters();
 
-        public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsWithChangeFeedOptionsParameters
-            => ValidCosmosDBTriggerBindigsWithChangeFeedOptions.GetParameters();
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsWithChangeFeedOptionsParameters
+            => ValidCosmosDBTriggerBindingsWithChangeFeedOptions.GetParameters();
 
         public static IEnumerable<object[]> InvalidCosmosDBTriggerParameters
         {
@@ -58,17 +58,17 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
         public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsDifferentConnectionsParameters
         {
-            get { return ValidCosmosDBTriggerBindigsDifferentConnections.GetParameters(); }
+            get { return ValidCosmosDBTriggerBindingsDifferentConnections.GetParameters(); }
         }
 
         public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsWithEnvironmentParameters
         {
-            get { return ValidCosmosDBTriggerBindigsWithEnvironment.GetParameters(); }
+            get { return ValidCosmosDBTriggerBindingsWithEnvironment.GetParameters(); }
         }
 
-        public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsPreferredLocationsParameters
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsPreferredLocationsParameters
         {
-            get { return ValidCosmosDBTriggerBindigsPreferredLocations.GetParameters(); }
+            get { return ValidCosmosDBTriggerBindingsPreferredLocations.GetParameters(); }
         }
 
         public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsCreateLeaseContainerParameters
@@ -76,9 +76,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             get { return ValidCosmosDBTriggerBindingsCreateLeaseContainer.GetParameters(); }
         }
 
-        public static IEnumerable<object[]> ValidCosmosDBTriggerBindigsWithStartTimeParameters
+        public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsWithStartTimeParameters
         {
-            get { return ValidCosmosDBTriggerBindigsWithStartTime.GetParameters(); }
+            get { return ValidCosmosDBTriggerBindingsWithStartTime.GetParameters(); }
         }
 
         [Theory]
@@ -146,7 +146,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
         [Theory]
         [MemberData(nameof(ValidCosmosDBTriggerBindingsWithDatabaseAndCollectionSettingsParameters))]
-        public async Task ValidCosmosDBTriggerBindigsWithDatabaseAndCollectionSettings_Succeed(ParameterInfo parameter)
+        public async Task ValidCosmosDBTriggerBindingsWithDatabaseAndCollectionSettings_Succeed(ParameterInfo parameter)
         {
             var nameResolver = new TestNameResolver();
             nameResolver.Values["CosmosDBConnectionString"] = "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;";
@@ -169,7 +169,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
         [Theory]
         [MemberData(nameof(ValidCosmosDBTriggerBindingsDifferentConnectionsParameters))]
-        public async Task ValidCosmosDBTriggerBindigsDifferentConnections_Succeed(ParameterInfo parameter)
+        public async Task ValidCosmosDBTriggerBindingsDifferentConnections_Succeed(ParameterInfo parameter)
         {
             var nameResolver = new TestNameResolver();
 
@@ -246,8 +246,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         }
 
         [Theory]
-        [MemberData(nameof(ValidCosmosDBTriggerBindigsPreferredLocationsParameters))]
-        public async Task ValidCosmosDBTriggerBindigsPreferredLocationsParameters_Succeed(ParameterInfo parameter)
+        [MemberData(nameof(ValidCosmosDBTriggerBindingsPreferredLocationsParameters))]
+        public async Task ValidCosmosDBTriggerBindingsPreferredLocationsParameters_Succeed(ParameterInfo parameter)
         {
             var nameResolver = new TestNameResolver();
             nameResolver.Values["regions"] = "East US, North Europe,";
@@ -283,7 +283,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         }
 
         [Theory]
-        [MemberData(nameof(ValidCosmosDBTriggerBindigsWithLeaseHostOptionsParameters))]
+        [MemberData(nameof(ValidCosmosDBTriggerBindingsWithLeaseHostOptionsParameters))]
         public async Task ValidLeaseHostOptions_Succeed(ParameterInfo parameter)
         {
             var nameResolver = new TestNameResolver();
@@ -429,7 +429,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         }
 
         [Theory]
-        [MemberData(nameof(ValidCosmosDBTriggerBindigsWithChangeFeedOptionsParameters))]
+        [MemberData(nameof(ValidCosmosDBTriggerBindingsWithChangeFeedOptionsParameters))]
         public async Task ValidChangeFeedOptions_Succeed(ParameterInfo parameter)
         {
             var config = new ConfigurationBuilder()
@@ -451,8 +451,29 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             Assert.Equal(new Uri("https://fromSettings"), binding.LeaseContainer.Database.Client.Endpoint);
         }
 
+#if PREVIEW
+        [Fact]
+        public async Task ChangeFeedMode_AllVersionsAndDeletes_SetsAttribute()
+        {
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    { "CosmosDBConnectionString", "AccountEndpoint=https://fromSettings;AccountKey=c29tZV9rZXk=;" }
+                })
+                .Build();
+
+            var parameter = GetFirstParameter(typeof(ValidCosmosDBTriggerBindingsWithChangeFeedMode), "Func1");
+
+            CosmosDBTriggerAttributeBindingProvider<dynamic> provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(new TestNameResolver(), _options, CreateExtensionConfigProvider(_options, config), _drainModeManager, _loggerFactory);
+
+            CosmosDBTriggerBinding<dynamic> binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+
+            Assert.Equal(CosmosDBChangeFeedMode.AllVersionsAndDeletes, binding.CosmosDBAttribute.ChangeFeedMode);
+        }
+#endif
+
         [Theory]
-        [MemberData(nameof(ValidCosmosDBTriggerBindigsWithStartTimeParameters))]
+        [MemberData(nameof(ValidCosmosDBTriggerBindingsWithStartTimeParameters))]
         public async Task ValidStartFromTime_Succeed(ParameterInfo parameter)
         {
             var nameResolver = new TestNameResolver();
@@ -494,7 +515,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         }
 
         // These will use the default for ConnectionStringSetting, but override LeaseConnectionStringSetting
-        private static class ValidCosmosDBTriggerBindigsWithLeaseHostOptions
+        private static class ValidCosmosDBTriggerBindingsWithLeaseHostOptions
         {
             public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", LeaseConnection = "LeaseConnectionString", LeaseContainerPrefix = "someLeasePrefix")] IReadOnlyList<dynamic> docs)
             {
@@ -506,7 +527,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
             public static IEnumerable<ParameterInfo[]> GetParameters()
             {
-                var type = typeof(ValidCosmosDBTriggerBindigsWithLeaseHostOptions);
+                var type = typeof(ValidCosmosDBTriggerBindingsWithLeaseHostOptions);
 
                 return new[]
                 {
@@ -517,7 +538,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         }
 
         // These will set ConnectionStringSetting, which LeaseConnectionStringSetting should also use by default
-        private static class ValidCosmosDBTriggerBindigsWithChangeFeedOptions
+        private static class ValidCosmosDBTriggerBindingsWithChangeFeedOptions
         {
             public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", Connection = "CosmosDBConnectionString", MaxItemsPerInvocation = 10, StartFromBeginning = true)] IReadOnlyList<dynamic> docs)
             {
@@ -533,7 +554,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
             public static IEnumerable<ParameterInfo[]> GetParameters()
             {
-                var type = typeof(ValidCosmosDBTriggerBindigsWithChangeFeedOptions);
+                var type = typeof(ValidCosmosDBTriggerBindingsWithChangeFeedOptions);
 
                 return new[]
                 {
@@ -543,6 +564,15 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
                 };
             }
         }
+
+#if PREVIEW
+        private static class ValidCosmosDBTriggerBindingsWithChangeFeedMode
+        {
+            public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", Connection = "CosmosDBConnectionString", ChangeFeedMode = CosmosDBChangeFeedMode.AllVersionsAndDeletes)] IReadOnlyList<ChangeFeedItem<dynamic>> docs)
+            {
+            }
+        }
+#endif
 
         private static class InvalidCosmosDBTriggerBindings
         {
@@ -623,7 +653,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             }
         }
 
-        private static class ValidCosmosDBTriggerBindigsDifferentConnections
+        private static class ValidCosmosDBTriggerBindingsDifferentConnections
         {
             public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", Connection = "CosmosDBConnectionString", LeaseConnection = "LeaseCosmosDBConnectionString")] IReadOnlyList<dynamic> docs)
             {
@@ -635,7 +665,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
             public static IEnumerable<ParameterInfo[]> GetParameters()
             {
-                var type = typeof(ValidCosmosDBTriggerBindigsDifferentConnections);
+                var type = typeof(ValidCosmosDBTriggerBindingsDifferentConnections);
 
                 return new[]
                 {
@@ -645,7 +675,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             }
         }
 
-        private static class ValidCosmosDBTriggerBindigsWithEnvironment
+        private static class ValidCosmosDBTriggerBindingsWithEnvironment
         {
             public static void Func1([CosmosDBTrigger("aDatabase", "aCollection")] IReadOnlyList<dynamic> docs)
             {
@@ -665,7 +695,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
             public static IEnumerable<ParameterInfo[]> GetParameters()
             {
-                var type = typeof(ValidCosmosDBTriggerBindigsWithEnvironment);
+                var type = typeof(ValidCosmosDBTriggerBindingsWithEnvironment);
 
                 return new[]
                 {
@@ -709,7 +739,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             }
         }
 
-        private static class ValidCosmosDBTriggerBindigsPreferredLocations
+        private static class ValidCosmosDBTriggerBindingsPreferredLocations
         {
             public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", PreferredLocations = "East US, North Europe,")] IReadOnlyList<dynamic> docs)
             {
@@ -721,7 +751,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
             public static IEnumerable<ParameterInfo[]> GetParameters()
             {
-                var type = typeof(ValidCosmosDBTriggerBindigsPreferredLocations);
+                var type = typeof(ValidCosmosDBTriggerBindingsPreferredLocations);
 
                 return new[]
                 {
@@ -748,7 +778,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             }
         }
 
-        private static class ValidCosmosDBTriggerBindigsWithStartTime
+        private static class ValidCosmosDBTriggerBindingsWithStartTime
         {
             public static void Func1([CosmosDBTrigger("ItemDB", "ItemCollection", Connection = "CosmosDBConnectionString", StartFromTime = "%StartTimeValue%")] IReadOnlyList<dynamic> docs)
             {
@@ -756,7 +786,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
             public static IEnumerable<ParameterInfo[]> GetParameters()
             {
-                var type = typeof(ValidCosmosDBTriggerBindigsWithStartTime);
+                var type = typeof(ValidCosmosDBTriggerBindingsWithStartTime);
 
                 return new[]
                 {

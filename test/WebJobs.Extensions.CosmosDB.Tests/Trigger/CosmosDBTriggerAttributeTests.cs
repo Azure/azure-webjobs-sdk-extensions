@@ -27,19 +27,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             const string leaseDatabaseName = "someLeaseDatabase";
             const string defaultLeaseCollectionName = "leases";
 
-            CosmosDBTriggerAttribute attributeWithNoLeaseSpecified = new CosmosDBTriggerAttribute(databaseName, collectionName);
+            CosmosDBTriggerAttribute attributeWithNoLeaseSpecified = new(databaseName, collectionName);
 
             Assert.Equal(collectionName, attributeWithNoLeaseSpecified.ContainerName);
             Assert.Equal(databaseName, attributeWithNoLeaseSpecified.DatabaseName);
             Assert.Equal(defaultLeaseCollectionName, attributeWithNoLeaseSpecified.LeaseContainerName);
             Assert.Equal(databaseName, attributeWithNoLeaseSpecified.LeaseDatabaseName);
 
-            CosmosDBTriggerAttribute attributeWithLeaseSpecified = new CosmosDBTriggerAttribute(databaseName, collectionName) { LeaseDatabaseName = leaseDatabaseName, LeaseContainerName = leaseCollectionName };
+#if PREVIEW
+            Assert.Equal(CosmosDBChangeFeedMode.LatestVersion, attributeWithNoLeaseSpecified.ChangeFeedMode);
+#endif
+
+            CosmosDBTriggerAttribute attributeWithLeaseSpecified = new(databaseName, collectionName) { LeaseDatabaseName = leaseDatabaseName, LeaseContainerName = leaseCollectionName };
 
             Assert.Equal(collectionName, attributeWithLeaseSpecified.ContainerName);
             Assert.Equal(databaseName, attributeWithLeaseSpecified.DatabaseName);
             Assert.Equal(leaseCollectionName, attributeWithLeaseSpecified.LeaseContainerName);
             Assert.Equal(leaseDatabaseName, attributeWithLeaseSpecified.LeaseDatabaseName);
+
+#if PREVIEW
+            attributeWithLeaseSpecified.ChangeFeedMode = CosmosDBChangeFeedMode.AllVersionsAndDeletes;
+            Assert.Equal(CosmosDBChangeFeedMode.AllVersionsAndDeletes, attributeWithLeaseSpecified.ChangeFeedMode);
+#endif
         }
     }
 }

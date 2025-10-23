@@ -35,7 +35,7 @@ namespace Microsoft.Azure.WebJobs
             ContainerName = containerName;
             DatabaseName = databaseName;
             LeaseContainerName = CosmosDBTriggerConstants.DefaultLeaseCollectionName;
-            LeaseDatabaseName = this.DatabaseName;
+            LeaseDatabaseName = DatabaseName;
         }
 
         /// <summary>
@@ -130,5 +130,16 @@ namespace Microsoft.Azure.WebJobs
         /// PreferredLocations = "East US,South Central US,North Europe".
         /// </example>
         public string PreferredLocations { get; set; }
+
+#if PREVIEW
+        /// <summary>
+        /// Gets or sets the Change Feed mode to use when processing changes. Defaults to <see cref="CosmosDBChangeFeedMode.LatestVersion"/>.
+        /// </summary>
+        /// <remarks>
+        /// Set to <see cref="CosmosDBChangeFeedMode.AllVersionsAndDeletes"/> to receive all intermediate mutations and delete events (preview feature in Azure Cosmos DB).
+        /// When using AllVersionsAndDeletes the item type should be wrapped with <see cref="Microsoft.Azure.Cosmos.ChangeFeedItem{T}"/>.
+        /// </remarks>
+        public CosmosDBChangeFeedMode ChangeFeedMode { get; set; } = CosmosDBChangeFeedMode.LatestVersion;
+#endif
     }
 }
