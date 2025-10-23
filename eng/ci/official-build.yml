@@ -1,15 +1,15 @@
+# Signing is only for testing here. Release pipelines will rebuild and sign themselves.
+parameters:
+- name: sign
+  type: boolean
+  default: false
+
 trigger:
   batch: true
   branches:
     include:
     - dev
     - release/*
-
-  # Not auto triggering for these as can't auto-enable 'sign: true' parameter. Needs a manual queue.
-  # tags:
-  #   include:
-  #   - v*
-  #   - '*-v*'
 
 schedules:
 # Ensure we build nightly to catch any new CVEs and report SDL often.
@@ -58,11 +58,11 @@ extends:
       jobs:
       - template: /eng/ci/templates/jobs/build.yml@self
         parameters:
-          sign: false
+          sign: ${{ parameters.sign }}
           projects: $(Build.SourcesDirectory)/WebJobs.Extensions.sln
 
       - template: /eng/ci/templates/jobs/build.yml@self
         parameters:
-          sign: false
+          sign: ${{ parameters.sign }}
           projects: $(Build.SourcesDirectory)/eng/sln/WebJobs.Extensions.Preview.proj
           label: preview
