@@ -20,12 +20,6 @@ jobs:
   - name: pack_dir
     readonly: true
     value: $(Build.ArtifactStagingDirectory)/pkg
-  - name: build_args
-    readonly: true
-    ${{ if eq(parameters.sign, true) }}:
-      value: -p:IsReleaseCI=true ${{ parameters.build_args }}
-    ${{ else }}:
-      value: ${{ parameters.build_args }}
 
   templateContext:
     outputParentDirectory: $(Build.ArtifactStagingDirectory)
@@ -38,31 +32,20 @@ jobs:
   steps:
     - template: /eng/ci/templates/steps/install-dotnet.yml@self
 
-    # If sign=true, verify this is a valid branch or tag
-    - ${{ if eq(parameters.sign, true) }}:
-      - pwsh: |
-          $source = "$(Build.SourceBranch)"
-          if (!($source -like "refs/tags/*-v*" || $source -like "refs/tags/v*" || $source -like "refs/heads/release/*"))
-          {
-            Write-Host "##vso[task.logissue type=error]Signing is not allowed on non-release branches or tags"
-            exit 1
-          }
-        displayName: Verify sign is allowed
-
     - task: DotNetCoreCLI@2
       displayName: Restore
       inputs:
         command: custom
         custom: restore
         projects: ${{ parameters.projects }}
-        arguments: -v m
+        arguments: -v m ${{ parameters.build_args }}
 
     - task: DotNetCoreCLI@2
       displayName: Build
       inputs:
         command: build
         projects: ${{ parameters.projects }}
-        arguments: -c $(configuration) -v m --no-restore $(build_args)
+        arguments: -c $(configuration) -v m --no-restore ${{ parameters.build_args }}
 
     - template: /eng/ci/templates/steps/start-emulators.yml@self
 
@@ -70,7 +53,7 @@ jobs:
       displayName: Unit tests
       inputs:
         command: test
-        arguments: -c $(configuration) --no-build
+        arguments: -c $(configuration) --no-build ${{ parameters.build_args }}
         projects: ${{ parameters.projects }}
       env:
         AzureWebJobsStorage: $(Storage)
@@ -93,7 +76,7 @@ jobs:
       inputs:
         command: custom
         custom: pack
-        arguments: -c $(configuration) -v m -o $(pack_dir) --no-build
+        arguments: -c $(configuration) -v m -o $(pack_dir) --no-build ${{ parameters.build_args }}
         projects: ${{ parameters.projects }}
 
     - ${{ if eq(parameters.sign, true) }}:
