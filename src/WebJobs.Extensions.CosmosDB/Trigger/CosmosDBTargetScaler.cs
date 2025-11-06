@@ -79,7 +79,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
                 targetWorkerCount = partitionCount;
             }
 
-            _logger.LogInformation(targetScaleMessage);
+            _logger.LogFunctionScaleVote(_functionId, targetWorkerCount, (int)remainingWork, concurrency, targetScaleMessage);
 
             return new TargetScalerResult
             {
