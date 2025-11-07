@@ -149,19 +149,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             _loggerProvider.ClearAllLogMessages();
 
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await _cosmosDbMetricsProvider.GetMetricsAsync());
-
-            warning = _loggerProvider.GetAllLogMessages().Single(p => p.Level == Microsoft.Extensions.Logging.LogLevel.Warning);
-            Assert.Equal("Unable to handle System.InvalidOperationException: Unknown", warning.FormattedMessage);
             _loggerProvider.ClearAllLogMessages();
 
-            metrics = (CosmosDBTriggerMetrics)await _cosmosDbMetricsProvider.GetMetricsAsync();
-
-            Assert.Equal(0, metrics.PartitionCount);
-            Assert.Equal(0, metrics.RemainingWork);
-            Assert.NotEqual(default(DateTime), metrics.Timestamp);
-
-            warning = _loggerProvider.GetAllLogMessages().Single(p => p.Level == Microsoft.Extensions.Logging.LogLevel.Warning);
-            Assert.Equal("CosmosDBTrigger Exception message: Uh oh again.", warning.FormattedMessage);
+            var ex = await Assert.ThrowsAsync<HttpRequestException>(async () => await _cosmosDbMetricsProvider.GetMetricsAsync());
+            Assert.Equal("Uh oh", ex.Message);
+            Assert.Equal("Uh oh again", ex.InnerException.Message);
         }
 
         [Fact]
