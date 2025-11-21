@@ -284,7 +284,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             Type itemType = typeof(T);
             if (!IsChangeFeedItemType(itemType))
             {
-                throw new InvalidOperationException("When using ChangeFeedMode.AllVersionsAndDeletes, the trigger type must be of type System.Collections.Generic.IReadOnlyCollection<Microsoft.Azure.Cosmos.ChangeFeedItem<T>>.");
+                throw new InvalidOperationException("When using ChangeFeedMode.AllVersionsAndDeletes, the document type must be of type Microsoft.Azure.Cosmos.ChangeFeedItem<T>.");
             }
 
             itemType = itemType.GetGenericArguments()[0];

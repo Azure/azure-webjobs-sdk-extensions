@@ -23,7 +23,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 {
     // The EndToEnd tests require the AzureWebJobsCosmosDBConnectionString environment variable to be set.
     [Trait("Category", "E2E")]
-    public sealed class CosmosDBEndToEndTests(ITestOutputHelper output) : IDisposable
+    public sealed partial class CosmosDBEndToEndTests(ITestOutputHelper output) : IDisposable
     {
         private const string DatabaseName = "E2EDb";
         private const string CollectionName = "E2ECollection";
@@ -260,7 +260,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             }
 
             public static void Trigger(
-                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "ciTrigger")]IReadOnlyList<Item> documents,
+                [CosmosDBTrigger(DatabaseName, CollectionName, CreateLeaseContainerIfNotExists = true, LeaseContainerPrefix = "ciTrigger")] IReadOnlyList<Item> documents,
                 ILogger log)
             {
                 foreach (var document in documents)
