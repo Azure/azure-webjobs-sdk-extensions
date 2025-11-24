@@ -1,5 +1,6 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
+#if PREVIEW
 
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,6 @@ using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 {
-#if PREVIEW
     // The EndToEnd tests require the AzureWebJobsCosmosDBConnectionString environment variable to be set.
     public sealed partial class CosmosDBEndToEndTests
     {
@@ -61,7 +61,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
         private static class IncorrectBindingTypeTestClass
         {
-
             public static void Trigger(
                 [CosmosDBTrigger(
                     DatabaseName,
