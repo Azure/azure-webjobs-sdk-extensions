@@ -269,29 +269,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         private ChangeFeedProcessorBuilder GetAllVersionsAndDeleteBuilder()
         {
-            static bool IsChangeFeedItemType(Type type)
-            {
-                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ChangeFeedItem<>))
-                {
-                    return true;
-                }
-
-                return false;
-            }
-
-            // We need to unwrap T from ChangeFeedItem<T> to T, and then construct a builder from that. We will also validate the
-            // binding is of type ChangeFeedItem<T>.
+            // We need to unwrap T from ChangeFeedItem<T> to T, and then construct a builder from that.
             Type itemType = typeof(T);
-            if (!IsChangeFeedItemType(itemType))
+            if (!itemType.IsGenericType || itemType.GetGenericTypeDefinition() != typeof(ChangeFeedItem<>))
             {
-                throw new InvalidOperationException("When using ChangeFeedMode.AllVersionsAndDeletes, the document type must be of type Microsoft.Azure.Cosmos.ChangeFeedItem<T>.");
+                // Type does not match ChangeFeedItem<T>, this is an invalid binding for AllVersionsAndDeletes.
+                throw new InvalidOperationException($"When using ChangeFeedMode.AllVersionsAndDeletes, the trigger binding type must be Microsoft.Azure.Cosmos.ChangeFeedItem<T>. Actual type: '{itemType.FullName}'.");
             }
 
             itemType = itemType.GetGenericArguments()[0];
-
             MethodInfo method = typeof(CosmosDBTriggerListener<T>).GetMethod(nameof(GetAllVersionsAndDeleteBuilderCore), BindingFlags.NonPublic | BindingFlags.Instance);
             MethodInfo genericMethod = method.MakeGenericMethod(itemType);
-            return (ChangeFeedProcessorBuilder)genericMethod.Invoke(this, []);
+            return (ChangeFeedProcessorBuilder)genericMethod.Invoke(this, null);
         }
 #endif
     }

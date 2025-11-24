@@ -34,7 +34,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             catch (FunctionListenerException ex)
             {
                 InvalidOperationException inner = Assert.IsType<InvalidOperationException>(ex.InnerException);
-                Assert.Equal("When using ChangeFeedMode.AllVersionsAndDeletes, the document type must be of type Microsoft.Azure.Cosmos.ChangeFeedItem<T>.", inner.Message);
+                Assert.StartsWith($"When using ChangeFeedMode.AllVersionsAndDeletes, the trigger binding type must be Microsoft.Azure.Cosmos.ChangeFeedItem<T>.", inner.Message);
             }
         }
 
