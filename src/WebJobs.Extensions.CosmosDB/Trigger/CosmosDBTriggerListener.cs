@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
@@ -13,7 +14,6 @@ using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Azure.WebJobs.Host.Scale;
 using Microsoft.Extensions.Logging;
-using static Microsoft.Azure.Cosmos.Container;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
@@ -253,12 +253,35 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             return _cosmosDBAttribute.ChangeFeedMode switch
             {
                 CosmosDBChangeFeedMode.LatestVersion => _monitoredContainer.GetChangeFeedProcessorBuilder<T>(_processorName, ProcessChangesAsync),
-                CosmosDBChangeFeedMode.AllVersionsAndDeletes => _monitoredContainer.GetChangeFeedProcessorBuilderWithAllVersionsAndDeletes<T>(_processorName, ProcessChangesAsync),
+                CosmosDBChangeFeedMode.AllVersionsAndDeletes => GetAllVersionsAndDeleteBuilder(),
                 _ => throw new InvalidOperationException($"Unsupported ChangeFeedMode '{_cosmosDBAttribute.ChangeFeedMode}'"),
             };
 #else
             return _monitoredContainer.GetChangeFeedProcessorBuilder<T>(_processorName, ProcessChangesAsync);
 #endif
         }
+
+#if PREVIEW
+        private ChangeFeedProcessorBuilder GetAllVersionsAndDeleteBuilderCore<TInner>()
+        {
+            return _monitoredContainer.GetChangeFeedProcessorBuilderWithAllVersionsAndDeletes<TInner>(_processorName, ProcessChangesAsync);
+        }
+
+        private ChangeFeedProcessorBuilder GetAllVersionsAndDeleteBuilder()
+        {
+            // We need to unwrap T from ChangeFeedItem<T> to T, and then construct a builder from that.
+            Type itemType = typeof(T);
+            if (!itemType.IsGenericType || itemType.GetGenericTypeDefinition() != typeof(ChangeFeedItem<>))
+            {
+                // Type does not match ChangeFeedItem<T>, this is an invalid binding for AllVersionsAndDeletes.
+                throw new InvalidOperationException($"When using ChangeFeedMode.AllVersionsAndDeletes, the trigger binding type must be Microsoft.Azure.Cosmos.ChangeFeedItem<T>. Actual type: '{itemType.FullName}'.");
+            }
+
+            itemType = itemType.GetGenericArguments()[0];
+            MethodInfo method = typeof(CosmosDBTriggerListener<T>).GetMethod(nameof(GetAllVersionsAndDeleteBuilderCore), BindingFlags.NonPublic | BindingFlags.Instance);
+            MethodInfo genericMethod = method.MakeGenericMethod(itemType);
+            return (ChangeFeedProcessorBuilder)genericMethod.Invoke(this, null);
+        }
+#endif
     }
 }

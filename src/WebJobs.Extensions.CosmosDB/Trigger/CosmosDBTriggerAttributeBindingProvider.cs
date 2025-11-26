@@ -121,7 +121,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 parameter,
                 processorName,
                 monitoredContainer,
-                leasesContainer, 
+                leasesContainer,
                 attribute,
                 _drainModeManager,
                 _logger);
