@@ -19,8 +19,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         /// <param name="applicationLifetime">The application lifetime instance.</param>
         /// <param name="routes">A route configuration handler.</param>
         /// <returns>The updated <see cref="IApplicationBuilder"/>.</returns>
+        [Obsolete("This method is obsolete. Use UseHttpBindingRouting instead.")]
         public static IApplicationBuilder UseHttpBinding(this IApplicationBuilder builder, IApplicationLifetime applicationLifetime, Action<WebJobsRouteBuilder> routes)
-            => UseHttpBindingRouting(builder, applicationLifetime, routes);
+            => UseHttpBindingRouting(builder, routes);
 
         /// <summary>
         /// Adds the WebJobs HTTP Binding routing feature to the <seealso cref="IApplicationBuilder"/> execution pipeline.
@@ -29,11 +30,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http
         /// <param name="applicationLifetime">The application lifetime instance.</param>
         /// <param name="routes">A route configuration handler.</param>
         /// <returns>The updated <see cref="IApplicationBuilder"/>.</returns>
+        [Obsolete("This overload of UseHttpBindingRouting is obsolete.")]
         public static IApplicationBuilder UseHttpBindingRouting(this IApplicationBuilder builder, IApplicationLifetime applicationLifetime, Action<WebJobsRouteBuilder> routes)
+            => UseHttpBindingRouting(builder, routes);
+
+        /// <summary>
+        /// Adds the WebJobs HTTP Binding routing feature to the <seealso cref="IApplicationBuilder"/> execution pipeline.
+        /// </summary>
+        /// <param name="builder">The application builder.</param>
+        /// <param name="routes">A route configuration handler.</param>
+        /// <returns>The updated <see cref="IApplicationBuilder"/>.</returns>
+        public static IApplicationBuilder UseHttpBindingRouting(this IApplicationBuilder builder, Action<WebJobsRouteBuilder> routes)
         {
             var router = builder.ApplicationServices.GetRequiredService<IWebJobsRouter>();
 
-            if (routes != null)
+            if (routes is not null)
             {
                 var routeHandler = builder.ApplicationServices.GetRequiredService<IWebJobsRouteHandler>();
 
