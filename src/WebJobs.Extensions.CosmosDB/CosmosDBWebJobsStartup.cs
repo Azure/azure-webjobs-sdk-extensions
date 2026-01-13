@@ -3,6 +3,7 @@
 
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 using Microsoft.Azure.WebJobs.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 [assembly: WebJobsStartup(typeof(CosmosDBWebJobsStartup))]
@@ -14,6 +15,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         public void Configure(IWebJobsBuilder builder)
         {
             builder.AddCosmosDB();
+
+            builder.Services.ConfigureOptions<CosmosDBAppCapabilitiesConfigProvider>();
         }
     }
 }
