@@ -9,18 +9,7 @@ internal sealed class CosmosDBAppCapabilitiesConfigProvider : IConfigureOptions<
 {
     public void Configure(AppCapabilitiesOptions options)
     {
-        // Add or update a capability for your extension
-        var metadata = new Dictionary<string, string>
-        {
-            ["endpoint"] = "https://your-extension-endpoint",
-            ["featureFlag"] = "true"
-        };
-
-        AppCapabilityHelpers.AddOrUpdateCapability(
-            options.Capabilities,
-            "CosmosDBCapability",
-            CapabilitySourceNames.ExtensionSource,
-            version: "1.0",
-            metadata: metadata);
+        options.Capabilities["CosmosDBCapability"] = "value1";
+        options.Capabilities["CosmosDBTriggerCapability"] = "value2";
     }
 }
