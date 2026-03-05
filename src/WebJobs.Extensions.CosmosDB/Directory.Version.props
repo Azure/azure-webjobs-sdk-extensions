@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <VersionPrefix>4.12.102</VersionPrefix>
+    <VersionPrefix>4.12.104</VersionPrefix>
     <VersionSuffix Condition="'$(Preview)' == 'true'">preview.2</VersionSuffix>
   </PropertyGroup>
 </Project>

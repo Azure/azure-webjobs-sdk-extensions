@@ -9,7 +9,8 @@ internal sealed class CosmosDBAppCapabilitiesConfigProvider : IConfigureOptions<
 {
     public void Configure(AppCapabilitiesOptions options)
     {
-        options.Capabilities["CosmosDBCapability"] = "value1";
-        options.Capabilities["CosmosDBTriggerCapability"] = "value2";
+        var optionsDict = (IDictionary<string, string>)options;
+        optionsDict["CosmosDBCapability"] = "value1";
+        optionsDict["CosmosDBTriggerCapability"] = "value2";
     }
 }
