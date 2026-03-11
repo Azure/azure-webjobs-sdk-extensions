@@ -15,8 +15,9 @@ using static Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger.CosmosDbScalerP
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
 {
-    internal class CosmosDbScalerProvider : IScaleMonitorProvider, ITargetScalerProvider
+    internal class CosmosDbScalerProvider : IScaleMonitorProvider, ITargetScalerProvider, IDisposable
     {
+        private readonly CosmosClient _cosmosClient;
         private readonly CosmosDBScaleMonitor _scaleMonitor;
         private readonly CosmosDBTargetScaler _targetScaler;
 
@@ -37,12 +38,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
             CosmosDbMetadata cosmosDbMetadata = JsonConvert.DeserializeObject<CosmosDbMetadata>(triggerMetadata.Metadata.ToString());
             cosmosDbMetadata.ResolveProperties(serviceProvider.GetService<INameResolver>());
             ICosmosDBServiceFactory serviceFactory = new DefaultCosmosDBServiceFactory(config, azureComponentFactory);
-            CosmosClient cosmosClient = serviceFactory.CreateService(cosmosDbMetadata.Connection, new CosmosClientOptions
+            _cosmosClient = serviceFactory.CreateService(cosmosDbMetadata.Connection, new CosmosClientOptions
             {
                 ConnectionMode = ConnectionMode.Gateway
             });
-            var monitoredContainer = cosmosClient.GetContainer(cosmosDbMetadata.DatabaseName, cosmosDbMetadata.ContainerName);
-            var leaseContainer = cosmosClient.GetContainer(string.IsNullOrEmpty(cosmosDbMetadata.LeaseDatabaseName) ? cosmosDbMetadata.DatabaseName : cosmosDbMetadata.LeaseDatabaseName, string.IsNullOrEmpty(cosmosDbMetadata.LeaseContainerName) ? CosmosDBTriggerConstants.DefaultLeaseCollectionName : cosmosDbMetadata.LeaseContainerName);
+            var monitoredContainer = _cosmosClient.GetContainer(cosmosDbMetadata.DatabaseName, cosmosDbMetadata.ContainerName);
+            var leaseContainer = _cosmosClient.GetContainer(string.IsNullOrEmpty(cosmosDbMetadata.LeaseDatabaseName) ? cosmosDbMetadata.DatabaseName : cosmosDbMetadata.LeaseDatabaseName, string.IsNullOrEmpty(cosmosDbMetadata.LeaseContainerName) ? CosmosDBTriggerConstants.DefaultLeaseCollectionName : cosmosDbMetadata.LeaseContainerName);
             _scaleMonitor = new CosmosDBScaleMonitor(triggerMetadata.FunctionName, loggerFactory.CreateLogger<CosmosDBScaleMonitor>(), monitoredContainer, leaseContainer, cosmosDbMetadata.LeaseContainerPrefix);
             _targetScaler = new CosmosDBTargetScaler(triggerMetadata.FunctionName, cosmosDbMetadata.MaxItemsPerInvocation, monitoredContainer, leaseContainer, cosmosDbMetadata.LeaseContainerPrefix, loggerFactory.CreateLogger<CosmosDBTargetScaler>());
         }
@@ -55,6 +56,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
         public ITargetScaler GetTargetScaler()
         {
             return _targetScaler;
+        }
+
+        public void Dispose()
+        {
+            _cosmosClient?.Dispose();
         }
 
         internal class CosmosDbMetadata
