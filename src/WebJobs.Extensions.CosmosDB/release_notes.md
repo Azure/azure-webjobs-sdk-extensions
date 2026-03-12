@@ -1,6 +1,6 @@
 ## Microsoft.Azure.WebJobs.Extensions.CosmosDB 4.14.1
 
-- Fix CosmosClient memory leak in CosmosDbScalerProvider by implementing IDisposable (#981)
+- Fix CosmosClient memory leak in CosmosDbScalerProvider by implementing IDisposable (#988)
 
 ## Microsoft.Azure.WebJobs.Extensions.CosmosDB 4.14.0
 
