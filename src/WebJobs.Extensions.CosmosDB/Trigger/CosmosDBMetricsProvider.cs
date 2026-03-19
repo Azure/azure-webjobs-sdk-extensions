@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.WebJobs.Host.Scale;
 using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
@@ -18,6 +19,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
         private readonly Container _leaseContainer;
         private readonly string _processorName;
         private readonly int _maxAssignWorkerOnNotFoundCount = 5;
+        private readonly string _functionId;
         private int _assignWorkerOnNotFoundCount = 0;
 
         private static readonly Dictionary<string, string> KnownDocumentClientErrors = new Dictionary<string, string>()
@@ -34,12 +36,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
             { "The specified document collection is invalid", string.Empty }
         };
 
-        public CosmosDBMetricsProvider(ILogger logger, Container monitoredContainer, Container leaseContainer, string processorName)
+        public CosmosDBMetricsProvider(ILogger logger, Container monitoredContainer, Container leaseContainer, string processorName, string functionId)
         {
             _logger = logger;
             _monitoredContainer = monitoredContainer;
             _leaseContainer = leaseContainer;
             _processorName = processorName;
+            _functionId = functionId;
         }
 
         public async Task<CosmosDBTriggerMetrics> GetMetricsAsync()
@@ -65,7 +68,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
                 {
                     partitionCount = 1;
                     remainingWork = 1;
-                    _logger.LogWarning(Events.OnScaling, "PartitionCount is 0, the lease container exists but it has not been initialized, scale out to 1 and wait for the first execution.");
+                    _logger.LogFunctionScaleWarning("PartitionCount is 0, the lease container exists but it has not been initialized, scale out to 1 and wait for the first execution.",
+                        _functionId, null);
                 }
                 else
                 {
@@ -88,8 +92,8 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
                 // However, it could also signal an issue with the monitoring container configuration.
                 // As a result, we make a limited number of attempts to create the lease container.
                 _assignWorkerOnNotFoundCount++;
-                _logger.LogWarning(Events.OnScaling, $"Possible non-exiting lease container detected. Trying to create the lease container, attempt '{_assignWorkerOnNotFoundCount}'",
-                    cosmosException.GetType().ToString(), cosmosException.Message);
+                _logger.LogFunctionScaleWarning($"Possible non-exiting lease container detected. Trying to create the lease container, attempt '{_assignWorkerOnNotFoundCount}'",
+                    _functionId, cosmosException);
                 partitionCount = 1;
                 remainingWork = 1;
             }
@@ -97,7 +101,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
             {
                 if (!TryHandleCosmosException(e))
                 {
-                    _logger.LogWarning(Events.OnScaling, "Unable to handle {0}: {1}", e.GetType().ToString(), e.Message);
+                    _logger.LogFunctionScaleWarning("Unable to handle CosmosDB exception during scaling metrics retrieval.", _functionId, e);
                     if (e is InvalidOperationException)
                     {
                         throw;
@@ -106,7 +110,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
             }
             catch (System.Net.Http.HttpRequestException e)
             {
-                string errormsg;
+                string errorMessage;
 
                 var webException = e.InnerException as WebException;
                 if (webException != null &&
@@ -114,23 +118,23 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
                 {
                     string statusCode = ((HttpWebResponse)webException.Response).StatusCode.ToString();
                     string statusDesc = ((HttpWebResponse)webException.Response).StatusDescription;
-                    errormsg = string.Format("CosmosDBTrigger status {0}: {1}.", statusCode, statusDesc);
+                    errorMessage = string.Format("CosmosDBTrigger status {0}: {1}.", statusCode, statusDesc);
                 }
                 else if (webException != null &&
                     webException.Status == WebExceptionStatus.NameResolutionFailure)
                 {
-                    errormsg = string.Format("CosmosDBTrigger Exception message: {0}.", webException.Message);
+                    errorMessage = string.Format("CosmosDBTrigger Exception message: {0}.", webException.Message);
                 }
                 else
                 {
-                    errormsg = e.ToString();
+                    errorMessage = e.ToString();
                 }
 
-                _logger.LogWarning(Events.OnScaling, errormsg);
+                _logger.LogFunctionScaleWarning(errorMessage, _functionId, e);
             }
             catch (Exception e)
             {
-                _logger.LogWarning(Events.OnScaling, "Exception occurred while obtaining metrics for CosmosDB {0}: {1}.", e.GetType().ToString(), e.ToString());
+                _logger.LogFunctionScaleWarning($"Exception occurred while obtaining metrics for CosmosDB.", _functionId, e);
             }
 
             return new CosmosDBTriggerMetrics
@@ -144,7 +148,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
         // Since all exceptions in the Cosmos client are thrown as CosmosExceptions, we have to parse their error strings because we dont have access to the internal types
         private bool TryHandleCosmosException(Exception exception)
         {
-            string errormsg = null;
+            string errorMessage = null;
             string exceptionMessage = exception.Message;
 
             if (!string.IsNullOrEmpty(exceptionMessage))
@@ -153,14 +157,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
                 {
                     if (exceptionMessage.IndexOf(exceptionString.Key, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        errormsg = !string.IsNullOrEmpty(exceptionString.Value) ? exceptionString.Value : exceptionMessage;
+                        errorMessage = !string.IsNullOrEmpty(exceptionString.Value) ? exceptionString.Value : exceptionMessage;
                     }
                 }
             }
 
-            if (!string.IsNullOrEmpty(errormsg))
+            if (!string.IsNullOrEmpty(errorMessage))
             {
-                _logger.LogWarning(errormsg);
+                _logger.LogFunctionScaleWarning(errorMessage, _functionId, exception);
                 return true;
             }
 

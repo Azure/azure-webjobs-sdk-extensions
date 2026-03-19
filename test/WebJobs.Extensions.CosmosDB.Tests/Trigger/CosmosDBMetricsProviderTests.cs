@@ -56,7 +56,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
                 .Setup(m => m.GetChangeFeedEstimator(It.Is<string>(s => s == ProcessorName), It.Is<Container>(c => c == _leasesContainer.Object)))
                 .Returns(estimator.Object);
 
-            _cosmosDbMetricsProvider = new CosmosDBMetricsProvider(_loggerFactory.CreateLogger<CosmosDBMetricsProviderTests>(), _monitoredContainer.Object, _leasesContainer.Object, ProcessorName);
+            _cosmosDbMetricsProvider = new CosmosDBMetricsProvider(_loggerFactory.CreateLogger<CosmosDBMetricsProviderTests>(), _monitoredContainer.Object, _leasesContainer.Object, ProcessorName, "testFunctionId");
         }
 
         [Fact]
@@ -145,13 +145,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             Assert.NotEqual(default(DateTime), metrics.Timestamp);
 
             var warning = _loggerProvider.GetAllLogMessages().Single(p => p.Level == Microsoft.Extensions.Logging.LogLevel.Warning);
-            Assert.StartsWith("Possible non-exiting lease container detected. Trying to create the lease container, attempt", warning.FormattedMessage);
+            Assert.StartsWith("Function 'testFunctionId' warning: Possible non-exiting lease container detected. Trying to create the lease container, attempt", warning.FormattedMessage);
             _loggerProvider.ClearAllLogMessages();
 
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await _cosmosDbMetricsProvider.GetMetricsAsync());
 
             warning = _loggerProvider.GetAllLogMessages().Single(p => p.Level == Microsoft.Extensions.Logging.LogLevel.Warning);
-            Assert.Equal("Unable to handle System.InvalidOperationException: Unknown", warning.FormattedMessage);
+            Assert.Equal("Function 'testFunctionId' warning: Unable to handle CosmosDB exception during scaling metrics retrieval.", warning.FormattedMessage);
             _loggerProvider.ClearAllLogMessages();
 
             metrics = (CosmosDBTriggerMetrics)await _cosmosDbMetricsProvider.GetMetricsAsync();
@@ -161,7 +161,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             Assert.NotEqual(default(DateTime), metrics.Timestamp);
 
             warning = _loggerProvider.GetAllLogMessages().Single(p => p.Level == Microsoft.Extensions.Logging.LogLevel.Warning);
-            Assert.Equal("CosmosDBTrigger Exception message: Uh oh again.", warning.FormattedMessage);
+            Assert.Equal("Function 'testFunctionId' warning: CosmosDBTrigger Exception message: Uh oh again.", warning.FormattedMessage);
         }
 
         [Fact]

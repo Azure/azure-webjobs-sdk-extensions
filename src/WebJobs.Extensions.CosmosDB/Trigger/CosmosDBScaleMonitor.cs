@@ -34,7 +34,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
             _functionId = functionId;
             _monitoredContainer = monitoredContainer;
             _scaleMonitorDescriptor = new ScaleMonitorDescriptor($"{_functionId}-CosmosDBTrigger-{_monitoredContainer.Database.Id}-{_monitoredContainer.Id}".ToLower(), _functionId);
-            _cosmosDBMetricsProvider = new CosmosDBMetricsProvider(logger, monitoredContainer, leaseContainer, processorName);
+            _cosmosDBMetricsProvider = new CosmosDBMetricsProvider(logger, monitoredContainer, leaseContainer, processorName, functionId);
         }
 
         public ScaleMonitorDescriptor Descriptor => _scaleMonitorDescriptor;
