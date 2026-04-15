@@ -182,7 +182,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Storage.Sch
             ILoggerFactory loggerFactory = new LoggerFactory();
             loggerFactory.AddProvider(new TestLoggerProvider());
 
-            return new StorageScheduleMonitor(new TestIdProvider(hostId), loggerFactory, azureStorageProvider);
+            var applicationLifetime = tempHost.Services.GetRequiredService<IApplicationLifetime>();
+
+            return new StorageScheduleMonitor(new TestIdProvider(hostId), loggerFactory, azureStorageProvider, applicationLifetime);
         }
 
         private class TestIdProvider : Host.Executors.IHostIdProvider

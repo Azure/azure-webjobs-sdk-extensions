@@ -11,6 +11,7 @@ using Azure.Storage.Blobs;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Storage;
 using Microsoft.Azure.WebJobs.Logging;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -26,6 +27,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         private readonly JsonSerializer _serializer;
         private readonly ILogger _logger;
         private readonly IHostIdProvider _hostIdProvider;
+        private readonly CancellationToken _shutdownToken;
         private string _timerStatusPath;
         private BlobContainerClient _containerClient;
 
@@ -35,11 +37,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// <param name="hostIdProvider"><see cref="IHostIdProvider"/> to retrieve the current Host ID.</param>
         /// <param name="loggerFactory"><see cref="ILoggerFactory"/> for logging purposes.</param>
         /// <param name="azureStorageProvider"><see cref="IAzureBlobStorageProvider"/> to instantiate Blob-related clients for Timer operations.</param>
-        public StorageScheduleMonitor(IHostIdProvider hostIdProvider, ILoggerFactory loggerFactory, IAzureBlobStorageProvider azureStorageProvider)
+        /// <param name="applicationLifetime"><see cref="IApplicationLifetime"/> to observe host shutdown for cancellation of storage operations.</param>
+        public StorageScheduleMonitor(IHostIdProvider hostIdProvider, ILoggerFactory loggerFactory, IAzureBlobStorageProvider azureStorageProvider, IApplicationLifetime applicationLifetime)
         {
             _hostIdProvider = hostIdProvider ?? throw new ArgumentNullException(nameof(hostIdProvider));
             _logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("Timer"));
             _azureStorageProvider = azureStorageProvider ?? throw new ArgumentNullException(nameof(azureStorageProvider));
+            _shutdownToken = applicationLifetime?.ApplicationStopping ?? CancellationToken.None;
 
             JsonSerializerSettings settings = new JsonSerializerSettings
             {
@@ -59,7 +63,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 // be available AFTER the host as been started
                 if (string.IsNullOrEmpty(_timerStatusPath))
                 {
-                    string hostId = _hostIdProvider.GetHostIdAsync(CancellationToken.None).GetAwaiter().GetResult();
+                    string hostId = _hostIdProvider.GetHostIdAsync(_shutdownToken).GetAwaiter().GetResult();
                     if (string.IsNullOrEmpty(hostId))
                     {
                         throw new InvalidOperationException("Unable to determine host ID.");
@@ -96,7 +100,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             try
             {
                 string statusLine;
-                var downloadResponse = await statusBlobClient.DownloadAsync();
+                var downloadResponse = await statusBlobClient.DownloadAsync(_shutdownToken);
                 using (StreamReader reader = new StreamReader(downloadResponse.Value.Content))
                 {
                     statusLine = reader.ReadToEnd();
@@ -135,8 +139,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 BlobClient statusBlobClient = await GetStatusBlobClient(timerName, createContainerIfNotExists: true);
                 using (Stream stream = new MemoryStream(Encoding.UTF8.GetBytes(statusLine)))
                 {
-                    await statusBlobClient.UploadAsync(stream, overwrite: true);
+                    await statusBlobClient.UploadAsync(stream, overwrite: true, _shutdownToken);
                 }
+            }
+            catch (OperationCanceledException) when (_shutdownToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -149,13 +157,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         {
             // Path to the status blob is:
             // timers/{hostId}/{timerName}/status
-            string blobName = string.Format("{0}/{1}/status", TimerStatusPath, timerName);
+            string timerStatusPath = await GetTimerStatusPathAsync();
+            string blobName = string.Format("{0}/{1}/status", timerStatusPath, timerName);
             if (createContainerIfNotExists)
             {
-                await ContainerClient.CreateIfNotExistsAsync();
+                await ContainerClient.CreateIfNotExistsAsync(cancellationToken: _shutdownToken);
             }
 
             return ContainerClient.GetBlobClient(blobName);
+        }
+
+        private async Task<string> GetTimerStatusPathAsync()
+        {
+            if (string.IsNullOrEmpty(_timerStatusPath))
+            {
+                string hostId = await _hostIdProvider.GetHostIdAsync(_shutdownToken);
+                if (string.IsNullOrEmpty(hostId))
+                {
+                    throw new InvalidOperationException("Unable to determine host ID.");
+                }
+
+                _timerStatusPath = string.Format("timers/{0}", hostId);
+            }
+
+            return _timerStatusPath;
         }
     }
 }
