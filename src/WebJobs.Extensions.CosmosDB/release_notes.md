@@ -1,3 +1,8 @@
+## Microsoft.Azure.WebJobs.Extensions.CosmosDB 4.15.0
+
+- Replace scaling warning/error log calls with standardized `LogFunctionScaleWarning` extension method to enable Scale Controller App Insights diagnostics
+- Update Microsoft.Azure.WebJobs to 3.0.44
+
 ## Microsoft.Azure.WebJobs.Extensions.CosmosDB 4.14.1
 
 - Fix CosmosClient memory leak in CosmosDbScalerProvider by implementing IDisposable (#988)
