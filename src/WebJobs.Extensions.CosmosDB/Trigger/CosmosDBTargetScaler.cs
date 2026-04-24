@@ -24,7 +24,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
             _functionId = functionId;
             _targetScalerDescriptor = new TargetScalerDescriptor(functionId);
             _monitoredContainer = monitoredContainer;
-            _cosmosDBMetricsProvider = new CosmosDBMetricsProvider(logger, _monitoredContainer, leaseContainer, processorName);
+            _cosmosDBMetricsProvider = new CosmosDBMetricsProvider(logger, _monitoredContainer, leaseContainer, processorName, _functionId);
             _logger = logger;
             _maxItemsPerInvocation = maxItemsPerInvocation;
         }
@@ -53,7 +53,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
 
             if (concurrency <= 0)
             {
-                _logger.LogWarning($"Concurrency value for target based scale must be greater than 0. Using default value of {DefaultMaxItemsPerInvocation} as concurrency value.");
+                _logger.LogFunctionScaleWarning($"Concurrency value for target based scale must be greater than 0. Using default value of {DefaultMaxItemsPerInvocation} as concurrency value.", _functionId, null);
                 concurrency = DefaultMaxItemsPerInvocation;
             }
 
