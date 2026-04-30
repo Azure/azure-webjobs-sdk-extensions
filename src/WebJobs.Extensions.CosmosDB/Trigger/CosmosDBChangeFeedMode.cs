@@ -1,7 +1,6 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-#if PREVIEW
 namespace Microsoft.Azure.WebJobs
 {
     /// <summary>
@@ -16,7 +15,7 @@ namespace Microsoft.Azure.WebJobs
         LatestVersion = 0,
 
         /// <summary>
-        /// All intermediate versions and delete tombstones are included (preview feature in Azure Cosmos DB).
+        /// All intermediate versions and delete tombstones are included.
         /// </summary>
         /// <remarks>
         /// When using <see cref="AllVersionsAndDeletes"/> the item type should be wrapped with <see cref="Microsoft.Azure.Cosmos.ChangeFeedItem{T}"/>.
@@ -24,4 +23,3 @@ namespace Microsoft.Azure.WebJobs
         AllVersionsAndDeletes = 1
     }
 }
-#endif

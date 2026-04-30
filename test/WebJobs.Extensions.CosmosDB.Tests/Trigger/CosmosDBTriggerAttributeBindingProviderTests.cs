@@ -451,7 +451,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             Assert.Equal(new Uri("https://fromSettings"), binding.LeaseContainer.Database.Client.Endpoint);
         }
 
-#if PREVIEW
         [Fact]
         public async Task ChangeFeedMode_AllVersionsAndDeletes_SetsAttribute()
         {
@@ -470,7 +469,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
             Assert.Equal(CosmosDBChangeFeedMode.AllVersionsAndDeletes, binding.CosmosDBAttribute.ChangeFeedMode);
         }
-#endif
 
         [Theory]
         [MemberData(nameof(ValidCosmosDBTriggerBindingsWithStartTimeParameters))]
@@ -565,14 +563,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
             }
         }
 
-#if PREVIEW
         private static class ValidCosmosDBTriggerBindingsWithChangeFeedMode
         {
             public static void Func1([CosmosDBTrigger("aDatabase", "aCollection", Connection = "CosmosDBConnectionString", ChangeFeedMode = CosmosDBChangeFeedMode.AllVersionsAndDeletes)] IReadOnlyList<ChangeFeedItem<dynamic>> docs)
             {
             }
         }
-#endif
 
         private static class InvalidCosmosDBTriggerBindings
         {
