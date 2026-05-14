@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Microsoft.Azure.WebJobs.Extensions.Timers
@@ -30,14 +31,38 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         public abstract Task<ScheduleStatus> GetStatusAsync(string timerName);
 
         /// <summary>
+        /// Gets the last recorded schedule status for the specified timer.
+        /// If the timer has not ran yet, null will be returned.
+        /// </summary>
+        /// <remarks>
+        /// The default implementation delegates to <see cref="GetStatusAsync(string)"/> and ignores the
+        /// supplied <paramref name="cancellationToken"/>. Override this method to honor cancellation.
+        /// </remarks>
+        /// <param name="timerName">The name of the timer to check.</param>
+        /// <param name="cancellationToken">A token observed for cancellation of the operation.</param>
+        /// <returns>The schedule status.</returns>
+        public virtual Task<ScheduleStatus> GetStatusAsync(string timerName, CancellationToken cancellationToken)
+            => GetStatusAsync(timerName);
+
+        /// <summary>
         /// Internally, calls <see cref="GetStatusAsync(string)"/> and corrects any invalid values
         /// on the returned <see cref="ScheduleStatus"/> object before returning.
         /// </summary>
         /// <param name="timerName">The name of the timer to check.</param>
         /// <returns>The schedule status.</returns>
-        public async Task<ScheduleStatus> GetSafeStatusAsync(string timerName)
+        public Task<ScheduleStatus> GetSafeStatusAsync(string timerName)
+            => GetSafeStatusAsync(timerName, CancellationToken.None);
+
+        /// <summary>
+        /// Internally, calls <see cref="GetStatusAsync(string, CancellationToken)"/> and corrects any
+        /// invalid values on the returned <see cref="ScheduleStatus"/> object before returning.
+        /// </summary>
+        /// <param name="timerName">The name of the timer to check.</param>
+        /// <param name="cancellationToken">A token observed for cancellation of the operation.</param>
+        /// <returns>The schedule status.</returns>
+        public async Task<ScheduleStatus> GetSafeStatusAsync(string timerName, CancellationToken cancellationToken)
         {
-            var status = await GetStatusAsync(timerName);
+            var status = await GetStatusAsync(timerName, cancellationToken);
 
             if (status?.Last < DefaultDateTimeThreshold)
             {
@@ -63,6 +88,21 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         /// <param name="timerName">The name of the timer.</param>
         /// <param name="status">The new schedule status.</param>
         public abstract Task UpdateStatusAsync(string timerName, ScheduleStatus status);
+
+        /// <summary>
+        /// Updates the schedule status for the specified timer.
+        /// </summary>
+        /// <remarks>
+        /// The default implementation delegates to <see cref="UpdateStatusAsync(string, ScheduleStatus)"/>
+        /// and ignores the supplied <paramref name="cancellationToken"/>. Override this method to honor
+        /// cancellation. Callers should be cautious about cancelling status updates that follow a successful
+        /// function invocation, as a failed update can result in duplicate invocations after restart.
+        /// </remarks>
+        /// <param name="timerName">The name of the timer.</param>
+        /// <param name="status">The new schedule status.</param>
+        /// <param name="cancellationToken">A token observed for cancellation of the operation.</param>
+        public virtual Task UpdateStatusAsync(string timerName, ScheduleStatus status, CancellationToken cancellationToken)
+            => UpdateStatusAsync(timerName, status);
 
         /// <summary>
         /// Checks whether the schedule is currently past due.

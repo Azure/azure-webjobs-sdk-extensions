@@ -255,7 +255,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 LastUpdated = ScheduleMonitor.DefaultDateTime
             };
 
-            _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_testTimerName)).ReturnsAsync(status);
+            _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_testTimerName, It.IsAny<CancellationToken>())).ReturnsAsync(status);
 
             DateTimeOffset lastOccurrence = default;
             TimeSpan pastDueAmount = TimeSpan.FromMinutes(3);
@@ -308,7 +308,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 Last = now.AddHours(-1),
                 Next = now.AddHours(1)
             };
-            _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_testTimerName)).ReturnsAsync(status);
+            _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_testTimerName, It.IsAny<CancellationToken>())).ReturnsAsync(status);
 
             TimeSpan pastDueAmount = TimeSpan.Zero;
             _mockScheduleMonitor.Setup(p => p.CheckPastDueAsync(_testTimerName, It.IsAny<DateTimeOffset>(), It.IsAny<TimerSchedule>(), status))
@@ -368,7 +368,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             DateTime testStart = DateTime.Now;
 
             _mockScheduleMonitor
-                .Setup(p => p.GetStatusAsync(_testTimerName))
+                .Setup(p => p.GetStatusAsync(_testTimerName, It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult<ScheduleStatus>(null));
 
             _mockScheduleMonitor
@@ -421,7 +421,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
             };
 
             _mockScheduleMonitor
-                .Setup(p => p.GetStatusAsync(_testTimerName))
+                .Setup(p => p.GetStatusAsync(_testTimerName, It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult(invalidStatus));
 
             _mockScheduleMonitor
@@ -512,7 +512,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
                 LastUpdated = ScheduleMonitor.DefaultDateTime
             };
 
-            _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_testTimerName)).ReturnsAsync(status);
+            _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_testTimerName, It.IsAny<CancellationToken>())).ReturnsAsync(status);
 
             // Make sure we invoke b/c we're past due.
             _mockScheduleMonitor.Setup(p => p.CheckPastDueAsync(_testTimerName, It.IsAny<DateTimeOffset>(), It.IsAny<TimerSchedule>(), status))
@@ -736,7 +736,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers
         public async Task RunInitialStatusTestAsync(ScheduleStatus initialStatus, string expected)
         {
             _mockScheduleMonitor
-                .Setup(m => m.GetStatusAsync(_testTimerName))
+                .Setup(m => m.GetStatusAsync(_testTimerName, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(initialStatus);
             _mockScheduleMonitor
                 .Setup(m => m.CheckPastDueAsync(_testTimerName, It.IsAny<DateTimeOffset>(), _schedule, It.IsAny<ScheduleStatus>()))
