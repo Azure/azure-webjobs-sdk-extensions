@@ -36,7 +36,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
 
             Assert.Equal(CosmosDBChangeFeedMode.LatestVersion, attributeWithNoLeaseSpecified.ChangeFeedMode);
 
-            CosmosDBTriggerAttribute attributeWithLeaseSpecified= new(databaseName, collectionName) { LeaseDatabaseName = leaseDatabaseName, LeaseContainerName = leaseCollectionName };
+            CosmosDBTriggerAttribute attributeWithLeaseSpecified = new(databaseName, collectionName) { LeaseDatabaseName = leaseDatabaseName, LeaseContainerName = leaseCollectionName };
 
             Assert.Equal(collectionName, attributeWithLeaseSpecified.ContainerName);
             Assert.Equal(databaseName, attributeWithLeaseSpecified.DatabaseName);
