@@ -230,7 +230,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         private async Task ProcessChangesAsync<TValue>(ChangeFeedProcessorContext context, IReadOnlyCollection<TValue> docs, CancellationToken cancellationToken)
         {
-            // TValue will depend on ChangeFeedMode (only LatestVersion is supported outside of PREVIEW)
+            // TValue will depend on ChangeFeedMode
             // For LatestVersion, it is T
             // For AllVersionsAndDeletes, it is ChangeFeedItem<T>
             _healthMonitor.OnChangesDelivered(context);
@@ -249,19 +249,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         private ChangeFeedProcessorBuilder GetBuilder()
         {
-#if PREVIEW
             return _cosmosDBAttribute.ChangeFeedMode switch
             {
                 CosmosDBChangeFeedMode.LatestVersion => _monitoredContainer.GetChangeFeedProcessorBuilder<T>(_processorName, ProcessChangesAsync),
                 CosmosDBChangeFeedMode.AllVersionsAndDeletes => GetAllVersionsAndDeleteBuilder(),
                 _ => throw new InvalidOperationException($"Unsupported ChangeFeedMode '{_cosmosDBAttribute.ChangeFeedMode}'"),
             };
-#else
-            return _monitoredContainer.GetChangeFeedProcessorBuilder<T>(_processorName, ProcessChangesAsync);
-#endif
         }
 
-#if PREVIEW
         private ChangeFeedProcessorBuilder GetAllVersionsAndDeleteBuilderCore<TInner>()
         {
             return _monitoredContainer.GetChangeFeedProcessorBuilderWithAllVersionsAndDeletes<TInner>(_processorName, ProcessChangesAsync);
@@ -282,6 +277,5 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             MethodInfo genericMethod = method.MakeGenericMethod(itemType);
             return (ChangeFeedProcessorBuilder)genericMethod.Invoke(this, null);
         }
-#endif
     }
 }
