@@ -1,4 +1,4 @@
-## Microsoft.Azure.WebJobs.Extensions.CosmosDB 4.15.0
+## Microsoft.Azure.WebJobs.Extensions.CosmosDB 4.16.0
 
 - feat: add support for `AllVersionsAndDelete` changefeed mode. (#999)
 - feat: update Microsoft.Azure.Cosmos to 3.60.0 (#999)

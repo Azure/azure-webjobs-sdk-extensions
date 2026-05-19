@@ -1,4 +1,4 @@
-## Microsoft.Azure.WebJobs.Extensions.CosmosDB 4.13.0-preview.1
+## Microsoft.Azure.WebJobs.Extensions.CosmosDB 4.16.0-preview.1
 
 - feat: update Microsoft.Azure.Cosmos to 3.61.0-preview.0 (#999)
 
