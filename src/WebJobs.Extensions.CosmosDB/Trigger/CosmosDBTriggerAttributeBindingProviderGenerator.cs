@@ -4,6 +4,7 @@
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Extensions.Logging;
@@ -57,6 +58,20 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             if (typeof(string).IsAssignableFrom(documentType))
             {
                 documentType = typeof(JObject);
+            }
+
+            // For out-of-process (worker) functions in AllVersionsAndDeletes mode, the parameter
+            // type surfaced to the host is the raw payload (JObject - after the JArray/string
+            // collapse above) rather than the worker's actual ChangeFeedItem<T> binding. Wrap so
+            // downstream type contracts (TriggerValueType, value binder, listener) all agree on
+            // ChangeFeedItem<JObject>. Intentionally NOT shimming arbitrary user POCOs: those are
+            // in-proc bindings where the user is expected to declare ChangeFeedItem<T> directly,
+            // and the listener's type guard will produce a clear InvalidOperationException at
+            // startup if they don't.
+            if (cosmosDBTriggerAttribute.ChangeFeedMode == CosmosDBChangeFeedMode.AllVersionsAndDeletes
+                && documentType == typeof(JObject))
+            {
+                documentType = typeof(ChangeFeedItem<JObject>);
             }
 
             Type baseType = typeof(CosmosDBTriggerAttributeBindingProvider<>);

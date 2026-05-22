@@ -108,6 +108,41 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests.Trigger
             Assert.Contains(_logDetails, logs[3].FormattedMessage);
         }
 
+        [Fact]
+        public async Task StartAsync_AllVersionsAndDeletes_NonChangeFeedItemType_Throws()
+        {
+            // The generator's AVAD shim intentionally does NOT wrap user-defined POCO bindings
+            // (only the worker-default JObject shape gets wrapped). For in-proc users who forget
+            // the ChangeFeedItem<T> wrapper, the listener's startup guard surfaces a clear
+            // InvalidOperationException rather than silently producing a malformed binding.
+            var attribute = new CosmosDBTriggerAttribute(DatabaseName, ContainerName)
+            {
+                ChangeFeedMode = CosmosDBChangeFeedMode.AllVersionsAndDeletes
+            };
+
+            var listener = new CosmosDBTriggerListener<MyDocument>(
+                _mockExecutor.Object,
+                _functionId,
+                ProcessorName,
+                _monitoredContainer.Object,
+                _leasesContainer.Object,
+                attribute,
+                Mock.Of<IDrainModeManager>(),
+                _loggerFactory.CreateLogger<CosmosDBTriggerListener<MyDocument>>());
+
+            InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => listener.StartAsync(CancellationToken.None));
+
+            Assert.Contains("ChangeFeedMode.AllVersionsAndDeletes", ex.Message);
+            Assert.Contains("Microsoft.Azure.Cosmos.ChangeFeedItem<T>", ex.Message);
+            Assert.Contains(typeof(MyDocument).FullName, ex.Message);
+        }
+
+        public class MyDocument
+        {
+            public string Id { get; set; }
+        }
+
         private class MockListener<T> : CosmosDBTriggerListener<T>
         {
             private int _retries = 0;
