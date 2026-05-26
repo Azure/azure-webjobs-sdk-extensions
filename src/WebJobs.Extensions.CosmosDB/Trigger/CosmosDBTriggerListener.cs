@@ -265,10 +265,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private ChangeFeedProcessorBuilder GetAllVersionsAndDeleteBuilder()
         {
             // We need to unwrap T from ChangeFeedItem<T> to T, and then construct a builder from that.
+            // For out-of-process functions the binding-provider generator wraps the default JObject
+            // payload into ChangeFeedItem<JObject> before reaching this listener, so by the time
+            // we're here T is always ChangeFeedItem<>. Any other T is an in-proc user mistake
+            // (e.g. IReadOnlyList<MyDocument> instead of IReadOnlyList<ChangeFeedItem<MyDocument>>);
+            // throw early with a clear error rather than silently produce malformed bindings.
             Type itemType = typeof(T);
             if (!itemType.IsGenericType || itemType.GetGenericTypeDefinition() != typeof(ChangeFeedItem<>))
             {
-                // Type does not match ChangeFeedItem<T>, this is an invalid binding for AllVersionsAndDeletes.
                 throw new InvalidOperationException($"When using ChangeFeedMode.AllVersionsAndDeletes, the trigger binding type must be Microsoft.Azure.Cosmos.ChangeFeedItem<T>. Actual type: '{itemType.FullName}'.");
             }
 

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -17,16 +18,19 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
         private readonly ParameterInfo _parameter;
         private readonly bool _isJArray;
         private readonly bool _isString;
+        private readonly bool _isAllVersionsAndDeletes;
 
         public CosmosDBTriggerValueBinder(
             ParameterInfo parameter, 
-            object value)
+            object value,
+            CosmosDBTriggerAttribute cosmosDBAttribute = null)
         {
             _value = value;
             _parameter = parameter;
             Type parameterType = CosmosDBTriggerAttributeBindingProviderGenerator.GetParameterType(parameter);
             _isJArray = parameterType.IsAssignableFrom(typeof(JArray));
             _isString = parameterType.IsAssignableFrom(typeof(string));
+            _isAllVersionsAndDeletes = cosmosDBAttribute?.ChangeFeedMode == CosmosDBChangeFeedMode.AllVersionsAndDeletes;
         }
 
         public Type Type
@@ -36,7 +40,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 if (_isJArray 
                     || _isString)
                 {
-                    return typeof(IReadOnlyCollection<JObject>);
+                    // In AllVersionsAndDeletes mode the host receives ChangeFeedItem<JObject>
+                    // from the change feed processor rather than raw JObjects.
+                    return _isAllVersionsAndDeletes
+                        ? typeof(IReadOnlyCollection<ChangeFeedItem<JObject>>)
+                        : typeof(IReadOnlyCollection<JObject>);
                 }
 
                 return _parameter.ParameterType;

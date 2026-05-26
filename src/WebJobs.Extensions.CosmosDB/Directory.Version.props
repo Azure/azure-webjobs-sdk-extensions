@@ -1,6 +1,10 @@
 <Project>
   <PropertyGroup>
-    <VersionPrefix>4.16.0</VersionPrefix>
-    <VersionSuffix Condition="'$(Preview)' == 'true'">preview.1</VersionSuffix>
+    <VersionPrefix>4.16.1</VersionPrefix>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Preview)' == 'true'">
+    <VersionPrefix>4.17.0</VersionPrefix>
+    <VersionSuffix>preview.1</VersionSuffix>
   </PropertyGroup>
 </Project>

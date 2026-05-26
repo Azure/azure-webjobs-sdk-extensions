@@ -69,7 +69,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
         {
-            IValueProvider valueBinder = new CosmosDBTriggerValueBinder(_parameter, value);
+            IValueProvider valueBinder = new CosmosDBTriggerValueBinder(_parameter, value, _cosmosDBAttribute);
             return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, _emptyBindingData));
         }
 
