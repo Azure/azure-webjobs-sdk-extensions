@@ -1,10 +1,17 @@
 steps:
 
+- task: npmAuthenticate@0
+  displayName: Authenticate npm
+  inputs:
+    workingFile: $(Build.SourcesDirectory)/.npmrc
+
 - pwsh: |
     npm install -g azurite
     Start-Process azurite.cmd -ArgumentList "--silent --inMemoryPersistence"
     Write-Host "##vso[task.setvariable variable=Storage]UseDevelopmentStorage=true"
   displayName: Start azurite
+  env:
+    NPM_CONFIG_USERCONFIG: $(Build.SourcesDirectory)/.npmrc
 
 - pwsh: |
     Import-Module "$env:ProgramFiles\Azure Cosmos DB Emulator\PSModules\Microsoft.Azure.CosmosDB.Emulator"
