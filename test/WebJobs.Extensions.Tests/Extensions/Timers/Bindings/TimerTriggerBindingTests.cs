@@ -54,7 +54,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Bindings
         public async Task BindAsync_ReturnsExpectedTriggerData()
         {
             ScheduleStatus status = new ScheduleStatus();
-            _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_timerName)).ReturnsAsync(status);
+            _mockScheduleMonitor.Setup(p => p.GetStatusAsync(_timerName, It.IsAny<CancellationToken>())).ReturnsAsync(status);
 
             // when we bind to a non-TimerInfo (e.g. in a Dashboard invocation) a new
             // TimerInfo is created, with the ScheduleStatus populated
@@ -108,7 +108,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Extensions.Timers.Bindings
             };
 
             _mockScheduleMonitor
-                .Setup(p => p.GetStatusAsync(_timerName))
+                .Setup(p => p.GetStatusAsync(_timerName, It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult(invalidStatus));
 
             FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
