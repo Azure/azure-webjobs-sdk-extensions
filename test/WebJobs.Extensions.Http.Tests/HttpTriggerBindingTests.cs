@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -253,6 +254,28 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
             TestPoco testPoco = (TestPoco)await triggerData.ValueProvider.GetValueAsync();
             Assert.Equal("FirstName LastName", testPoco.Name);
             Assert.Equal("MyCity", testPoco.Location);
+        }
+        
+        [Fact]
+        public async Task BindAsync_Poco_FromQueryParameters_WithDifferentNaming()
+        {
+            ParameterInfo parameterInfo = GetType().GetMethod("TestPocoFunctionWithCustomName").GetParameters()[0];
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding binding = new HttpTriggerAttributeBindingProvider.HttpTriggerBinding(new HttpTriggerAttribute(), parameterInfo, true);
+
+            HttpRequest request = HttpTestHelpers.CreateHttpRequest("GET", "http://functions/myfunc?code=abc123&custom_value=Mathew%20Charles&Location=Seattle");
+
+            FunctionBindingContext functionContext = new FunctionBindingContext(Guid.NewGuid(), CancellationToken.None);
+            ValueBindingContext context = new ValueBindingContext(functionContext, CancellationToken.None);
+            ITriggerData triggerData = await binding.BindAsync(request, context);
+
+            Assert.Equal(6, triggerData.BindingData.Count);
+            Assert.Null(triggerData.BindingData[nameof(TestPocoWithDataMember.CustomValue)]);
+            Assert.Equal("Mathew Charles", triggerData.BindingData["custom_value"]);
+            Assert.Equal("Seattle", triggerData.BindingData[nameof(TestPocoWithDataMember.Location)]);
+
+            TestPocoWithDataMember testPoco = (TestPocoWithDataMember)(await triggerData.ValueProvider.GetValueAsync());
+            Assert.Equal("Mathew Charles", testPoco.CustomValue);
+            Assert.Equal("Seattle", testPoco.Location);
         }
 
         [Fact]
@@ -506,6 +529,22 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
                 Assert.Equal(pair.Value, poco.Properties[pair.Key]);
             }
         }
+        
+        [Fact]
+        public static void ApplyBindingDataWithDataMember_Succeeds()
+        {
+            TestPocoWithDataMember poco = new TestPocoWithDataMember();
+            Dictionary<string, object> bindingData = new Dictionary<string, object>()
+            {
+                { "Location", "Seattle" },
+                { "custom_value", "25" }
+            };
+
+            HttpTriggerAttributeBindingProvider.HttpTriggerBinding.ApplyBindingData(poco, bindingData);
+
+            Assert.Equal("Seattle", poco.Location);
+            Assert.Equal("25", poco.CustomValue);
+        }
 
         [Fact]
         public static void LazyBindingData_DelaysInstantiation()
@@ -545,6 +584,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
         }
 
         public void TestPocoFunction(TestPoco poco)
+        {
+        }
+
+        public void TestPocoFunctionWithCustomName(TestPocoWithDataMember poco)
         {
         }
 
@@ -597,6 +640,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Http.Tests
         public class TestPoco
         {
             public string Name { get; set; }
+
+            public string Location { get; set; }
+        }
+
+        public class TestPocoWithDataMember
+        {
+            [DataMember(Name = "custom_value")]
+            public string CustomValue { get; set; }
 
             public string Location { get; set; }
         }
