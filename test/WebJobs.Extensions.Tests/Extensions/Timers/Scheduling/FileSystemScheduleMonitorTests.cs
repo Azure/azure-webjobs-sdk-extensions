@@ -51,6 +51,30 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         }
 
         [Fact]
+        public void Constructor_JobsInLastPathSegment_DefaultsToHomeDataDirectory()
+        {
+            string home = Path.Combine(Path.GetTempPath(), "home-" + Guid.NewGuid().ToString("N"));
+            Environment.SetEnvironmentVariable("HOME", home);
+            try
+            {
+                // "jobs" appears only after the last directory separator, as in a project folder named "MyJobs"
+                string currentDirectory = Path.Combine(Path.GetTempPath(), "src", "MyJobs");
+
+                FileSystemScheduleMonitor localMonitor = new FileSystemScheduleMonitor(currentDirectory);
+
+                Assert.Equal(Path.Combine(home, "data", "webjobs", "timers"), localMonitor.StatusFilePath);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("HOME", null);
+                if (Directory.Exists(home))
+                {
+                    Directory.Delete(home, true);
+                }
+            }
+        }
+
+        [Fact]
         public void StatusFilePath_OverridesDefaultWhenSet()
         {
             FileSystemScheduleMonitor localMonitor = new FileSystemScheduleMonitor();
