@@ -188,7 +188,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers.Listeners
             {
                 // check to see if we've missed an occurrence since we last started.
                 // If we have, invoke it immediately.
-                ScheduleStatus = await ScheduleMonitor.GetSafeStatusAsync(_timerLookupName);
+                ScheduleStatus = await ScheduleMonitor.GetSafeStatusAsync(_timerLookupName, cancellationToken);
 
                 Logger.InitialStatus(_logger, _functionLogName, ScheduleStatus?.Last.ToString("o"), ScheduleStatus?.Next.ToString("o"), ScheduleStatus?.LastUpdated.ToString("o"));
                 TimeSpan pastDueDuration = await ScheduleMonitor.CheckPastDueAsync(_timerLookupName, now, _schedule, ScheduleStatus);
