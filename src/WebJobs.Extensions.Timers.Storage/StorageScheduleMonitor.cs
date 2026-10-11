@@ -89,14 +89,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         }
 
         /// <inheritdoc/>
-        public override async Task<ScheduleStatus> GetStatusAsync(string timerName)
+        public override Task<ScheduleStatus> GetStatusAsync(string timerName)
+            => GetStatusAsync(timerName, CancellationToken.None);
+
+        /// <inheritdoc/>
+        public override async Task<ScheduleStatus> GetStatusAsync(string timerName, CancellationToken cancellationToken)
         {
-            BlobClient statusBlobClient = await GetStatusBlobClient(timerName, createContainerIfNotExists: false);
+            BlobClient statusBlobClient = await GetStatusBlobClient(timerName, createContainerIfNotExists: false, cancellationToken);
 
             try
             {
                 string statusLine;
-                var downloadResponse = await statusBlobClient.DownloadAsync();
+                var downloadResponse = await statusBlobClient.DownloadAsync(cancellationToken);
                 using (StreamReader reader = new StreamReader(downloadResponse.Value.Content))
                 {
                     statusLine = reader.ReadToEnd();
@@ -121,7 +125,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
         }
 
         /// <inheritdoc/>
-        public override async Task UpdateStatusAsync(string timerName, ScheduleStatus status)
+        public override Task UpdateStatusAsync(string timerName, ScheduleStatus status)
+            => UpdateStatusAsync(timerName, status, CancellationToken.None);
+
+        /// <inheritdoc/>
+        public override async Task UpdateStatusAsync(string timerName, ScheduleStatus status, CancellationToken cancellationToken)
         {
             string statusLine;
             using (StringWriter stringWriter = new StringWriter())
@@ -132,10 +140,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
 
             try
             {
-                BlobClient statusBlobClient = await GetStatusBlobClient(timerName, createContainerIfNotExists: true);
+                BlobClient statusBlobClient = await GetStatusBlobClient(timerName, createContainerIfNotExists: true, cancellationToken);
                 using (Stream stream = new MemoryStream(Encoding.UTF8.GetBytes(statusLine)))
                 {
-                    await statusBlobClient.UploadAsync(stream, overwrite: true);
+                    await statusBlobClient.UploadAsync(stream, overwrite: true, cancellationToken);
                 }
             }
             catch (Exception ex)
@@ -145,14 +153,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
             }
         }
 
-        private async Task<BlobClient> GetStatusBlobClient(string timerName, bool createContainerIfNotExists = false)
+        private async Task<BlobClient> GetStatusBlobClient(string timerName, bool createContainerIfNotExists, CancellationToken cancellationToken)
         {
             // Path to the status blob is:
             // timers/{hostId}/{timerName}/status
             string blobName = string.Format("{0}/{1}/status", TimerStatusPath, timerName);
             if (createContainerIfNotExists)
             {
-                await ContainerClient.CreateIfNotExistsAsync();
+                await ContainerClient.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
             }
 
             return ContainerClient.GetBlobClient(blobName);
