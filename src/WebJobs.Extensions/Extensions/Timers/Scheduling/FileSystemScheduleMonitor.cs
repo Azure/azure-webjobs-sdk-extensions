@@ -48,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Timers
                 // run from is the same as the data directory structure
                 int start = currentDirectory.IndexOf("jobs", StringComparison.OrdinalIgnoreCase);
                 int end = currentDirectory.LastIndexOf(Path.DirectorySeparatorChar);
-                if (start > 0 && end > 0)
+                if (start > 0 && end > start)
                 {
                     string jobPath = currentDirectory.Substring(start, end - start);
                     _statusFilePath = Path.Combine(rootPath, jobPath);
