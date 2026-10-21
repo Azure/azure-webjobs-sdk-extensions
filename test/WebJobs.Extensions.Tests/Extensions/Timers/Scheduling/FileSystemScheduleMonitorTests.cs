@@ -53,6 +53,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
         [Fact]
         public void Constructor_JobsInLastPathSegment_DefaultsToHomeDataDirectory()
         {
+            string originalHome = Environment.GetEnvironmentVariable("HOME");
             string home = Path.Combine(Path.GetTempPath(), "home-" + Guid.NewGuid().ToString("N"));
             Environment.SetEnvironmentVariable("HOME", home);
             try
@@ -66,7 +67,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.Tests.Timers.Scheduling
             }
             finally
             {
-                Environment.SetEnvironmentVariable("HOME", null);
+                Environment.SetEnvironmentVariable("HOME", originalHome);
                 if (Directory.Exists(home))
                 {
                     Directory.Delete(home, true);
