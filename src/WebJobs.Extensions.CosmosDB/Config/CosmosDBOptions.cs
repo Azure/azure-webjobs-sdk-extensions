@@ -3,6 +3,7 @@
 
 using System.IO;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger;
 using Microsoft.Azure.WebJobs.Hosting;
 using Newtonsoft.Json;
 
@@ -10,6 +11,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 {
     public class CosmosDBOptions : IOptionsFormatter
     {
+        /// <summary>
+        /// Gets or sets the default maximum number of change feed items per invocation.
+        /// </summary>
+        public string DefaultMaxItemsPerInvocation { get; set; }
+
         /// <summary>
         /// Gets or sets the ConnectionMode used in the CosmosClient instances.
         /// </summary>
@@ -28,6 +34,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public string Format()
         {
+            MaxItemsPerInvocationResolver.Resolve(0, null, DefaultMaxItemsPerInvocation, null, null);
             StringWriter sw = new StringWriter();
             using (JsonTextWriter writer = new JsonTextWriter(sw) { Formatting = Formatting.Indented })
             {
@@ -35,6 +42,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
                 writer.WritePropertyName(nameof(this.ConnectionMode));
                 writer.WriteValue(this.ConnectionMode);
+
+                if (DefaultMaxItemsPerInvocation != null)
+                {
+                    writer.WritePropertyName(nameof(this.DefaultMaxItemsPerInvocation));
+                    writer.WriteValue(this.DefaultMaxItemsPerInvocation);
+                }
 
                 if (!string.IsNullOrEmpty(UserAgentSuffix))
                 {

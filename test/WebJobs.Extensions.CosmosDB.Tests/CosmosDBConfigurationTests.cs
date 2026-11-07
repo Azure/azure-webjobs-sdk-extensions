@@ -26,6 +26,18 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         });
 
         [Fact]
+        public void InvalidDefaultIsRejectedBeforeFormattingOrExtensionInitialization()
+        {
+            var options = new CosmosDBOptions { DefaultMaxItemsPerInvocation = "private-invalid-value" };
+            var formatError = Assert.Throws<InvalidOperationException>(() => options.Format());
+            Assert.DoesNotContain("private-invalid-value", formatError.Message);
+            var initError = Assert.Throws<InvalidOperationException>(() => new CosmosDBExtensionConfigProvider(
+                new OptionsWrapper<CosmosDBOptions>(options), new DefaultCosmosDBServiceFactory(_baseConfig, Mock.Of<AzureComponentFactory>()),
+                new DefaultCosmosDBSerializerFactory(), new TestNameResolver(), Mock.Of<IDrainModeManager>(), NullLoggerFactory.Instance));
+            Assert.DoesNotContain("private-invalid-value", initError.Message);
+        }
+
+        [Fact]
         public async Task Configuration_Caches_Clients()
         {
             // Arrange

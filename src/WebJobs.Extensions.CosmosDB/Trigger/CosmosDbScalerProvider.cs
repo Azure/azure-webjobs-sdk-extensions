@@ -36,7 +36,11 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
             IConfiguration config = serviceProvider.GetService<IConfiguration>();
             ILoggerFactory loggerFactory = serviceProvider.GetService<ILoggerFactory>();
             CosmosDbMetadata cosmosDbMetadata = JsonConvert.DeserializeObject<CosmosDbMetadata>(triggerMetadata.Metadata.ToString());
-            cosmosDbMetadata.ResolveProperties(serviceProvider.GetService<INameResolver>());
+            INameResolver nameResolver = serviceProvider.GetService<INameResolver>();
+            cosmosDbMetadata.ResolveProperties(nameResolver);
+            string defaultMaxItems = serviceProvider.GetService<IOptions<CosmosDBOptions>>()?.Value.DefaultMaxItemsPerInvocation
+                ?? config?["AzureWebJobs:extensions:cosmosDB:defaultMaxItemsPerInvocation"];
+            int maxItems = MaxItemsPerInvocationResolver.Resolve(cosmosDbMetadata.MaxItemsPerInvocation, cosmosDbMetadata.MaxItemsPerInvocationSetting, defaultMaxItems, name => nameResolver != null ? nameResolver.Resolve(name) : config?[name], triggerMetadata.FunctionName);
             ICosmosDBServiceFactory serviceFactory = new DefaultCosmosDBServiceFactory(config, azureComponentFactory);
             _cosmosClient = serviceFactory.CreateService(cosmosDbMetadata.Connection, new CosmosClientOptions
             {
@@ -45,7 +49,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
             var monitoredContainer = _cosmosClient.GetContainer(cosmosDbMetadata.DatabaseName, cosmosDbMetadata.ContainerName);
             var leaseContainer = _cosmosClient.GetContainer(string.IsNullOrEmpty(cosmosDbMetadata.LeaseDatabaseName) ? cosmosDbMetadata.DatabaseName : cosmosDbMetadata.LeaseDatabaseName, string.IsNullOrEmpty(cosmosDbMetadata.LeaseContainerName) ? CosmosDBTriggerConstants.DefaultLeaseCollectionName : cosmosDbMetadata.LeaseContainerName);
             _scaleMonitor = new CosmosDBScaleMonitor(triggerMetadata.FunctionName, loggerFactory.CreateLogger<CosmosDBScaleMonitor>(), monitoredContainer, leaseContainer, cosmosDbMetadata.LeaseContainerPrefix);
-            _targetScaler = new CosmosDBTargetScaler(triggerMetadata.FunctionName, cosmosDbMetadata.MaxItemsPerInvocation, monitoredContainer, leaseContainer, cosmosDbMetadata.LeaseContainerPrefix, loggerFactory.CreateLogger<CosmosDBTargetScaler>());
+            _targetScaler = new CosmosDBTargetScaler(triggerMetadata.FunctionName, maxItems, monitoredContainer, leaseContainer, cosmosDbMetadata.LeaseContainerPrefix, loggerFactory.CreateLogger<CosmosDBTargetScaler>());
         }
 
         public IScaleMonitor GetMonitor()
@@ -85,6 +89,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
 
             [JsonProperty]
             public int MaxItemsPerInvocation { get; set; }
+
+            [JsonProperty]
+            public string MaxItemsPerInvocationSetting { get; set; }
 
             public void ResolveProperties(INameResolver resolver)
             {
