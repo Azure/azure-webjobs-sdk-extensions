@@ -34,7 +34,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
 
         public string Format()
         {
-            MaxItemsPerInvocationResolver.Resolve(0, null, DefaultMaxItemsPerInvocation, null, null);
             StringWriter sw = new StringWriter();
             using (JsonTextWriter writer = new JsonTextWriter(sw) { Formatting = Formatting.Indented })
             {
@@ -46,7 +45,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
                 if (DefaultMaxItemsPerInvocation != null)
                 {
                     writer.WritePropertyName(nameof(this.DefaultMaxItemsPerInvocation));
-                    writer.WriteValue(this.DefaultMaxItemsPerInvocation);
+
+                    // Never echo an unparsed value: a misplaced secret must not reach the logs.
+                    if (MaxItemsPerInvocationResolver.TryParsePositive(this.DefaultMaxItemsPerInvocation, out int defaultMaxItems))
+                    {
+                        writer.WriteValue(defaultMaxItems);
+                    }
+                    else
+                    {
+                        writer.WriteValue("<invalid>");
+                    }
                 }
 
                 if (!string.IsNullOrEmpty(UserAgentSuffix))

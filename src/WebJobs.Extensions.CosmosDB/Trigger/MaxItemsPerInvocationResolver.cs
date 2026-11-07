@@ -29,9 +29,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
             return explicitValue > 0 ? explicitValue : appDefault ?? explicitValue;
         }
 
+        internal static bool TryParsePositive(string value, out int result)
+        {
+            return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out result) && result > 0;
+        }
+
         private static int ParsePositive(string value, string option)
         {
-            if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int result) || result <= 0)
+            if (!TryParsePositive(value, out int result))
             {
                 throw new InvalidOperationException($"{option} must resolve to a positive 32-bit integer.");
             }

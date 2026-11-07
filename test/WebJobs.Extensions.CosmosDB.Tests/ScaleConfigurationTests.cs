@@ -119,13 +119,16 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
             Assert.DoesNotContain("invalid", error.Message, StringComparison.OrdinalIgnoreCase);
         }
 
-        [Fact]
-        public void ScaleHostWithoutExtensionRegistrationReadsConfiguredDefault()
+        [Theory]
+        [InlineData(null, "AzureWebJobs")]
+        [InlineData("AzureFunctionsJobHost", "AzureFunctionsJobHost")]
+        public void ScaleHostWithoutExtensionRegistrationReadsConfiguredDefault(string rootSection, string settingRoot)
         {
             var settings = new Dictionary<string, string>
             {
                 ["CosmosConnection"] = "AccountEndpoint=https://example.invalid;AccountKey=c29tZV9rZXk=;",
-                ["AzureWebJobs:extensions:cosmosDB:DefaultMaxItemsPerInvocation"] = "30"
+                ["AzureWebJobsConfigurationSection"] = rootSection,
+                [$"{settingRoot}:extensions:cosmosDB:defaultMaxItemsPerInvocation"] = "30"
             };
             var metadata = new TriggerMetadata(JObject.Parse(@"{
                 'type': 'cosmosDBTrigger', 'functionName': 'TestFunction',

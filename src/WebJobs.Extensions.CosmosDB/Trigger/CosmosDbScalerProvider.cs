@@ -39,7 +39,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger
             INameResolver nameResolver = serviceProvider.GetService<INameResolver>();
             cosmosDbMetadata.ResolveProperties(nameResolver);
             string defaultMaxItems = serviceProvider.GetService<IOptions<CosmosDBOptions>>()?.Value.DefaultMaxItemsPerInvocation
-                ?? config?["AzureWebJobs:extensions:cosmosDB:defaultMaxItemsPerInvocation"];
+                ?? config?.GetWebJobsExtensionConfigurationSection(Constants.WebJobsCosmosExtensionName)[nameof(CosmosDBOptions.DefaultMaxItemsPerInvocation)];
             int maxItems = MaxItemsPerInvocationResolver.Resolve(cosmosDbMetadata.MaxItemsPerInvocation, cosmosDbMetadata.MaxItemsPerInvocationSetting, defaultMaxItems, name => nameResolver != null ? nameResolver.Resolve(name) : config?[name], triggerMetadata.FunctionName);
             ICosmosDBServiceFactory serviceFactory = new DefaultCosmosDBServiceFactory(config, azureComponentFactory);
             _cosmosClient = serviceFactory.CreateService(cosmosDbMetadata.Connection, new CosmosClientOptions
