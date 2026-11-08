@@ -18,10 +18,10 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         [InlineData(0, null, null, null, 0)]
         [InlineData(2147483647, null, null, null, 2147483647)]
         [InlineData(0, "limit", null, "2147483647", 2147483647)]
-        public void ResolvesPrecedenceAndLegacyValues(int explicitValue, string name, string appDefault, string settingValue, int expected)
+        public void ResolvesPrecedenceAndLegacyValues(int explicitLimit, string settingName, string appDefaultValue, string resolvedSettingValue, int expectedLimit)
         {
-            int result = MaxItemsPerInvocationResolver.Resolve(explicitValue, name, appDefault, _ => settingValue, "Function1");
-            Assert.Equal(expected, result);
+            int result = MaxItemsPerInvocationResolver.Resolve(explicitLimit, settingName, appDefaultValue, _ => resolvedSettingValue, "Function1");
+            Assert.Equal(expectedLimit, result);
         }
 
         [Theory]
@@ -32,14 +32,14 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         [InlineData("-1")]
         [InlineData("2147483648")]
         [InlineData("not-a-number")]
-        public void NamedSettingMustBePositiveInteger(string value)
+        public void RejectsMissingOrInvalidNamedSettingValue(string resolvedSettingValue)
         {
-            var error = Assert.Throws<InvalidOperationException>(() => MaxItemsPerInvocationResolver.Resolve(0, "BatchLimit", "10", _ => value, "Function1"));
+            var error = Assert.Throws<InvalidOperationException>(() => MaxItemsPerInvocationResolver.Resolve(0, "BatchLimit", "10", _ => resolvedSettingValue, "Function1"));
             Assert.Contains("BatchLimit", error.Message);
             Assert.Contains("Function1", error.Message);
-            if (!string.IsNullOrWhiteSpace(value) && value == "not-a-number")
+            if (resolvedSettingValue == "not-a-number")
             {
-                Assert.DoesNotContain(value, error.Message);
+                Assert.DoesNotContain(resolvedSettingValue, error.Message);
             }
         }
 
@@ -49,9 +49,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         [InlineData("-1")]
         [InlineData("2147483648")]
         [InlineData("invalid")]
-        public void InvalidDefaultFailsEvenWithExplicitOverride(string value)
+        public void InvalidDefaultFailsEvenWithExplicitOverride(string appDefaultValue)
         {
-            var error = Assert.Throws<InvalidOperationException>(() => MaxItemsPerInvocationResolver.Resolve(5, null, value, null, "Function1"));
+            var error = Assert.Throws<InvalidOperationException>(() => MaxItemsPerInvocationResolver.Resolve(5, null, appDefaultValue, null, "Function1"));
             Assert.Contains("DefaultMaxItemsPerInvocation", error.Message);
         }
 
@@ -65,9 +65,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
         [Theory]
         [InlineData("")]
         [InlineData(" ")]
-        public void EmptySettingNameIsRejected(string name)
+        public void RejectsBlankSettingName(string settingName)
         {
-            Assert.Throws<InvalidOperationException>(() => MaxItemsPerInvocationResolver.Resolve(0, name, "10", _ => null, "Function1"));
+            Assert.Throws<InvalidOperationException>(() => MaxItemsPerInvocationResolver.Resolve(0, settingName, "10", _ => null, "Function1"));
         }
     }
 }

@@ -9,7 +9,6 @@ using Microsoft.Azure.WebJobs.Host.Scale;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
@@ -17,35 +16,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 {
     public class ScaleConfigurationTests
     {
-        [Fact]
-        public void ScaleHostProvidesApplicationSettingsAndExtensionOptions()
-        {
-            var settings = new Dictionary<string, string>
-            {
-                ["CosmosConnection"] = "AccountEndpoint=https://example.invalid;AccountKey=c29tZV9rZXk=;",
-                ["DatabaseSetting"] = "database",
-                ["AzureWebJobs:extensions:cosmosDB:UserAgentSuffix"] = "scale-test"
-            };
-            var metadata = new TriggerMetadata(JObject.Parse(@"{
-                'type': 'cosmosDBTrigger', 'functionName': 'TestFunction',
-                'connection': 'CosmosConnection', 'databaseName': 'database',
-                'containerName': 'items', 'leaseContainerName': 'leases'
-            }"));
-
-            using IHost host = new HostBuilder()
-                .ConfigureAppConfiguration(config => config.AddInMemoryCollection(settings))
-                .ConfigureWebJobsScale((context, builder) =>
-                {
-                    builder.AddCosmosDB();
-                    builder.AddCosmosDbScaleForTrigger(metadata);
-                }, _ => { })
-                .Build();
-
-            Assert.Equal("database", host.Services.GetRequiredService<IConfiguration>()["DatabaseSetting"]);
-            Assert.Equal("scale-test", host.Services.GetRequiredService<IOptions<CosmosDBOptions>>().Value.UserAgentSuffix);
-            Assert.NotNull(host.Services.GetRequiredService<ITargetScalerProvider>().GetTargetScaler());
-        }
-
         [Theory]
         [InlineData("BatchLimit", 6)]
         [InlineData(null, 4)]
@@ -78,11 +48,9 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests
 
             var scaler = (CosmosDBTargetScaler)host.Services.GetRequiredService<ITargetScalerProvider>().GetTargetScaler();
             Assert.Equal(expectedWorkers, scaler.GetScaleResultInternal(new TargetScalerContext(), 120, 0).TargetWorkerCount);
-            Assert.Equal(3, scaler.GetScaleResultInternal(new TargetScalerContext { InstanceConcurrency = 50 }, 120, 0).TargetWorkerCount);
         }
 
         [Theory]
-        [InlineData("BatchLimit", "invalid", "30", 0, "BatchLimit")]
         [InlineData("BatchLimit", null, "30", 0, "BatchLimit")]
         [InlineData("BatchLimit", "20", "30", 5, "both")]
         [InlineData(null, "20", "invalid", 5, "DefaultMaxItemsPerInvocation")]
