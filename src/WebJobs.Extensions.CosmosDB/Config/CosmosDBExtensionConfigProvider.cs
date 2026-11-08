@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Bindings;
+using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
@@ -43,6 +44,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             _cosmosSerializerFactory = cosmosSerializerFactory;
             _nameResolver = nameResolver;
             _options = options.Value;
+            MaxItemsPerInvocationResolver.Resolve(0, null, _options.DefaultMaxItemsPerInvocation, null, null);
             _drainModeManager = drainModeManager;
             _loggerFactory = loggerFactory;
         }

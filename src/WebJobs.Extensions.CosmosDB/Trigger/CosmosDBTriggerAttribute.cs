@@ -110,6 +110,11 @@ namespace Microsoft.Azure.WebJobs
         public int MaxItemsPerInvocation { get; set; }
 
         /// <summary>
+        /// Gets or sets the name of an application setting containing the maximum number of items per invocation.
+        /// </summary>
+        public string MaxItemsPerInvocationSetting { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether change feed in the Azure Cosmos DB service should start from beginning (true) or from current (false). By default it's start from current (false).
         /// </summary>
         /// <remarks>This is only used to set the initial trigger state. Once the trigger has a lease state, changing this value has no effect.</remarks>

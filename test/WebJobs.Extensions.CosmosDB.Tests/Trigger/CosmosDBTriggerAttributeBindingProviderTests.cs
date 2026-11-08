@@ -10,8 +10,10 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB;
 using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Tests;
+using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger;
 using Microsoft.Azure.WebJobs.Extensions.Tests.Common;
 using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Azure.WebJobs.Host.Scale;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
@@ -79,6 +81,92 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDBTrigger.Tests
         public static IEnumerable<object[]> ValidCosmosDBTriggerBindingsWithStartTimeParameters
         {
             get { return ValidCosmosDBTriggerBindingsWithStartTime.GetParameters(); }
+        }
+
+        [Fact]
+        public async Task NamedBatchSettingIsResolvedForListenerBinding()
+        {
+            var resolver = new TestNameResolver();
+            resolver.Values["BatchLimit"] = "23";
+            var logProvider = new TestLoggerProvider();
+            _loggerFactory.AddProvider(logProvider);
+            var provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(resolver, _options, CreateExtensionConfigProvider(_options, _baseConfig), _drainModeManager, _loggerFactory);
+            var parameter = typeof(CosmosDBTriggerAttributeBindingProviderTests).GetMethod(nameof(NamedBatchFunction), BindingFlags.Static | BindingFlags.NonPublic).GetParameters()[0];
+
+            var binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+
+            Assert.Equal(23, binding.CosmosDBAttribute.MaxItemsPerInvocation);
+            Assert.Contains(logProvider.GetAllLogMessages(), message => message.FormattedMessage.Contains("Change feed batch limit for RenamedFunction: 23"));
+            using var listener = new CosmosDBTriggerListener<dynamic>(null, "Function1", binding.ProcessorName,
+                binding.MonitoredContainer, binding.LeaseContainer, binding.CosmosDBAttribute, _drainModeManager, _loggerFactory.CreateLogger("test"));
+            var targetScaler = (CosmosDBTargetScaler)listener.GetTargetScaler();
+            Assert.Equal(6, targetScaler.GetScaleResultInternal(new TargetScalerContext(), 120, 0).TargetWorkerCount);
+            Assert.Equal(3, targetScaler.GetScaleResultInternal(new TargetScalerContext { InstanceConcurrency = 50 }, 120, 0).TargetWorkerCount);
+        }
+
+        [Fact]
+        public async Task MissingNamedBatchSettingFailsBindingWithoutFallback()
+        {
+            _options.DefaultMaxItemsPerInvocation = "30";
+            var resolver = new TestNameResolver();
+            var provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(resolver, _options, CreateExtensionConfigProvider(_options, _baseConfig), _drainModeManager, _loggerFactory);
+            var parameter = typeof(CosmosDBTriggerAttributeBindingProviderTests).GetMethod(nameof(NamedBatchFunction), BindingFlags.Static | BindingFlags.NonPublic).GetParameters()[0];
+
+            var error = await Assert.ThrowsAsync<InvalidOperationException>(() => provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None)));
+            Assert.Contains("BatchLimit", error.Message);
+            Assert.Contains("RenamedFunction", error.Message);
+        }
+
+        [Theory]
+        [InlineData(nameof(DefaultBatchFunction), "30", 30)]
+        [InlineData(nameof(ExplicitBatchFunction), "30", 10)]
+        [InlineData(nameof(LegacyBatchFunction), null, -1)]
+        public async Task ListenerBindingUsesDefaultExplicitOrLegacyValue(string methodName, string defaultValue, int expected)
+        {
+            _options.DefaultMaxItemsPerInvocation = defaultValue;
+            var resolver = new TestNameResolver();
+            var provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(resolver, _options, CreateExtensionConfigProvider(_options, _baseConfig), _drainModeManager, _loggerFactory);
+            var parameter = typeof(CosmosDBTriggerAttributeBindingProviderTests).GetMethod(methodName, BindingFlags.Static | BindingFlags.NonPublic).GetParameters()[0];
+            var binding = (CosmosDBTriggerBinding<dynamic>)await provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None));
+
+            Assert.Equal(expected, binding.CosmosDBAttribute.MaxItemsPerInvocation);
+            using var listener = new CosmosDBTriggerListener<dynamic>(null, "Function1", binding.ProcessorName,
+                binding.MonitoredContainer, binding.LeaseContainer, binding.CosmosDBAttribute, _drainModeManager, _loggerFactory.CreateLogger("test"));
+            var targetScaler = (CosmosDBTargetScaler)listener.GetTargetScaler();
+            int concurrency = expected > 0 ? expected : 100;
+            Assert.Equal((int)Math.Ceiling(120.0 / concurrency), targetScaler.GetScaleResultInternal(new TargetScalerContext(), 120, 0).TargetWorkerCount);
+        }
+
+        [Fact]
+        public async Task ListenerBindingRejectsConflictingBatchOptions()
+        {
+            var resolver = new TestNameResolver();
+            var provider = new CosmosDBTriggerAttributeBindingProvider<dynamic>(resolver, _options, CreateExtensionConfigProvider(_options, _baseConfig), _drainModeManager, _loggerFactory);
+            var parameter = typeof(CosmosDBTriggerAttributeBindingProviderTests).GetMethod(nameof(ConflictingBatchFunction), BindingFlags.Static | BindingFlags.NonPublic).GetParameters()[0];
+
+            var error = await Assert.ThrowsAsync<InvalidOperationException>(() => provider.TryCreateAsync(new TriggerBindingProviderContext(parameter, CancellationToken.None)));
+            Assert.Contains("both", error.Message);
+        }
+
+        [FunctionName("RenamedFunction")]
+        private static void NamedBatchFunction([CosmosDBTrigger("database", "items", MaxItemsPerInvocationSetting = "BatchLimit")] IReadOnlyList<dynamic> documents)
+        {
+        }
+
+        private static void DefaultBatchFunction([CosmosDBTrigger("database", "items")] IReadOnlyList<dynamic> documents)
+        {
+        }
+
+        private static void ExplicitBatchFunction([CosmosDBTrigger("database", "items", MaxItemsPerInvocation = 10)] IReadOnlyList<dynamic> documents)
+        {
+        }
+
+        private static void LegacyBatchFunction([CosmosDBTrigger("database", "items", MaxItemsPerInvocation = -1)] IReadOnlyList<dynamic> documents)
+        {
+        }
+
+        private static void ConflictingBatchFunction([CosmosDBTrigger("database", "items", MaxItemsPerInvocation = 10, MaxItemsPerInvocationSetting = "BatchLimit")] IReadOnlyList<dynamic> documents)
+        {
         }
 
         [Theory]

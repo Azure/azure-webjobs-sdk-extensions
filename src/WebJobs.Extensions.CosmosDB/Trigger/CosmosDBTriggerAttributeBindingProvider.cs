@@ -5,6 +5,7 @@ using System;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.WebJobs.Extensions.CosmosDB.Trigger;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Azure.WebJobs.Logging;
@@ -51,6 +52,12 @@ namespace Microsoft.Azure.WebJobs.Extensions.CosmosDB
             {
                 return null;
             }
+
+            string functionName = parameter.Member.GetCustomAttribute<FunctionNameAttribute>()?.Name ?? parameter.Member.Name;
+            attribute.MaxItemsPerInvocation = MaxItemsPerInvocationResolver.Resolve(
+                attribute.MaxItemsPerInvocation, attribute.MaxItemsPerInvocationSetting,
+                _options.DefaultMaxItemsPerInvocation, name => _nameResolver?.Resolve(name), functionName);
+            _logger.LogDebug("Change feed batch limit for {Function}: {MaxItemsPerInvocation}", functionName, attribute.MaxItemsPerInvocation);
 
             Container monitoredContainer;
             Container leasesContainer;

@@ -1,3 +1,7 @@
+## Unreleased
+
+- Add optional application-setting and extension-wide defaults for Cosmos DB trigger batch size.
+
 ## Microsoft.Azure.WebJobs.Extensions.CosmosDB 4.16.1
 
 - fix: wrap worker-default trigger type as ChangeFeedItem<JObject> for AllVersionsAndDeletes (#1000)
